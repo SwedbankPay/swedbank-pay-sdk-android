@@ -1,0 +1,70 @@
+
+<resources>
+    <string name="javascript_interface_name">payexsdk</string>
+
+    <string name="view_consumer_identification_template">
+&lt;!DOCTYPE html>
+&lt;html>
+    &lt;head>
+        &lt;title>PayEx Checkout is Awesome!&lt;/title>
+    &lt;/head>
+    &lt;body>
+        &lt;div id=\"checkin\" />
+        &lt;script data-payex-hostedview=\"checkin\" src=\"%s\">&lt;/script>
+        &lt;script language=\"javascript\">
+            payex.hostedView.consumer({
+                container: \"checkin\",
+                onConsumerIdentified: function(consumerIdentifiedEvent) {
+                    console.log(consumerIdentifiedEvent);
+                    payexsdk.onConsumerProfileRefAvailable(consumerIdentifiedEvent.consumerProfileRef);
+                },
+                onShippingDetailsAvailable: function(shippingDetailsAvailable){
+                    console.log(shippingDetailsAvailable);
+                },
+                onError: function(error) {
+                    console.error(error);
+                    payexsdk.onIdentifyError(JSON.stringify(error));
+                }
+            }).open();
+        &lt;/script>
+    &lt;/body>
+&lt;/html>
+    </string>
+
+    <string name="view_paymentorder_template">
+&lt;!DOCTYPE html>
+&lt;html>
+    &lt;head>
+        &lt;title>PayEx Checkout is Awesome!&lt;/title>
+    &lt;/head>
+    &lt;body>
+        &lt;div id=\"checkout\" />
+        &lt;script src=\"%s\">&lt;/script>
+        &lt;script language="javascript">
+            payex.hostedView.paymentMenu({
+                container: \"checkout\",
+                onPaymentMenuInstrumentSelected: function(event) {
+                    payexsdk.onPaymentMenuInstrumentSelected(JSON.stringify(event));
+                },
+                onPaymentCompleted: function(event) {
+                    payexsdk.onPaymentCompleted(JSON.stringify(event));
+                },
+                onPaymentFailed: function(event) {
+                    payexsdk.onPaymentFailed(JSON.stringify(event));
+                },
+                onPaymentCreated: function(event) {
+                    payexsdk.onPaymentCreated(JSON.stringify(event));
+                },
+                onPaymentToS: function(event) {
+                    payexsdk.onPaymentToS(JSON.stringify(event));
+                },
+                onError: function(error) {
+                    payexsdk.onPaymentError(JSON.stringify(error));
+                }
+            }).open();
+        &lt;/script>
+    &lt;/body>
+&lt;/html>
+    </string>
+
+</resources>
