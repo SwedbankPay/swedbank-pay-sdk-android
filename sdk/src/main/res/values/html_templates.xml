@@ -1,8 +1,8 @@
 
 <resources>
-    <string name="javascript_interface_name">payexsdk</string>
+    <string name="payexsdk_javascript_interface_name">payexsdk</string>
 
-    <string name="view_consumer_identification_template">
+    <string name="payexsdk_view_consumer_identification_template">
 &lt;!DOCTYPE html>
 &lt;html>
     &lt;head>
@@ -31,7 +31,7 @@
 &lt;/html>
     </string>
 
-    <string name="view_paymentorder_template">
+    <string name="payexsdk_view_paymentorder_template">
 &lt;!DOCTYPE html>
 &lt;html>
     &lt;head>

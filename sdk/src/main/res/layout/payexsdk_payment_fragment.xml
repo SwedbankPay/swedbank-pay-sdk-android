@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <WebView
+        android:id="@+id/payexsdk_web_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <ProgressBar
+        android:id="@+id/payexsdk_loading_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/payexsdk_margin"
+        android:layout_alignParentTop="true"
+        android:layout_centerInParent="true"
+        style="@style/payexsdk_progress"/>
+
+    <TextView
+        android:id="@+id/payexsdk_message_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/payexsdk_margin"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
+        style="@style/payexsdk_title"/>
+
+    <TextView
+        android:id="@+id/payexsdk_message_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/payexsdk_margin"
+        android:layout_below="@id/payexsdk_message_title"
+        android:gravity="center"
+        style="@style/payexsdk_body"/>
+
+    <Button
+        android:id="@+id/payexsdk_retry_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/payexsdk_margin"
+        android:layout_below="@id/payexsdk_message_body"
+        android:gravity="center"
+        android:text="@string/payexsdk_retry_button"
+        style="@style/payexsdk_button"/>
+
+</RelativeLayout>

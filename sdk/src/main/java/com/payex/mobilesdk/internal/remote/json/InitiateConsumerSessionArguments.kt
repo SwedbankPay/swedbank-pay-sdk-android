@@ -10,8 +10,6 @@ internal class InitiateConsumerSessionArguments(
         @SerializedName("countryCode") private val countryCode: String
     )
 
-    //@SerializedName("operation")
-    //private val operation = "initiate-consumer-session"
     @SerializedName("msisdn")
     var msisdn: String? = null
     @SerializedName("email")

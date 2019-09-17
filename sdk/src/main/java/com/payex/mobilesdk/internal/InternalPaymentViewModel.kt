@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
+import android.view.View
 import androidx.annotation.MainThread
 import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
@@ -13,6 +14,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.viewModelScope
 import com.payex.mobilesdk.Configuration
+import com.payex.mobilesdk.PaymentViewModel
 import com.payex.mobilesdk.R
 import com.payex.mobilesdk.TerminalFailure
 import kotlinx.coroutines.CancellationException
@@ -30,21 +32,51 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     private val processState = MutableLiveData<ProcessState>()
     private val moveToNextStateJob = MutableLiveData<Job>()
 
-    private val uiState = Transformations.map(processState) { it?.uiState }
+    val uiState = Transformations.map(processState) { it?.uiState }
+
+    val loading = Transformations.map(uiState) { it == UIState.Loading }
     val currentPage = Transformations.map(uiState) { it?.getWebViewPage(this) }
+    val messageTitle = Transformations.map(uiState) {
+        when (it) {
+            is UIState.RetryableError -> R.string.payexsdk_retryable_error_title
+            UIState.Success -> R.string.payexsdk_payment_success
+            is UIState.Failure -> when (it.terminalFailure) {
+                null -> R.string.payexsdk_payment_failed
+                else -> R.string.payexsdk_terminal_failure_title
+            }
+            else -> null
+        }?.let(getApplication<Application>()::getString)
+    }
+    val messageBody = Transformations.map(uiState) {
+        when (it) {
+            is UIState.RetryableError -> getApplication<Application>().getString(it.message)
+            is UIState.Failure -> it.terminalFailure?.messageId?.let {
+                getApplication<Application>().getString(R.string.payexsdk_terminal_failure_message, it)
+            }
+            else -> null
+        }
+    }
+    val retryActionAvailable = Transformations.map(uiState) { it is UIState.RetryableError }
 
     val javascriptInterface = JSInterface(this)
 
-    private var configuration: Configuration? = null
+    var configuration: Configuration? = null
 
-    fun setConfiguration(configuration: Configuration) {
-        this.configuration = configuration
-    }
+    var publicVm: PaymentViewModel? = null
+        set(value) {
+            val old = field
+            if (old != value) {
+                old?.detachInternalViewModel(this)
+                field = value
+                value?.attachInternalViewModel(this)
+            }
+        }
 
     override fun onCleared() {
         super.onCleared()
         javascriptInterface.vm = null
         configuration = null
+        publicVm = null
     }
 
     private fun setProcessState(processState: ProcessState?) {
@@ -129,7 +161,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         setProcessState(ProcessState.PayExError(terminalFailure))
     }
 
-    private sealed class UIState {
+    sealed class UIState {
         open fun getWebViewPage(vm: AndroidViewModel): String? = null
 
         object Loading : UIState()
@@ -197,7 +229,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         ) : ProcessState() {
             companion object { @JvmField val CREATOR = makeCreator(::FailedInitializeConsumerSession) }
 
-            override val uiState get() = UIState.RetryableError(R.string.unknown_error)
+            override val uiState get() = UIState.RetryableError(R.string.payexsdk_failed_init_consumer)
 
             override val isRetryableErrorState get() = true
             override suspend fun getNextState(context: Context, configuration: Configuration): ProcessState {
@@ -220,7 +252,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         ) : ProcessState() {
             companion object { @JvmField val CREATOR = makeCreator(::IdentifyingConsumer) }
 
-            override val uiState get() = UIState.HtmlContent(R.string.view_consumer_identification_template, viewConsumerIdentification)
+            override val uiState get() = UIState.HtmlContent(R.string.payexsdk_view_consumer_identification_template, viewConsumerIdentification)
 
             override fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState? {
                 return CreatingPaymentOrder(consumerProfileRef, merchantData)
@@ -278,7 +310,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         ) : ProcessState() {
             companion object { @JvmField val CREATOR = makeCreator(::FailedCreatePaymentOrder) }
 
-            override val uiState get() = UIState.RetryableError(R.string.unknown_error)
+            override val uiState get() = UIState.RetryableError(R.string.payexsdk_failed_create_payment)
 
             override val isRetryableErrorState get() = true
             override suspend fun getNextState(context: Context, configuration: Configuration): ProcessState {
@@ -301,7 +333,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         ) : ProcessState() {
             companion object { @JvmField val CREATOR = makeCreator(::Paying) }
 
-            override val uiState get() = UIState.HtmlContent(R.string.view_paymentorder_template, viewPaymentOrder)
+            override val uiState get() = UIState.HtmlContent(R.string.payexsdk_view_paymentorder_template, viewPaymentOrder)
 
             override fun getNextStateAfterPaymentFailed() = PaymentFailed(/*paymentOrderUrl*/)
 

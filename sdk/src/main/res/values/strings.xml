@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="unknown_error">Unexpected error (%s)</string>
-    <string name="payment_failed">Payment failed</string>
+    <string name="payexsdk_retryable_error_title">Communication Error</string>
+    <string name="payexsdk_retry_button">Retry</string>
+    <string name="payexsdk_failed_init_consumer">Could not initialize identification.</string>
+    <string name="payexsdk_failed_create_payment">Could  not initialize payment.</string>
+    <string name="payexsdk_terminal_failure_title">Configuration Error</string>
+    <string name="payexsdk_terminal_failure_message">ID: %s</string>
+    <string name="payexsdk_payment_success">Payment succeeded</string>
+    <string name="payexsdk_payment_failed">Payment failed</string>
 </resources>

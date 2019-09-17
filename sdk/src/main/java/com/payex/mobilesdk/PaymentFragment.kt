@@ -1,6 +1,7 @@
 package com.payex.mobilesdk
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -18,6 +19,8 @@ import com.payex.mobilesdk.PaymentFragment.ArgumentsBuilder
 import com.payex.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.payex.mobilesdk.internal.InternalPaymentViewModel
 import com.payex.mobilesdk.internal.LOG_TAG
+import kotlinx.android.synthetic.main.payexsdk_payment_fragment.*
+import kotlinx.android.synthetic.main.payexsdk_payment_fragment.view.*
 
 /**
  * A [Fragment] that handles a payment process.
@@ -45,7 +48,8 @@ import com.payex.mobilesdk.internal.LOG_TAG
  *
  *     ViewModelProviders.of(activity).get(PaymentViewModel.class)
  *
- * Optionally, you may specify a custom [ViewModelProvider][androidx.lifecycle.ViewModelProvider] key in [ArgumentsBuilder],
+ * Optionally, you may specify a custom [ViewModelProvider][androidx.lifecycle.ViewModelProvider]
+ * key by [ArgumentsBuilder.viewModelKey],
  * e.g. if you want to support multiple PaymentFragments in an Activity (not recommended).
  *
  * After configuring the PaymentFragment, [add][androidx.fragment.app.FragmentTransaction.add] it to
@@ -71,7 +75,7 @@ import com.payex.mobilesdk.internal.LOG_TAG
  * All [Bundle] keys used by PaymentFragment are namespaced by a "com.payex.mobilesdk" prefix,
  * so they should not conflict with any custom keys.
  *
- * @constructor Creates a new, unconfigured instance of PaymentFragment. You must configure it using [setArguments] before use.
+ * @constructor Creates a new, unconfigured instance of PaymentFragment. It must be [configured][ArgumentsBuilder] before use.
  */
 open class PaymentFragment : Fragment() {
     /**
@@ -206,18 +210,62 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun setupViewModels(configuration: Configuration) {
+        // N.B! The Fragment does not have a view at this point;
+        // however, a lifecycle-bound observer will only start
+        // observing after the owning lifecycle is STARTED,
+        // which happens after onCreateView. Thus we can assume
+        // the observer callbacks will only ever be called when we
+        // actually have a view. It does mean we cannot cache
+        // the subviews here, but that is a minor penalty, as the
+        // kotlin-android-extensions synthetic accessors will
+        // cache them for us.
         val vm = vm
-        vm.setConfiguration(configuration)
-        val baseUrl = configuration.rootLink.href.toString()
-        vm.currentPage.observe(this, Observer {
-            if (it != null) {
-                (view as? WebView)?.loadDataWithBaseURL(baseUrl, it, "text/html", "utf-8", "")
+        val publicVm = publicVm
+        vm.configuration = configuration
+        vm.publicVm = publicVm
+        vm.observeLoading()
+        vm.observeCurrentPage(configuration.rootLink.href.toString())
+        vm.observeMessage()
+        publicVm.observeRetryPreviousPressed()
+    }
+
+    private fun InternalPaymentViewModel.observeLoading() {
+        loading.observe(this@PaymentFragment, Observer {
+            payexsdk_loading_indicator?.visibility = if (it == true) View.VISIBLE else View.INVISIBLE
+        })
+    }
+
+    private fun InternalPaymentViewModel.observeCurrentPage(baseUrl: String) {
+        currentPage.observe(this@PaymentFragment, Observer {
+            payexsdk_web_view?.apply {
+                clearHistory()
+                if (it == null) {
+                    loadUrl("about:blank")
+                } else {
+                    loadDataWithBaseURL(baseUrl, it, "text/html", "utf-8", "")
+                }
             }
         })
+    }
 
-        publicVm.onRetryPreviousAction.observe(this, Observer {
+    private fun InternalPaymentViewModel.observeMessage() {
+        messageTitle.observe(this@PaymentFragment, Observer {
+            payexsdk_message_title?.text = it
+        })
+
+        messageBody.observe(this@PaymentFragment, Observer {
+            payexsdk_message_body?.text = it
+        })
+
+        retryActionAvailable.observe(this@PaymentFragment, Observer {
+            payexsdk_retry_button.visibility = if (it == true) View.VISIBLE else View.INVISIBLE
+        })
+    }
+
+    private fun PaymentViewModel.observeRetryPreviousPressed() {
+        onRetryPreviousAction.observe(this@PaymentFragment, Observer {
             if (it != null) {
-                this.vm.retryFromRetryableError()
+                vm.retryFromRetryableError()
             }
         })
     }
@@ -241,22 +289,28 @@ open class PaymentFragment : Fragment() {
 
     @CallSuper
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return WebView(context).apply {
-            settings.apply {
-                // JavaScript is required for our use case.
-                // The SDK will only use remote content through links
-                // retrieved from the backend. The backend must be careful
-                // not to send compromised links.
-                @SuppressLint("SetJavaScriptEnabled")
-                javaScriptEnabled = true
+        return inflater.inflate(R.layout.payexsdk_payment_fragment, container, false).apply {
+            payexsdk_web_view.apply {
+                settings.apply {
+                    // JavaScript is required for our use case.
+                    // The SDK will only use remote content through links
+                    // retrieved from the backend. The backend must be careful
+                    // not to send compromised links.
+                    @SuppressLint("SetJavaScriptEnabled")
+                    javaScriptEnabled = true
+                }
+                addJavascriptInterface(vm.javascriptInterface, getString(R.string.payexsdk_javascript_interface_name))
 
-                domStorageEnabled = true
-            }
-            addJavascriptInterface(vm.javascriptInterface, getString(R.string.javascript_interface_name))
-            webChromeClient = object : WebChromeClient() {
-                override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
-                    Log.d(LOG_TAG, consoleMessage.message())
-                    return true
+
+
+                webChromeClient = object : WebChromeClient() {
+                    override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+                        Log.d(LOG_TAG, consoleMessage.message())
+                        return true
+                    }
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    WebView.setWebContentsDebuggingEnabled(true)
                 }
             }
         }
@@ -268,4 +322,3 @@ open class PaymentFragment : Fragment() {
         outState.putBundle(STATE_VM, Bundle().also(vm::saveState))
     }
 }
-

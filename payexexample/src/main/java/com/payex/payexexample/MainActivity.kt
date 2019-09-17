@@ -2,7 +2,6 @@ package com.payex.payexexample
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.google.gson.Gson
 import com.payex.mobilesdk.*
 import timber.log.Timber
 import java.util.*
@@ -53,7 +52,7 @@ class MainActivity : AppCompatActivity() {
 
         val fragment = PaymentFragment().apply {
             setArguments(PaymentFragment.ArgumentsBuilder()
-                .consumer(Consumer.Identified("SE"))
+                .consumer(Consumer.Identified("NO"))
                 .merchantData(data)
             )
         }
