@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The host app must provide a unique scheme by overriding this resource -->
+    <string name="payexsdk_callback_url_scheme"></string>
+
     <string name="payexsdk_retryable_error_title">Communication Error</string>
     <string name="payexsdk_retry_button">Retry</string>
     <string name="payexsdk_failed_init_consumer">Could not initialize identification.</string>
-    <string name="payexsdk_failed_create_payment">Could  not initialize payment.</string>
+    <string name="payexsdk_failed_create_payment">Could not initialize payment.</string>
+    <string name="payexsdk_bad_init_request_title">Unable to Start Payment at This Time</string>
+    <string name="payexsdk_bad_init_request_message">Code: %d</string>
     <string name="payexsdk_terminal_failure_title">Configuration Error</string>
     <string name="payexsdk_terminal_failure_message">ID: %s</string>
     <string name="payexsdk_payment_success">Payment succeeded</string>
     <string name="payexsdk_payment_failed">Payment failed</string>
+
+    <string name="payexsdk_tos">Terms of Service</string>
 </resources>

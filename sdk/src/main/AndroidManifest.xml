@@ -1,4 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.payex.mobilesdk">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <application>
+        <activity android:name=".internal.ToSActivity" android:label="@string/payexsdk_tos"/>
+        <activity android:name=".internal.CallbackActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@string/payexsdk_callback_url_scheme"/>
+            </intent-filter>
+        </activity>
+    </application>
 </manifest>

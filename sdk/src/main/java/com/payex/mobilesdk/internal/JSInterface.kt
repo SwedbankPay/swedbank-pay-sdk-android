@@ -1,13 +1,17 @@
 package com.payex.mobilesdk.internal
 
+import android.util.JsonReader
 import android.util.Log
 import android.webkit.JavascriptInterface
 import androidx.annotation.AnyThread
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.payex.mobilesdk.TerminalFailure
+import com.payex.mobilesdk.internal.remote.json.OnPaymentToSEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.lang.Exception
 
 @AnyThread
 internal class JSInterface(var vm: InternalPaymentViewModel?) {
@@ -27,40 +31,45 @@ internal class JSInterface(var vm: InternalPaymentViewModel?) {
 
     @JavascriptInterface
     fun onPaymentMenuInstrumentSelected(event: String) {
-        Log.d(LOG_TAG, "onPaymentMenuInstrumentSelected")
+        // TODO: Analytics?
     }
 
     @JavascriptInterface
     fun onPaymentCreated(event: String) {
-        Log.d(LOG_TAG, "onPaymentCreated")
+        // TODO: Analytics?
     }
 
     @JavascriptInterface
     fun onPaymentCompleted(event: String) = withVmScope {
-        Log.d(LOG_TAG, "onPaymentCompleted")
         vm?.onPaymentSuccess()
 
     }
 
     @JavascriptInterface
     fun onPaymentCanceled(event: String) {
-        Log.d(LOG_TAG, "onPaymentCanceled")
+        // TODO: Analytics?
     }
 
     @JavascriptInterface
     fun onPaymentFailed(event: String) = withVmScope {
-        Log.d(LOG_TAG, "onPaymentFailed")
         vm?.onPaymentFailed()
     }
 
     @JavascriptInterface
     fun onPaymentToS(event: String) {
-        Log.d(LOG_TAG, "onPaymentToS")
+        try {
+            Gson().fromJson(event, OnPaymentToSEvent::class.java).openUrl?.let {
+                withVmScope {
+                    vm?.onPaymentToS(it)
+                }
+            }
+        } catch (_: Exception) {
+            return
+        }
     }
 
     @JavascriptInterface
     fun onPaymentError(error: String) = withVmScope {
-        Log.d(LOG_TAG, "onPaymentError")
         vm?.onError(Gson().fromJson(error, TerminalFailure::class.java))
     }
 }

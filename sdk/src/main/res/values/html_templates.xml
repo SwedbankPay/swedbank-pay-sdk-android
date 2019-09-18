@@ -15,14 +15,9 @@
             payex.hostedView.consumer({
                 container: \"checkin\",
                 onConsumerIdentified: function(consumerIdentifiedEvent) {
-                    console.log(consumerIdentifiedEvent);
                     payexsdk.onConsumerProfileRefAvailable(consumerIdentifiedEvent.consumerProfileRef);
                 },
-                onShippingDetailsAvailable: function(shippingDetailsAvailable){
-                    console.log(shippingDetailsAvailable);
-                },
                 onError: function(error) {
-                    console.error(error);
                     payexsdk.onIdentifyError(JSON.stringify(error));
                 }
             }).open();

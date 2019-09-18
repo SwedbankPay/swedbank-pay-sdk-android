@@ -4,8 +4,9 @@ import com.google.gson.annotations.SerializedName
 import com.payex.mobilesdk.internal.remote.json.annotations.Required
 
 internal class PaymentOrder {
+    @Required
     @SerializedName("url")
-    var url: Link.PaymentOrder? = null
+    lateinit var url: Link.PaymentOrder
         private set
 
     @SerializedName("state")

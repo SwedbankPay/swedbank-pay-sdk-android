@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">PayExExample</string>
+
+    <!--string name="payexsdk_callback_url_scheme">payexexample</string-->
 </resources>

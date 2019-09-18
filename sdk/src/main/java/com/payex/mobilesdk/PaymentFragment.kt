@@ -1,6 +1,7 @@
 package com.payex.mobilesdk
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -19,6 +20,7 @@ import com.payex.mobilesdk.PaymentFragment.ArgumentsBuilder
 import com.payex.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.payex.mobilesdk.internal.InternalPaymentViewModel
 import com.payex.mobilesdk.internal.LOG_TAG
+import com.payex.mobilesdk.internal.ToSActivity
 import kotlinx.android.synthetic.main.payexsdk_payment_fragment.*
 import kotlinx.android.synthetic.main.payexsdk_payment_fragment.view.*
 
@@ -226,12 +228,13 @@ open class PaymentFragment : Fragment() {
         vm.observeLoading()
         vm.observeCurrentPage(configuration.rootLink.href.toString())
         vm.observeMessage()
+        vm.observeTermsOfServicePressed()
         publicVm.observeRetryPreviousPressed()
     }
 
     private fun InternalPaymentViewModel.observeLoading() {
         loading.observe(this@PaymentFragment, Observer {
-            payexsdk_loading_indicator?.visibility = if (it == true) View.VISIBLE else View.INVISIBLE
+            updateRefreshLayoutState()
         })
     }
 
@@ -250,6 +253,7 @@ open class PaymentFragment : Fragment() {
 
     private fun InternalPaymentViewModel.observeMessage() {
         messageTitle.observe(this@PaymentFragment, Observer {
+            payexsdk_message.visibility = if (it != null) View.VISIBLE else View.INVISIBLE
             payexsdk_message_title?.text = it
         })
 
@@ -258,7 +262,28 @@ open class PaymentFragment : Fragment() {
         })
 
         retryActionAvailable.observe(this@PaymentFragment, Observer {
-            payexsdk_retry_button.visibility = if (it == true) View.VISIBLE else View.INVISIBLE
+            updateRefreshLayoutState()
+        })
+    }
+
+    private fun updateRefreshLayoutState() {
+        val vm = this.vm
+        val swipeLayout = payexsdk_swipe_refresh_layout
+        val loading = vm.loading.value == true
+        swipeLayout.isRefreshing = loading
+        swipeLayout.isEnabled = loading || vm.retryActionAvailable.value == true
+    }
+
+    private fun InternalPaymentViewModel.observeTermsOfServicePressed() {
+        termsOfServiceUrl.observe(this@PaymentFragment, Observer { url ->
+            if (url != null) {
+                context?.let {
+                    it.startActivity(
+                        Intent(it, ToSActivity::class.java)
+                            .putExtra(ToSActivity.EXTRA_URL, url)
+                    )
+                }
+            }
         })
     }
 
@@ -300,20 +325,22 @@ open class PaymentFragment : Fragment() {
                     javaScriptEnabled = true
                 }
                 addJavascriptInterface(vm.javascriptInterface, getString(R.string.payexsdk_javascript_interface_name))
+            }
 
-
-
-                webChromeClient = object : WebChromeClient() {
-                    override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
-                        Log.d(LOG_TAG, consoleMessage.message())
-                        return true
-                    }
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    WebView.setWebContentsDebuggingEnabled(true)
-                }
+            payexsdk_swipe_refresh_layout.setOnRefreshListener {
+                vm.retryFromRetryableError()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        payexsdk_web_view.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        payexsdk_web_view.onPause()
     }
 
     @CallSuper

@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.payex.mobilesdk.internal.InternalPaymentViewModel
 import com.payex.mobilesdk.internal.getValueConsistentMap
 import com.payex.mobilesdk.internal.getValueConsistentSwitchMap
@@ -107,6 +106,7 @@ class PaymentViewModel : AndroidViewModel {
             null -> State.IDLE
             InternalPaymentViewModel.UIState.Loading -> State.IN_PROGRESS
             is InternalPaymentViewModel.UIState.HtmlContent -> State.IN_PROGRESS
+            is InternalPaymentViewModel.UIState.InitializationError -> State.FAILURE
             is InternalPaymentViewModel.UIState.RetryableError -> State.RETRYABLE_ERROR
             InternalPaymentViewModel.UIState.Success -> State.SUCCESS
             is InternalPaymentViewModel.UIState.Failure -> State.FAILURE
@@ -122,6 +122,15 @@ class PaymentViewModel : AndroidViewModel {
             ?.message
             ?.takeUnless { it == 0 }
             ?.let(getApplication<Application>()::getString)
+    }
+
+    /**
+     * If the current state is [FAILURE][State.FAILURE], and it was caused by a client
+     * error response (i.e. http status 400-499), this property contains a description
+     * of the error.
+     */
+    val initializationErrorDescription = internalState.getValueConsistentMap {
+        (it as? InternalPaymentViewModel.UIState.InitializationError)?.badRequestDescription
     }
 
     /**

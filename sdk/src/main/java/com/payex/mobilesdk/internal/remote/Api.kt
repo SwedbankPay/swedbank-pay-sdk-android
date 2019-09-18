@@ -1,14 +1,13 @@
 package com.payex.mobilesdk.internal.remote
 
 import android.content.Context
-import android.util.Log
 import com.google.android.gms.security.ProviderInstaller
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
+import com.payex.mobilesdk.BadRequestDescription
 import com.payex.mobilesdk.Configuration
 import com.payex.mobilesdk.RequestDecorator
 import com.payex.mobilesdk.UserHeaders
-import com.payex.mobilesdk.internal.LOG_TAG
 import com.payex.mobilesdk.internal.remote.json.Link
 import com.payex.mobilesdk.internal.remote.json.annotations.Required
 import kotlinx.coroutines.CancellationException
@@ -16,6 +15,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
+import okhttp3.logging.HttpLoggingInterceptor
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.io.Reader
@@ -23,7 +23,11 @@ import java.io.Reader
 internal object Api {
     private val JSON_MEDIA_TYPE = MediaType.get("application/json")
 
-    private val lazyClient = lazy(::OkHttpClient)
+    private val lazyClient = lazy {
+        OkHttpClient.Builder()
+            .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+            .build()
+    }
     private suspend fun getClient(context: Context): OkHttpClient {
         if (!lazyClient.isInitialized()) {
             withContext(Dispatchers.IO) {
@@ -107,6 +111,7 @@ internal object Api {
             override fun onResponse(call: Call, response: Response) {
                 response.use {
                     try {
+                        checkClientError(it)
                         val entity = parseResponse(it, entityType)
                         it.receivedResponseAtMillis()
                         result.complete(CacheableResult(entity, it.validUntilMillis))
@@ -127,6 +132,31 @@ internal object Api {
         }
     }
 
+    private fun checkClientError(response: Response) {
+        val code = response.code()
+        if (code in 400..499) {
+            val body = getClientErrorBody(response)
+            val description = BadRequestDescription(
+                code,
+                body?.first?.toString(),
+                body?.second
+            )
+            throw BadRequestException(description)
+        }
+    }
+
+    private fun getClientErrorBody(response: Response): Pair<MediaType, String>? {
+        return response.body()?.run {
+            contentType()?.let {
+                try {
+                    Pair(it, string())
+                } catch (_: Exception) {
+                    null
+                }
+            }
+        }
+    }
+
     private fun <T : Any> parseResponse(response: Response, entityType: Class<T>): T {
         return GsonBuilder()
             .registerTypeHierarchyAdapter(Link::class.java, Link.getDeserializer(response))
@@ -139,8 +169,6 @@ internal object Api {
         val body = body() ?: throw IOException("Missing response body")
         val contentType = body.contentType()
         if (contentType == null || contentType.type() != JSON_MEDIA_TYPE.type() || contentType.subtype() != JSON_MEDIA_TYPE.subtype()) {
-            val wtf = body.charStream().use { it.readText() }
-            Log.w(LOG_TAG, "Got bogus response $wtf")
             throw IOException("Invalid Content-Type: $contentType")
         }
         return body.charStream()
