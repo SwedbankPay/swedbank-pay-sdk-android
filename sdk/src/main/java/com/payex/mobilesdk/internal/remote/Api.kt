@@ -4,10 +4,12 @@ import android.content.Context
 import com.google.android.gms.security.ProviderInstaller
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
-import com.payex.mobilesdk.BadRequestDescription
 import com.payex.mobilesdk.Configuration
+import com.payex.mobilesdk.Problem
 import com.payex.mobilesdk.RequestDecorator
 import com.payex.mobilesdk.UserHeaders
+import com.payex.mobilesdk.internal.makeUnexpectedContentProblem
+import com.payex.mobilesdk.internal.parseProblem
 import com.payex.mobilesdk.internal.remote.json.Link
 import com.payex.mobilesdk.internal.remote.json.annotations.Required
 import kotlinx.coroutines.CancellationException
@@ -18,10 +20,10 @@ import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
-import java.io.Reader
 
 internal object Api {
     private val JSON_MEDIA_TYPE = MediaType.get("application/json")
+    private val PROBLEM_MEDIA_TYPE = MediaType.get("application/problem+json")
 
     private val lazyClient = lazy {
         OkHttpClient.Builder()
@@ -111,8 +113,11 @@ internal object Api {
             override fun onResponse(call: Call, response: Response) {
                 response.use {
                     try {
-                        checkClientError(it)
-                        val entity = parseResponse(it, entityType)
+                        // Buffer the entire body so we can pass it to the error
+                        // reporting system if needed.
+                        val body = it.body()?.string()
+                        checkErrorResponse(it, body)
+                        val entity = parseResponse(it, body, entityType)
                         it.receivedResponseAtMillis()
                         result.complete(CacheableResult(entity, it.validUntilMillis))
                     } catch (t: Throwable) {
@@ -132,46 +137,46 @@ internal object Api {
         }
     }
 
-    private fun checkClientError(response: Response) {
+    private fun MediaType?.checkEquals(expectedContentType: MediaType) {
+        if (this == null || type() != expectedContentType.type() || subtype() != expectedContentType.subtype()) {
+            throw IOException("Invalid Content-Type: $this")
+        }
+    }
+
+    private fun checkErrorResponse(response: Response, body: String?) {
         val code = response.code()
-        if (code in 400..499) {
-            val body = getClientErrorBody(response)
-            val description = BadRequestDescription(
-                code,
-                body?.first?.toString(),
-                body?.second
-            )
-            throw BadRequestException(description)
+        if (code in 400..599) {
+            throw RequestProblemException(getProblem(response, body))
         }
     }
 
-    private fun getClientErrorBody(response: Response): Pair<MediaType, String>? {
-        return response.body()?.run {
-            contentType()?.let {
-                try {
-                    Pair(it, string())
-                } catch (_: Exception) {
-                    null
-                }
-            }
+    private fun getProblem(response: Response, body: String?): Problem {
+        return try {
+            response.body()?.contentType().checkEquals(PROBLEM_MEDIA_TYPE)
+            parseProblem(response, checkNotNull(body))
+        } catch (_: Exception) {
+            makeUnexpectedContentProblem(response, body)
         }
     }
 
-    private fun <T : Any> parseResponse(response: Response, entityType: Class<T>): T {
-        return GsonBuilder()
-            .registerTypeHierarchyAdapter(Link::class.java, Link.getDeserializer(response))
-            .create()
-            .fromJson(response.jsonStream(), entityType)
-            .also(::validateResponse)
-    }
-
-    private fun Response.jsonStream(): Reader {
-        val body = body() ?: throw IOException("Missing response body")
-        val contentType = body.contentType()
-        if (contentType == null || contentType.type() != JSON_MEDIA_TYPE.type() || contentType.subtype() != JSON_MEDIA_TYPE.subtype()) {
-            throw IOException("Invalid Content-Type: $contentType")
+    private fun <T : Any> parseResponse(response: Response, body: String?, entityType: Class<T>): T {
+        // Note: This does not support responses without a body,
+        // such as 204 No Content, because the API does not
+        // use them currently.
+        return try {
+            response.body()?.contentType().checkEquals(JSON_MEDIA_TYPE)
+            GsonBuilder()
+                .registerTypeHierarchyAdapter(Link::class.java, Link.getDeserializer(response))
+                .create()
+                .fromJson(checkNotNull(body), entityType)
+                .also(::validateResponse)
+        } catch (e: Exception) {
+            throw RequestProblemException(
+                makeUnexpectedContentProblem(
+                    response,
+                    body
+                ), e)
         }
-        return body.charStream()
     }
 
     private fun validateResponse(response: Any) {

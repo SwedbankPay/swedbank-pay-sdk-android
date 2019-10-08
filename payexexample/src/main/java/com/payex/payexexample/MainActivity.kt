@@ -40,8 +40,8 @@ class MainActivity : AppCompatActivity() {
             addPaymentFragment()
         }
 
-        ViewModelProviders.of(this)[PaymentViewModel::class.java].initializationErrorDescription.observe(this, androidx.lifecycle.Observer {
-            it?.code?.let { Timber.d("Uh-oh, got a $it response from backend.") }
+        ViewModelProviders.of(this)[PaymentViewModel::class.java].lastProblem.observe(this, androidx.lifecycle.Observer {
+            it?.let { Timber.d("Uh-oh, problem: $it") }
         })
     }
 
@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
 
         val fragment = PaymentFragment().apply {
             setArguments(PaymentFragment.ArgumentsBuilder()
-                //.consumer(Consumer.Identified("NO"))
+                .consumer(Consumer.Identified("NO"))
                 .merchantData(data)
             )
         }

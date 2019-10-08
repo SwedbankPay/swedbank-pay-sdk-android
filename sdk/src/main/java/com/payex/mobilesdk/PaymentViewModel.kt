@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import com.payex.mobilesdk.internal.InternalPaymentViewModel
 import com.payex.mobilesdk.internal.getValueConsistentMap
 import com.payex.mobilesdk.internal.getValueConsistentSwitchMap
+import java.io.IOException
 
 /**
  * <a href="https://developer.android.com/reference/androidx/lifecycle/ViewModel" target="_blank">ViewModel</a>
@@ -125,12 +126,23 @@ class PaymentViewModel : AndroidViewModel {
     }
 
     /**
-     * If the current state is [FAILURE][State.FAILURE], and it was caused by a client
-     * error response (i.e. http status 400-499), this property contains a description
-     * of the error.
+     * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR], and it was caused
+     * by am [IOException], this property contains that exception.
      */
-    val initializationErrorDescription = internalState.getValueConsistentMap {
-        (it as? InternalPaymentViewModel.UIState.InitializationError)?.badRequestDescription
+    val lastIOException: LiveData<IOException> = internalState.getValueConsistentMap {
+        (it as? InternalPaymentViewModel.UIState.RetryableError)?.ioException
+    }
+
+    /**
+     * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR] or [FAILURE][State.FAILURE],
+     * and it was caused by a problem response, this property contains an object describing the problem.
+     */
+    val lastProblem = internalState.getValueConsistentMap {
+        when (it) {
+            is InternalPaymentViewModel.UIState.InitializationError -> it.problem
+            is InternalPaymentViewModel.UIState.RetryableError -> it.problem
+            else -> null
+        }
     }
 
     /**

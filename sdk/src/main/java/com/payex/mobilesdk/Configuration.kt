@@ -85,11 +85,7 @@ class Configuration private constructor(builder: Builder) {
             return it
         }
 
-        val newInstance = try {
-            rootLink.get(context, this)
-        } catch (e: UninitializedPropertyAccessException) {
-            throw IllegalStateException("PayEx.configure not called", e)
-        }
+        val newInstance = rootLink.get(context, this)
         withContext(Dispatchers.Main) {
             topLevelResources.let {
                 if (it == null || newInstance.isValidLongerThan(it)) {

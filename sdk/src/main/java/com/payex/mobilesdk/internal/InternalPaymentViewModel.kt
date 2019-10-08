@@ -12,12 +12,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.viewModelScope
-import com.payex.mobilesdk.Configuration
-import com.payex.mobilesdk.PaymentViewModel
-import com.payex.mobilesdk.R
-import com.payex.mobilesdk.TerminalFailure
-import com.payex.mobilesdk.BadRequestDescription
-import com.payex.mobilesdk.internal.remote.BadRequestException
+import com.payex.mobilesdk.*
+import com.payex.mobilesdk.internal.remote.RequestProblemException
 import com.payex.mobilesdk.internal.remote.json.Link
 import com.payex.mobilesdk.internal.remote.json.readLink
 import com.payex.mobilesdk.internal.remote.json.writeLink
@@ -54,10 +50,12 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     }
     val messageBody = Transformations.map(uiState) {
         when (it) {
-            is UIState.InitializationError -> getApplication<Application>().getString(
-                R.string.payexsdk_bad_init_request_message, it.badRequestDescription.code
-            )
-            is UIState.RetryableError -> getApplication<Application>().getString(it.message)
+            is UIState.InitializationError -> it.problem.getFriendlyDescription()
+            is UIState.RetryableError -> sequenceOf(
+                getApplication<Application>().getString(it.message),
+                it.problem?.getFriendlyDescription(),
+                it.ioException?.localizedMessage
+            ).filterNotNull().joinToString("\n\n")
             is UIState.Failure -> it.terminalFailure?.messageId?.let {
                 getApplication<Application>().getString(R.string.payexsdk_terminal_failure_message, it)
             }
@@ -177,6 +175,26 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         setProcessState(ProcessState.PayExError(terminalFailure))
     }
 
+    private fun Problem.getFriendlyDescription(): String {
+        val resId = when (this) {
+            is Problem.Client.MobileSDK.Unauthorized -> R.string.payexsdk_problem_unauthorized
+            is Problem.Client.MobileSDK.InvalidRequest -> R.string.payexsdk_problem_invalid_request
+            is Problem.Client.PayEx.InputError -> R.string.payexsdk_problem_input_error
+            is Problem.Client.PayEx.Forbidden -> R.string.payexsdk_problem_forbidden
+            is Problem.Client.PayEx.NotFound -> R.string.payexsdk_problem_not_found
+            is Problem.Client.Unknown -> R.string.payexsdk_problem_unknown
+            is Problem.Client.UnexpectedContent -> R.string.payexsdk_problem_unexpected_content
+            is Problem.Server.MobileSDK.BackendConnectionTimeout -> R.string.payexsdk_problem_backend_connection_timeout
+            is Problem.Server.MobileSDK.BackendConnectionFailure -> R.string.payexsdk_problem_backend_connection_failure
+            is Problem.Server.MobileSDK.InvalidBackendResponse -> R.string.payexsdk_problem_invalid_backend_response
+            is Problem.Server.PayEx.SystemError -> R.string.payexsdk_problem_system_error
+            is Problem.Server.PayEx.ConfigurationError -> R.string.payexsdk_problem_configuration_error
+            is Problem.Server.Unknown -> R.string.payexsdk_problem_unknown
+            is Problem.Server.UnexpectedContent -> R.string.payexsdk_problem_unexpected_content
+        }
+        return getApplication<Application>().getString(resId)
+    }
+
     sealed class UIState {
         open fun getWebViewPage(vm: AndroidViewModel): String? = null
 
@@ -186,8 +204,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 return vm.getApplication<Application>().getString(template, link)
             }
         }
-        class InitializationError(val badRequestDescription: BadRequestDescription) : UIState()
-        class RetryableError(@StringRes val message: Int) : UIState()
+        class InitializationError(val problem: Problem) : UIState()
+        class RetryableError(val problem: Problem?, val ioException: IOException?, @StringRes val message: Int) : UIState()
         object Success : UIState()
         class Failure(val terminalFailure: TerminalFailure?) : UIState()
     }
@@ -204,11 +222,15 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
         override fun describeContents() = 0
 
+        val Problem.isRetryable get() = this is Problem.Server && this !is Problem.Server.PayEx.ConfigurationError
+
         class InitializingConsumerSession(
             private val consumerIdentificationData: String,
             private val merchantData: String?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::InitializingConsumerSession) }
+            companion object { @JvmField val CREATOR =
+                makeCreator(::InitializingConsumerSession)
+            }
 
             override val uiState get() = UIState.Loading
 
@@ -224,10 +246,10 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                         operations.find("view-consumer-identification")?.href
                             ?: throw IOException("Missing required operation")
                     IdentifyingConsumer(viewConsumerIdentification, merchantData)
-                } catch (e: BadRequestException) {
-                    FailedInitializeConsumerSession(consumerIdentificationData, merchantData, e.description)
+                } catch (e: RequestProblemException) {
+                    FailedInitializeConsumerSession(consumerIdentificationData, merchantData, e.problem, null)
                 } catch (e: Exception) {
-                    FailedInitializeConsumerSession(consumerIdentificationData, merchantData, null)
+                    FailedInitializeConsumerSession(consumerIdentificationData, merchantData, null, e as? IOException)
                 }
             }
 
@@ -244,13 +266,19 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class FailedInitializeConsumerSession(
             private val consumerIdentificationData: String,
             private val merchantData: String?,
-            private val badRequestDescription: BadRequestDescription?
+            private val problem: Problem?,
+            private val ioException: IOException?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::FailedInitializeConsumerSession) }
+            companion object { @JvmField val CREATOR =
+                makeCreator(::FailedInitializeConsumerSession)
+            }
 
             override val uiState
-                get() = badRequestDescription?.let(UIState::InitializationError)
-                    ?: UIState.RetryableError(R.string.payexsdk_failed_init_consumer)
+                get() = if (problem?.isRetryable == false) {
+                    UIState.InitializationError(problem)
+                } else {
+                    UIState.RetryableError(problem, ioException, R.string.payexsdk_failed_init_consumer)
+                }
 
             override val isRetryableErrorState get() = true
             override suspend fun getNextState(context: Context, configuration: Configuration): ProcessState {
@@ -260,12 +288,14 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 parcel.writeString(consumerIdentificationData)
                 parcel.writeString(merchantData)
-                parcel.writeParcelable(badRequestDescription, flags)
+                parcel.writeParcelable(problem, flags)
+                parcel.writeSerializable(ioException)
             }
             constructor(parcel: Parcel) : this(
                 checkNotNull(parcel.readString()),
                 parcel.readString(),
-                parcel.readParcelable(BadRequestDescription::class.java.classLoader)
+                parcel.readParcelable(Problem::class.java.classLoader),
+                parcel.readSerializable() as? IOException
             )
         }
 
@@ -273,7 +303,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val viewConsumerIdentification: String,
             private val merchantData: String?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::IdentifyingConsumer) }
+            companion object { @JvmField val CREATOR =
+                makeCreator(::IdentifyingConsumer)
+            }
 
             override val uiState get() = UIState.HtmlContent(R.string.payexsdk_view_consumer_identification_template, viewConsumerIdentification)
 
@@ -295,7 +327,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val consumerProfileRef: String?,
             private val merchantData: String?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::CreatingPaymentOrder) }
+            companion object { @JvmField val CREATOR =
+                makeCreator(::CreatingPaymentOrder)
+            }
 
             override val uiState get() = UIState.Loading
 
@@ -310,10 +344,10 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                         paymentOrder.operations.find("view-paymentorder")?.href
                             ?: throw IOException("Missing required operation")
                     Paying(viewPaymentOrder, paymentOrder.url)
-                } catch (e: BadRequestException) {
-                    FailedCreatePaymentOrder(consumerProfileRef, merchantData, e.description)
+                } catch (e: RequestProblemException) {
+                    FailedCreatePaymentOrder(consumerProfileRef, merchantData, e.problem, null)
                 } catch (e: Exception) {
-                    FailedCreatePaymentOrder(consumerProfileRef, merchantData, null)
+                    FailedCreatePaymentOrder(consumerProfileRef, merchantData, null, e as? IOException)
                 }
             }
 
@@ -331,13 +365,19 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class FailedCreatePaymentOrder(
             private val consumerProfileRef: String?,
             private val merchantData: String?,
-            private val badRequestDescription: BadRequestDescription?
+            private val problem: Problem?,
+            private val ioException: IOException?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::FailedCreatePaymentOrder) }
+            companion object { @JvmField val CREATOR =
+                makeCreator(::FailedCreatePaymentOrder)
+            }
 
             override val uiState
-                get() = badRequestDescription?.let(UIState::InitializationError)
-                    ?: UIState.RetryableError(R.string.payexsdk_failed_create_payment)
+                get() = if (problem?.isRetryable == false) {
+                    UIState.InitializationError(problem)
+                } else {
+                    UIState.RetryableError(problem, ioException, R.string.payexsdk_failed_create_payment)
+                }
 
             override val isRetryableErrorState get() = true
             override suspend fun getNextState(context: Context, configuration: Configuration): ProcessState {
@@ -347,12 +387,14 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 parcel.writeString(consumerProfileRef)
                 parcel.writeString(merchantData)
-                parcel.writeParcelable(badRequestDescription, flags)
+                parcel.writeParcelable(problem, flags)
+                parcel.writeSerializable(ioException)
             }
             constructor(parcel: Parcel) : this(
                 parcel.readString(),
                 parcel.readString(),
-                parcel.readParcelable(BadRequestDescription::class.java.classLoader)
+                parcel.readParcelable(Problem::class.java.classLoader),
+                parcel.readSerializable() as? IOException
             )
         }
 
@@ -390,7 +432,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class PaymentFailed(
             private val paymentOrderUrl: Link.PaymentOrder
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::PaymentFailed) }
+            companion object { @JvmField val CREATOR =
+                makeCreator(::PaymentFailed)
+            }
 
             override val uiState get() = UIState.Failure(null)
 
@@ -405,7 +449,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class PayExError(
             private val terminalFailure: TerminalFailure?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::PayExError) }
+            companion object { @JvmField val CREATOR =
+                makeCreator(::PayExError)
+            }
 
             override val uiState get() = UIState.Failure(terminalFailure)
 
