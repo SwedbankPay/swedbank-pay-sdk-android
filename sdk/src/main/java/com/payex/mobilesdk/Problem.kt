@@ -204,9 +204,15 @@ sealed class Problem : Parcelable {
             override val action: PayexAction?,
             override val problems: List<PayExSubproblem>
         ) : Server(), PayExProblem {
+            /**
+             * TODO
+             */
             class SystemError(raw: JsonObject, title: String?, status: Int, detail: String?, instance: String?, action: PayexAction?, problems: List<PayExSubproblem>)
                 : PayEx(raw, title, status, detail, instance, action, problems)
 
+            /**
+             * TODO
+             */
             class ConfigurationError(raw: JsonObject, title: String?, status: Int, detail: String?, instance: String?, action: PayexAction?, problems: List<PayExSubproblem>)
                 : PayEx(raw, title, status, detail, instance, action, problems)
         }

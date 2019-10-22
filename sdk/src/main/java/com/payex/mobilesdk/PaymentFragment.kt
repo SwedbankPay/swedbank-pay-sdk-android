@@ -165,8 +165,20 @@ open class PaymentFragment : Fragment() {
          */
         var defaultConfiguration: Configuration? = null
 
+        /**
+         * Default UI flag: a prompt to retry a failed request that can reasonably be retried
+         * See [ArgumentsBuilder.setEnabledDefaultUI]
+         */
         const val RETRY_PROMPT = 1 shl 0
+        /**
+         * Default UI flag: a laconic success message
+         * See [ArgumentsBuilder.setEnabledDefaultUI]
+         */
         const val SUCCESS_MESSAGE = 1 shl 1
+        /**
+         * Default UI flag: a less laconic, though a bit technical, error message
+         * See [ArgumentsBuilder.setEnabledDefaultUI]
+         */
         const val ERROR_MESSAGE = 1 shl 2
 
         private const val ARG_ID_MODE = "com.payex.mobilesdk.ARG_ID_MODE"

@@ -3,6 +3,7 @@ package com.payex.mobilesdk
 import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
+import com.payex.mobilesdk.internal.makeCreator
 
 /**
  * Describes a terminal error condition signaled by an onError callback from PayEx.
@@ -31,7 +32,7 @@ class TerminalFailure internal constructor() : Parcelable {
      */
     val details get() = _details
 
-    constructor(parcel: Parcel) : this() {
+    private constructor(parcel: Parcel) : this() {
         _origin = parcel.readString()
         _messageId = parcel.readString()
         _details = parcel.readString()
@@ -42,8 +43,8 @@ class TerminalFailure internal constructor() : Parcelable {
         parcel.writeString(_details)
     }
     override fun describeContents() = 0
-    companion object CREATOR : Parcelable.Creator<TerminalFailure> {
-        override fun createFromParcel(parcel: Parcel) = TerminalFailure(parcel)
-        override fun newArray(size: Int) = arrayOfNulls<TerminalFailure>(size)
+    companion object {
+        @Suppress("unused")
+        @JvmField val CREATOR = makeCreator(::TerminalFailure)
     }
 }
