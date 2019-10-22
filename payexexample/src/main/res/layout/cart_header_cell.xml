@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cart_header_cell"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/cart_background_top">
+    <ImageView
+        android:id="@+id/cart_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_margin="16dp"
+        android:layout_gravity="center_vertical"
+        android:src="@drawable/ic_cart"
+        android:importantForAccessibility="no"
+        />
+    <TextView
+        style="@style/medium_text"
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center_vertical"
+        android:gravity="center_horizontal"
+        android:text="@string/cart_title"
+        />
+    <ImageView
+        android:id="@+id/close_button"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_margin="16dp"
+        android:layout_gravity="center_vertical"
+        android:src="@drawable/ic_close"
+        android:contentDescription="@string/close"
+        />
+</LinearLayout>

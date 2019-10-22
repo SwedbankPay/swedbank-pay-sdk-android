@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The host app must provide a unique scheme by overriding this resource -->
-    <string name="payexsdk_callback_url_scheme"></string>
+    <string name="payexsdk_callback_url_scheme" />
 
     <string name="payexsdk_retryable_error_title">Communication Error</string>
     <string name="payexsdk_retry_button">Retry</string>
@@ -13,6 +13,7 @@
     <string name="payexsdk_terminal_failure_message">ID: %s</string>
     <string name="payexsdk_payment_success">Payment succeeded</string>
     <string name="payexsdk_payment_failed">Payment failed</string>
+    <string name="payexsdk_pull_to_refresh">Pull down to retry.</string>
     
     <string name="payexsdk_problem_unauthorized">Unauthorized</string>
     <string name="payexsdk_problem_invalid_request">Service did not recognize the request.</string>

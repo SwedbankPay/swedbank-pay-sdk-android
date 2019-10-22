@@ -14,6 +14,7 @@ import com.payex.mobilesdk.internal.remote.json.InitiateConsumerSessionArguments
  * You may optionally store the consumer reference after the identification
  * and use a [Stored] for further payments.
  */
+@Suppress("unused")
 abstract class Consumer private constructor() {
     companion object {
         /**

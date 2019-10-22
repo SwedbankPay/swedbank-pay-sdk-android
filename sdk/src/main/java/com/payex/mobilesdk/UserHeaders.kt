@@ -14,6 +14,7 @@ import java.util.*
  *         userHeaders.add("hmac", getHmac(body))
  *     }
  */
+@Suppress("unused")
 class UserHeaders internal constructor() {
     private val builder = Headers.Builder()
 

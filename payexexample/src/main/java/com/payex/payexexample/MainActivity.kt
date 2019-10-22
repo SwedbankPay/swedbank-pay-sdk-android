@@ -2,72 +2,82 @@ package com.payex.payexexample
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.Observer
+import androidx.navigation.fragment.NavHostFragment
 import com.payex.mobilesdk.*
-import timber.log.Timber
-import java.util.*
+import com.payex.payexexample.products.productsViewModel
+import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
+private const val ALERT_TAG = "com.payex.payexexample.alert"
+
+class MainActivity : AppCompatActivity(R.layout.activity_main) {
     companion object {
         private var isSetup = false
         private fun setupApp() {
             if (!isSetup) {
                 isSetup = true
-                Timber.plant(Timber.DebugTree())
-                PaymentFragment.defaultConfiguration =
-                    Configuration.Builder("https://payex-merchant-samples.appspot.com/")
-                        .requestDecorator(object : RequestDecorator() {
-                            override fun decorateAnyRequest(userHeaders: UserHeaders, method: String, url: String, body: String?) {
-                                userHeaders
-                                    .add("x-payex-sample-apikey", "c339f53d-8a36-4ea9-9695-75048e592cc0")
-                                    .add("x-payex-sample-access-token", "token123")
-                            }
-                        })
-                    .build()
+                PaymentFragment.defaultConfiguration = buildPaymentConfiguration()
             }
         }
-    }
-
-    init {
-        setupApp()
+        private fun buildPaymentConfiguration() =
+            Configuration.Builder("https://payex-merchant-samples.appspot.com/")
+                .requestDecorator(object : RequestDecorator() {
+                    override fun decorateAnyRequest(userHeaders: UserHeaders, method: String, url: String, body: String?) {
+                        userHeaders
+                            .add("x-payex-sample-apikey", "c339f53d-8a36-4ea9-9695-75048e592cc0")
+                            .add("x-payex-sample-access-token", "token123")
+                    }
+                })
+                .build()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setupApp()
+
         super.onCreate(savedInstanceState)
+        savedInstanceState?.let(mainViewModel::resumeFromSavedState)
+        observePaymentProcess()
+        observeErrorMessage()
+    }
 
-        setContentView(R.layout.activity_main)
-        if (savedInstanceState == null) {
-            addPaymentFragment()
-        }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        mainViewModel.saveState(outState)
+    }
 
-        ViewModelProviders.of(this)[PaymentViewModel::class.java].lastProblem.observe(this, androidx.lifecycle.Observer {
-            it?.let { Timber.d("Uh-oh, problem: $it") }
+    private fun observePaymentProcess() {
+        // N.B! The PaymentViewModel is observed at the Activity level here,
+        // because the ProductsFragment will be in a stopped state when the
+        // PaymentFragment is visible, and as such it would not receive any callbacks.
+        // If PaymentFragment would instead be shown as a child fragment
+        // of ProductsFragment, then we could have this observation in ProductsFragment.
+        paymentViewModel.richState.observe(this, Observer {
+            if (it.state == PaymentViewModel.State.FAILURE) {
+                mainViewModel.setErrorMessageFromState(it)
+            }
+            if (it.state.isFinal) {
+                (nav_host as NavHostFragment)
+                    .navController
+                    .apply {
+                        popBackStack(R.id.productsFragment, false)
+                        if (it.state == PaymentViewModel.State.SUCCESS) {
+                            productsViewModel.clearCart()
+                            navigate(R.id.action_productsFragment_to_successFragment)
+                        }
+                    }
+            }
         })
     }
 
-    private fun addPaymentFragment() {
-        val data = mapOf(
-            "basketId" to UUID.randomUUID().toString(),
-            "currency" to "SEK",
-            "languageCode" to "sv-SE",
-            "items" to arrayOf(
-                mapOf(
-                    "itemId" to "1",
-                    "quantity" to 1,
-                    "price" to 1250,
-                    "vat" to 250
-                )
-            )
-        )
-
-        val fragment = PaymentFragment().apply {
-            setArguments(PaymentFragment.ArgumentsBuilder()
-                .consumer(Consumer.Identified("NO"))
-                .merchantData(data)
-            )
-        }
-        supportFragmentManager.beginTransaction()
-            .add(R.id.payment, fragment)
-            .commit()
+    private fun observeErrorMessage() {
+        mainViewModel.currentErrorMessage.observe(this, Observer {
+            if (it != null) {
+                supportFragmentManager.apply {
+                    if (findFragmentByTag(ALERT_TAG) == null) {
+                        PaymentErrorDialogFragment().show(this, ALERT_TAG)
+                    }
+                }
+            }
+        })
     }
 }

@@ -106,7 +106,7 @@ internal sealed class Link(
     class PaymentOrder(href: HttpUrl) : Link(href) {
         suspend fun get(context: Context, configuration: Configuration) =
             get<com.payex.mobilesdk.internal.remote.json.PaymentOrder>(context, configuration) {
-                decorateGetPaymentTransactions(it, href.toString())
+                decorateGetPaymentOrder(it, href.toString())
             }
     }
 }

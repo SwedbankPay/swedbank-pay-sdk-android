@@ -1,13 +1,15 @@
 package com.payex.mobilesdk
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.*
 import com.payex.mobilesdk.internal.InternalPaymentViewModel
-import com.payex.mobilesdk.internal.getValueConsistentMap
-import com.payex.mobilesdk.internal.getValueConsistentSwitchMap
 import java.io.IOException
+
+/**
+ * Convenience for `ViewModelProviders.of(activity).get(PaymentViewModel::class.java)`.
+ */
+val FragmentActivity.paymentViewModel get() = ViewModelProviders.of(this)[PaymentViewModel::class.java]
 
 /**
  * <a href="https://developer.android.com/reference/androidx/lifecycle/ViewModel" target="_blank">ViewModel</a>
@@ -17,6 +19,7 @@ import java.io.IOException
  *
  *     ViewModelProviders.of(activity).get(PaymentViewModel::class.java)
  */
+@Suppress("unused")
 class PaymentViewModel : AndroidViewModel {
     /**
      * @suppress
@@ -54,7 +57,7 @@ class PaymentViewModel : AndroidViewModel {
          * Payment is active, but could not proceed.
          *
          * By default, [PaymentFragment] shows an error message with a Retry button
-         * when in this state. See [PaymentFragment.ArgumentsBuilder.useDefaultRetryPrompt].
+         * when in this state. See [PaymentFragment.ArgumentsBuilder.setEnabledDefaultUI].
          */
         RETRYABLE_ERROR {
             /** `false` */
@@ -75,9 +78,39 @@ class PaymentViewModel : AndroidViewModel {
         abstract val isFinal: Boolean
     }
 
+    /**
+     * Contains the state of the payment process and possible associated data.
+     */
+    class RichState internal constructor(
+        /**
+         * The state of the payment process.
+         */
+        val state: State,
+        /**
+         * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR],
+         * this property contains an error message describing the situation.
+         */
+        val retryableErrorMessage: String?,
+        /**
+         * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR], and it was caused
+         * by am [IOException], this property contains that exception.
+         */
+        val ioException: IOException?,
+        /**
+         * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR] or [FAILURE][State.FAILURE],
+         * and it was caused by a problem response, this property contains an object describing the problem.
+         */
+        val problem: Problem?,
+        /**
+         * If the current state is [FAILURE][State.FAILURE], and it was caused by an onError
+         * callback from PayEx, this property contains an object describing the error.
+         */
+        val terminalFailure: TerminalFailure?
+    )
+
     private val internalVm = MutableLiveData<InternalPaymentViewModel>()
 
-    private val internalState = internalVm.getValueConsistentSwitchMap {
+    private val internalState = Transformations.switchMap(internalVm) {
         it?.uiState
     }
 
@@ -100,10 +133,21 @@ class PaymentViewModel : AndroidViewModel {
     }
 
     /**
-     * The current state of the [PaymentFragment] corresponding to this [PaymentViewModel].
+     * The current state and associated data of the [PaymentFragment] corresponding to this [PaymentViewModel].
+     *
+     * For convenience, this property will retain the last-known state of a PaymentFragment
+     * after it has been removed. When a new PaymentFragment is added to the same Activity,
+     * this property will reflect that PaymentFragment from there on. To support multiple
+     * PaymentFragments in an Activity, see [PaymentFragment.ArgumentsBuilder.viewModelKey].
+     *
+     * Due to the semantics of [Transformations], you should be careful if accessing
+     * this value using [LiveData.getValue] directly rather than by an [Observer].
+     * Specifically, if nothing is observing this property (possibly indirectly, such as through
+     * the [state] property), then the value will not be updated, and the state may be permanently
+     * lost if the PaymentFragment is removed before adding an observer to this property.
      */
-    val state: LiveData<State> = internalState.getValueConsistentMap {
-        when (it) {
+    val richState = Transformations.map(internalState) {
+        val state = when (it) {
             null -> State.IDLE
             InternalPaymentViewModel.UIState.Loading -> State.IN_PROGRESS
             is InternalPaymentViewModel.UIState.HtmlContent -> State.IN_PROGRESS
@@ -112,46 +156,27 @@ class PaymentViewModel : AndroidViewModel {
             InternalPaymentViewModel.UIState.Success -> State.SUCCESS
             is InternalPaymentViewModel.UIState.Failure -> State.FAILURE
         }
-    }
-
-    /**
-     * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR],
-     * this property contains an error message describing the situation.
-     */
-    val retryableErrorMessage: LiveData<String> = internalState.getValueConsistentMap {
-        (it as? InternalPaymentViewModel.UIState.RetryableError)
+        val retryableErrorMessage = (it as? InternalPaymentViewModel.UIState.RetryableError)
             ?.message
             ?.takeUnless { it == 0 }
             ?.let(getApplication<Application>()::getString)
-    }
-
-    /**
-     * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR], and it was caused
-     * by am [IOException], this property contains that exception.
-     */
-    val lastIOException: LiveData<IOException> = internalState.getValueConsistentMap {
-        (it as? InternalPaymentViewModel.UIState.RetryableError)?.ioException
-    }
-
-    /**
-     * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR] or [FAILURE][State.FAILURE],
-     * and it was caused by a problem response, this property contains an object describing the problem.
-     */
-    val lastProblem = internalState.getValueConsistentMap {
-        when (it) {
+        val ioException = (it as? InternalPaymentViewModel.UIState.RetryableError)?.ioException
+        val problem = when (it) {
             is InternalPaymentViewModel.UIState.InitializationError -> it.problem
             is InternalPaymentViewModel.UIState.RetryableError -> it.problem
             else -> null
         }
+        val terminalFailure = (it as? InternalPaymentViewModel.UIState.Failure)?.terminalFailure
+
+        RichState(state, retryableErrorMessage, ioException, problem, terminalFailure)
     }
 
     /**
-     * If the current state is [FAILURE][State.FAILURE], and it was caused by an onError
-     * callback from PayEx, this property contains an object describing the error.
+     * The current state of the [PaymentFragment] corresponding to this [PaymentViewModel].
+     *
+     * See notes at [richState].
      */
-    val terminalFailure: LiveData<TerminalFailure> = internalState.getValueConsistentMap {
-        (it as? InternalPaymentViewModel.UIState.Failure)?.terminalFailure
-    }
+    val state = Transformations.map(richState) { it.state }
 
     /**
      * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR], attempts the previous

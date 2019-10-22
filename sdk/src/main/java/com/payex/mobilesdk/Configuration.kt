@@ -25,6 +25,7 @@ class Configuration private constructor(builder: Builder) {
      *
      * @param backendUrl the URL of your merchant backend
      */
+    @Suppress("unused")
     class Builder(val backendUrl: String) {
         internal var requestDecorator: RequestDecorator? = null
         internal val domainWhitelist = ArrayList<WhitelistedDomain>()

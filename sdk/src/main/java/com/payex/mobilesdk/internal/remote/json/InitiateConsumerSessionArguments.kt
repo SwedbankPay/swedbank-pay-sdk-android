@@ -2,6 +2,7 @@ package com.payex.mobilesdk.internal.remote.json
 
 import com.google.gson.annotations.SerializedName
 
+@Suppress("unused")
 internal class InitiateConsumerSessionArguments(
     @SerializedName("consumerCountryCode") private val consumerCountryCode: String
 ) {

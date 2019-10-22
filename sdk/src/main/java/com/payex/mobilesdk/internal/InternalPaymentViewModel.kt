@@ -8,11 +8,9 @@ import android.os.Parcelable
 import android.util.Log
 import androidx.annotation.MainThread
 import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.payex.mobilesdk.*
+import com.payex.mobilesdk.R
 import com.payex.mobilesdk.internal.remote.RequestProblemException
 import com.payex.mobilesdk.internal.remote.json.Link
 import com.payex.mobilesdk.internal.remote.json.readLink
@@ -32,11 +30,35 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     private val processState = MutableLiveData<ProcessState>()
     private val moveToNextStateJob = MutableLiveData<Job>()
 
+    val enabledDefaultUI = MutableLiveData<@PaymentFragment.DefaultUI Int>().apply { value = 0 }
+
     val uiState = Transformations.map(processState) { it?.uiState }
 
     val loading = Transformations.map(uiState) { it == UIState.Loading }
     val currentPage = Transformations.map(uiState) { it?.getWebViewPage(this) }
-    val messageTitle = Transformations.map(uiState) {
+
+    val messageTitle = mapUIState {
+        when {
+            it is UIState.InitializationError && isEnabled(PaymentFragment.ERROR_MESSAGE) ->
+                R.string.payexsdk_bad_init_request_title
+
+            it is UIState.RetryableError && isEnabled(PaymentFragment.RETRY_PROMPT) ->
+                R.string.payexsdk_retryable_error_title
+
+            it == UIState.Success && isEnabled(PaymentFragment.SUCCESS_MESSAGE) ->
+                R.string.payexsdk_payment_success
+
+            it is UIState.Failure && isEnabled(PaymentFragment.ERROR_MESSAGE) ->
+                when (it.terminalFailure) {
+                    null -> R.string.payexsdk_payment_failed
+                    else -> R.string.payexsdk_terminal_failure_title
+                }
+
+            else -> null
+        }?.let(getApplication<Application>()::getString)
+    }
+
+    /*Transformations.map(uiState) {
         when (it) {
             is UIState.InitializationError -> R.string.payexsdk_bad_init_request_title
             is UIState.RetryableError -> R.string.payexsdk_retryable_error_title
@@ -47,8 +69,37 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             }
             else -> null
         }?.let(getApplication<Application>()::getString)
+    }*/
+    val messageBody = mapUIState {
+        when {
+            it is UIState.InitializationError && isEnabled(PaymentFragment.ERROR_MESSAGE) ->
+                it.problem.getFriendlyDescription()
+
+            it is UIState.RetryableError && isEnabled(PaymentFragment.RETRY_PROMPT) ->
+                getApplication<Application>().run {
+                    sequenceOf(
+                        getString(it.message),
+                        it.problem?.getFriendlyDescription(),
+                        it.ioException?.localizedMessage,
+                        getString(R.string.payexsdk_pull_to_refresh)
+                    )
+                }.filterNotNull().joinToString("\n\n")
+
+            it is UIState.Failure && isEnabled(PaymentFragment.ERROR_MESSAGE) ->
+                it.terminalFailure?.messageId?.let { messageId ->
+                    getApplication<Application>().getString(R.string.payexsdk_terminal_failure_message, messageId)
+                }
+
+            else -> null
+        }
     }
-    val messageBody = Transformations.map(uiState) {
+
+
+
+
+    /*Transformations.map(uiState) {
+
+
         when (it) {
             is UIState.InitializationError -> it.problem.getFriendlyDescription()
             is UIState.RetryableError -> sequenceOf(
@@ -61,7 +112,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             }
             else -> null
         }
-    }
+    }*/
     val retryActionAvailable = Transformations.map(uiState) { it is UIState.RetryableError }
 
     val termsOfServiceUrl = MutableLiveData<String>()
@@ -85,6 +136,26 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         javascriptInterface.vm = null
         configuration = null
         publicVm = null
+    }
+
+    private class UIStateContext(
+        @PaymentFragment.DefaultUI
+        private val enabledDefaultUI: Int
+    ) {
+        fun isEnabled(@PaymentFragment.DefaultUI defaultUI: Int): Boolean {
+            return enabledDefaultUI and defaultUI != 0
+        }
+    }
+    private fun <T> mapUIState(f: UIStateContext.(UIState?) -> T): LiveData<T> {
+        return MediatorLiveData<T>().apply {
+            val observer = Observer<Any?> {
+                val enabledUI = enabledDefaultUI.value ?: 0
+                val state = uiState.value
+                value = UIStateContext(enabledUI).f(state)
+            }
+            addSource(enabledDefaultUI, observer)
+            addSource(uiState, observer)
+        }
     }
 
     private fun setProcessState(processState: ProcessState?) {
@@ -199,7 +270,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         open fun getWebViewPage(vm: AndroidViewModel): String? = null
 
         object Loading : UIState()
-        class HtmlContent(@StringRes val template: Int, val link: String) : UIState() {
+        class HtmlContent(@StringRes private val template: Int, private val link: String) : UIState() {
             override fun getWebViewPage(vm: AndroidViewModel): String? {
                 return vm.getApplication<Application>().getString(template, link)
             }

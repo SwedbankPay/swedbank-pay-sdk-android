@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|top"
+        android:background="@drawable/expanding_button_background"
+        android:backgroundTint="#000000">
+        <ImageView
+            android:id="@+id/open_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:src="@drawable/ic_settings"
+            android:contentDescription="@string/open_settings"/>
+        <ImageView
+            android:id="@+id/close_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:src="@drawable/ic_close"
+            android:tint="#FFFFFF"
+            android:contentDescription="@string/close_settings"/>
+
+        <TextView
+            style="@style/tiny_white_text"
+            android:id="@+id/user_type_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/open_settings"
+            app:layout_constraintEnd_toStartOf="@id/close_settings"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center_horizontal"
+            android:text="@string/user_type"/>
+        <LinearLayout
+            android:id="@+id/user_type_area"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            app:layout_constraintStart_toStartOf="@id/user_type_title"
+            app:layout_constraintEnd_toEndOf="@id/user_type_title"
+            app:layout_constraintTop_toBottomOf="@id/user_type_title"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal"
+            android:baselineAligned="false">
+            <include android:id="@+id/user_anonymous"
+                layout="@layout/settings_option_label"/>
+            <include android:id="@+id/user_identified"
+                layout="@layout/settings_option_label"/>
+        </LinearLayout>
+
+        <TextView
+            style="@style/tiny_white_text"
+            android:id="@+id/user_country_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="@id/user_type_title"
+            app:layout_constraintEnd_toEndOf="@id/user_type_title"
+            app:layout_constraintTop_toBottomOf="@id/user_type_area"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:text="@string/country"/>
+        <LinearLayout
+            android:id="@+id/user_country_area"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            app:layout_constraintStart_toStartOf="@id/user_type_title"
+            app:layout_constraintEnd_toEndOf="@id/user_type_title"
+            app:layout_constraintTop_toBottomOf="@id/user_country_title"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal"
+            android:baselineAligned="false">
+            <include android:id="@+id/country_norway"
+                layout="@layout/settings_option_label"/>
+            <include android:id="@+id/country_sweden"
+                layout="@layout/settings_option_label"/>
+        </LinearLayout>
+
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/expanded_state_widgets"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="close_settings,user_type_title,user_type_area,user_country_title,user_country_area"
+            />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>

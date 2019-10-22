@@ -2,16 +2,12 @@ package com.payex.mobilesdk
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.ConsoleMessage
-import android.webkit.WebChromeClient
-import android.webkit.WebView
 import androidx.annotation.CallSuper
+import androidx.annotation.IntDef
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -19,7 +15,6 @@ import com.google.gson.GsonBuilder
 import com.payex.mobilesdk.PaymentFragment.ArgumentsBuilder
 import com.payex.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.payex.mobilesdk.internal.InternalPaymentViewModel
-import com.payex.mobilesdk.internal.LOG_TAG
 import com.payex.mobilesdk.internal.ToSActivity
 import kotlinx.android.synthetic.main.payexsdk_payment_fragment.*
 import kotlinx.android.synthetic.main.payexsdk_payment_fragment.view.*
@@ -83,11 +78,13 @@ open class PaymentFragment : Fragment() {
     /**
      * Builder class for the argument [Bundle] used by PaymentFragment.
      */
+    @Suppress("unused")
     class ArgumentsBuilder {
         private var consumer = Consumer.ANONYMOUS
         private var merchantData: Any? = null
         private var viewModelKey: String? = null
-        private var useDefaultRetryPrompt = true
+        @DefaultUI
+        private var enabledDefaultUI = RETRY_PROMPT
 
         /**
          * Sets the consumer for this payment. Defaults to [Consumer.ANONYMOUS].
@@ -106,23 +103,31 @@ open class PaymentFragment : Fragment() {
          * [ViewModelProvider][androidx.lifecycle.ViewModelProvider]
          * for the [PaymentViewModel]. This is only useful for special scenarios.
          * @param viewModelKey the [androidx.lifecycle.ViewModelProvider] key the PaymentFragment uses to find its [PaymentViewModel] in the containing [activity][androidx.fragment.app.FragmentActivity]
-         * @see [PaymentViewModel.retryPreviousAction]
          */
         fun viewModelKey(viewModelKey: String?) = apply { this.viewModelKey = viewModelKey }
 
         /**
-         * Enables or disables the default UI for 'retryable error' situations.
+         * Set the enabled default user interfaces.
          *
-         * If this is set to `false`, you should show your own UI when
-         * [PaymentViewModel.state] is [PaymentViewModel.State.RETRYABLE_ERROR].
-         * The PaymentFragment will be blank in this case.
+         * There are three:
+         *  - [RETRY_PROMPT], a prompt to retry a failed request that can reasonably be retried
+         *  - [SUCCESS_MESSAGE], a laconic success message
+         *  - [ERROR_MESSAGE] a less laconic, though a bit technical, error message
          *
-         * Defaults to `true`.
+         * If a default UI is not enabled, the fragment will be blank instead.
          *
-         * @param useDefaultRetryPrompt `false` to disable the default UI, `true` to enable it.
+         * The default is to only enable RETRY_PROMPT. This is often useful,
+         * as a custom retry prompt is likely unnecessary, but the success and error states
+         * should cause the fragment to be dismissed.
+         *
+         * To disable everything, pass an empty argument list here (a value of 0 also works).
+         * If it is more convenient for you, you may also OR the flags manually and call this
+         * method with the result value.
+         *
+         * @param defaultUI the default UI to enable
          */
-        fun useDefaultRetryPrompt(useDefaultRetryPrompt: Boolean) = apply {
-            this.useDefaultRetryPrompt = useDefaultRetryPrompt
+        fun setEnabledDefaultUI(@DefaultUI vararg defaultUI: Int) = apply {
+            enabledDefaultUI = defaultUI.fold(0, Int::or)
         }
 
         /**
@@ -138,17 +143,17 @@ open class PaymentFragment : Fragment() {
                 .toJson(merchantData)
 
             putInt(ARG_ID_MODE, consumer.getIdMode())
-            putString(ARG_ID_DATA, consumer.getIdData())
+            consumer.getIdData()?.let { putString(ARG_ID_DATA, it) }
             putString(ARG_MERCHANT_DATA, serializedMerchantData)
-            putString(ARG_VM_KEY, viewModelKey)
-            putBoolean(ARG_USE_DEFAULT_RETRY, useDefaultRetryPrompt)
+            viewModelKey?.let { putString(ARG_VM_KEY, it) }
+            putInt(ARG_DEFAULT_UI, enabledDefaultUI)
         }
 
         /**
          * Convenience for `build(Bundle())`.
          * @return a new [Bundle] with the configuration from this ArgumentsBuilder
          */
-        fun build() = build(Bundle(4))
+        fun build() = build(Bundle(5))
     }
 
     companion object {
@@ -160,11 +165,15 @@ open class PaymentFragment : Fragment() {
          */
         var defaultConfiguration: Configuration? = null
 
+        const val RETRY_PROMPT = 1 shl 0
+        const val SUCCESS_MESSAGE = 1 shl 1
+        const val ERROR_MESSAGE = 1 shl 2
+
         private const val ARG_ID_MODE = "com.payex.mobilesdk.ARG_ID_MODE"
         private const val ARG_ID_DATA = "com.payex.mobilesdk.ARG_ID_DATA"
         private const val ARG_MERCHANT_DATA = "com.payex.mobilesdk.ARG_MERCHANT_DATA"
         private const val ARG_VM_KEY = "com.payex.mobilesdk.ARG_VM_KEY"
-        private const val ARG_USE_DEFAULT_RETRY = "com.payex.mobilesdk.ARG_USE_DEFAULT_RETRY"
+        private const val ARG_DEFAULT_UI = "com.payex.mobilesdk.ARG_DEFAULT_UI"
 
         private const val STATE_VM = "com.payex.mobilesdk.STATE_VM"
 
@@ -173,8 +182,13 @@ open class PaymentFragment : Fragment() {
         internal const val ID_MODE_ONLINE = 2
     }
 
+    /** @hide */
+    @Retention(AnnotationRetention.SOURCE)
+    @IntDef(RETRY_PROMPT, SUCCESS_MESSAGE, ERROR_MESSAGE, flag = true)
+    annotation class DefaultUI
+
     private val publicVm get() = ViewModelProviders.of(requireActivity()).run {
-        val key = checkNotNull(arguments).getString(ARG_VM_KEY)
+        val key = requireArguments().getString(ARG_VM_KEY)
         if (key == null) {
             get(PaymentViewModel::class.java)
         } else {
@@ -197,14 +211,6 @@ open class PaymentFragment : Fragment() {
         return checkNotNull(defaultConfiguration) { "Default Configuration not set" }
     }
 
-    /**
-     * Convenience for `arguments = builder.build()`.
-     * @param builder the [ArgumentsBuilder] to apply to this PaymentFrament
-     */
-    fun setArguments(builder: ArgumentsBuilder) {
-        arguments = builder.build()
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupViewModels(getConfiguration())
@@ -225,6 +231,7 @@ open class PaymentFragment : Fragment() {
         val publicVm = publicVm
         vm.configuration = configuration
         vm.publicVm = publicVm
+        vm.enabledDefaultUI.value = requireArguments().getInt(ARG_DEFAULT_UI)
         vm.observeLoading()
         vm.observeCurrentPage(configuration.rootLink.href.toString())
         vm.observeMessage()
@@ -299,8 +306,7 @@ open class PaymentFragment : Fragment() {
         if (savedInstanceState != null) {
             vm.resumeFromSavedState(checkNotNull(savedInstanceState.getBundle(STATE_VM)))
         } else {
-            val arguments = checkNotNull(arguments) { "setArguments not called" }
-            arguments.apply {
+            requireArguments().apply {
                 val merchantData = getString(ARG_MERCHANT_DATA)
                 when (getInt(ARG_ID_MODE)) {
                     ID_MODE_ANONYMOUS -> vm.startStoredOrAnonymousCustomer(null, merchantData)

@@ -7,6 +7,14 @@ package com.payex.mobilesdk
  */
 abstract class RequestDecorator {
 
+    /**
+     * Override this method to add custom headers to all backend requests.
+     *
+     * @param userHeaders headers added to this will be sent with the request
+     * @param method the HTTP method of the request
+     * @param url the URL of the request
+     * @param body the body of the request, if any
+     */
     open fun decorateAnyRequest(userHeaders: UserHeaders, method: String, url: String, body: String?) {}
 
     /**
@@ -19,7 +27,7 @@ abstract class RequestDecorator {
      *
      * The default implementation does nothing.
      *
-     * @param userHeaders header added to this will be sent with the request
+     * @param userHeaders headers added to this will be sent with the request
      * @param body the body of the request
      */
     open fun decorateInitiateConsumerSession(userHeaders: UserHeaders, body: String) {}
@@ -29,7 +37,7 @@ abstract class RequestDecorator {
      *
      * The default implementation does nothing.
      *
-     * @param userHeaders header added to this will be sent with the request
+     * @param userHeaders headers added to this will be sent with the request
      * @param body the body of the request
      * @param consumerProfileRef the consumer profile reference used in the request
      * @param merchantData the serialized merchant data used in the request
@@ -46,8 +54,8 @@ abstract class RequestDecorator {
      *
      * The default implementation does nothing.
      *
-     * @param userHeaders header added to this will be sent with the request
-     * @param paymentId the URL being requested
+     * @param userHeaders headers added to this will be sent with the request
+     * @param url the URL being requested
      */
-    open fun decorateGetPaymentTransactions(userHeaders: UserHeaders, url: String) {}
+    open fun decorateGetPaymentOrder(userHeaders: UserHeaders, url: String) {}
 }

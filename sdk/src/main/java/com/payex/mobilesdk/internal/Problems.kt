@@ -147,7 +147,7 @@ private sealed class ProblemSpace {
             "https://api.payex.com/psp/errordetail/mobilesdk/gatewaytimeout" ->
                 Problem.Server.MobileSDK.BackendConnectionTimeout(json, status, json.detail)
             "https://api.payex.com/psp/errordetail/mobilesdk/badgateway" ->
-                Problem.Server.MobileSDK.BackendConnectionFailure(json, status, json.detail)
+                parseBadGatewayProblem(status, json)
             "https://api.payex.com/psp/errordetail/systemerror" ->
                 parsePayExProblem(Problem.Server.PayEx::SystemError, status, json)
             "https://api.payex.com/psp/errordetail/configurationerror" ->
@@ -158,6 +158,18 @@ private sealed class ProblemSpace {
         override fun makeUnknownProblem(
             raw: JsonObject, type: String, title: String?, status: Int, detail: String?, instance: String?
         ) = Problem.Server.Unknown(raw, type, title, status, detail, instance)
+
+        private fun parseBadGatewayProblem(status: Int, json: JsonObject): Problem {
+            // a https://api.payex.com/psp/errordetail/mobilesdk/badgateway
+            // problem will have a "gatewayStatus" field if and only if it originated from a bogus
+            // Swedbank response.
+            val gatewayStatus = json["gatewayStatus"]?.asIntOrNull
+            return if (gatewayStatus != null) {
+                Problem.Server.MobileSDK.InvalidBackendResponse(json, status, gatewayStatus, json["body"]?.asStringOrNull)
+            } else {
+                Problem.Server.MobileSDK.BackendConnectionFailure(json, status, json.detail)
+            }
+        }
     }
 
     fun parseProblem(status: Int, json: JsonObject): Problem {

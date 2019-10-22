@@ -1,18 +1,15 @@
 package com.payex.mobilesdk.internal
 
-import android.util.JsonReader
-import android.util.Log
 import android.webkit.JavascriptInterface
 import androidx.annotation.AnyThread
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import com.payex.mobilesdk.TerminalFailure
 import com.payex.mobilesdk.internal.remote.json.OnPaymentToSEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.lang.Exception
 
+@Suppress("unused")
 @AnyThread
 internal class JSInterface(var vm: InternalPaymentViewModel?) {
     private fun withVmScope(f: suspend CoroutineScope.() -> Unit) {

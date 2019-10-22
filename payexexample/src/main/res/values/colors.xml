@@ -3,4 +3,11 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
+
+    <color name="white_text">#FFFFFF</color>
+
+    <color name="add_to_cart_button">#000000</color>
+    <color name="remove_from_cart_button">#C42626</color>
+
+    <color name="cart_background">#FFFFFF</color>
 </resources>

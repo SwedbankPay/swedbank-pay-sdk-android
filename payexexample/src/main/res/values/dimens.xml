@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="cart_side_margin">16dp</dimen>
+    <dimen name="cart_top_margin">50dp</dimen>
+    <dimen name="cart_background_corner_radius">16dp</dimen>
+    <dimen name="cart_text_start">132dp</dimen>
+    <dimen name="settings_side_margin">32dp</dimen>
+    <dimen name="settings_top_margin">16dp</dimen>
+    <dimen name="settings_bottom_margin">40dp</dimen>
+
+    <dimen name="settings_selected_underline_space">3dp</dimen>
+    <dimen name="settings_selected_underline_height">2dp</dimen>
+</resources>

@@ -12,6 +12,7 @@ import com.google.gson.annotations.SerializedName
  * and
  * [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/payment-orders-resource/#HOnError].
  */
+@Suppress("unused")
 class TerminalFailure internal constructor() : Parcelable {
     @SerializedName("origin") private var _origin: String? = null
     @SerializedName("messageId") private var _messageId: String? = null
