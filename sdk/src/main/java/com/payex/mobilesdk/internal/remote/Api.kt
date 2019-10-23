@@ -27,7 +27,6 @@ internal object Api {
 
     private val lazyClient = lazy {
         OkHttpClient.Builder()
-            .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
             .build()
     }
     private suspend fun getClient(context: Context): OkHttpClient {
