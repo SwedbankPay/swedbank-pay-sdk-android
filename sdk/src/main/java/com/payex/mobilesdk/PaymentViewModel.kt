@@ -192,6 +192,4 @@ class PaymentViewModel : AndroidViewModel {
         onRetryPreviousAction.value = Unit
         onRetryPreviousAction.value = null
     }
-
-
 }

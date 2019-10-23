@@ -5,7 +5,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
 import com.payex.mobilesdk.R
-import kotlinx.android.synthetic.main.payexsdk_tos_fragment.*
+import kotlinx.android.synthetic.main.payexsdk_tos_activity.*
 
 internal class ToSActivity : AppCompatActivity() {
     companion object {
@@ -14,7 +14,7 @@ internal class ToSActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.payexsdk_tos_fragment)
+        setContentView(R.layout.payexsdk_tos_activity)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         setupWebView()

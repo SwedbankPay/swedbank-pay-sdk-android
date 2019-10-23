@@ -58,18 +58,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         }?.let(getApplication<Application>()::getString)
     }
 
-    /*Transformations.map(uiState) {
-        when (it) {
-            is UIState.InitializationError -> R.string.payexsdk_bad_init_request_title
-            is UIState.RetryableError -> R.string.payexsdk_retryable_error_title
-            UIState.Success -> R.string.payexsdk_payment_success
-            is UIState.Failure -> when (it.terminalFailure) {
-                null -> R.string.payexsdk_payment_failed
-                else -> R.string.payexsdk_terminal_failure_title
-            }
-            else -> null
-        }?.let(getApplication<Application>()::getString)
-    }*/
     val messageBody = mapUIState {
         when {
             it is UIState.InitializationError && isEnabled(PaymentFragment.ERROR_MESSAGE) ->
@@ -94,25 +82,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         }
     }
 
-
-
-
-    /*Transformations.map(uiState) {
-
-
-        when (it) {
-            is UIState.InitializationError -> it.problem.getFriendlyDescription()
-            is UIState.RetryableError -> sequenceOf(
-                getApplication<Application>().getString(it.message),
-                it.problem?.getFriendlyDescription(),
-                it.ioException?.localizedMessage
-            ).filterNotNull().joinToString("\n\n")
-            is UIState.Failure -> it.terminalFailure?.messageId?.let {
-                getApplication<Application>().getString(R.string.payexsdk_terminal_failure_message, it)
-            }
-            else -> null
-        }
-    }*/
     val retryActionAvailable = Transformations.map(uiState) { it is UIState.RetryableError }
 
     val termsOfServiceUrl = MutableLiveData<String>()
