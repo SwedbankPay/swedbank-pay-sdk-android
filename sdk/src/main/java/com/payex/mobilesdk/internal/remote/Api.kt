@@ -17,7 +17,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
-import okhttp3.logging.HttpLoggingInterceptor
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 
@@ -117,7 +116,6 @@ internal object Api {
                         val body = it.body()?.string()
                         checkErrorResponse(it, body)
                         val entity = parseResponse(it, body, entityType)
-                        it.receivedResponseAtMillis()
                         result.complete(CacheableResult(entity, it.validUntilMillis))
                     } catch (t: Throwable) {
                         result.completeExceptionally(t)

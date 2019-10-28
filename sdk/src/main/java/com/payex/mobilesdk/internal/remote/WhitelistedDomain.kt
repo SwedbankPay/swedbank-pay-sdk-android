@@ -5,10 +5,7 @@ internal class WhitelistedDomain(
     private val includeSubdomains: Boolean
 ) {
     fun matches(domain: String): Boolean {
-        return if (includeSubdomains) {
-            domain.endsWith(this.domain)
-        } else {
-            domain == this.domain
-        }
+        return domain == this.domain
+                || (includeSubdomains && domain.endsWith(".${this.domain}"))
     }
 }

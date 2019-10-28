@@ -4,6 +4,11 @@ import android.app.Application
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
 import com.payex.mobilesdk.internal.InternalPaymentViewModel
+import com.payex.mobilesdk.internal.remote.RequestProblemException
+import com.payex.mobilesdk.internal.remote.json.Link
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 /**
@@ -103,10 +108,68 @@ class PaymentViewModel : AndroidViewModel {
         val problem: Problem?,
         /**
          * If the current state is [FAILURE][State.FAILURE], and it was caused by an onError
-         * callback from PayEx, this property contains an object describing the error.
+         * callback from the Chekout API, this property contains an object describing the error.
          */
-        val terminalFailure: TerminalFailure?
-    )
+        val terminalFailure: TerminalFailure?,
+
+        private val failureReasonLiveData: FailureReasonLiveData?
+    ) {
+        /**
+         * If the current state is [FAILURE][State.FAILURE], and it was caused by an
+         * onPaymentFailed callback from the Checkout API, this LiveData will eventually
+         * be updated to contain a reason for the failure.
+         *
+         * N.B! The initial value is `null`, and it will only be updated when this
+         * LiveData becomes active.
+         */
+        val failureReason: LiveData<String?> = failureReasonLiveData?.let {
+            Transformations.map(it) {
+                it.getOrNull()
+            }
+        } ?: MutableLiveData()
+
+        /**
+         * If the current state is [FAILURE][State.FAILURE], and it was caused by an
+         * onPaymentFailed callback from the Checkout API, but an [IOException] occurs
+         * while retrieving the failure reason, that IOException will appear in this LiveData.
+         */
+        val failureReasonIOException: LiveData<IOException?> = failureReasonLiveData?.let {
+            Transformations.map(it) {
+                it.exceptionOrNull() as? IOException
+            }
+        } ?: MutableLiveData()
+
+        /**
+         * If the current state is [FAILURE][State.FAILURE], and it was caused by an
+         * onPaymentFailed callback from the Checkout API, but there is a Problem retrieving
+         * the failure reason, that Problem will appear in this LiveData.
+         */
+        val failureReasonProblem: LiveData<Problem?> = failureReasonLiveData?.let {
+            Transformations.map(it) {
+                val problemException = it.exceptionOrNull() as? RequestProblemException
+                problemException?.problem
+            }
+        } ?: MutableLiveData()
+
+        /**
+         * Contains a LiveData whose value will be `true` if the contents of failureReason
+         * are currently updating. You can use this information to display a progress indicator.
+         *
+         * N.B! The failureReason will not be updated until failureReason
+         * becomes active. Due to the semantics of [Transformations],
+         * its `getValue()` method will return null until it has active observers.
+         */
+        val failureReasonUpdating: LiveData<Boolean> = failureReasonLiveData?.run {
+            Transformations.map(loadJob) { it != null }
+        } ?: MutableLiveData(false)
+
+        /**
+         * Attempts to reload the failure reason if it has not been successfully loaded yet.
+         */
+        fun reloadFailureReason() {
+            failureReasonLiveData?.loadIfNeeded()
+        }
+    }
 
     private val internalVm = MutableLiveData<InternalPaymentViewModel>()
 
@@ -166,9 +229,17 @@ class PaymentViewModel : AndroidViewModel {
             is InternalPaymentViewModel.UIState.RetryableError -> it.problem
             else -> null
         }
+
         val terminalFailure = (it as? InternalPaymentViewModel.UIState.Failure)?.terminalFailure
 
-        RichState(state, retryableErrorMessage, ioException, problem, terminalFailure)
+        val failedPaymentOrderUrl = (it as? InternalPaymentViewModel.UIState.Failure)?.paymentOrderUrl
+        val failureReasonLiveData = failedPaymentOrderUrl?.let { link ->
+            internalVm.value?.configuration?.let { configuration ->
+                FailureReasonLiveData(this, configuration, link)
+            }
+        }
+
+        RichState(state, retryableErrorMessage, ioException, problem, terminalFailure, failureReasonLiveData)
     }
 
     /**
@@ -191,5 +262,55 @@ class PaymentViewModel : AndroidViewModel {
         // observer, ignoring the quiescent null state.
         onRetryPreviousAction.value = Unit
         onRetryPreviousAction.value = null
+    }
+
+    internal class FailureReasonLiveData(
+        owner: PaymentViewModel,
+        configuration: Configuration,
+        paymentOrderLink: Link.PaymentOrder
+    ) : LiveData<Result<String?>>() {
+        val loadJob = MutableLiveData<Job?>()
+
+        // nullable so we can release the resources when the load succeeds
+        private var loader: Loader? = Loader(owner, configuration, paymentOrderLink)
+
+        fun loadIfNeeded() {
+            if (value == null) {
+                loader?.load()
+            }
+        }
+
+        override fun onActive() {
+            loadIfNeeded()
+        }
+
+        private inner class Loader(
+            private val owner: PaymentViewModel,
+            private val configuration: Configuration,
+            private val paymentOrderLink: Link.PaymentOrder
+        ) {
+            fun load() {
+                if (loadJob.value == null) {
+                    loadJob.value = owner.viewModelScope.launch {
+                        value = try {
+                            val reason = getFailureReason()
+                            loader = null
+                            Result.success(reason)
+                        } catch (_: CancellationException) {
+                            return@launch
+                        } catch (t: Throwable) {
+                            Result.failure(t)
+                        } finally {
+                            loadJob.value = null
+                        }
+                    }
+                }
+            }
+
+            private suspend fun getFailureReason(): String? {
+                val paymentOrder = paymentOrderLink.get(owner.getApplication(), configuration)
+                return paymentOrder.failureReason
+            }
+        }
     }
 }

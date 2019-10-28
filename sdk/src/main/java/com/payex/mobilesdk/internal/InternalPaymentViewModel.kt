@@ -247,7 +247,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class InitializationError(val problem: Problem) : UIState()
         class RetryableError(val problem: Problem?, val ioException: IOException?, @StringRes val message: Int) : UIState()
         object Success : UIState()
-        class Failure(val terminalFailure: TerminalFailure?) : UIState()
+        class Failure(val paymentOrderUrl: Link.PaymentOrder?, val terminalFailure: TerminalFailure?) : UIState()
     }
 
     @Suppress("unused") // The IDE does not understand @JvmField val CREATOR
@@ -476,7 +476,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 makeCreator(::PaymentFailed)
             }
 
-            override val uiState get() = UIState.Failure(null)
+            override val uiState get() = UIState.Failure(paymentOrderUrl, null)
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 parcel.writeLink(paymentOrderUrl)
@@ -493,7 +493,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 makeCreator(::PayExError)
             }
 
-            override val uiState get() = UIState.Failure(terminalFailure)
+            override val uiState get() = UIState.Failure(null, terminalFailure)
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 parcel.writeParcelable(terminalFailure, flags)
