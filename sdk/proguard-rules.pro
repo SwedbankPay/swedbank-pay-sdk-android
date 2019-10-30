@@ -5,15 +5,15 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
--keepclassmembers class com.payex.mobilesdk.internal.JSInterface {
+-keepclassmembers class com.swedbankpay.mobilesdk.internal.JSInterface {
     @android.webkit.JavascriptInterface public <methods>;
 }
 
--keepclassmembers,allowobfuscation class com.payex.mobilesdk.internal.remote.json.* {
+-keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.internal.remote.json.* {
     <init>();
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
--keepclassmembers,allowobfuscation class com.payex.mobilesdk.internal.remote.json.Link* {
+-keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.internal.remote.json.Link* {
     <init>(okhttp3.HttpUrl);
 }

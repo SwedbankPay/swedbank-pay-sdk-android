@@ -1,12 +1,12 @@
 
 <resources>
-    <string name="payexsdk_javascript_interface_name">payexsdk</string>
+    <string name="swedbankpaysdk_javascript_interface_name">swedbankpaysdk</string>
 
-    <string name="payexsdk_view_consumer_identification_template">
+    <string name="swedbankpaysdk_view_consumer_identification_template">
 &lt;!DOCTYPE html>
 &lt;html>
     &lt;head>
-        &lt;title>PayEx Checkout is Awesome!&lt;/title>
+        &lt;title>&lt;/title>
     &lt;/head>
     &lt;body>
         &lt;div id=\"checkin\" />
@@ -15,10 +15,10 @@
             payex.hostedView.consumer({
                 container: \"checkin\",
                 onConsumerIdentified: function(consumerIdentifiedEvent) {
-                    payexsdk.onConsumerProfileRefAvailable(consumerIdentifiedEvent.consumerProfileRef);
+                    swedbankpaysdk.onConsumerProfileRefAvailable(consumerIdentifiedEvent.consumerProfileRef);
                 },
                 onError: function(error) {
-                    payexsdk.onIdentifyError(JSON.stringify(error));
+                    swedbankpaysdk.onIdentifyError(JSON.stringify(error));
                 }
             }).open();
         &lt;/script>
@@ -26,11 +26,11 @@
 &lt;/html>
     </string>
 
-    <string name="payexsdk_view_paymentorder_template">
+    <string name="swedbankpaysdk_view_paymentorder_template">
 &lt;!DOCTYPE html>
 &lt;html>
     &lt;head>
-        &lt;title>PayEx Checkout is Awesome!&lt;/title>
+        &lt;title>&lt;/title>
     &lt;/head>
     &lt;body>
         &lt;div id=\"checkout\" />
@@ -39,22 +39,22 @@
             payex.hostedView.paymentMenu({
                 container: \"checkout\",
                 onPaymentMenuInstrumentSelected: function(event) {
-                    payexsdk.onPaymentMenuInstrumentSelected(JSON.stringify(event));
+                    swedbankpaysdk.onPaymentMenuInstrumentSelected(JSON.stringify(event));
                 },
                 onPaymentCompleted: function(event) {
-                    payexsdk.onPaymentCompleted(JSON.stringify(event));
+                    swedbankpaysdk.onPaymentCompleted(JSON.stringify(event));
                 },
                 onPaymentFailed: function(event) {
-                    payexsdk.onPaymentFailed(JSON.stringify(event));
+                    swedbankpaysdk.onPaymentFailed(JSON.stringify(event));
                 },
                 onPaymentCreated: function(event) {
-                    payexsdk.onPaymentCreated(JSON.stringify(event));
+                    swedbankpaysdk.onPaymentCreated(JSON.stringify(event));
                 },
                 onPaymentToS: function(event) {
-                    payexsdk.onPaymentToS(JSON.stringify(event));
+                    swedbankpaysdk.onPaymentToS(JSON.stringify(event));
                 },
                 onError: function(error) {
-                    payexsdk.onPaymentError(JSON.stringify(error));
+                    swedbankpaysdk.onPaymentError(JSON.stringify(error));
                 }
             }).open();
         &lt;/script>

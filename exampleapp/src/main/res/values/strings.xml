@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Swedbank Pay Example</string>
+
+    <string name="cart_button">Open shopping cart</string>
+    
+    <string name="items_title">Shoes</string>
+    <string name="item_image">Item image</string>
+    <string name="remove">Remove</string>
+    <string name="close">Close</string>
+    <string name="cart_title">Shopping basket</string>
+    <string name="add_to_cart_description">Add to shopping basket</string>
+    <string name="remove_from_cart_description">Remove from shopping basket</string>
+    <string name="shipping">Shipping</string>
+    <string name="total">Total</string>
+    <string name="check_out">Check out</string>
+    <string name="open_settings">Open settings</string>
+    <string name="close_settings">Close settings</string>
+    <string name="user_type">User type</string>
+    <string name="anonymous">Anonymous</string>
+    <string name="identified">Identified</string>
+    <string name="country">Country</string>
+    <string name="norway">Norway</string>
+    <string name="sweden">Sweden</string>
+
+    <string name="success_dialog_title">Payment successul!</string>
+
+    <string name="error_dialog_title">Payment failed</string>
+    <string name="error_server_problem">Payment service is unavailable at the moment. Please try again later.</string>
+    <string name="error_client_problem">There appears to be a problem communicating with the payment service. Please try again later.</string>
+    <string name="error_terminal_failure">There appears to be a configuration error in the payment service. Please try again later.</string>
+
+    <string name="error_problem_id_format">Problem ID: %s</string>
+
+    <!--string name="swedbankpaysdk_callback_url_scheme">swedbankexample</string-->
+</resources>

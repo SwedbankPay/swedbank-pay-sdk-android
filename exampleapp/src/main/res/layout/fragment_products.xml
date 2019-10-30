@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        />
+    <ImageView
+        android:id="@+id/open_cart"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="19dp"
+        android:layout_gravity="top|end"
+        android:src="@drawable/ic_cart"
+        android:scaleType="center"
+        android:contentDescription="@string/cart_button"
+        />
+    <fragment
+        android:id="@+id/cart_and_settings"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.swedbankpay.exampleapp.cartsettings.CartAndSettingsFragment"
+        />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

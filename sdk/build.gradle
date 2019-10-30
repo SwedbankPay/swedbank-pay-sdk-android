@@ -6,6 +6,8 @@ apply plugin: 'kotlin-android-extensions'
 
 apply plugin: 'org.jetbrains.dokka-android'
 
+apply plugin: 'digital.wup.android-maven-publish'
+
 android {
     compileSdkVersion 29
     defaultConfig {
@@ -62,3 +64,18 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }
 
+task sourceJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier "sources"
+}
+
+publishing {
+    publications {
+        mavenAar(MavenPublication) {
+            from components.android
+            groupId 'com.swedbankpay.mobilesdk'
+            artifactId 'mobilesdk'
+            version '0.1'
+        }
+    }
+}
