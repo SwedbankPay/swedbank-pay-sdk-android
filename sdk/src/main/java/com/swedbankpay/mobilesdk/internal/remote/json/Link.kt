@@ -6,6 +6,7 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonSyntaxException
 import com.google.gson.stream.JsonWriter
 import com.swedbankpay.mobilesdk.Configuration
+import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.RequestDecorator
 import com.swedbankpay.mobilesdk.UserHeaders
 import com.swedbankpay.mobilesdk.internal.remote.Api
@@ -85,17 +86,22 @@ internal sealed class Link(
             consumerProfileRef: String?,
             merchantData: String?
         ): com.swedbankpay.mobilesdk.internal.remote.json.PaymentOrder {
-            val body = buildCreatePaymentOrderBody(consumerProfileRef, merchantData)
+            val callbackScheme = context.getString(R.string.swedbankpaysdk_callback_url_scheme)
+            val body = buildCreatePaymentOrderBody(callbackScheme, consumerProfileRef, merchantData)
             return post(context, configuration, body) {
                 decorateCreatePaymentOrder(it, body, consumerProfileRef, merchantData)
             }
         }
 
-        private fun buildCreatePaymentOrderBody(consumerProfileRef: String?, merchantData: String?): String {
+        private fun buildCreatePaymentOrderBody(callbackScheme: String, consumerProfileRef: String?, merchantData: String?): String {
             val writer = StringWriter()
             JsonWriter(writer).use {  it.apply {
                 serializeNulls = false
                 beginObject()
+                if (callbackScheme.isNotEmpty()) {
+                    name("callbackScheme")
+                    value(callbackScheme)
+                }
                 name("consumerProfileRef")
                 value(consumerProfileRef)
                 name("merchantData")

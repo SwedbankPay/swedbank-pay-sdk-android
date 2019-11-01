@@ -10,7 +10,7 @@
     &lt;/head>
     &lt;body>
         &lt;div id=\"checkin\" />
-        &lt;script data-payex-hostedview=\"checkin\" src=\"%s\">&lt;/script>
+        &lt;script src=\"%s\">&lt;/script>
         &lt;script language=\"javascript\">
             payex.hostedView.consumer({
                 container: \"checkin\",

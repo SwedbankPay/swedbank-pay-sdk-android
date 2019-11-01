@@ -13,6 +13,7 @@ import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.internal.remote.RequestProblemException
 import com.swedbankpay.mobilesdk.internal.remote.json.Link
+import com.swedbankpay.mobilesdk.internal.remote.json.OnExternalRedirectEvent
 import com.swedbankpay.mobilesdk.internal.remote.json.readLink
 import com.swedbankpay.mobilesdk.internal.remote.json.writeLink
 import kotlinx.coroutines.CancellationException
@@ -85,6 +86,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     val retryActionAvailable = Transformations.map(uiState) { it is UIState.RetryableError }
 
     val termsOfServiceUrl = MutableLiveData<String>()
+
+    val externalRedirectUrlTemplate = MutableLiveData<String>()
 
     val javascriptInterface = JSInterface(this)
 
@@ -213,6 +216,17 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
     fun onError(terminalFailure: TerminalFailure?) {
         setProcessState(ProcessState.SwedbankPayError(terminalFailure))
+    }
+
+    fun getPaymentMenuWebPage(): String? {
+        return (processState.value as? ProcessState.Paying)?.uiState?.getWebViewPage(this)
+    }
+
+    fun onExternalRedirect(externalRedirectEvent: OnExternalRedirectEvent?) {
+        externalRedirectEvent?.urlTemplate?.let {
+            externalRedirectUrlTemplate.value = it
+            externalRedirectUrlTemplate.value = null
+        }
     }
 
     private fun Problem.getFriendlyDescription(): String {
