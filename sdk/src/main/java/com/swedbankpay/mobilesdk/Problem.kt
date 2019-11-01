@@ -205,13 +205,13 @@ sealed class Problem : Parcelable {
             override val problems: List<SwedbankPaySubproblem>
         ) : Server(), SwedbankPayProblem {
             /**
-             * TODO
+             * General internal error in Swedbank Pay systems.
              */
             class SystemError(raw: JsonObject, title: String?, status: Int, detail: String?, instance: String?, action: SwedbankPayAction?, problems: List<SwedbankPaySubproblem>)
                 : SwedbankPay(raw, title, status, detail, instance, action, problems)
 
             /**
-             * TODO
+             * There is a problem with your merchant configuration.
              */
             class ConfigurationError(raw: JsonObject, title: String?, status: Int, detail: String?, instance: String?, action: SwedbankPayAction?, problems: List<SwedbankPaySubproblem>)
                 : SwedbankPay(raw, title, status, detail, instance, action, problems)

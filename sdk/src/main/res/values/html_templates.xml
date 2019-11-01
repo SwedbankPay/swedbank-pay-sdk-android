@@ -38,17 +38,11 @@
         &lt;script language="javascript">
             payex.hostedView.paymentMenu({
                 container: \"checkout\",
-                onPaymentMenuInstrumentSelected: function(event) {
-                    swedbankpaysdk.onPaymentMenuInstrumentSelected(JSON.stringify(event));
-                },
                 onPaymentCompleted: function(event) {
-                    swedbankpaysdk.onPaymentCompleted(JSON.stringify(event));
+                    swedbankpaysdk.onPaymentCompleted();
                 },
                 onPaymentFailed: function(event) {
-                    swedbankpaysdk.onPaymentFailed(JSON.stringify(event));
-                },
-                onPaymentCreated: function(event) {
-                    swedbankpaysdk.onPaymentCreated(JSON.stringify(event));
+                    swedbankpaysdk.onPaymentFailed();
                 },
                 onPaymentToS: function(event) {
                     swedbankpaysdk.onPaymentToS(JSON.stringify(event));
