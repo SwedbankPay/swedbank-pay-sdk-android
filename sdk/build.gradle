@@ -66,13 +66,14 @@ dependencies {
 
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    classifier "sources"
+    archiveClassifier.set("sources")
 }
 
 publishing {
     publications {
         mavenAar(MavenPublication) {
             from components.android
+            artifact(sourceJar)
             groupId 'com.swedbankpay.mobilesdk'
             artifactId 'mobilesdk'
             version '0.1'
