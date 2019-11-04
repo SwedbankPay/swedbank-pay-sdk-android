@@ -7,6 +7,7 @@ import com.swedbankpay.mobilesdk.internal.remote.json.Link
 import com.swedbankpay.mobilesdk.internal.remote.json.TopLevelResources
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.CertificatePinner
 import okhttp3.HttpUrl
 
 /**
@@ -27,6 +28,7 @@ class Configuration private constructor(builder: Builder) {
      */
     @Suppress("unused")
     class Builder(val backendUrl: String) {
+        internal var pinnerBuilder: CertificatePinner.Builder? = null
         internal var requestDecorator: RequestDecorator? = null
         internal val domainWhitelist = ArrayList<WhitelistedDomain>()
 
@@ -35,6 +37,29 @@ class Configuration private constructor(builder: Builder) {
          * @return a new [Configuration] object with values copied from this Builder
          */
         fun build() = Configuration(this)
+
+        /**
+         * Pins certificates for a hostname pattern.
+         *
+         * The pattern may contain an asterisk (*) as the left-most
+         * part. The asterisk will only match one part of the hostname,
+         * so `*.foo.com` will match `bar.foo.com`, but not `baz.bar.foo.com`.
+         *
+         * The certificates are [HPKP](https://tools.ietf.org/html/rfc7469) SHA-256 hashes.
+         *
+         * Please see [okhttp](https://square.github.io/okhttp/3.x/okhttp/okhttp3/CertificatePinner.html)
+         * documentation for discussion on how to do certificate pinning and
+         * its consequences.
+         *
+         * @param pattern the hostname pattern to pin
+         * @param certificates the certificates to require for the pattern
+         */
+        fun pinCertificates(pattern: String, vararg certificates: String) {
+            val pinnerBuilder = pinnerBuilder ?: CertificatePinner.Builder().also {
+                pinnerBuilder = it
+            }
+            pinnerBuilder.add(pattern, *certificates)
+        }
 
         /**
          * Sets a [RequestDecorator] that adds custom headers to backend requests.
@@ -68,6 +93,7 @@ class Configuration private constructor(builder: Builder) {
     }
 
     internal val rootLink = Link.Root(HttpUrl.get(builder.backendUrl))
+    internal val certificatePinner = builder.pinnerBuilder?.build()
     internal val requestDecorator = builder.requestDecorator
     internal val domainWhitelist =
         builder.domainWhitelist.let {

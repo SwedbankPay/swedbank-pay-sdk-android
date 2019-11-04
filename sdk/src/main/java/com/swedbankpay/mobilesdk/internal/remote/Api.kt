@@ -28,13 +28,18 @@ internal object Api {
         OkHttpClient.Builder()
             .build()
     }
-    private suspend fun getClient(context: Context): OkHttpClient {
+    private suspend fun getClient(context: Context, configuration: Configuration): OkHttpClient {
         if (!lazyClient.isInitialized()) {
             withContext(Dispatchers.IO) {
                 ProviderInstaller.installIfNeeded(context)
             }
         }
-        return lazyClient.value
+        val client = lazyClient.value
+        return configuration.certificatePinner?.let {
+            client.newBuilder()
+                .certificatePinner(it)
+                .build()
+        } ?: client
     }
     @TestOnly
     internal fun skipProviderInstallerForTests() {
@@ -45,7 +50,7 @@ internal object Api {
         context: Context,
         configuration: Configuration,
         url: HttpUrl,
-        userHeadersBuilder: RequestDecorator.(UserHeaders) -> Unit,
+        userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit,
         entityType: Class<T>
     ) = request(context, configuration, "GET", url, null, userHeadersBuilder, entityType)
 
@@ -54,7 +59,7 @@ internal object Api {
         configuration: Configuration,
         url: HttpUrl,
         body: String,
-        userHeadersBuilder: RequestDecorator.(UserHeaders) -> Unit,
+        userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit,
         entityType: Class<T>
     ) = request(context, configuration, "POST", url, body, userHeadersBuilder, entityType)
 
@@ -64,19 +69,19 @@ internal object Api {
         method: String,
         url: HttpUrl,
         body: String?,
-        userHeadersBuilder: RequestDecorator.(UserHeaders) -> Unit,
+        userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit,
         entityType: Class<T>
     ): CacheableResult<T> {
         val request = buildRequest(configuration, method, url, body, userHeadersBuilder)
-        return executeRequest(context, request, entityType)
+        return executeRequest(context, configuration, request, entityType)
     }
 
-    private fun buildRequest(
+    private suspend fun buildRequest(
         configuration: Configuration,
         method: String,
         url: HttpUrl,
         body: String?,
-        userHeadersBuilder: RequestDecorator.(UserHeaders) -> Unit
+        userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
     ): Request {
         val domain = url.host()
         if (configuration.domainWhitelist.none { it.matches(domain) }) {
@@ -101,10 +106,11 @@ internal object Api {
 
     private suspend fun <T : Any> executeRequest(
         context: Context,
+        configuration: Configuration,
         request: Request,
         entityType: Class<T>
     ): CacheableResult<T> {
-        val client = getClient(context)
+        val client = getClient(context, configuration)
         val call = client.newCall(request)
         val result = CompletableDeferred<CacheableResult<T>>()
         call.enqueue(object : Callback {

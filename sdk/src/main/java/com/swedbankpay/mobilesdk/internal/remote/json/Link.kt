@@ -47,20 +47,20 @@ internal sealed class Link(
     protected suspend inline fun <reified T : Any> get(
         context: Context,
         configuration: Configuration,
-        noinline userHeadersBuilder: RequestDecorator.(UserHeaders) -> Unit
+        noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
     ) = getCacheable<T>(context, configuration, userHeadersBuilder).value
 
     protected suspend inline fun <reified T : Any> getCacheable(
         context: Context,
         configuration: Configuration,
-        noinline userHeadersBuilder: RequestDecorator.(UserHeaders) -> Unit
+        noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
     ) = Api.get(context, configuration, href, userHeadersBuilder, T::class.java)
 
     protected suspend inline fun <reified T : Any> post(
         context: Context,
         configuration: Configuration,
         body: String,
-        noinline userHeadersBuilder: RequestDecorator.(UserHeaders) -> Unit
+        noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
     ) = Api.post(context, configuration, href, body, userHeadersBuilder, T::class.java).value
 
     class Root(href: HttpUrl) : Link(href) {
