@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk
 
+import androidx.annotation.WorkerThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,6 +15,7 @@ import kotlinx.coroutines.withContext
  * [IO Dispatcher](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-i-o.html).
  * This means your callbacks run in a background thread, so be careful with synchronization.
  */
+@WorkerThread
 @Suppress("unused")
 open class RequestDecoratorCompat : RequestDecorator() {
     /**
