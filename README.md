@@ -19,7 +19,7 @@ SDK Class documentation is available [here](https://qvik-payex-dev.s3.eu-north-1
 
 #### Configuring The SDK
 
-First, you must [build](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-configuration/-builder/index.html) a [Configuration](hhttps://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-configuration/index.html) specific to your merchant backend. All Configurations need the merchant backend url. Only the entry point url is specified in the client configuration, and other needed endpoints are found by following links returned by the backend.
+First, you must [build](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-configuration/-builder/index.html) a [Configuration](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-configuration/index.html) specific to your merchant backend. All Configurations need the merchant backend url. Only the entry point url is specified in the client configuration, and other needed endpoints are found by following links returned by the backend.
 
 For security purposes, the SDK restricts the domains of the links. This is known as the domain whitelist; any link that points to a non-whitelisted domain will not be followed, causing the relevant operation to fail. By default, the domain of the backend url is whitelisted, along with its subdomains. E.g:
  - `backendUrl` is `https://pay.example.com/api/start`
