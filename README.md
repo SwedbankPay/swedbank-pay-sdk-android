@@ -21,7 +21,7 @@ Related Google tickets are https://issuetracker.google.com/issues/141132133 and 
 
 To use the SDK you must have a "merchant backend" server running. Please refer to the merchant backend example [documentation](https://github.com/SwedbankPay/swedbank-pay-sdk-mobile-example-merchant) on how to set one up.
 
-SDK Class documentation is available [here](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/index.html).
+SDK Class documentation is available [here](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/index.html). An example project demonstrating simple payments is available [here](https://github.com/SwedbankPay/swedbank-pay-sdk-android-example-app).
 
 #### Configuring The SDK
 
