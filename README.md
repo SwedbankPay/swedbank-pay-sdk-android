@@ -19,7 +19,7 @@ SDK Class documentation is available [here](https://qvik-payex-dev.s3.eu-north-1
 
 #### Configuring The SDK
 
-First, you must [build](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-configuration/-builder/index.html) a [Configuration](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.payex.mobilesdk/-configuration/index.html) specific to your merchant backend. All Configurations need the merchant backend url. Only the entry point url is specified in the client configuration, and other needed endpoints are found by following links returned by the backend.
+First, you must [build](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-configuration/-builder/index.html) a [Configuration](hhttps://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-configuration/index.html) specific to your merchant backend. All Configurations need the merchant backend url. Only the entry point url is specified in the client configuration, and other needed endpoints are found by following links returned by the backend.
 
 For security purposes, the SDK restricts the domains of the links. This is known as the domain whitelist; any link that points to a non-whitelisted domain will not be followed, causing the relevant operation to fail. By default, the domain of the backend url is whitelisted, along with its subdomains. E.g:
  - `backendUrl` is `https://pay.example.com/api/start`
@@ -63,11 +63,11 @@ By observing `richState`, you get access to any Problems that arise during the p
 All Problems that can arise are subclasses of [Problem](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-problem/index.html), which is a sealed class. This allows you to write exhaustive error-handling code. At a root level, Problems are separated to [Client](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-problem/-client/index.html) and [Server](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-problem/-server/index.html) problems, where a Client problem means there is something wrong with the request sent to the backend—this implies there is something wrong with your configuration in the app end. A Server problem means the server was unable to process your request. The SDK treats Server problems as transient, allowing retries if they occur.
 
 There are also some interfaces for Problems with common elements. Please refer to the class documentation:
- - https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-problem/index.html
- - https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-proper-problem/index.html
- - https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-swedbank-pay-problem/index.html
- - https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-unknown-problem/index.html
- - https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-unexpected-content-problem/index.html 
+ - [Problem](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-problem/index.html)
+ - [ProperProblem](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-proper-problem/index.html)
+ - [SwedbankPayProblem](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-swedbank-pay-problem/index.html)
+ - [UnknownProblem](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-unknown-problem/index.html)
+ - [UnexpectedContentProblem](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-unexpected-content-problem/index.html)
 
 ### License
 
