@@ -11,6 +11,12 @@ dependencies {
 }
 ```
 
+#### Important Note
+
+The AndroidX Appcompat library version 1.1.0 (`androidx.appcompat:appcompat:1.1.0`) has a bug which can cause crashes when using WebView. If your app uses the Appcompat library, you should not use a version later than 1.1.0-rc01, i.e. `androidx.appcompat:appcompat:1.1.0-rc01` unless your minSdkVersion is high enough not to be affected by the bug.
+
+Related Google tickets are https://issuetracker.google.com/issues/141132133 and https://issuetracker.google.com/issues/141351441 (N.B. the crash can occur by simply showing a WebView, a long press is not needed, and is actually not necessarily even related to this crash.)
+
 ### Documentation
 
 To use the SDK you must have a "merchant backend" server running. Please refer to the merchant backend example [documentation](https://github.com/SwedbankPay/swedbank-pay-sdk-mobile-example-merchant) on how to set one up.
