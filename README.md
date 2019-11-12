@@ -6,10 +6,29 @@ The Swedbank Pay Android SDK enables simple embedding of [Swedbank Pay Checkout]
 
 ### Installation
 
-Gradle (N.B! Not working at the time of writing; identifier subject to change):
+Gradle:
 ```gradle
 dependencies {
-  implementation 'com.swedbankpay.mobilesdk:mobilesdk:1.0.0'
+  implementation 'com.swedbankpay.mobilesdk:mobilesdk:1.0.0-beta01'
+}
+```
+
+For the time beign, you also need add either this to your project `build.gradle`:
+```gradle
+allprojects {
+  repositories {
+    maven {
+      url  "https://swedbankpay.bintray.com/swedbank-pay-sdk-android"
+    }
+  }
+}
+```
+or this to your module `build.gradle`
+```gradle
+allprojects {
+  maven {
+    url  "https://swedbankpay.bintray.com/swedbank-pay-sdk-android"
+  }
 }
 ```
 
