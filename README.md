@@ -1,5 +1,7 @@
 # Swedbank Pay Android SDK
 
+[![Download](https://api.bintray.com/packages/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/images/download.svg?version=1.0.0-beta01) ](https://bintray.com/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/1.0.0-beta01/link)
+
 The Swedbank Pay Android SDK enables simple embedding of [Swedbank Pay Checkout](https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/payex-checkout) to an Android application.
 
 ### Installation
