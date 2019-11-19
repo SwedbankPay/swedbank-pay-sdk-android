@@ -7,9 +7,9 @@ import androidx.lifecycle.Observer
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.nhaarman.mockitokotlin2.*
 import com.swedbankpay.mobilesdk.Configuration
+import com.swedbankpay.mobilesdk.PaymentViewModel
 import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
-import okhttp3.HttpUrl
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -41,6 +41,7 @@ class StartIdentifiedConsumerTest {
 
     private fun withViewModel(f: InternalPaymentViewModel.() -> Unit) {
         val vm = InternalPaymentViewModel(application)
+        vm.publicVm = PaymentViewModel(application)
         vm.configuration = configuration
         vm.f()
     }
@@ -54,26 +55,33 @@ class StartIdentifiedConsumerTest {
             observing(currentPage) {
                 verify(it, never()).onChanged(anyOrNull())
             }
+            observing(publicVm!!.state) {
+                verify(it, never()).onChanged(anyOrNull())
+            }
         }
     }
 
     @Test
     fun itShouldMoveToLoadingState() {
         withViewModel {
-            observing(uiState) {
-                startIdentifiedCustomer(
-                    TestConstants.consumerIdentificationData,
-                    TestConstants.merchantData
-                )
-                verify(it).onChanged(InternalPaymentViewModel.UIState.Loading)
+            observing(uiState) { internalState ->
+                observing(publicVm!!.state) { publicState ->
+                    startIdentifiedCustomer(
+                        TestConstants.consumerIdentificationData,
+                        TestConstants.merchantData
+                    )
+                    verify(internalState).onChanged(InternalPaymentViewModel.UIState.Loading)
+                    verify(publicState).onChanged(PaymentViewModel.State.IN_PROGRESS)
+                }
             }
+
         }
     }
 
     @Test
     fun itShouldMoveToHtmlContentState() {
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, false))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), null))
         }
 
         withViewModel {
@@ -89,6 +97,10 @@ class StartIdentifiedConsumerTest {
                 )
                 verifyNoMoreInteractions(it)
             }
+            observing(publicVm!!.state) {
+                verify(it).onChanged(PaymentViewModel.State.IN_PROGRESS)
+                verifyNoMoreInteractions(it)
+            }
         }
 
     }
@@ -101,7 +113,7 @@ class StartIdentifiedConsumerTest {
             } doReturn TestConstants.consumerSessionHtmlPage
         }
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, false))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), null))
         }
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
@@ -115,7 +127,7 @@ class StartIdentifiedConsumerTest {
     @Test
     fun itShouldMoveToLoadingStateAfterOnConsumerProfileRefAvailable() {
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, false))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), null))
         }
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
@@ -131,7 +143,7 @@ class StartIdentifiedConsumerTest {
     @Test
     fun itShouldMoveToHtmlContentStateAfterOnConsumerProfileRefAvailable() {
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, true))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), mockPaymentOrders()))
         }
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
@@ -158,7 +170,7 @@ class StartIdentifiedConsumerTest {
             } doReturn TestConstants.paymentorderHtmlPage
         }
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, true))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), mockPaymentOrders()))
         }
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
@@ -173,7 +185,7 @@ class StartIdentifiedConsumerTest {
     @Test
     fun itShouldMoveToFailureStateAfterOnIdentifyError() {
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, false))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), null))
         }
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
@@ -192,13 +204,31 @@ class StartIdentifiedConsumerTest {
                 }
                 verifyNoMoreInteractions(it)
             }
+            observing(publicVm!!.richState) {
+                val argument = argumentCaptor<PaymentViewModel.RichState>()
+                verify(it).onChanged(argument.capture())
+                argument.firstValue.apply {
+                    Assert.assertEquals(PaymentViewModel.State.FAILURE, state)
+                    Assert.assertNull(problem)
+                    Assert.assertNotNull(terminalFailure)
+                    terminalFailure?.apply {
+                        Assert.assertEquals(TestConstants.consumerSessionErrorOrigin, origin)
+                        Assert.assertEquals(TestConstants.consumerSessionErrorMessageId, messageId)
+                        Assert.assertEquals(TestConstants.consumerSessionErrorDetails, details)
+                    }
+                    observing(failureReason) {
+                        verifyNoMoreInteractions(it)
+                    }
+                }
+                verifyNoMoreInteractions(it)
+            }
         }
     }
 
     @Test
     fun itShouldMoveToSuccessStateAfterOnPaymentCompleted() {
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, true))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), mockPaymentOrders()))
         }
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
@@ -208,13 +238,17 @@ class StartIdentifiedConsumerTest {
                 verify(it).onChanged(InternalPaymentViewModel.UIState.Success)
                 verifyNoMoreInteractions(it)
             }
+            observing(publicVm!!.state) {
+                verify(it).onChanged(PaymentViewModel.State.SUCCESS)
+                verifyNoMoreInteractions(it)
+            }
         }
     }
 
     @Test
     fun itShouldMoveToFailureStateAfterOnPaymentFailed() {
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, true))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), mockPaymentOrders(TestConstants.paymentOrderFailureReason)))
         }
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
@@ -225,8 +259,22 @@ class StartIdentifiedConsumerTest {
                 verify(it).onChanged(argument.capture())
                 argument.firstValue.apply {
                     Assert.assertNotNull(paymentOrderUrl)
-                    Assert.assertEquals(HttpUrl.get(TestConstants.paymentOrderUrl), paymentOrderUrl?.href)
+                    //Assert.assertEquals(HttpUrl.get(TestConstants.paymentOrderUrl), paymentOrderUrl?.href)
                     Assert.assertNull(terminalFailure)
+                }
+                verifyNoMoreInteractions(it)
+            }
+            observing(publicVm!!.richState) {
+                val argument = argumentCaptor<PaymentViewModel.RichState>()
+                verify(it).onChanged(argument.capture())
+                argument.firstValue.apply {
+                    Assert.assertEquals(PaymentViewModel.State.FAILURE, state)
+                    Assert.assertNull(problem)
+                    Assert.assertNull(terminalFailure)
+                    observing(failureReason) {
+                        verify(it).onChanged(TestConstants.paymentOrderFailureReason)
+                        verifyNoMoreInteractions(it)
+                    }
                 }
                 verifyNoMoreInteractions(it)
             }
@@ -236,7 +284,7 @@ class StartIdentifiedConsumerTest {
     @Test
     fun itShouldNotifyTermsOfServiceUrlObserversAfterOnPaymentToS() {
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, true))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), mockPaymentOrders()))
         }
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
@@ -253,7 +301,7 @@ class StartIdentifiedConsumerTest {
     @Test
     fun itShouldMoveToFailureStateAfterOnError() {
         configuration.stub {
-            onTopLevelResources(mockTopLevelResources(true, true))
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), mockPaymentOrders()))
         }
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
@@ -275,81 +323,4 @@ class StartIdentifiedConsumerTest {
             }
         }
     }
-
-    //val app = ApplicationProvider.getApplicationContext<Application>()
-
-
-
-    /*private var mockServer: MockWebServer? = null
-
-    @Before
-    fun startServer() {
-        val mockServer = MockWebServer()
-        this.mockServer = mockServer
-
-        //TopLevelResources.purge()
-        mockServer.enqueue(MockResponses.getRoot)
-        mockServer.enqueue(MockResponses.postConsumers)
-
-        mockServer.start(0)
-        val url = mockServer.url("/").toString()
-        //PayEx.configure(Configuration.Builder(url).build())
-        Api.skipProviderInstallerForTests()
-    }
-
-    @After
-    fun shutdownServer() {
-        mockServer?.shutdown()
-        mockServer = null
-    }
-
-    @Test
-    fun itShouldShowHtmlPage() = testSuspend {
-        /*val vm = InternalPaymentViewModel(app)
-        vm.startIdentifiedCustomer("idData", "merchantData")
-        vm.waitForNonTransientState()
-        var html: String? = null
-        val observer = Observer<String?> {
-            if (it != null) {
-                html = it
-            }
-        }
-        vm.currentPage.observeForever(observer)
-        vm.currentPage.removeObserver(observer)
-
-        Assert.assertNotNull(html)*/
-    }*/
-/*
-    private fun testSuspend(timeout: Long = 5_000L, f: suspend CoroutineScope.() -> Unit) {
-        val looper = shadowOf(getMainLooper())
-        looper.pause()
-        var result: Any? = null
-        MainScope().launch {
-            result = try {
-                f()
-                Unit
-            } catch (t: Throwable) {
-                t
-            }
-        }
-        val expirationTime = System.nanoTime() + timeout * 1_000_000L
-        looper.runToEndOfTasks()
-        while (result == null && System.nanoTime() < expirationTime) {
-            Thread.sleep(100L)
-            looper.runToEndOfTasks()
-        }
-        Assert.assertNotNull("Coroutine still active; increasing the timeout may help.", result)
-        (result as? Throwable)?.let {
-            throw it
-        }
-    }*/
-/*
-    @Test
-    fun sanityCheck() = testSuspend {
-        val child = launch(Dispatchers.IO) {
-            Thread.sleep(1000L)
-        }
-        child.join()
-        Assert.assertTrue(child.isCompleted)
-    }*/
 }

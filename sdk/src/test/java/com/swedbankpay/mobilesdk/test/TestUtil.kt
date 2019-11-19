@@ -5,29 +5,46 @@ import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.internal.remote.json.*
 import okhttp3.HttpUrl
 
-internal fun mockTopLevelResources(stubConsumers: Boolean, stubPaymentorders: Boolean): TopLevelResources {
+internal fun mockTopLevelResources(consumers: Link.Consumers?, paymentorders: Link.PaymentOrders?): TopLevelResources {
     return TopLevelResources().apply {
-        if (stubConsumers) {
-            consumers = mock {
-                onPost(ConsumerSession().apply {
-                    operations = operationsWith(
-                        "view-consumer-identification",
-                        TestConstants.viewConsumerSessionLink
-                    )
-                })
-            }
+        consumers?.let { this.consumers = it }
+        paymentorders?.let { this.paymentorders = it }
+    }
+}
+
+internal fun mockConsumers(): Link.Consumers = mock {
+    onPost(ConsumerSession().apply {
+        operations = operationsWith(
+            "view-consumer-identification",
+            TestConstants.viewConsumerSessionLink
+        )
+    })
+}
+
+internal fun mockPaymentOrders(failureReason: String? = null): Link.PaymentOrders {
+    val operations = operationsWith(
+        "view-paymentorder",
+        TestConstants.viewPaymentorderLink
+    )
+
+    val href = HttpUrl.get(TestConstants.paymentOrderUrl)
+    val url = failureReason?.let {
+        val getResult = PaymentOrder().apply {
+            this.failureReason = failureReason
+            this.operations = operations
         }
-        if (stubPaymentorders) {
-            paymentorders = mock {
-                onPost(PaymentOrder().apply {
-                    url = Link.PaymentOrder(HttpUrl.get(TestConstants.paymentOrderUrl))
-                    operations = operationsWith(
-                        "view-paymentorder",
-                        TestConstants.viewPaymentorderLink
-                    )
-                })
-            }
+        mock<Link.PaymentOrder> {
+            onGet(getResult)
+        }.also {
+            getResult.url = it
         }
+    } ?: Link.PaymentOrder(href)
+
+    return mock {
+        onPost(PaymentOrder().apply {
+            this.url = url
+            this.operations = operations
+        })
     }
 }
 
@@ -41,6 +58,10 @@ internal fun KStubbing<Link.Consumers>.onPost(consumerSession: ConsumerSession) 
 
 internal fun KStubbing<Link.PaymentOrders>.onPost(paymentOrder: PaymentOrder) {
     onBlocking { post(any(), any(), anyOrNull(), anyOrNull()) } doReturn paymentOrder
+}
+
+internal fun KStubbing<Link.PaymentOrder>.onGet(paymentOrder: PaymentOrder) {
+    onBlocking { get(any(), any()) } doReturn paymentOrder
 }
 
 internal fun operationsWith(rel: String, href: String) = Operations().apply {
