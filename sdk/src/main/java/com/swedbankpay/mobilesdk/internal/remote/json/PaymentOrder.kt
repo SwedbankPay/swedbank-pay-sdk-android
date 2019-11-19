@@ -7,17 +7,13 @@ internal class PaymentOrder {
     @Required
     @SerializedName("url")
     lateinit var url: Link.PaymentOrder
-        private set
 
     @SerializedName("state")
     var state: String? = null
-        private set
 
     @SerializedName("failureReason")
     var failureReason: String? = null
-        private set
 
     @SerializedName("operations")
     var operations = Operations()
-        private set
 }

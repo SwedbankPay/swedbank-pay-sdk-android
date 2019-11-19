@@ -7,10 +7,8 @@ internal class TopLevelResources {
     @Required
     @SerializedName("consumers")
     lateinit var consumers: Link.Consumers
-        private set
 
     @Required
     @SerializedName("paymentorders")
     lateinit var paymentorders: Link.PaymentOrders
-        private set
 }
