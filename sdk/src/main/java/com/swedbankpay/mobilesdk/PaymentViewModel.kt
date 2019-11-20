@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.swedbankpay.mobilesdk
 
 import android.app.Application
@@ -24,7 +26,6 @@ val FragmentActivity.paymentViewModel get() = ViewModelProviders.of(this)[Paymen
  *
  *     ViewModelProviders.of(activity).get(PaymentViewModel::class.java)
  */
-@Suppress("unused")
 class PaymentViewModel : AndroidViewModel {
     /**
      * @suppress

@@ -2,12 +2,12 @@ package com.swedbankpay.mobilesdk.test
 
 import android.app.Application
 import android.os.Build
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
+import androidx.annotation.StringRes
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.nhaarman.mockitokotlin2.*
 import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.PaymentViewModel
+import com.swedbankpay.mobilesdk.Problem
 import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import org.junit.Assert
@@ -19,17 +19,11 @@ import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
 import org.mockito.quality.Strictness
 import org.robolectric.annotation.Config
-
-fun <T> observing(liveData: LiveData<T>, f: (Observer<T>) -> Unit) {
-    val observer = mock<Observer<T>>()
-    liveData.observeForever(observer)
-    f(observer)
-    liveData.removeObserver(observer)
-}
+import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.P])
-class StartIdentifiedConsumerTest {
+class ViewModelIdentifiedConsumerTest {
     @get:Rule
     val rule: MockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS)
 
@@ -79,6 +73,92 @@ class StartIdentifiedConsumerTest {
     }
 
     @Test
+    fun itShouldMoveToRetryableErrorStateAfterTopLevelResourcesFailure() {
+        val exception = IOException()
+        application.stub {
+            on {
+                getString(R.string.swedbankpaysdk_failed_init_consumer)
+            } doReturn TestConstants.consumerRetryableErrorMessage
+        }
+        configuration.stub {
+            onBlocking { getTopLevelResources(any()) } doThrow exception
+        }
+        withViewModel {
+            startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
+            verifyIsInRetryableErrorState(
+                null,
+                exception,
+                R.string.swedbankpaysdk_failed_init_consumer,
+                TestConstants.consumerRetryableErrorMessage
+            )
+        }
+    }
+
+    @Test
+    fun itShouldMoveToRetryableErrorStateAfterConsumersFailure() {
+        val exception = IOException()
+        application.stub {
+            on {
+                getString(R.string.swedbankpaysdk_failed_init_consumer)
+            } doReturn TestConstants.consumerRetryableErrorMessage
+        }
+        configuration.stub {
+            onTopLevelResources(mockTopLevelResources(mock {
+                onBlocking { post(any(), any(), any()) } doThrow exception
+            }, null))
+        }
+        withViewModel {
+            startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
+            verifyIsInRetryableErrorState(
+                null,
+                exception,
+                R.string.swedbankpaysdk_failed_init_consumer,
+                TestConstants.consumerRetryableErrorMessage
+            )
+        }
+    }
+
+    @Test
+    fun itShouldRetryConsumersAfterRetryFromRetryableError() {
+        val exception = IOException()
+        configuration.stub {
+            onTopLevelResources(mockTopLevelResources(mock {
+                onBlocking { post(any(), any(), any()) } doThrow exception
+            }, null))
+        }
+        withViewModel {
+            startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
+            observing(uiState) { internalState ->
+                observing(publicVm!!.state) { publicState ->
+                    retryFromRetryableError()
+
+                    internalState.inOrder {
+                        verify().onChanged(refEq(InternalPaymentViewModel.UIState.RetryableError(
+                            null,
+                            exception,
+                            R.string.swedbankpaysdk_failed_init_consumer
+                        )))
+                        verify().onChanged(InternalPaymentViewModel.UIState.Loading)
+                        verify().onChanged(refEq(InternalPaymentViewModel.UIState.RetryableError(
+                            null,
+                            exception,
+                            R.string.swedbankpaysdk_failed_init_consumer
+                        )))
+                    }
+                    verifyNoMoreInteractions(internalState)
+
+                    publicState.inOrder {
+                        verify().onChanged(PaymentViewModel.State.RETRYABLE_ERROR)
+                        verify().onChanged(PaymentViewModel.State.IN_PROGRESS)
+                        verify().onChanged(PaymentViewModel.State.RETRYABLE_ERROR)
+                    }
+                    verifyNoMoreInteractions(publicState)
+                }
+            }
+        }
+    }
+
+    @Test
     fun itShouldMoveToHtmlContentState() {
         configuration.stub {
             onTopLevelResources(mockTopLevelResources(mockConsumers(), null))
@@ -103,6 +183,40 @@ class StartIdentifiedConsumerTest {
             }
         }
 
+    }
+
+    @Test
+    fun itShouldMoveToHtmlContentStateAfterRetry() {
+        val exception = IOException()
+        configuration.stub {
+            onTopLevelResources(mockTopLevelResources(mock {
+                onBlocking { post(any(), any(), any()) } doThrow exception
+            }, null))
+        }
+        withViewModel {
+            startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
+
+            this@ViewModelIdentifiedConsumerTest.configuration.stub {
+                onTopLevelResources(mockTopLevelResources(mockConsumers(), null))
+            }
+
+            retryFromRetryableError()
+            observing(uiState) {
+                verify(it).onChanged(
+                    refEq(
+                        InternalPaymentViewModel.UIState.HtmlContent(
+                            R.string.swedbankpaysdk_view_consumer_identification_template,
+                            TestConstants.viewConsumerSessionLink
+                        )
+                    )
+                )
+                verifyNoMoreInteractions(it)
+            }
+            observing(publicVm!!.state) {
+                verify(it).onChanged(PaymentViewModel.State.IN_PROGRESS)
+                verifyNoMoreInteractions(it)
+            }
+        }
     }
 
     @Test
@@ -163,6 +277,69 @@ class StartIdentifiedConsumerTest {
     }
 
     @Test
+    fun itShouldMoveToRetryableErrorStateAfterPaymentOrdersFailure() {
+        val exception = IOException()
+        configuration.stub {
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), mock {
+                onBlocking { post(any(), any(), anyOrNull(), anyOrNull()) } doThrow exception
+            }))
+        }
+        withViewModel {
+            startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
+            javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
+            observing(uiState) {
+                verifyIsInRetryableErrorState(
+                    null,
+                    exception,
+                    R.string.swedbankpaysdk_failed_create_payment
+                )
+            }
+        }
+    }
+
+    @Test
+    fun itShouldRetryPaymentOrdersAfterRetryFromRetryableError() {
+        val exception = IOException()
+        configuration.stub {
+            onTopLevelResources(mockTopLevelResources(mockConsumers(), mock {
+                onBlocking { post(any(), any(), anyOrNull(), anyOrNull()) } doThrow exception
+            }))
+        }
+        withViewModel {
+            startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
+            javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
+            observing(uiState) { internalState ->
+                observing(publicVm!!.state) { publicState ->
+
+                    retryFromRetryableError()
+
+                    internalState.inOrder {
+                        verify().onChanged(refEq(InternalPaymentViewModel.UIState.RetryableError(
+                            null,
+                            exception,
+                            R.string.swedbankpaysdk_failed_create_payment
+                        )))
+                        verify().onChanged(InternalPaymentViewModel.UIState.Loading)
+                        verify().onChanged(refEq(InternalPaymentViewModel.UIState.RetryableError(
+                            null,
+                            exception,
+                            R.string.swedbankpaysdk_failed_create_payment
+                        )))
+                    }
+                    verifyNoMoreInteractions(internalState)
+
+                    publicState.inOrder {
+                        verify().onChanged(PaymentViewModel.State.RETRYABLE_ERROR)
+                        verify().onChanged(PaymentViewModel.State.IN_PROGRESS)
+                        verify().onChanged(PaymentViewModel.State.RETRYABLE_ERROR)
+                    }
+                    verifyNoMoreInteractions(publicState)
+                }
+            }
+        }
+    }
+
+    @Test
     fun itShouldShowExpectedHtmlPageAfterOnConsumerProfileRefAvailable() {
         application.stub {
             on {
@@ -190,38 +367,11 @@ class StartIdentifiedConsumerTest {
         withViewModel {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
             javascriptInterface.onIdentifyError(TestConstants.consumerSessionError)
-            observing(uiState) {
-                val argument = argumentCaptor<InternalPaymentViewModel.UIState.Failure>()
-                verify(it).onChanged(argument.capture())
-                argument.firstValue.apply {
-                    Assert.assertNull(paymentOrderUrl)
-                    Assert.assertNotNull(terminalFailure)
-                    terminalFailure?.apply {
-                        Assert.assertEquals(TestConstants.consumerSessionErrorOrigin, origin)
-                        Assert.assertEquals(TestConstants.consumerSessionErrorMessageId, messageId)
-                        Assert.assertEquals(TestConstants.consumerSessionErrorDetails, details)
-                    }
-                }
-                verifyNoMoreInteractions(it)
-            }
-            observing(publicVm!!.richState) {
-                val argument = argumentCaptor<PaymentViewModel.RichState>()
-                verify(it).onChanged(argument.capture())
-                argument.firstValue.apply {
-                    Assert.assertEquals(PaymentViewModel.State.FAILURE, state)
-                    Assert.assertNull(problem)
-                    Assert.assertNotNull(terminalFailure)
-                    terminalFailure?.apply {
-                        Assert.assertEquals(TestConstants.consumerSessionErrorOrigin, origin)
-                        Assert.assertEquals(TestConstants.consumerSessionErrorMessageId, messageId)
-                        Assert.assertEquals(TestConstants.consumerSessionErrorDetails, details)
-                    }
-                    observing(failureReason) {
-                        verifyNoMoreInteractions(it)
-                    }
-                }
-                verifyNoMoreInteractions(it)
-            }
+            verifyIsInFailureStateWithTerminalFailure(
+                TestConstants.consumerSessionErrorOrigin,
+                TestConstants.consumerSessionErrorMessageId,
+                TestConstants.consumerSessionErrorDetails
+            )
         }
     }
 
@@ -254,30 +404,9 @@ class StartIdentifiedConsumerTest {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
             javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
             javascriptInterface.onPaymentFailed()
-            observing(uiState) {
-                val argument = argumentCaptor<InternalPaymentViewModel.UIState.Failure>()
-                verify(it).onChanged(argument.capture())
-                argument.firstValue.apply {
-                    Assert.assertNotNull(paymentOrderUrl)
-                    //Assert.assertEquals(HttpUrl.get(TestConstants.paymentOrderUrl), paymentOrderUrl?.href)
-                    Assert.assertNull(terminalFailure)
-                }
-                verifyNoMoreInteractions(it)
-            }
-            observing(publicVm!!.richState) {
-                val argument = argumentCaptor<PaymentViewModel.RichState>()
-                verify(it).onChanged(argument.capture())
-                argument.firstValue.apply {
-                    Assert.assertEquals(PaymentViewModel.State.FAILURE, state)
-                    Assert.assertNull(problem)
-                    Assert.assertNull(terminalFailure)
-                    observing(failureReason) {
-                        verify(it).onChanged(TestConstants.paymentOrderFailureReason)
-                        verifyNoMoreInteractions(it)
-                    }
-                }
-                verifyNoMoreInteractions(it)
-            }
+            verifyIsInFailureStateWithFailureReason(
+                TestConstants.paymentOrderFailureReason
+            )
         }
     }
 
@@ -307,19 +436,135 @@ class StartIdentifiedConsumerTest {
             startIdentifiedCustomer(TestConstants.consumerIdentificationData, TestConstants.merchantData)
             javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
             javascriptInterface.onPaymentError(TestConstants.paymentOrderError)
-            observing(uiState) {
+            verifyIsInFailureStateWithTerminalFailure(
+                TestConstants.paymentOrderErrorOrigin,
+                TestConstants.paymentOrderErrorMessageId,
+                TestConstants.paymentOrderErrorDetails
+            )
+        }
+    }
+
+    private fun InternalPaymentViewModel.verifyIsInRetryableErrorState(
+        problem: Problem?,
+        ioException: IOException?,
+        @StringRes messageId: Int,
+        message: String? = null
+    ) {
+        observing(uiState) {
+            verify(it).onChanged(refEq(InternalPaymentViewModel.UIState.RetryableError(
+                null,
+                ioException,
+                messageId
+            )))
+            verifyNoMoreInteractions(it)
+        }
+        observing(retryActionAvailable) {
+            verify(it).onChanged(true)
+            verifyNoMoreInteractions(it)
+        }
+        observing(publicVm!!.richState) {
+            val argument = argumentCaptor<PaymentViewModel.RichState>()
+            verify(it).onChanged(argument.capture())
+            argument.firstValue.apply {
+                Assert.assertEquals(PaymentViewModel.State.RETRYABLE_ERROR, state)
+                if (message != null) {
+                    Assert.assertEquals(message, retryableErrorMessage)
+                }
+                Assert.assertEquals(ioException, this.ioException)
+                Assert.assertEquals(problem, this.problem)
+                Assert.assertNull(terminalFailure)
+            }
+            verifyNoMoreInteractions(it)
+        }
+    }
+
+    private fun InternalPaymentViewModel.verifyIsInFailureStateWithTerminalFailure(
+        origin: String,
+        messageId: String,
+        details: String
+    ) {
+        FailureStateVerifier.TerminalFailure(origin, messageId, details).verify(this)
+    }
+
+    private fun InternalPaymentViewModel.verifyIsInFailureStateWithFailureReason(
+        failureReason: String
+    ) {
+        FailureStateVerifier.FailureReason(failureReason).verify(this)
+    }
+
+    private sealed class FailureStateVerifier() {
+        fun verify(viewModel: InternalPaymentViewModel) {
+            observing(viewModel.uiState) {
                 val argument = argumentCaptor<InternalPaymentViewModel.UIState.Failure>()
                 verify(it).onChanged(argument.capture())
-                argument.firstValue.apply {
-                    Assert.assertNull(paymentOrderUrl)
-                    Assert.assertNotNull(terminalFailure)
-                    terminalFailure?.apply {
-                        Assert.assertEquals(TestConstants.paymentOrderErrorOrigin, origin)
-                        Assert.assertEquals(TestConstants.paymentOrderErrorMessageId, messageId)
-                        Assert.assertEquals(TestConstants.paymentOrderErrorDetails, details)
-                    }
+                verifyInternal(argument.firstValue)
+                verifyNoMoreInteractions(it)
+            }
+            observing(viewModel.publicVm!!.richState) {
+                val argument = argumentCaptor<PaymentViewModel.RichState>()
+                verify(it).onChanged(argument.capture())
+                argument.firstValue.let {
+                    Assert.assertEquals(PaymentViewModel.State.FAILURE, it.state)
+                    verifyPublic(it)
                 }
                 verifyNoMoreInteractions(it)
+            }
+        }
+
+        abstract fun verifyInternal(failure: InternalPaymentViewModel.UIState.Failure)
+        abstract fun verifyPublic(richState: PaymentViewModel.RichState)
+
+        class TerminalFailure(
+            val origin: String,
+            val messageId: String,
+            val details: String
+        ) : FailureStateVerifier() {
+            override fun verifyInternal(failure: InternalPaymentViewModel.UIState.Failure) {
+                Assert.assertNull(failure.paymentOrderUrl)
+                Assert.assertNotNull(failure.terminalFailure)
+                Assert.assertEquals(origin, failure.terminalFailure?.origin)
+                Assert.assertEquals(messageId, failure.terminalFailure?.messageId)
+                Assert.assertEquals(details, failure.terminalFailure?.details)
+            }
+            override fun verifyPublic(richState: PaymentViewModel.RichState) {
+                Assert.assertNull(richState.problem)
+                Assert.assertNotNull(richState.terminalFailure)
+                Assert.assertEquals(origin, richState.terminalFailure?.origin)
+                Assert.assertEquals(messageId, richState.terminalFailure?.messageId)
+                Assert.assertEquals(details, richState.terminalFailure?.details)
+                observing(richState.failureReason) {
+                    verifyNoMoreInteractions(it)
+                }
+                observing(richState.failureReasonIOException) {
+                    verifyNoMoreInteractions(it)
+                }
+                observing(richState.failureReasonProblem) {
+                    verifyNoMoreInteractions(it)
+                }
+            }
+        }
+
+        class FailureReason(val failureReason: String) : FailureStateVerifier() {
+            override fun verifyInternal(failure: InternalPaymentViewModel.UIState.Failure) {
+                Assert.assertNotNull(failure.paymentOrderUrl)
+                Assert.assertNull(failure.terminalFailure)
+            }
+
+            override fun verifyPublic(richState: PaymentViewModel.RichState) {
+                Assert.assertNull(richState.problem)
+                Assert.assertNull(richState.terminalFailure)
+                observing(richState.failureReason) {
+                    verify(it).onChanged(failureReason)
+                    verifyNoMoreInteractions(it)
+                }
+                observing(richState.failureReasonIOException) {
+                    verify(it).onChanged(null)
+                    verifyNoMoreInteractions(it)
+                }
+                observing(richState.failureReasonProblem) {
+                    verify(it).onChanged(null)
+                    verifyNoMoreInteractions(it)
+                }
             }
         }
     }

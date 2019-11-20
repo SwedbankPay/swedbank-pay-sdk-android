@@ -11,6 +11,7 @@ import com.swedbankpay.mobilesdk.UserHeaders
 import com.swedbankpay.mobilesdk.internal.remote.Api
 import okhttp3.HttpUrl
 import okhttp3.Response
+import java.io.IOException
 import java.io.StringWriter
 
 internal fun Parcel.writeLink(link: Link) {
@@ -70,12 +71,14 @@ internal sealed class Link(
     }
 
     class Consumers(href: HttpUrl) : Link(href) {
+        @Throws(IOException::class) // for testing; see Configuration.getTopLevelResources
         suspend fun post(context: Context, configuration: Configuration, body: String) = post<ConsumerSession>(context, configuration, body) {
             decorateInitiateConsumerSession(it, body)
         }
     }
 
     class PaymentOrders(href: HttpUrl) : Link(href) {
+        @Throws(IOException::class) // for testing
         suspend fun post(
             context: Context,
             configuration: Configuration,

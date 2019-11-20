@@ -22,4 +22,5 @@ object TestConstants {
     const val paymentOrderError =
         """{"origin":"$paymentOrderErrorOrigin","messageId":"$paymentOrderErrorMessageId","details":"$paymentOrderErrorDetails"}"""
     const val paymentOrderFailureReason = "paymentFailureReason"
+    const val consumerRetryableErrorMessage = "retryConsumer"
 }

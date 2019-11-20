@@ -1,9 +1,18 @@
 package com.swedbankpay.mobilesdk.test
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import com.nhaarman.mockitokotlin2.*
 import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.internal.remote.json.*
 import okhttp3.HttpUrl
+
+fun <T> observing(liveData: LiveData<T>, f: (Observer<T>) -> Unit) {
+    val observer = mock<Observer<T>>()
+    liveData.observeForever(observer)
+    f(observer)
+    liveData.removeObserver(observer)
+}
 
 internal fun mockTopLevelResources(consumers: Link.Consumers?, paymentorders: Link.PaymentOrders?): TopLevelResources {
     return TopLevelResources().apply {
