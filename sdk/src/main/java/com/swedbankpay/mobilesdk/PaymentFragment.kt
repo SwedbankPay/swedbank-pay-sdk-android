@@ -8,11 +8,12 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.*
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.annotation.CallSuper
 import androidx.annotation.IntDef
 import androidx.fragment.app.Fragment
@@ -23,7 +24,6 @@ import com.swedbankpay.mobilesdk.PaymentFragment.ArgumentsBuilder
 import com.swedbankpay.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
-import com.swedbankpay.mobilesdk.internal.LOG_TAG
 import com.swedbankpay.mobilesdk.internal.ToSActivity
 import kotlinx.android.synthetic.main.swedbankpaysdk_payment_fragment.*
 import kotlinx.android.synthetic.main.swedbankpaysdk_payment_fragment.view.*
@@ -378,7 +378,6 @@ open class PaymentFragment : Fragment() {
                 webViewClient = object : WebViewClient() {
 
                     override fun shouldOverrideUrlLoading(view: WebView, url: String?): Boolean {
-                        Log.d(LOG_TAG,"shouldOverrideUrlLoading")
                         try {
                             url?.let(Uri::parse)?.let { openRedirect(view.context, it) }
                         } catch (_: Exception) {}
@@ -390,7 +389,6 @@ open class PaymentFragment : Fragment() {
                         view: WebView,
                         request: WebResourceRequest?
                     ): Boolean {
-                        Log.d(LOG_TAG,"shouldOverrideUrlLoading")
                         request?.url?.let { openRedirect(view.context, it) }
                         return true
                     }

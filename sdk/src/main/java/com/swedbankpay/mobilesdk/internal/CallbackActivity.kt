@@ -3,7 +3,6 @@ package com.swedbankpay.mobilesdk.internal
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.telecom.Call
 import androidx.lifecycle.MutableLiveData
 
 // The purpose of this is to provide a way for external applications
