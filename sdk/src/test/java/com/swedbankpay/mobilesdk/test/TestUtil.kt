@@ -38,7 +38,7 @@ internal fun mockPaymentOrders(failureReason: String? = null): Link.PaymentOrder
 
     val href = HttpUrl.get(TestConstants.paymentOrderUrl)
     val url = failureReason?.let {
-        val getResult = PaymentOrder().apply {
+        val getResult = PaymentOrderIn().apply {
             this.failureReason = failureReason
             this.operations = operations
         }
@@ -50,7 +50,7 @@ internal fun mockPaymentOrders(failureReason: String? = null): Link.PaymentOrder
     } ?: Link.PaymentOrder(href)
 
     return mock {
-        onPost(PaymentOrder().apply {
+        onPost(PaymentOrderIn().apply {
             this.url = url
             this.operations = operations
         })
@@ -65,11 +65,11 @@ internal fun KStubbing<Link.Consumers>.onPost(consumerSession: ConsumerSession) 
     onBlocking { post(any(), any(), any()) } doReturn consumerSession
 }
 
-internal fun KStubbing<Link.PaymentOrders>.onPost(paymentOrder: PaymentOrder) {
+internal fun KStubbing<Link.PaymentOrders>.onPost(paymentOrder: PaymentOrderIn) {
     onBlocking { post(any(), any(), anyOrNull(), anyOrNull()) } doReturn paymentOrder
 }
 
-internal fun KStubbing<Link.PaymentOrder>.onGet(paymentOrder: PaymentOrder) {
+internal fun KStubbing<Link.PaymentOrder>.onGet(paymentOrder: PaymentOrderIn) {
     onBlocking { get(any(), any()) } doReturn paymentOrder
 }
 

@@ -46,7 +46,11 @@ open class RequestDecoratorCompat : RequestDecorator() {
      * @param userHeaders headers added to this will be sent with the request
      * @param body the body of the request
      */
-    open fun decorateInitiateConsumerSessionCompat(userHeaders: UserHeaders, body: String) {}
+    open fun decorateInitiateConsumerSessionCompat(
+        userHeaders: UserHeaders,
+        body: String,
+        consumer: Consumer
+    ) {}
 
     /**
      * Override this method to add custom headers to the POST {paymentorders} request.
@@ -55,14 +59,12 @@ open class RequestDecoratorCompat : RequestDecorator() {
      *
      * @param userHeaders headers added to this will be sent with the request
      * @param body the body of the request
-     * @param consumerProfileRef the consumer profile reference used in the request
-     * @param merchantData the serialized merchant data used in the request
+     * @param paymentOrder the payment order used to create the request body
      */
     open fun decorateCreatePaymentOrderCompat(
         userHeaders: UserHeaders,
         body: String,
-        consumerProfileRef: String?,
-        merchantData: String?
+        paymentOrder: PaymentOrder
     ) {}
 
     /**
@@ -96,18 +98,18 @@ open class RequestDecoratorCompat : RequestDecorator() {
 
     final override suspend fun decorateInitiateConsumerSession(
         userHeaders: UserHeaders,
-        body: String
+        body: String,
+        consumer: Consumer
     ) = decorateCompat {
-        decorateInitiateConsumerSessionCompat(userHeaders, body)
+        decorateInitiateConsumerSessionCompat(userHeaders, body, consumer)
     }
 
     final override suspend fun decorateCreatePaymentOrder(
         userHeaders: UserHeaders,
         body: String,
-        consumerProfileRef: String?,
-        merchantData: String?
+        paymentOrder: PaymentOrder
     ) = decorateCompat {
-        decorateCreatePaymentOrderCompat(userHeaders, body, consumerProfileRef, merchantData)
+        decorateCreatePaymentOrderCompat(userHeaders, body, paymentOrder)
     }
 
     final override suspend fun decorateGetPaymentOrder(

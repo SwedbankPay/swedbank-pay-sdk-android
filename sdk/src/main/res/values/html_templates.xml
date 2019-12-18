@@ -41,6 +41,9 @@
                 onPaymentCompleted: function(event) {
                     swedbankpaysdk.onPaymentCompleted();
                 },
+                onPaymentCanceled: function(event) {
+                    swedbankpaysdk.onPaymentCanceled();
+                },
                 onPaymentFailed: function(event) {
                     swedbankpaysdk.onPaymentFailed();
                 },

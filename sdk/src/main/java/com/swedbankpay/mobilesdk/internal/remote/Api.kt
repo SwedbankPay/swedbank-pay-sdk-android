@@ -11,7 +11,7 @@ import com.swedbankpay.mobilesdk.UserHeaders
 import com.swedbankpay.mobilesdk.internal.makeUnexpectedContentProblem
 import com.swedbankpay.mobilesdk.internal.parseProblem
 import com.swedbankpay.mobilesdk.internal.remote.json.Link
-import com.swedbankpay.mobilesdk.internal.remote.json.annotations.Required
+import com.swedbankpay.mobilesdk.internal.remote.annotations.Required
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers

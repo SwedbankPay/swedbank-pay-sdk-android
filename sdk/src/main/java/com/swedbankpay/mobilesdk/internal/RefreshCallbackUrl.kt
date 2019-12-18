@@ -56,18 +56,3 @@ internal data class RefreshCallbackUrl(val token: String) {
     }
 }
 
-private fun String.ensureSuffix(suffix: Char): String {
-    return if (endsWith(suffix)) {
-        this
-    } else {
-        "$this$suffix"
-    }
-}
-
-private fun String.substringAfterPrefix(prefix: String): String? {
-    return if (startsWith(prefix)) {
-        substring(prefix.length)
-    } else {
-        null
-    }
-}

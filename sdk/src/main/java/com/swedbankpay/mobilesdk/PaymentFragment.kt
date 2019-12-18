@@ -12,7 +12,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.gson.GsonBuilder
 import com.swedbankpay.mobilesdk.PaymentFragment.ArgumentsBuilder
 import com.swedbankpay.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
@@ -33,12 +32,8 @@ import com.swedbankpay.mobilesdk.internal.WebViewFragment
  *
  * You must set the [arguments][setArguments] of a PaymentFragment before use.
  * The argument [Bundle] is created by [ArgumentsBuilder].
- * Payments are always made by a [Consumer], which is [anonymous][Consumer.ANONYMOUS] by default.
- * You should also supply some data that your backend will use to construct
- * the payment details. The format of this merchant specific data is not
- * otherwise specified, but it will be converted to a JSON representation:
- * You can use POJOs, [Lists][List], and [Maps][Map] for the structure; leaf values
- * must be primitives, [Strings][String] or nulls. See [ArgumentsBuilder] for further options.
+ * The arguments must contain a [PaymentOrder] to create.
+ * See [ArgumentsBuilder] for further options.
  *
  * You may observe the state of the PaymentFragment via [PaymentViewModel].
  * Access the PaymentViewModel through the containing [activity][androidx.fragment.app.FragmentActivity]:
@@ -80,23 +75,23 @@ open class PaymentFragment : Fragment() {
      */
     @Suppress("unused")
     class ArgumentsBuilder {
-        private var consumer = Consumer.ANONYMOUS
-        private var merchantData: Any? = null
+        private var consumer: Consumer? = null
+        private var paymentOrder: PaymentOrder? = null
         private var viewModelKey: String? = null
         @DefaultUI
         private var enabledDefaultUI = RETRY_PROMPT
 
         /**
-         * Sets the consumer for this payment. Defaults to [Consumer.ANONYMOUS].
+         * Sets a consumer for this payment.
          * @param consumer the consumer making this payment
          */
-        fun consumer(consumer: Consumer) = apply { this.consumer = consumer }
+        fun consumer(consumer: Consumer?) = apply { this.consumer = consumer }
 
         /**
-         * Sets the merchant data for this payment.
-         * @param merchantData the merchant data to send to the backend. The value will be serialized to JSON.
+         * Sets the payment order to create
+         * @param paymentOrder the payment order to create
          */
-        fun merchantData(merchantData: Any?) = apply { this.merchantData = merchantData }
+        fun paymentOrder(paymentOrder: PaymentOrder) = apply { this.paymentOrder = paymentOrder }
 
         /**
          * Sets the key used on the containing [activity's][androidx.fragment.app.FragmentActivity]
@@ -104,7 +99,7 @@ open class PaymentFragment : Fragment() {
          * for the [PaymentViewModel]. This is only useful for special scenarios.
          * @param viewModelKey the [androidx.lifecycle.ViewModelProvider] key the PaymentFragment uses to find its [PaymentViewModel] in the containing [activity][androidx.fragment.app.FragmentActivity]
          */
-        fun viewModelKey(viewModelKey: String?) = apply { this.viewModelKey = viewModelKey }
+        fun viewModelProviderKey(viewModelKey: String?) = apply { this.viewModelKey = viewModelKey }
 
         /**
          * Set the enabled default user interfaces.
@@ -136,24 +131,17 @@ open class PaymentFragment : Fragment() {
          * @return the bundle
          */
         fun build(bundle: Bundle) = bundle.apply {
-            val consumer = consumer
-            val serializedMerchantData = GsonBuilder()
-                .serializeNulls()
-                .create()
-                .toJson(merchantData)
-
-            putInt(ARG_ID_MODE, consumer.getIdMode())
-            consumer.getIdData()?.let { putString(ARG_ID_DATA, it) }
-            putString(ARG_MERCHANT_DATA, serializedMerchantData)
-            viewModelKey?.let { putString(ARG_VM_KEY, it) }
-            putInt(ARG_DEFAULT_UI, enabledDefaultUI)
+            putParcelable(ARG_CONSUMER, consumer)
+            putParcelable(ARG_PAYMENT_ORDER, paymentOrder)
+            viewModelKey?.let { putString(ARG_VIEW_MODEL_PROVIDER_KEY, it) }
+            putInt(ARG_ENABLED_DEFAULT_UI, enabledDefaultUI)
         }
 
         /**
          * Convenience for `build(Bundle())`.
          * @return a new [Bundle] with the configuration from this ArgumentsBuilder
          */
-        fun build() = build(Bundle(5))
+        fun build() = build(Bundle(4))
     }
 
     companion object {
@@ -181,17 +169,12 @@ open class PaymentFragment : Fragment() {
          */
         const val ERROR_MESSAGE = 1 shl 2
 
-        private const val ARG_ID_MODE = "com.swedbankpay.mobilesdk.ARG_ID_MODE"
-        private const val ARG_ID_DATA = "com.swedbankpay.mobilesdk.ARG_ID_DATA"
-        private const val ARG_MERCHANT_DATA = "com.swedbankpay.mobilesdk.ARG_MERCHANT_DATA"
-        private const val ARG_VM_KEY = "com.swedbankpay.mobilesdk.ARG_VM_KEY"
-        private const val ARG_DEFAULT_UI = "com.swedbankpay.mobilesdk.ARG_DEFAULT_UI"
+        const val ARG_CONSUMER = "com.swedbankpay.mobilesdk.ARG_CONSUMER"
+        const val ARG_PAYMENT_ORDER = "com.swedbankpay.mobilesdk.ARG_PAYMENT_ORDER"
+        const val ARG_VIEW_MODEL_PROVIDER_KEY = "com.swedbankpay.mobilesdk.ARG_VIEW_MODEL_PROVIDER_KEY"
+        const val ARG_ENABLED_DEFAULT_UI = "com.swedbankpay.mobilesdk.ARG_DEFAULT_UI"
 
         private const val STATE_VM = "com.swedbankpay.mobilesdk.STATE_VM"
-
-        internal const val ID_MODE_ANONYMOUS = 0
-        internal const val ID_MODE_STORED = 1
-        internal const val ID_MODE_ONLINE = 2
     }
 
     /** @hide */
@@ -200,7 +183,7 @@ open class PaymentFragment : Fragment() {
     annotation class DefaultUI
 
     private val publicVm get() = ViewModelProviders.of(requireActivity()).run {
-        val key = requireArguments().getString(ARG_VM_KEY)
+        val key = requireArguments().getString(ARG_VIEW_MODEL_PROVIDER_KEY)
         if (key == null) {
             get(PaymentViewModel::class.java)
         } else {
@@ -243,7 +226,7 @@ open class PaymentFragment : Fragment() {
         val publicVm = publicVm
         vm.configuration = configuration
         vm.publicVm = publicVm
-        vm.enabledDefaultUI.value = requireArguments().getInt(ARG_DEFAULT_UI)
+        vm.enabledDefaultUI.value = requireArguments().getInt(ARG_ENABLED_DEFAULT_UI)
         vm.observeLoading()
         vm.observeCurrentPage(configuration.rootLink.href.toString())
         vm.observeMessage()
@@ -338,13 +321,11 @@ open class PaymentFragment : Fragment() {
             vm.resumeFromSavedState(checkNotNull(savedInstanceState.getBundle(STATE_VM)))
         } else {
             requireArguments().apply {
-                val merchantData = getString(ARG_MERCHANT_DATA)
-                when (getInt(ARG_ID_MODE)) {
-                    ID_MODE_ANONYMOUS -> vm.startStoredOrAnonymousCustomer(null, merchantData)
-                    ID_MODE_STORED -> vm.startStoredOrAnonymousCustomer(checkNotNull(getString(ARG_ID_DATA)), merchantData)
-                    ID_MODE_ONLINE -> vm.startIdentifiedCustomer(checkNotNull(getString(ARG_ID_DATA)), merchantData)
-                    else -> throw IllegalStateException()
+                val consumer = getParcelable<Consumer>(ARG_CONSUMER)
+                val paymentOrder = checkNotNull(getParcelable<PaymentOrder>(ARG_PAYMENT_ORDER)) {
+                    "Fragment $this@PaymentFragment does not have a PaymentFragment.ARG_PAYMENT_ORDER argument."
                 }
+                vm.start(consumer, paymentOrder)
             }
         }
     }

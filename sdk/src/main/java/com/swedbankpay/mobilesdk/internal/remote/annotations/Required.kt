@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk.internal.remote.json.annotations
+package com.swedbankpay.mobilesdk.internal.remote.annotations
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)

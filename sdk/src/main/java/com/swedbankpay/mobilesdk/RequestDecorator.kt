@@ -54,7 +54,11 @@ abstract class RequestDecorator {
      * @param userHeaders headers added to this will be sent with the request
      * @param body the body of the request
      */
-    open suspend fun decorateInitiateConsumerSession(userHeaders: UserHeaders, body: String) {}
+    open suspend fun decorateInitiateConsumerSession(
+        userHeaders: UserHeaders,
+        body: String,
+        consumer: Consumer
+    ) {}
 
     /**
      * Override this method to add custom headers to the POST {paymentorders} request.
@@ -63,14 +67,12 @@ abstract class RequestDecorator {
      *
      * @param userHeaders headers added to this will be sent with the request
      * @param body the body of the request
-     * @param consumerProfileRef the consumer profile reference used in the request
-     * @param merchantData the serialized merchant data used in the request
+     * @param paymentOrder the payment order used to create the request body
      */
     open suspend fun decorateCreatePaymentOrder(
         userHeaders: UserHeaders,
         body: String,
-        consumerProfileRef: String?,
-        merchantData: String?
+        paymentOrder: PaymentOrder
     ) {}
 
     /**

@@ -1,37 +1,21 @@
 package com.swedbankpay.mobilesdk.internal.remote.json
 
 import android.content.Context
-import android.os.Parcel
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonSyntaxException
-import com.google.gson.stream.JsonWriter
-import com.swedbankpay.mobilesdk.Configuration
-import com.swedbankpay.mobilesdk.R
-import com.swedbankpay.mobilesdk.RequestDecorator
-import com.swedbankpay.mobilesdk.UserHeaders
-import com.swedbankpay.mobilesdk.internal.RefreshCallbackUrl
+import com.google.gson.annotations.SerializedName
+import com.swedbankpay.mobilesdk.*
+import com.swedbankpay.mobilesdk.internal.BundleTypeAdapterFactory
 import com.swedbankpay.mobilesdk.internal.remote.Api
+import com.swedbankpay.mobilesdk.internal.remote.ExtensibleJsonObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Response
 import java.io.IOException
-import java.io.StringWriter
-
-internal fun Parcel.writeLink(link: Link) {
-    writeString(link.raw)
-    writeString(link.href.toString())
-}
-internal fun <T> Parcel.readLink(constructor: (String, HttpUrl) -> T): T? {
-    val raw = readString()
-    val href = readString()?.let(HttpUrl::get)
-    return if (raw != null && href != null) {
-        constructor(raw, href)
-    } else {
-        null
-    }
-}
 
 internal sealed class Link(
-    val raw: String,
     val href: HttpUrl
 ) {
     companion object {
@@ -49,9 +33,17 @@ internal sealed class Link(
                     ?: throw JsonSyntaxException("Invalid link: $link")
                 (type as Class<*>)
                     .asSubclass(Link::class.java)
-                    .getConstructor(String::class.java, HttpUrl::class.java)
-                    .newInstance(link, href)
+                    .getConstructor(HttpUrl::class.java)
+                    .newInstance(href)
             }
+        }
+
+        private suspend fun toJsonBody(value: Any) = withContext(Dispatchers.Default) {
+            GsonBuilder()
+                .registerTypeAdapterFactory(ExtensibleJsonObject.TypeAdapterFactory)
+                .registerTypeAdapterFactory(BundleTypeAdapterFactory)
+                .create()
+                .toJson(value)
         }
     }
 
@@ -74,60 +66,39 @@ internal sealed class Link(
         noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
     ) = Api.post(context, configuration, href, body, userHeadersBuilder, T::class.java).value
 
-    class Root(raw: String, href: HttpUrl) : Link(raw, href) {
+    class Root(href: HttpUrl) : Link(href) {
         suspend fun get(context: Context, configuration: Configuration) = getCacheable<TopLevelResources>(context, configuration) {
             decorateGetTopLevelResources(it)
         }
     }
 
-    class Consumers(raw: String, href: HttpUrl) : Link(raw, href) {
+    class Consumers(href: HttpUrl) : Link(href) {
         @Throws(IOException::class) // for testing; see Configuration.getTopLevelResources
-        suspend fun post(context: Context, configuration: Configuration, body: String) = post<ConsumerSession>(context, configuration, body) {
-            decorateInitiateConsumerSession(it, body)
+        suspend fun post(context: Context, configuration: Configuration, consumer: Consumer): ConsumerSession {
+            val body = toJsonBody(consumer)
+            return post(context, configuration, body) {
+                decorateInitiateConsumerSession(it, body, consumer)
+            }
         }
     }
 
-    class PaymentOrders(raw: String, href: HttpUrl) : Link(raw, href) {
+    class PaymentOrders(href: HttpUrl) : Link(href) {
         @Throws(IOException::class) // for testing
         suspend fun post(
             context: Context,
             configuration: Configuration,
-            consumerProfileRef: String?,
-            merchantData: String?
-        ): com.swedbankpay.mobilesdk.internal.remote.json.PaymentOrder {
-            val callbackScheme = context.getString(R.string.swedbankpaysdk_callback_url_scheme)
-            val callbackPrefix = RefreshCallbackUrl.getCallbackPrefix(context)
-            val body = buildCreatePaymentOrderBody(callbackScheme, callbackPrefix, consumerProfileRef, merchantData)
+            paymentOrder: PaymentOrder
+        ): PaymentOrderIn {
+            val body = toJsonBody(Body(paymentOrder))
             return post(context, configuration, body) {
-                decorateCreatePaymentOrder(it, body, consumerProfileRef, merchantData)
+                decorateCreatePaymentOrder(it, body, paymentOrder)
             }
         }
 
-        private fun buildCreatePaymentOrderBody(callbackScheme: String, callbackPrefix: String?, consumerProfileRef: String?, merchantData: String?): String {
-            val writer = StringWriter()
-            JsonWriter(writer).use { it.apply {
-                serializeNulls = false
-                beginObject()
-                if (callbackScheme.isNotEmpty()) {
-                    name("callbackScheme")
-                    value(callbackScheme)
-                    name("callbackPrefix")
-                    value(callbackPrefix)
-                }
-                name("consumerProfileRef")
-                value(consumerProfileRef)
-                name("merchantData")
-                jsonValue(merchantData)
-                endObject()
-            } }
-            return writer.toString()
-        }
-    }
-
-    class PaymentOrder(raw: String, href: HttpUrl) : Link(raw, href) {
-        suspend fun get(context: Context, configuration: Configuration) =
-            get<com.swedbankpay.mobilesdk.internal.remote.json.PaymentOrder>(context, configuration) {
-                decorateGetPaymentOrder(it, href.toString())
-            }
+        private class Body(
+            @Suppress("unused")
+            @SerializedName("paymentorder")
+            val paymentorder: PaymentOrder
+        )
     }
 }

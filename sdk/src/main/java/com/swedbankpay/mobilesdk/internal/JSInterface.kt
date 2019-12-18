@@ -53,6 +53,11 @@ internal class JSInterface(var vm: InternalPaymentViewModel?) {
     }
 
     @JavascriptInterface
+    fun onPaymentCanceled() = withViewModel {
+        onPaymentCanceled()
+    }
+
+    @JavascriptInterface
     fun onPaymentFailed() = withViewModel {
         onPaymentFailed()
     }

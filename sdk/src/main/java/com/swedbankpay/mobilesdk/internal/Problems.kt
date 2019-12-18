@@ -116,7 +116,7 @@ private fun parseSwedbankPayProblem(
         status,
         json.detail,
         json.instance,
-        json["action"].asStringOrNull,
+        json["action"]?.asStringOrNull,
         problems
     )
 }
