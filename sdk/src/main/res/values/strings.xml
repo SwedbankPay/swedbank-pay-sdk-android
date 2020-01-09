@@ -14,6 +14,10 @@
     <string name="swedbankpaysdk_payment_success">Payment succeeded</string>
     <string name="swedbankpaysdk_payment_failed">Payment failed</string>
     <string name="swedbankpaysdk_pull_to_refresh">Pull down to retry.</string>
+    <string name="swedbankpaysdk_intent_failure_title">Error</string>
+    <string name="swedbankpaysdk_intent_failure_body">Unable to launch app: %s</string>
+    <string name="swedbankpaysdk_intent_failure_unknown">&lt;unknown&gt;</string>
+    <string name="swedbankpaysdk_intent_failure_close">Close</string>
     
     <string name="swedbankpaysdk_problem_unauthorized">Unauthorized</string>
     <string name="swedbankpaysdk_problem_invalid_request">Service did not recognize the request.</string>
