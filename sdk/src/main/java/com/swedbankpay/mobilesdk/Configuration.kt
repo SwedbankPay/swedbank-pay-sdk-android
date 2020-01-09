@@ -93,7 +93,7 @@ class Configuration private constructor(builder: Builder) {
         }
     }
 
-    internal val rootLink = Link.Root(HttpUrl.get(builder.backendUrl))
+    internal val rootLink = Link.Root(builder.backendUrl, HttpUrl.get(builder.backendUrl))
     internal val certificatePinner = builder.pinnerBuilder?.build()
     internal val requestDecorator = builder.requestDecorator
     internal val domainWhitelist =

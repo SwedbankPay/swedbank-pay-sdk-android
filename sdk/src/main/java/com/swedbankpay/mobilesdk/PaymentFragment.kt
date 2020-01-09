@@ -1,32 +1,23 @@
 package com.swedbankpay.mobilesdk
 
-import android.annotation.SuppressLint
-import android.annotation.TargetApi
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.widget.TextView
 import androidx.annotation.CallSuper
 import androidx.annotation.IntDef
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.gson.GsonBuilder
 import com.swedbankpay.mobilesdk.PaymentFragment.ArgumentsBuilder
 import com.swedbankpay.mobilesdk.PaymentFragment.Companion.defaultConfiguration
-import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import com.swedbankpay.mobilesdk.internal.ToSActivity
-import kotlinx.android.synthetic.main.swedbankpaysdk_payment_fragment.*
-import kotlinx.android.synthetic.main.swedbankpaysdk_payment_fragment.view.*
+import com.swedbankpay.mobilesdk.internal.WebViewFragment
 
 /**
  * A [Fragment] that handles a payment process.
@@ -258,7 +249,6 @@ open class PaymentFragment : Fragment() {
         vm.observeMessage()
         vm.observeTermsOfServicePressed()
         publicVm.observeRetryPreviousPressed()
-        observeOnReloadPaymentMenu()
     }
 
     private fun InternalPaymentViewModel.observeLoading() {
@@ -269,25 +259,42 @@ open class PaymentFragment : Fragment() {
 
     private fun InternalPaymentViewModel.observeCurrentPage(baseUrl: String) {
         currentPage.observe(this@PaymentFragment, Observer {
-            swedbankpaysdk_web_view?.apply {
-                clearHistory()
-                if (it == null) {
-                    loadUrl("about:blank")
+            val webFragment =
+                childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
+            webFragment.apply {
+                reloadRequested = if (it == null) {
+                    clear()
+                    false
                 } else {
-                    loadDataWithBaseURL(baseUrl, it, "text/html", "utf-8", "")
+                    // only clear reload flag if WebViewFragment actually loaded the page
+                    // This way we protect ourselves against arbitrary ordering of calls to
+                    // this and onStart.
+                    !load(baseUrl, it)
                 }
             }
         })
     }
 
+    private fun reloadPaymentMenu() {
+        vm.apply {
+            reloadRequested = false
+            getPaymentMenuWebPage()?.let { page ->
+                configuration?.rootLink?.href?.toString()?.let { baseUrl ->
+                    val webFragment = childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
+                    webFragment.load(baseUrl, page)
+                }
+            }
+        }
+    }
+
     private fun InternalPaymentViewModel.observeMessage() {
         messageTitle.observe(this@PaymentFragment, Observer {
-            swedbankpaysdk_message.visibility = if (it != null) View.VISIBLE else View.INVISIBLE
-            swedbankpaysdk_message_title?.text = it
+            view!!.findViewById<View>(R.id.swedbankpaysdk_message).visibility = if (it != null) View.VISIBLE else View.INVISIBLE
+            view!!.findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
         })
 
         messageBody.observe(this@PaymentFragment, Observer {
-            swedbankpaysdk_message_body?.text = it
+            view!!.findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
         })
 
         retryActionAvailable.observe(this@PaymentFragment, Observer {
@@ -297,7 +304,7 @@ open class PaymentFragment : Fragment() {
 
     private fun updateRefreshLayoutState() {
         val vm = this.vm
-        val swipeLayout = swedbankpaysdk_swipe_refresh_layout
+        val swipeLayout = view!!.findViewById<SwipeRefreshLayout>(R.id.swedbankpaysdk_swipe_refresh_layout)
         val loading = vm.loading.value == true
         swipeLayout.isRefreshing = loading
         swipeLayout.isEnabled = loading || vm.retryActionAvailable.value == true
@@ -324,26 +331,7 @@ open class PaymentFragment : Fragment() {
         })
     }
 
-    private fun observeOnReloadPaymentMenu() {
-        CallbackActivity.onReloadPaymentMenu.observe(this, Observer {
-            if (it != null) {
-                reloadPaymentMenu()
-            }
-        })
-    }
 
-    private fun reloadPaymentMenu() {
-        vm.apply {
-            getPaymentMenuWebPage()?.let { page ->
-                configuration?.rootLink?.href?.toString()?.let { baseUrl ->
-                    swedbankpaysdk_web_view?.apply {
-                        clearHistory()
-                        loadDataWithBaseURL(baseUrl, page, "text/html", "utf-8", "")
-                    }
-                }
-            }
-        }
-    }
 
     private fun startOrResumePayment(savedInstanceState: Bundle?) {
         if (savedInstanceState != null) {
@@ -364,89 +352,18 @@ open class PaymentFragment : Fragment() {
     @CallSuper
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.swedbankpaysdk_payment_fragment, container, false).apply {
-            swedbankpaysdk_web_view.apply {
-                settings.apply {
-                    // JavaScript is required for our use case.
-                    // The SDK will only use remote content through links
-                    // retrieved from the backend. The backend must be careful
-                    // not to send compromised links.
-                    @SuppressLint("SetJavaScriptEnabled")
-                    javaScriptEnabled = true
-                }
-                addJavascriptInterface(vm.javascriptInterface, getString(R.string.swedbankpaysdk_javascript_interface_name))
-
-                webViewClient = object : WebViewClient() {
-
-                    override fun shouldOverrideUrlLoading(view: WebView, url: String?): Boolean {
-                        try {
-                            url?.let(Uri::parse)?.let { openRedirect(view.context, it) }
-                        } catch (_: Exception) {}
-                        return true
-                    }
-
-                    @TargetApi(Build.VERSION_CODES.N)
-                    override fun shouldOverrideUrlLoading(
-                        view: WebView,
-                        request: WebResourceRequest?
-                    ): Boolean {
-                        request?.url?.let { openRedirect(view.context, it) }
-                        return true
-                    }
-
-                    private val packagesForSchemes = mapOf(
-                        "swish" to "se.bankgirot.swish"
-                    )
-
-                    private fun openRedirect(context: Context, url: Uri) {
-                        val intent = Intent(Intent.ACTION_VIEW, url)
-                        val packageName = packagesForSchemes[url.scheme]
-                        packageName?.let(intent::setPackage)
-                        val resolveInfo = context.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-                        val intentToStart = if (resolveInfo != null) {
-                            intent
-                        } else {
-                            packageName?.let(::getPlayStoreIntent)
-                        }
-                        try {
-                            intentToStart?.addFlags(
-                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-                            )
-                            intentToStart?.let(context::startActivity)
-                        } catch (_: Exception) {
-                            // can happen if Google Play is not installed
-                        }
-                    }
-
-                    private fun getPlayStoreIntent(packageName: String): Intent {
-                        return Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse(
-                                "https://play.google.com/store/apps/details?id=$packageName")
-                            setPackage("com.android.vending")
-                        }
-                    }
-
-                }
-            }
-
-            swedbankpaysdk_swipe_refresh_layout.setOnRefreshListener {
+            val swipeRefreshLayout = findViewById<SwipeRefreshLayout>(R.id.swedbankpaysdk_swipe_refresh_layout)
+            swipeRefreshLayout.setOnRefreshListener {
                 vm.retryFromRetryableError()
             }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        swedbankpaysdk_web_view.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        swedbankpaysdk_web_view.onPause()
-    }
-
     override fun onStart() {
         super.onStart()
-        reloadPaymentMenu()
+        if (vm.reloadRequested) {
+            reloadPaymentMenu()
+        }
     }
 
     @CallSuper

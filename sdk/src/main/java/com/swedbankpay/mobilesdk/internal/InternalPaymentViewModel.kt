@@ -2,6 +2,7 @@ package com.swedbankpay.mobilesdk.internal
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
@@ -18,7 +19,6 @@ import com.swedbankpay.mobilesdk.internal.remote.json.writeLink
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 
 @MainThread
@@ -27,8 +27,14 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         const val KEY_STATE = "s"
     }
 
+    private val callbackUrlObserver = Observer<Unit> {
+        checkCallbacks()
+    }
+
     private val processState = MutableLiveData<ProcessState>()
     private val moveToNextStateJob = MutableLiveData<Job>()
+
+    var reloadRequested = false
 
     val enabledDefaultUI = MutableLiveData<@PaymentFragment.DefaultUI Int>().apply { value = 0 }
 
@@ -100,8 +106,13 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             }
         }
 
+    init {
+        CallbackActivity.onCallbackUrlInvoked.observeForever(callbackUrlObserver)
+    }
+
     override fun onCleared() {
         super.onCleared()
+        CallbackActivity.onCallbackUrlInvoked.removeObserver(callbackUrlObserver)
         javascriptInterface.vm = null
         configuration = null
         publicVm = null
@@ -127,12 +138,40 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         }
     }
 
+    private fun checkCallbacks() {
+        val payingState = processState.value as? ProcessState.Paying
+        if (payingState != null) {
+            if (CallbackActivity.consumeCallbackUrl(payingState.callbackUrl)) {
+                reloadPaymentPage(payingState)
+            }
+        }
+    }
+
+    private fun checkCallback(callbackUrl: CallbackUrl): Boolean {
+        val payingState = processState.value as? ProcessState.Paying
+        return if (payingState?.callbackUrl == callbackUrl) {
+            reloadPaymentPage(payingState)
+            true
+        } else {
+            false
+        }
+    }
+
+    private fun reloadPaymentPage(payingState: ProcessState.Paying) {
+        reloadRequested = true
+        // Call setValue to make observers rebind themselves
+        // This will, in effect, cause the payment page to be reloaded.
+        processState.value = payingState
+    }
+
     private fun setProcessState(processState: ProcessState?) {
         moveToNextStateJob.value?.cancel()
         moveToNextStateJob.value = null
         this.processState.value = processState
         if (processState?.shouldProceedAutomatically == true) {
             moveToNextState()
+        } else {
+            checkCallbacks()
         }
     }
 
@@ -149,15 +188,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 moveToNextStateJob.value = null
                 setProcessState(nextState)
             } catch (_: CancellationException) {}
-        }
-    }
-
-    @TestOnly
-    internal suspend fun waitForNonTransientState() {
-        var job = moveToNextStateJob.value
-        while (job != null) {
-            job.join()
-            job = moveToNextStateJob.value
         }
     }
 
@@ -217,6 +247,11 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
     fun getPaymentMenuWebPage(): String? {
         return (processState.value as? ProcessState.Paying)?.uiState?.getWebViewPage(this)
+    }
+
+    fun overrideNavigation(context: Context, uri: Uri): Boolean {
+        val callbackUrl = CallbackUrl.parse(context, uri)
+        return callbackUrl != null && checkCallback(callbackUrl)
     }
 
     private fun Problem.getFriendlyDescription(): String {
@@ -281,6 +316,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override val shouldProceedAutomatically get() = true
             override suspend fun getNextState(context: Context, configuration: Configuration): ProcessState {
                 return try {
+                    // see https://youtrack.jetbrains.com/issue/IDEA-209249
+                    @Suppress("BlockingMethodInNonBlockingContext")
                     val operations = configuration
                         .getTopLevelResources(context)
                         .consumers
@@ -380,6 +417,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override val shouldProceedAutomatically get() = true
             override suspend fun getNextState(context: Context, configuration: Configuration): ProcessState {
                 return try {
+                    // see https://youtrack.jetbrains.com/issue/IDEA-209249
+                    @Suppress("BlockingMethodInNonBlockingContext")
                     val paymentOrder = configuration
                         .getTopLevelResources(context)
                         .paymentorders
@@ -451,6 +490,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override val uiState get() = UIState.HtmlContent(R.string.swedbankpaysdk_view_paymentorder_template, viewPaymentOrder)
 
             override fun getNextStateAfterPaymentFailed() = PaymentFailed(paymentOrderUrl)
+
+            val callbackUrl: CallbackUrl get() = CallbackUrl(paymentOrderUrl.raw)
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 parcel.writeString(viewPaymentOrder)
