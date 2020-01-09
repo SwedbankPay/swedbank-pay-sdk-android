@@ -79,7 +79,7 @@ publishing {
             artifact(sourceJar)
             groupId 'com.swedbankpay.mobilesdk'
             artifactId 'mobilesdk'
-            version '1.0.0-beta03'
+            version '1.0.0-beta04'
         }
     }
 }
