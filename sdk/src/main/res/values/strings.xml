@@ -2,6 +2,8 @@
 <resources>
     <!-- The host app must provide a unique scheme by overriding this resource -->
     <string name="swedbankpaysdk_callback_url_scheme" />
+    <string name="swedbankpaysdk_callback_host" />
+    <string name="swedbankpaysdk_callback_path_prefix">/sdk-callback/</string>
 
     <string name="swedbankpaysdk_retryable_error_title">Communication Error</string>
     <string name="swedbankpaysdk_retry_button">Retry</string>

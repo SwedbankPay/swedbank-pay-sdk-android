@@ -6,9 +6,10 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonSyntaxException
 import com.google.gson.stream.JsonWriter
 import com.swedbankpay.mobilesdk.Configuration
+import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.RequestDecorator
 import com.swedbankpay.mobilesdk.UserHeaders
-import com.swedbankpay.mobilesdk.internal.CallbackUrl
+import com.swedbankpay.mobilesdk.internal.RefreshCallbackUrl
 import com.swedbankpay.mobilesdk.internal.remote.Api
 import okhttp3.HttpUrl
 import okhttp3.Response
@@ -94,20 +95,25 @@ internal sealed class Link(
             consumerProfileRef: String?,
             merchantData: String?
         ): com.swedbankpay.mobilesdk.internal.remote.json.PaymentOrder {
-            val callbackPrefix = CallbackUrl.getPrefix(context)
-            val body = buildCreatePaymentOrderBody(callbackPrefix, consumerProfileRef, merchantData)
+            val callbackScheme = context.getString(R.string.swedbankpaysdk_callback_url_scheme)
+            val callbackPrefix = RefreshCallbackUrl.getCallbackPrefix(context)
+            val body = buildCreatePaymentOrderBody(callbackScheme, callbackPrefix, consumerProfileRef, merchantData)
             return post(context, configuration, body) {
                 decorateCreatePaymentOrder(it, body, consumerProfileRef, merchantData)
             }
         }
 
-        private fun buildCreatePaymentOrderBody(callbackPrefix: String?, consumerProfileRef: String?, merchantData: String?): String {
+        private fun buildCreatePaymentOrderBody(callbackScheme: String, callbackPrefix: String?, consumerProfileRef: String?, merchantData: String?): String {
             val writer = StringWriter()
-            JsonWriter(writer).use {  it.apply {
+            JsonWriter(writer).use { it.apply {
                 serializeNulls = false
                 beginObject()
-                name("callbackPrefix")
-                value(callbackPrefix)
+                if (callbackScheme.isNotEmpty()) {
+                    name("callbackScheme")
+                    value(callbackScheme)
+                    name("callbackPrefix")
+                    value(callbackPrefix)
+                }
                 name("consumerProfileRef")
                 value(consumerProfileRef)
                 name("merchantData")

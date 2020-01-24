@@ -1,7 +1,6 @@
 package com.swedbankpay.mobilesdk.internal
 
 import android.app.Activity
-import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import androidx.lifecycle.MutableLiveData
@@ -9,14 +8,14 @@ import androidx.lifecycle.MutableLiveData
 internal class CallbackActivity : Activity() {
     companion object {
         val onCallbackUrlInvoked = MutableLiveData<Unit>()
-        private val invokedCallbackUrls = HashSet<CallbackUrl>()
+        private val invokedCallbackUrls = HashSet<RefreshCallbackUrl>()
 
-        private fun onCallbackUrl(callbackUrl: CallbackUrl) {
-            invokedCallbackUrls.add(callbackUrl)
+        private fun onCallbackUrl(refreshCallbackUrl: RefreshCallbackUrl) {
+            invokedCallbackUrls.add(refreshCallbackUrl)
             onCallbackUrlInvoked.value = Unit
         }
-        fun consumeCallbackUrl(callbackUrl: CallbackUrl): Boolean {
-            return invokedCallbackUrls.remove(callbackUrl)
+        fun consumeCallbackUrl(refreshCallbackUrl: RefreshCallbackUrl): Boolean {
+            return invokedCallbackUrls.remove(refreshCallbackUrl)
         }
     }
 
@@ -35,7 +34,7 @@ internal class CallbackActivity : Activity() {
             })
         } else {
             intent.data?.let {
-                CallbackUrl.parse(this, it)
+                RefreshCallbackUrl.parse(this, it)
             }?.let(::onCallbackUrl)
         }
         finish()

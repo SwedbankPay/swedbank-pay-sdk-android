@@ -141,15 +141,15 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     private fun checkCallbacks() {
         val payingState = processState.value as? ProcessState.Paying
         if (payingState != null) {
-            if (CallbackActivity.consumeCallbackUrl(payingState.callbackUrl)) {
+            if (CallbackActivity.consumeCallbackUrl(payingState.refreshCallbackUrl)) {
                 reloadPaymentPage(payingState)
             }
         }
     }
 
-    private fun checkCallback(callbackUrl: CallbackUrl): Boolean {
+    private fun checkCallback(refreshCallbackUrl: RefreshCallbackUrl): Boolean {
         val payingState = processState.value as? ProcessState.Paying
-        return if (payingState?.callbackUrl == callbackUrl) {
+        return if (payingState?.refreshCallbackUrl == refreshCallbackUrl) {
             reloadPaymentPage(payingState)
             true
         } else {
@@ -250,7 +250,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     }
 
     fun overrideNavigation(context: Context, uri: Uri): Boolean {
-        val callbackUrl = CallbackUrl.parse(context, uri)
+        val callbackUrl = RefreshCallbackUrl.parse(context, uri)
         return callbackUrl != null && checkCallback(callbackUrl)
     }
 
@@ -491,7 +491,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
             override fun getNextStateAfterPaymentFailed() = PaymentFailed(paymentOrderUrl)
 
-            val callbackUrl: CallbackUrl get() = CallbackUrl(paymentOrderUrl.raw)
+            val refreshCallbackUrl: RefreshCallbackUrl get() = RefreshCallbackUrl(paymentOrderUrl.raw)
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 parcel.writeString(viewPaymentOrder)
