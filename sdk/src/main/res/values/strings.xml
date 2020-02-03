@@ -20,6 +20,7 @@
     <string name="swedbankpaysdk_intent_failure_body">Unable to launch app: %s</string>
     <string name="swedbankpaysdk_intent_failure_unknown">&lt;unknown&gt;</string>
     <string name="swedbankpaysdk_intent_failure_close">Close</string>
+    <string name="swedbankpaysdk_js_prompt_hint">Input</string>
     
     <string name="swedbankpaysdk_problem_unauthorized">Unauthorized</string>
     <string name="swedbankpaysdk_problem_invalid_request">Service did not recognize the request.</string>

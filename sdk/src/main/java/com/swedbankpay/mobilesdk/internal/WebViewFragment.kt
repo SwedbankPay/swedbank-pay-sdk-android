@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Dialog
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -12,13 +13,15 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.SparseArray
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
+import android.widget.EditText
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.core.util.size
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
@@ -27,7 +30,7 @@ import java.net.URISyntaxException
 
 internal class WebViewFragment : Fragment() {
     private companion object {
-        private const val STATE_WEBVIEW = "W"
+        private const val STATE_WEB_VIEW = "W"
         private const val STATE_BASE_HTML = "B"
 
         private val INTENT_URI_FLAGS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -40,6 +43,9 @@ internal class WebViewFragment : Fragment() {
     private var webView: WebView? = null
     private var webViewActive = false
     private val activeWebView: WebView? get() = webView.takeIf { webViewActive }
+
+    // these are usually unused
+    private val pendingJsResults = SparseArray<JsResult>(0)
 
     private var currentBaseUrl: String? = null
     private var lastBaseHtml: String? = null
@@ -56,7 +62,7 @@ internal class WebViewFragment : Fragment() {
                         saveState(it) != null
                     }
                     webViewState?.let {
-                        outState.putBundle(STATE_WEBVIEW, it)
+                        outState.putBundle(STATE_WEB_VIEW, it)
                         outState.putString(STATE_BASE_HTML, html)
                     }
                 }
@@ -66,7 +72,7 @@ internal class WebViewFragment : Fragment() {
 
     private fun restoreInstanceState(savedInstanceState: Bundle, webView: WebView) {
         val html = savedInstanceState.getString(STATE_BASE_HTML)
-        val state = savedInstanceState.getBundle(STATE_WEBVIEW)
+        val state = savedInstanceState.getBundle(STATE_WEB_VIEW)
         if (html != null && state != null && webView.restoreState(state) != null) {
             currentBaseUrl = null // we never save a "root" state
             lastBaseHtml = html
@@ -80,11 +86,17 @@ internal class WebViewFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         return WebView(inflater.context).apply {
-            webView?.destroy()
+            webView?.apply {
+                webViewClient = null
+                webChromeClient = null
+                destroy()
+            }
+            clearJavascriptDialogs()
             webView = this
             webViewActive = true
 
             webViewClient = MyWebViewClient()
+            webChromeClient = MyWebChromeClient()
             settings.apply {
                 // JavaScript is required for our use case.
                 // The SDK will only use remote content through links
@@ -117,6 +129,11 @@ internal class WebViewFragment : Fragment() {
 
     override fun onDestroyView() {
         webViewActive = false
+        webView?.apply {
+            webViewClient = null
+            webChromeClient = null
+        }
+        clearJavascriptDialogs(allowStateLoss = true)
         super.onDestroyView()
     }
 
@@ -132,6 +149,7 @@ internal class WebViewFragment : Fragment() {
         restored = false
 
         activeWebView?.apply {
+            clearJavascriptDialogs()
             clearHistory()
             loadUrl("about:blank")
         }
@@ -149,10 +167,44 @@ internal class WebViewFragment : Fragment() {
         currentBaseUrl = baseUrl
         lastBaseHtml = htmlString
         activeWebView?.apply {
+            clearJavascriptDialogs()
             clearHistory()
             loadDataWithBaseURL(baseUrl, htmlString, "text/html", "utf-8", "")
         }
         return true
+    }
+
+    private fun showJavascriptDialog(dialog: JSDialogFragment, result: JsResult) {
+        if (webViewActive) {
+            val key = pendingJsResults.size
+            pendingJsResults.append(key, result)
+            dialog.resultKey = key
+            dialog.show(childFragmentManager, null)
+        }
+    }
+
+    private fun consumePendingJsResult(dialog: JSDialogFragment): JsResult? {
+        val index = pendingJsResults.indexOfKey(dialog.resultKey)
+        return if (index >= 0) {
+            val result = pendingJsResults.valueAt(index)
+            pendingJsResults.removeAt(index)
+            result
+        } else {
+            null
+        }
+    }
+
+    private fun clearJavascriptDialogs(allowStateLoss: Boolean = false) {
+        pendingJsResults.clear()
+        for (fragment in childFragmentManager.fragments) {
+            (fragment as? JSDialogFragment)?.apply {
+                if (allowStateLoss) {
+                    dismissAllowingStateLoss()
+                } else {
+                    dismiss()
+                }
+            }
+        }
     }
 
     private fun showIntentUriErrorDialog(uri: Uri) {
@@ -274,6 +326,139 @@ internal class WebViewFragment : Fragment() {
                     // only open http(s) links in external apps if the intent filter is a "good" match
                     resolveInfo.match and IntentFilter.MATCH_CATEGORY_MASK >= IntentFilter.MATCH_CATEGORY_HOST
                 else -> true
+            }
+        }
+    }
+
+    private inner class MyWebChromeClient : WebChromeClient() {
+        override fun onJsAlert(
+            view: WebView?,
+            url: String?,
+            message: String?,
+            result: JsResult
+        ): Boolean {
+            showJavascriptDialog(JSDialogFragment.newAlert(message), result)
+            return true
+        }
+
+        override fun onJsConfirm(
+            view: WebView?,
+            url: String?,
+            message: String?,
+            result: JsResult
+        ): Boolean {
+            showJavascriptDialog(JSDialogFragment.newConfirm(message), result)
+            return true
+        }
+
+        override fun onJsPrompt(
+            view: WebView?,
+            url: String?,
+            message: String?,
+            defaultValue: String?,
+            result: JsPromptResult
+        ): Boolean {
+            showJavascriptDialog(JSDialogFragment.newPrompt(message, defaultValue), result)
+            return true
+        }
+    }
+
+    abstract class JSDialogFragment : DialogFragment(), DialogInterface.OnClickListener {
+        companion object {
+            private const val ARG_RESULT_KEY = "K"
+            private const val ARG_MESSAGE = "M"
+            private const val ARG_HAS_CANCEL = "C"
+            private const val ARG_DEFAULT_VALUE = "D"
+
+            fun newAlert(message: String?) = Simple().apply {
+                arguments = buildArguments(message, false)
+            }
+
+            fun newConfirm(message: String?) = Simple().apply {
+                arguments = buildArguments(message, true)
+            }
+
+            fun newPrompt(message: String?, defaultValue: String?) = Prompt().apply {
+                arguments = buildArguments(message, true, defaultValue)
+            }
+
+            private fun buildArguments(message: String?, hasCancel: Boolean, defaultValue: String? = null)
+                    = Bundle().apply {
+                putString(ARG_MESSAGE, message)
+                putBoolean(ARG_HAS_CANCEL, hasCancel)
+                putString(ARG_DEFAULT_VALUE, defaultValue)
+            }
+        }
+
+        private var resultSent = false
+
+        var resultKey: Int
+            get() = checkNotNull(arguments?.get(ARG_RESULT_KEY) as? Int)
+            set(value) = checkNotNull(arguments).putInt(ARG_RESULT_KEY, value)
+
+        protected abstract fun setView(builder: AlertDialog.Builder)
+        protected abstract fun onConfirm(result: JsResult)
+
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+            return AlertDialog.Builder(requireContext(), theme)
+                .also {
+                    setView(it)
+                    if (checkNotNull(arguments).getBoolean(ARG_HAS_CANCEL)) {
+                        it.setNegativeButton("no", this)
+                    }
+                    it.setPositiveButton("yes", this)
+                }
+                .create()
+        }
+
+        override fun onDismiss(dialog: DialogInterface) {
+            super.onDismiss(dialog)
+            if (!resultSent) {
+                resultSent = true
+                (parentFragment as? WebViewFragment)?.consumePendingJsResult(this)?.let {
+                    if (checkNotNull(arguments).getBoolean(ARG_HAS_CANCEL)) {
+                        it.cancel()
+                    } else {
+                        it.confirm()
+                    }
+                }
+            }
+        }
+
+        override fun onClick(dialog: DialogInterface?, which: Int) {
+            resultSent = true
+            (parentFragment as? WebViewFragment)?.consumePendingJsResult(this)?.let {
+                when (which) {
+                    DialogInterface.BUTTON_NEGATIVE -> it.cancel()
+                    DialogInterface.BUTTON_POSITIVE -> onConfirm(it)
+                }
+            }
+            dismiss()
+        }
+
+        class Simple : JSDialogFragment() {
+            override fun setView(builder: AlertDialog.Builder) {
+                builder.setMessage(checkNotNull(arguments).getString(ARG_MESSAGE))
+            }
+
+            override fun onConfirm(result: JsResult) {
+                result.confirm()
+            }
+        }
+        class Prompt : JSDialogFragment() {
+            override fun setView(builder: AlertDialog.Builder) {
+                val args = checkNotNull(arguments)
+
+                @SuppressLint("InflateParams") // must use null as parent of dialog view
+                val view = LayoutInflater.from(builder.context).inflate(R.layout.swedbankpaysdk_webviewfragment_prompt, null)
+                view.findViewById<TextView>(R.id.swedbankpaysdk_prompt_message).text = args.getString(ARG_MESSAGE)
+                view.findViewById<EditText>(R.id.swedbankpaysdk_prompt_value).setText(args.getString(ARG_DEFAULT_VALUE))
+                builder.setView(view)
+            }
+
+            override fun onConfirm(result: JsResult) {
+                val value = dialog?.findViewById<EditText>(R.id.swedbankpaysdk_prompt_value)?.text?.toString()
+                (result as JsPromptResult).confirm(value ?: "")
             }
         }
     }

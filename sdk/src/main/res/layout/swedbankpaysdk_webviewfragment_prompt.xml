@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    style="@style/Base.DialogWindowTitleBackground.AppCompat">
+    <TextView
+        android:id="@+id/swedbankpaysdk_prompt_message"
+        style="@style/TextAppearance.AppCompat.Subhead"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="Message" />
+    <EditText
+        android:id="@+id/swedbankpaysdk_prompt_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:hint="@string/swedbankpaysdk_js_prompt_hint"
+        android:importantForAutofill="no" />
+</LinearLayout>
