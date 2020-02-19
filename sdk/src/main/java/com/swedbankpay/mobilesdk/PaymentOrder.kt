@@ -21,11 +21,13 @@ data class PaymentOrder(
     @SerializedName("userAgent") val userAgent: String = Defaults.userAgent,
     @SerializedName("language") val language: Language = Defaults.language,
     @SerializedName("generateRecurrenceToken") val generateRecurrenceToken: Boolean = Defaults.generateRecurrenceToken,
+    @SerializedName("restrictedToInstruments") val restrictedToInstruments: List<String>? = Defaults.restrictedToInstruments,
     @SerializedName("urls") val urls: PaymentOrderUrls,
     @SerializedName("payeeInfo") val payeeInfo: PayeeInfo = Defaults.payeeInfo,
     @SerializedName("payer") val payer: PaymentOrderPayer? = Defaults.payer,
     @SerializedName("orderItems") val orderItems: List<OrderItem>? = Defaults.orderItems,
     @SerializedName("riskIndicator") val riskIndicator: RiskIndicator? = Defaults.riskIndicator,
+    @SerializedName("disablePaymentMenu") val disablePaymentMenu: Boolean = Defaults.disablePaymentMenu,
 
     // /** @hide */
     @Transient override val extensionProperties: Bundle? = null
@@ -47,12 +49,14 @@ data class PaymentOrder(
         private var userAgent = Defaults.userAgent
         private var language = Defaults.language
         private var generateRecurrenceToken = Defaults.generateRecurrenceToken
+        private var restrictedToInstruments = Defaults.restrictedToInstruments
         private var urls: PaymentOrderUrls? = null
         private var payeeInfo = Defaults.payeeInfo
         private var payer = Defaults.payer
         private var orderItems = Defaults.orderItems
         private var riskIndicator = Defaults.riskIndicator
         private var extensionProperties: Bundle? = null
+        private var disablePaymentMenu = Defaults.disablePaymentMenu
 
         fun operation(operation: PaymentOrderOperation) = apply { this.operation = operation }
         fun currency(currency: Currency) = apply { this.currency = currency }
@@ -62,11 +66,13 @@ data class PaymentOrder(
         fun userAgent(userAgent: String) = apply { this.userAgent = userAgent }
         fun language(language: Language) = apply { this.language = language }
         fun generateRecurrenceToken(generateRecurrenceToken: Boolean) = apply { this.generateRecurrenceToken = generateRecurrenceToken }
+        fun restrictedToInstruments(restrictedToInstruments: List<String>?) = apply { this.restrictedToInstruments = restrictedToInstruments }
         fun urls(urls: PaymentOrderUrls) = apply { this.urls = urls }
         fun payeeInfo(payeeInfo: PayeeInfo) = apply { this.payeeInfo = payeeInfo }
         fun payer(payer: PaymentOrderPayer?) = apply { this.payer = payer }
         fun orderItems(orderItems: List<OrderItem>?) = apply { this.orderItems = orderItems }
         fun riskIndicator(riskIndicator: RiskIndicator?) = apply { this.riskIndicator = riskIndicator }
+        fun disablePaymentMenu(disablePaymentMenu: Boolean) = apply { this.disablePaymentMenu = disablePaymentMenu }
 
         /** @hide */
         fun extensionProperties(extensionProperties: Bundle?) = apply { this.extensionProperties = extensionProperties }
@@ -80,11 +86,14 @@ data class PaymentOrder(
             userAgent = userAgent,
             language = language,
             generateRecurrenceToken = generateRecurrenceToken,
+            restrictedToInstruments = restrictedToInstruments,
             urls = checkBuilderNotNull(urls, "urls"),
             payeeInfo = payeeInfo,
             payer = payer,
             orderItems = orderItems,
             riskIndicator = riskIndicator,
+            disablePaymentMenu = disablePaymentMenu,
+
             extensionProperties = extensionProperties
         )
     }
@@ -94,10 +103,12 @@ data class PaymentOrder(
         const val userAgent = "SwedbankPaySDK-Android/${BuildConfig.VERSION_NAME}"
         val language = Language.ENGLISH
         const val generateRecurrenceToken = false
+        val restrictedToInstruments: List<String>? = null
         val payeeInfo = PayeeInfo()
         val payer: PaymentOrderPayer? = null
         val orderItems: List<OrderItem>? = null
         val riskIndicator: RiskIndicator? = null
+        const val disablePaymentMenu = false
     }
 
     override fun describeContents() = 0
@@ -111,11 +122,14 @@ data class PaymentOrder(
             writeString(userAgent)
             writeEnum(language)
             writeBooleanCompat(generateRecurrenceToken)
+            writeStringList(restrictedToInstruments)
             writeParcelable(urls, flags)
             writeParcelable(payeeInfo, flags)
             writeParcelable(payer, flags)
             writeTypedList(orderItems)
             writeParcelable(riskIndicator, flags)
+            writeBooleanCompat(disablePaymentMenu)
+
             writeBundle(extensionProperties)
         }
     }
@@ -128,11 +142,14 @@ data class PaymentOrder(
         userAgent = checkNotNull(parcel.readString()),
         language = checkNotNull(parcel.readEnum<Language>()),
         generateRecurrenceToken = parcel.readBooleanCompat(),
+        restrictedToInstruments = parcel.createStringArrayList(),
         urls = checkNotNull(parcel.readParcelable()),
         payeeInfo = checkNotNull(parcel.readParcelable()),
         payer = parcel.readParcelable(),
         orderItems = parcel.createTypedArrayList(OrderItem.CREATOR),
         riskIndicator = parcel.readParcelable(),
+        disablePaymentMenu = parcel.readBooleanCompat(),
+
         extensionProperties = parcel.readBundle(PaymentOrder::class.java.classLoader)
     )
 }
