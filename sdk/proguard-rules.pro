@@ -9,9 +9,16 @@
     @android.webkit.JavascriptInterface public <methods>;
 }
 
+-keepclassmembers enum com.swedbankpay.mobilesdk.** {
+    @com.google.gson.annotations.SerializedName static <fields>;
+}
+
+-keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.** {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
 -keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.internal.remote.json.* {
     <init>();
-    @com.google.gson.annotations.SerializedName <fields>;
 }
 
 -keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.internal.remote.json.Link* {
