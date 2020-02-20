@@ -9,22 +9,96 @@ import com.swedbankpay.mobilesdk.internal.makeCreator
 import com.swedbankpay.mobilesdk.internal.readEnum
 import com.swedbankpay.mobilesdk.internal.writeEnum
 
+/**
+ * An item being paid for, part of a [PaymentOrder].
+ *
+ * OrderItems are an optional, but recommended, part of PaymentOrders.
+ * To use them, create an OrderItem for each distinct item the paymentorder
+ * is for: e.g. if the consumer is paying for one Thingamajig and two
+ * Watchamacallits, which will be shipped to the consumer's address,
+ * you would create three OrderItems: one for the lone Thingamajig,
+ * one for the two Watchamacallits, and one for the shipping fee.
+ *
+ * When using OrderItems, make sure that the sum of the OrderItems'
+ * amount and vatAmount are equal to the PaymentOrder's amount
+ * and vatAmount properties, respectively.
+ */
 @Suppress("unused")
 data class OrderItem(
+    /**
+     * A reference that identifies the item in your own systems.
+     */
     @SerializedName("reference") val reference: String,
+    /**
+     * Name of the item
+     */
     @SerializedName("name") val name: String,
+    /**
+     * Type of the item
+     */
     @SerializedName("type") val type: ItemType,
+    /**
+     * A classification of the item. Must not contain spaces.
+     *
+     * Can be used for assigning the order item to a specific product category,
+     * such as <code>"MobilePhone"</code>.
+     *
+     * Swedbank Pay may use this field for statistics.
+     */
     @SerializedName("class") @get:JvmName("getItemClass") val `class`: String,
+    /**
+     * URL of a web page that contains information about the item
+     */
     @SerializedName("itemUrl") val itemUrl: String? = null,
+    /**
+     * URL to an image of the item
+     */
     @SerializedName("imageUrl") val imageUrl: String? = null,
+    /**
+     * Human-friendly description of the item
+     */
     @SerializedName("description") val description: String? = null,
+    /**
+     * Human-friendly description of the discount on the item, if applicable
+     */
     @SerializedName("discountDescription") val discountDescription: String? = null,
+    /**
+     * Quantity of the item being purchased
+     */
     @SerializedName("quantity") val quantity: Int,
+    /**
+     * Unit of the quantity
+     *
+     * E.g. <code>"pcs"</code>, <code>"grams"</code>
+     */
     @SerializedName("quantityUnit") val quantityUnit: String,
+    /**
+     * Price of a single unit, including VAT.
+     */
     @SerializedName("unitPrice") val unitPrice: Long,
+    /**
+     * The discounted price of the item, if applicable
+     */
     @SerializedName("discountPrice") val discountPrice: Long? = null,
+    /**
+     * The VAT percent value, multiplied by 100.
+     *
+     * E.g. 25% would be represented as <code>2500</code>.
+     */
     @SerializedName("vatPercent") val vatPercent: Int,
+    /**
+     * The total amount, including VAT, paid for the specified quantity of the item.
+     *
+     * Denoted in the smallest monetary unit applicable, typically 1/100.
+     * E.g. 50.00 SEK would be represented as <code>5000</code>.
+     */
     @SerializedName("amount") val amount: Long,
+    /**
+     * The total amount of VAT paid for the specified quantity of the item.
+     *
+     * Denoted in the smallest monetary unit applicable, typically 1/100.
+     * E.g. 50.00 SEK would be represented as <code>5000</code>.
+     */
     @SerializedName("vatAmount") val vatAmount: Long
 ) : Parcelable {
     companion object {

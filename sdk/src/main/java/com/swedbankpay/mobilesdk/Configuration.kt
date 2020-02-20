@@ -54,8 +54,9 @@ class Configuration private constructor(builder: Builder) {
          *
          * @param pattern the hostname pattern to pin
          * @param certificates the certificates to require for the pattern
+         * @return this
          */
-        fun pinCertificates(pattern: String, vararg certificates: String) {
+        fun pinCertificates(pattern: String, vararg certificates: String) = apply {
             val pinnerBuilder = pinnerBuilder ?: CertificatePinner.Builder().also {
                 pinnerBuilder = it
             }
