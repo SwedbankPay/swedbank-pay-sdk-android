@@ -6,7 +6,11 @@
 
 The Swedbank Pay Android SDK enables simple embedding of [Swedbank Pay Checkout](https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/payex-checkout) to an Android application.
 
-### Installation
+## About
+
+**IMPORTANT**: This SDK is at an early stage and not yet used in production. We do not offer support for this version, but will release supported versions in the future. Feel free to play around, but for full functionality and support, please wait for the supported, stable release.
+
+## Installation
 
 Gradle:
 ```gradle
@@ -34,19 +38,19 @@ allprojects {
 }
 ```
 
-#### Important Note
+### Important Note
 
 The AndroidX Appcompat library version 1.1.0 (`androidx.appcompat:appcompat:1.1.0`) has a bug which can cause crashes when using WebView. If your app uses the Appcompat library, you should not use a version later than 1.1.0-rc01, i.e. `androidx.appcompat:appcompat:1.1.0-rc01` unless your minSdkVersion is high enough not to be affected by the bug.
 
 Related Google tickets are https://issuetracker.google.com/issues/141132133 and https://issuetracker.google.com/issues/141351441 (N.B. the crash can occur by simply showing a WebView, a long press is not needed, and is actually not necessarily even related to this crash.)
 
-### Documentation
+## Documentation
 
 To use the SDK you must have a "merchant backend" server running. Please refer to the merchant backend example [documentation](https://github.com/SwedbankPay/swedbank-pay-sdk-mobile-example-merchant) on how to set one up.
 
 SDK Class documentation is available [here](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/index.html). An example project demonstrating simple payments is available [here](https://github.com/SwedbankPay/swedbank-pay-sdk-android-example-app).
 
-#### Configuring The SDK
+### Configuring The SDK
 
 First, you must [build](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-configuration/-builder/index.html) a [Configuration](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-configuration/index.html) specific to your merchant backend. All Configurations need the merchant backend url. Only the entry point url is specified in the client configuration, and other needed endpoints are found by following links returned by the backend.
 
@@ -64,7 +68,7 @@ Finally, you can [set](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/
 
 If do not need to dynamically change your Configuration at run time, you can simply set your Configuration as the [default Configuration](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-payment-fragment/default-configuration.html) for [PaymentFragments](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-payment-fragment/index.html). For more advanced use-cases, you may need to subclass PaymentFragment and override [getConfiguration](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-payment-fragment/get-configuration.html).
 
-#### Making A Payment
+### Making A Payment
 
 To make a payment, you show a [PaymentFragment](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-payment-fragment/index.html). The PaymentFragment requires certain [arguments](https://developer.android.com/reference/androidx/fragment/app/Fragment.html#setArguments(android.os.Bundle)) to function; attempting to show a PaymentFragment without the proper arguments results in an exception.
 
@@ -74,7 +78,7 @@ By default, the payment will be anonymous. You may, optionally, support identifi
 
 The PaymentFragment may also be configured to [disable certain parts of its default UI](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-payment-fragment/-arguments-builder/set-enabled-default-u-i.html), and even to use a custom ViewModelProvider key for the [PaymentViewModel](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-payment-view-model/index.html) used to control the PaymentFragment. These are for advanced use-cases; please refer to the class documentation on how to use these.
 
-### The Payment Process
+## The Payment Process
 
 PaymentFragment handles the UI for the payment process, but the containing app must observe its state. This is done through [PaymentViewModel](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-payment-view-model/index.html). You obtain the PaymentViewModel from the containing activity:
 `ViewModelProviders.of(activity).get(PaymentViewModel::class.java)`.
@@ -83,7 +87,7 @@ PaymentViewModel contains two properties: `state` and `richState`. For simple ca
 
 PaymentViewModel also contains one method, `retryPreviousAction`, which can be called if `state` is `RETRYABLE_ERROR`. It retries the current step in the process. The default UI has a pull-to-refresh widget for the reload action.
 
-### Problems
+## Problems
 
 Swedbank Pay, and the example merchant backend both use [Problem Details for HTTP APIs](https://tools.ietf.org/html/rfc7807) application/problem+json for error reporting. Your custom merchant backend is encouraged to do so as well. The SDK contains facilities for propagating these Problem objects to the containing app's code.
 
@@ -98,7 +102,7 @@ There are also some interfaces for Problems with common elements. Please refer t
  - [UnknownProblem](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-unknown-problem/index.html)
  - [UnexpectedContentProblem](https://qvik-payex-dev.s3.eu-north-1.amazonaws.com/dokka/sdk/com.swedbankpay.mobilesdk/-unexpected-content-problem/index.html)
 
-### License
+## License
 
 Swedbank Pay Android SDK is released under the [Apache 2.0 license](LICENSE).
 
