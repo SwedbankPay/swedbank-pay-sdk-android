@@ -1,4 +1,6 @@
-# Swedbank Pay Android SDK
+# Swedbank Pay SDK for Android
+
+![Swedbank Pay SDK for Android][opengraph-image]
 
 [![Download](https://api.bintray.com/packages/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/images/download.svg?version=1.0.0-beta01) ](https://bintray.com/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/1.0.0-beta01/link)
 
@@ -99,3 +101,5 @@ There are also some interfaces for Problems with common elements. Please refer t
 ### License
 
 Swedbank Pay Android SDK is released under the [Apache 2.0 license](LICENSE).
+
+[opengraph-image]: https://repository-images.githubusercontent.com/209749704/df2ce180-53e8-11ea-95a5-490dbe7c7706
