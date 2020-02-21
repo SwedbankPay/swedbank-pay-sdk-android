@@ -52,6 +52,8 @@ internal class WebViewFragment : Fragment() {
 
     private var restored = false
 
+    private var useBrowser: Boolean = false
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         // only save webview state if it is not showing the initial page
@@ -109,6 +111,7 @@ internal class WebViewFragment : Fragment() {
                 domStorageEnabled = true
             }
             val vm = ViewModelProviders.of(requireParentFragment())[InternalPaymentViewModel::class.java]
+            useBrowser = vm.useExternalBrowser
             addJavascriptInterface(vm.javascriptInterface, getString(R.string.swedbankpaysdk_javascript_interface_name))
 
             savedInstanceState?.let {
@@ -321,6 +324,7 @@ internal class WebViewFragment : Fragment() {
         }
 
         private fun shouldStartActivity(uri: Uri, resolveInfo: ResolveInfo): Boolean {
+            if(useBrowser) return true
             return when (uri.scheme) {
                 "http", "https" ->
                     // only open http(s) links in external apps if the intent filter is a "good" match
