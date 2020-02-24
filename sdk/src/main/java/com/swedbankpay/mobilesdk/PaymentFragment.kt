@@ -78,6 +78,7 @@ open class PaymentFragment : Fragment() {
         private var consumer: Consumer? = null
         private var paymentOrder: PaymentOrder? = null
         private var viewModelKey: String? = null
+        private var useExternalBrowser: Boolean = false
         @DefaultUI
         private var enabledDefaultUI = RETRY_PROMPT
 
@@ -100,6 +101,12 @@ open class PaymentFragment : Fragment() {
          * @param viewModelKey the [androidx.lifecycle.ViewModelProvider] key the PaymentFragment uses to find its [PaymentViewModel] in the containing [activity][androidx.fragment.app.FragmentActivity]
          */
         fun viewModelProviderKey(viewModelKey: String?) = apply { this.viewModelKey = viewModelKey }
+
+        /**
+         * Sets if the payment flow should open an external browser or continue in WebView.
+         * @param external set tu true if the external browser should be used instead of the WebView
+         */
+        fun useBrowser(external: Boolean = false) = apply { this.useExternalBrowser = external }
 
         /**
          * Set the enabled default user interfaces.
@@ -133,6 +140,7 @@ open class PaymentFragment : Fragment() {
         fun build(bundle: Bundle) = bundle.apply {
             putParcelable(ARG_CONSUMER, consumer)
             putParcelable(ARG_PAYMENT_ORDER, paymentOrder)
+            putBoolean(ARG_USE_BROWSER, useExternalBrowser)
             viewModelKey?.let { putString(ARG_VIEW_MODEL_PROVIDER_KEY, it) }
             putInt(ARG_ENABLED_DEFAULT_UI, enabledDefaultUI)
         }
@@ -170,6 +178,7 @@ open class PaymentFragment : Fragment() {
         const val ERROR_MESSAGE = 1 shl 2
 
         const val ARG_CONSUMER = "com.swedbankpay.mobilesdk.ARG_CONSUMER"
+        const val ARG_USE_BROWSER = "com.swedbankpay.mobilesdk.ARG_USE_BROWSER"
         const val ARG_PAYMENT_ORDER = "com.swedbankpay.mobilesdk.ARG_PAYMENT_ORDER"
         const val ARG_VIEW_MODEL_PROVIDER_KEY = "com.swedbankpay.mobilesdk.ARG_VIEW_MODEL_PROVIDER_KEY"
         const val ARG_ENABLED_DEFAULT_UI = "com.swedbankpay.mobilesdk.ARG_DEFAULT_UI"
@@ -325,7 +334,8 @@ open class PaymentFragment : Fragment() {
                 val paymentOrder = checkNotNull(getParcelable<PaymentOrder>(ARG_PAYMENT_ORDER)) {
                     "Fragment $this@PaymentFragment does not have a PaymentFragment.ARG_PAYMENT_ORDER argument."
                 }
-                vm.start(consumer, paymentOrder)
+                val useExternal = getBoolean(ARG_USE_BROWSER)
+                vm.start(consumer, paymentOrder, useExternal)
             }
         }
     }

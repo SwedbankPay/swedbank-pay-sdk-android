@@ -106,6 +106,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     init {
         CallbackActivity.onCallbackUrlInvoked.observeForever(callbackUrlObserver)
     }
+    
+    var useExternalBrowser: Boolean = false
+        private set
 
     override fun onCleared() {
         super.onCleared()
@@ -187,7 +190,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         }
     }
 
-    fun start(consumer: Consumer?, paymentOrder: PaymentOrder) {
+    fun start(consumer: Consumer?, paymentOrder: PaymentOrder, useBrowser: Boolean) {
+        useExternalBrowser = useBrowser
         if (processState.value == null) {
             val state = if (consumer != null) {
                 ProcessState.InitializingConsumerSession(consumer, paymentOrder)
