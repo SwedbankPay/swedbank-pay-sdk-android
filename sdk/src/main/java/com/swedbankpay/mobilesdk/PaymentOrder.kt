@@ -29,10 +29,9 @@ data class PaymentOrder(
     @SerializedName("riskIndicator") val riskIndicator: RiskIndicator? = Defaults.riskIndicator,
     @SerializedName("disablePaymentMenu") val disablePaymentMenu: Boolean = Defaults.disablePaymentMenu,
 
-    // /** @hide */
+    /** @hide */
     @Transient override val extensionProperties: Bundle? = null
-) : Parcelable,
-    ExtensibleJsonObject {
+) : Parcelable, ExtensibleJsonObject {
     companion object {
         @Suppress("unused")
         @JvmField
