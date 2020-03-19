@@ -38,18 +38,6 @@
         &lt;script language="javascript">
             payex.hostedView.paymentMenu({
                 container: \"checkout\",
-                onPaymentCompleted: function(event) {
-                    swedbankpaysdk.onPaymentCompleted();
-                },
-                onPaymentCanceled: function(event) {
-                    swedbankpaysdk.onPaymentCanceled();
-                },
-                onPaymentFailed: function(event) {
-                    swedbankpaysdk.onPaymentFailed();
-                },
-                onPaymentToS: function(event) {
-                    swedbankpaysdk.onPaymentToS(JSON.stringify(event));
-                },
                 onError: function(error) {
                     swedbankpaysdk.onPaymentError(JSON.stringify(error));
                 }

@@ -146,16 +146,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         }
     }
 
-    private fun checkCallback(refreshCallbackUrl: RefreshCallbackUrl): Boolean {
-        val payingState = processState.value as? ProcessState.Paying
-        return if (payingState?.refreshCallbackUrl == refreshCallbackUrl) {
-            reloadPaymentPage(payingState)
-            true
-        } else {
-            false
-        }
-    }
-
     private fun reloadPaymentPage(payingState: ProcessState.Paying) {
         reloadRequested = true
         // Call setValue to make observers rebind themselves
@@ -222,26 +212,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             ?.let(::setProcessState)
     }
 
-    fun onPaymentToS(url: String) {
-        // See comment at PaymentViewModel.retryPreviousAction()
-        termsOfServiceUrl.value = url
-        termsOfServiceUrl.value = null
-    }
-
-    fun onPaymentSuccess() {
-        setProcessState(ProcessState.Success)
-    }
-
-    fun onPaymentCanceled() {
-        setProcessState(ProcessState.Canceled)
-    }
-
-    fun onPaymentFailed() {
-        processState.value
-            ?.getNextStateAfterPaymentFailed()
-            ?.let(::setProcessState)
-    }
-
     fun onError(terminalFailure: TerminalFailure?) {
         setProcessState(ProcessState.SwedbankPayError(terminalFailure))
     }
@@ -250,9 +220,20 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         return (processState.value as? ProcessState.Paying)?.uiState?.getWebViewPage(this)
     }
 
-    fun overrideNavigation(context: Context, uri: Uri): Boolean {
-        val callbackUrl = RefreshCallbackUrl.parse(context, uri)
-        return callbackUrl != null && checkCallback(callbackUrl)
+    fun overrideNavigation(uri: Uri): Boolean {
+        val payingState = processState.value as? ProcessState.Paying ?: return false
+        when (val uriString = uri.toString()) {
+            payingState.completeUrl -> setProcessState(ProcessState.Success)
+            payingState.cancelUrl -> setProcessState(ProcessState.Canceled)
+            payingState.paymentUrl -> reloadPaymentPage(payingState)
+            payingState.termsOfServiceUrl -> {
+                // See comment at PaymentViewModel.retryPreviousAction()
+                termsOfServiceUrl.value = uriString
+                termsOfServiceUrl.value = null
+            }
+            else -> return false
+        }
+        return true
     }
 
     private fun Problem.getFriendlyDescription(): String {
@@ -299,7 +280,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         open val isRetryableErrorState get() = false
         open suspend fun getNextState(context: Context, configuration: Configuration) = this
         open fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState? = null
-        open fun getNextStateAfterPaymentFailed(): ProcessState? = null
 
         override fun describeContents() = 0
 
@@ -422,7 +402,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                     val paymentOrderOut = consumerProfileRef?.let {
                         paymentOrder.copy(payer = PaymentOrderPayer(it))
                     } ?: paymentOrder
-                    val paymentToken = paymentOrderOut.urls.paymentToken
+                    val urls = paymentOrderOut.urls
                     // see https://youtrack.jetbrains.com/issue/IDEA-209249
                     @Suppress("BlockingMethodInNonBlockingContext")
                     val paymentOrderIn = configuration
@@ -432,7 +412,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                     val viewPaymentOrder =
                         paymentOrderIn.operations.find("view-paymentorder")?.href
                             ?: throw IOException("Missing required operation")
-                    Paying(paymentToken, viewPaymentOrder/*, paymentOrderIn.url*/)
+                    Paying(urls, viewPaymentOrder)
                 } catch (e: RequestProblemException) {
                     FailedCreatePaymentOrder(consumerProfileRef, paymentOrder, e.problem, null)
                 } catch (e: Exception) {
@@ -488,23 +468,26 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         }
 
         class Paying(
-            private val paymentToken: String,
+            private val paymentOrderUrls: PaymentOrderUrls,
             private val viewPaymentOrder: String
         ) : ProcessState() {
             companion object { @JvmField val CREATOR = makeCreator(::Paying) }
 
             override val uiState get() = UIState.HtmlContent(R.string.swedbankpaysdk_view_paymentorder_template, viewPaymentOrder)
 
-            override fun getNextStateAfterPaymentFailed() = PaymentFailed
+            val completeUrl get() = paymentOrderUrls.completeUrl
+            val cancelUrl get() = paymentOrderUrls.cancelUrl
+            val paymentUrl get() = paymentOrderUrls.paymentUrl
+            val termsOfServiceUrl get() = paymentOrderUrls.termsOfServiceUrl
 
-            val refreshCallbackUrl: RefreshCallbackUrl? get() = RefreshCallbackUrl(paymentToken)
+            val refreshCallbackUrl get() = RefreshCallbackUrl(paymentOrderUrls.paymentToken)
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeString(paymentToken)
+                parcel.writeParcelable(paymentOrderUrls, flags)
                 parcel.writeString(viewPaymentOrder)
             }
             constructor(parcel: Parcel) : this(
-                checkNotNull(parcel.readString()),
+                checkNotNull(parcel.readParcelable()),
                 checkNotNull(parcel.readString())
             )
         }
@@ -521,13 +504,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {}
             @JvmField val CREATOR = makeCreator { Canceled }
-        }
-
-        object PaymentFailed : ProcessState() {
-            override val uiState get() = UIState.Failure(null)
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {}
-            @JvmField val CREATOR = makeCreator { PaymentFailed }
         }
 
         class SwedbankPayError(

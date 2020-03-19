@@ -47,29 +47,6 @@ internal class JSInterface(var vm: InternalPaymentViewModel?) {
     }
 
     @JavascriptInterface
-    fun onPaymentCompleted() = withViewModel {
-        onPaymentSuccess()
-
-    }
-
-    @JavascriptInterface
-    fun onPaymentCanceled() = withViewModel {
-        onPaymentCanceled()
-    }
-
-    @JavascriptInterface
-    fun onPaymentFailed() = withViewModel {
-        onPaymentFailed()
-    }
-
-    @JavascriptInterface
-    fun onPaymentToS(event: String) {
-        withViewModelAndEvent<OnPaymentToSEvent>(event) {
-            it?.openUrl?.let(::onPaymentToS)
-        }
-    }
-
-    @JavascriptInterface
     fun onPaymentError(error: String) {
         withViewModelAndEvent(error, InternalPaymentViewModel::onError)
     }

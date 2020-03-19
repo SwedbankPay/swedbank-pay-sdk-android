@@ -243,9 +243,8 @@ internal class WebViewFragment : Fragment() {
 
         private fun attemptHandleByViewModel(uri: Uri): Boolean {
             val parentFragment = parentFragment ?: return false
-            val context = context ?: return false
             val vm = ViewModelProviders.of(parentFragment)[InternalPaymentViewModel::class.java]
-            return vm.overrideNavigation(context, uri)
+            return vm.overrideNavigation(uri)
         }
 
         private fun attemptHandleIntentUri(uri: Uri): Boolean {
