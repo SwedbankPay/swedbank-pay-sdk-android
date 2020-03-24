@@ -140,7 +140,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
     private fun checkCallbacks() {
         val payingState = processState.value as? ProcessState.Paying
-        val callbackUrl = payingState?.refreshCallbackUrl
+        val callbackUrl = payingState?.paymentUrl
         if (callbackUrl != null && CallbackActivity.consumeCallbackUrl(callbackUrl)) {
             reloadPaymentPage(payingState)
         }
@@ -269,7 +269,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class RetryableError(val problem: Problem?, val ioException: IOException?, @StringRes val message: Int) : UIState()
         object Success : UIState()
         object Canceled : UIState()
-        class Failure(/*val paymentOrderUrl: Link.PaymentOrder?, */val terminalFailure: TerminalFailure?) : UIState()
+        class Failure(val terminalFailure: TerminalFailure?) : UIState()
     }
 
     @Suppress("unused") // The IDE does not understand @JvmField val CREATOR
@@ -479,8 +479,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             val cancelUrl get() = paymentOrderUrls.cancelUrl
             val paymentUrl get() = paymentOrderUrls.paymentUrl
             val termsOfServiceUrl get() = paymentOrderUrls.termsOfServiceUrl
-
-            val refreshCallbackUrl get() = RefreshCallbackUrl(paymentOrderUrls.paymentToken)
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 parcel.writeParcelable(paymentOrderUrls, flags)

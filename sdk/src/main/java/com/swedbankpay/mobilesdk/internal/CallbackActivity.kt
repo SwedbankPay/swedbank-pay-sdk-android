@@ -8,13 +8,13 @@ import androidx.lifecycle.MutableLiveData
 internal class CallbackActivity : Activity() {
     companion object {
         val onCallbackUrlInvoked = MutableLiveData<Unit>()
-        private val invokedCallbackUrls = HashSet<RefreshCallbackUrl>()
+        private val invokedCallbackUrls = HashSet<String>()
 
-        private fun onCallbackUrl(refreshCallbackUrl: RefreshCallbackUrl) {
+        private fun onCallbackUrl(refreshCallbackUrl: String) {
             invokedCallbackUrls.add(refreshCallbackUrl)
             onCallbackUrlInvoked.value = Unit
         }
-        fun consumeCallbackUrl(refreshCallbackUrl: RefreshCallbackUrl): Boolean {
+        fun consumeCallbackUrl(refreshCallbackUrl: String): Boolean {
             return invokedCallbackUrls.remove(refreshCallbackUrl)
         }
     }
@@ -33,9 +33,7 @@ internal class CallbackActivity : Activity() {
                 it.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             })
         } else {
-            intent.data?.let {
-                RefreshCallbackUrl.parse(this, it)
-            }?.let(::onCallbackUrl)
+            intent.data?.toString()?.let(::onCallbackUrl)
         }
         finish()
     }

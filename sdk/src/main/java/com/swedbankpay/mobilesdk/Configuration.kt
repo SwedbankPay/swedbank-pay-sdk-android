@@ -106,6 +106,9 @@ class Configuration private constructor(builder: Builder) {
             }
         }
 
+    @Suppress("unused")
+    val backendUrl get() = rootLink.href.toString()
+
     private var topLevelResources: CacheableResult<TopLevelResources>? = null
 
     // Throws annontation for testing purposes.

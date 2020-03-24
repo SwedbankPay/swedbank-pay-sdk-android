@@ -5,21 +5,14 @@
     <application>
         <activity android:name=".internal.ToSActivity" android:label="@string/swedbankpaysdk_tos"/>
         <activity android:name=".internal.CallbackActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
+            <intent-filter android:priority="-100">
+                <!--  Priority is negative on purpose. This way you can
+                 easily override this intent filter in your app. -->
+                <action android:name="com.swedbankpay.mobilesdk.VIEW_PAYMENTORDER" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="@string/swedbankpaysdk_callback_url_scheme"/>
-            </intent-filter>
-            <intent-filter
-                android:autoVerify="true"
-                tools:targetApi="m">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https"
-                    android:host="@string/swedbankpaysdk_callback_host"
-                    android:pathPrefix="@string/swedbankpaysdk_callback_path_prefix" />
+                <data android:scheme="https" />
+                <data android:scheme="http" />
             </intent-filter>
         </activity>
     </application>

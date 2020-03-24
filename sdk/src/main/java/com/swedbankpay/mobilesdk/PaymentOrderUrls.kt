@@ -1,14 +1,12 @@
 package com.swedbankpay.mobilesdk
 
 import android.content.Context
-import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.internal.RefreshCallbackUrl
 import com.swedbankpay.mobilesdk.internal.checkBuilderNotNull
-import com.swedbankpay.mobilesdk.internal.ensureSuffix
 import com.swedbankpay.mobilesdk.internal.makeCreator
+import okhttp3.HttpUrl
 import java.util.*
 
 data class PaymentOrderUrls(
@@ -17,71 +15,75 @@ data class PaymentOrderUrls(
     @SerializedName("cancelUrl") val cancelUrl: String? = null,
     @SerializedName("paymentUrl") val paymentUrl: String? = null,
     @SerializedName("callbackUrl") val callbackUrl: String? = null,
-    @SerializedName("termsOfServiceUrl") val termsOfServiceUrl: String? = null,
-    @Transient val paymentToken: String
+    @SerializedName("termsOfServiceUrl") val termsOfServiceUrl: String? = null//,
 ) : Parcelable {
     companion object {
         @Suppress("unused")
         @JvmField
         val CREATOR = makeCreator(::PaymentOrderUrls)
 
-        private fun getRandomToken() = UUID.randomUUID().toString()
-
-        private val Context.callbackHost
-            get() = getString(R.string.swedbankpaysdk_callback_host).also {
-                require(it.isNotEmpty()) { """
-                String resource swedbankpaysdk_callback_host not overridden.
-                Please set this string to the hostname of your callback page server,
-                or set the hostUrl(s) explicitly.
-            """.trimIndent()
+        private fun buildCompleteUrl(backendUrl: HttpUrl) = checkNotNull(backendUrl.newBuilder("complete")).toString()
+        private fun buildCancelUrl(backendUrl: HttpUrl) = backendUrl.newBuilder("cancel")?.toString()
+        private fun buildPaymentUrl(context: Context, backendUrl: HttpUrl, id: String) =
+            backendUrl.newBuilder("sdk-callback/android-intent")
+                ?.addQueryParameter("package", context.packageName)
+                ?.apply {
+                    val port = backendUrl.port()
+                    if (port != HttpUrl.defaultPort(backendUrl.scheme())) {
+                        addQueryParameter("port", port.toString())
+                    }
                 }
-            }
-
-        private val Context.hostUrl get() = "https://${callbackHost}/"
-
-        private fun getCompleteUrl(hostUrl: String) = "${hostUrl.ensureSuffix('/')}complete"
-        private fun getCancelUrl(hostUrl: String) = "${hostUrl.ensureSuffix('/')}cancel"
-
-        private val Context.callbackScheme
-            get() = getString(R.string.swedbankpaysdk_callback_url_scheme).takeUnless { it.isEmpty() }
-
-        private fun Context.getPaymentUrl(token: String) = callbackScheme?.let { scheme ->
-            val encodedToken = Uri.encode(token)
-            RefreshCallbackUrl.getCallbackPrefix(this)?.ensureSuffix('/')?.let { prefix ->
-                "${prefix}reload?token=${encodedToken}&scheme=${Uri.encode(scheme)}"
-            } ?: "$scheme:///reload?token=${encodedToken}"
-        }
+                ?.addQueryParameter("id", id)
+                ?.toString()
     }
 
     @JvmOverloads
     @Suppress("unused")
     constructor(
         context: Context,
+        backendUrl: String,
         callbackUrl: String? = null,
         termsOfServiceUrl: String? = null,
-        paymentToken: String = getRandomToken()
+        identifier: String = UUID.randomUUID().toString()
     ) : this(
         context = context,
-        hostUrl = context.hostUrl,
+        hostUrl = backendUrl,
+        backendUrl = backendUrl,
         callbackUrl = callbackUrl,
         termsOfServiceUrl = termsOfServiceUrl,
-        paymentToken = paymentToken
+        identifier = identifier
     )
 
     constructor(
         context: Context,
         hostUrl: String,
+        backendUrl: String,
         callbackUrl: String?,
         termsOfServiceUrl: String?,
-        paymentToken: String = getRandomToken()
+        identifier: String = UUID.randomUUID().toString()
     ) : this(
-        hostUrls = listOf(hostUrl),
-        completeUrl = getCompleteUrl(hostUrl),
-        cancelUrl = getCancelUrl(hostUrl),
-        paymentUrl = context.getPaymentUrl(paymentToken),
+        context = context,
+        hostUrl = hostUrl,
+        backendUrl = HttpUrl.get(backendUrl),
         callbackUrl = callbackUrl,
         termsOfServiceUrl = termsOfServiceUrl,
-        paymentToken = paymentToken
+        identifier = identifier
+    )
+
+    private constructor(
+        context: Context,
+        hostUrl: String,
+        backendUrl: HttpUrl,
+        callbackUrl: String?,
+        termsOfServiceUrl: String?,
+        identifier: String
+    ) : this(
+        hostUrls = listOf(hostUrl),
+        completeUrl = buildCompleteUrl(backendUrl),
+        cancelUrl = buildCancelUrl(backendUrl),
+        paymentUrl = buildPaymentUrl(context, backendUrl, identifier),
+        callbackUrl = callbackUrl,
+        termsOfServiceUrl = termsOfServiceUrl
     )
 
     @Suppress("unused")
@@ -92,16 +94,14 @@ data class PaymentOrderUrls(
         private var paymentUrl: String? = null
         private var callbackUrl: String? = null
         private var termsOfServiceUrl: String? = null
-        private var paymentToken: String? = null
 
         @JvmOverloads
-        fun fromContext(context: Context, paymentToken: String = getRandomToken()) = apply {
-            val hostUrl = context.hostUrl
-            hostUrls = listOf(hostUrl)
-            completeUrl = getCompleteUrl(hostUrl)
-            cancelUrl = getCancelUrl(hostUrl)
-            paymentUrl = context.getPaymentUrl(paymentToken)
-            this.paymentToken = paymentToken
+        fun fromContext(context: Context, backendUrl: String, identifier: String = UUID.randomUUID().toString()) = apply {
+            val backendHttpUrl = HttpUrl.get(backendUrl)
+            hostUrls = listOf(backendUrl)
+            completeUrl = buildCompleteUrl(backendHttpUrl)
+            cancelUrl = buildCancelUrl(backendHttpUrl)
+            paymentUrl = buildPaymentUrl(context, backendHttpUrl, identifier)
         }
 
         fun hostUrls(hostUrls: List<String>) = apply { this.hostUrls = hostUrls }
@@ -110,7 +110,6 @@ data class PaymentOrderUrls(
         fun paymentUrl(paymentUrl: String?) = apply { this.paymentUrl = paymentUrl }
         fun callbackUrl(callbackUrl: String?) = apply { this.callbackUrl = callbackUrl }
         fun termsOfServiceUrl(termsOfServiceUrl: String?) = apply { this.termsOfServiceUrl = termsOfServiceUrl }
-        fun paymentToken(paymentToken: String?) = apply { this.paymentToken = paymentToken }
 
         fun build() = PaymentOrderUrls(
             hostUrls = hostUrls,
@@ -118,8 +117,7 @@ data class PaymentOrderUrls(
             cancelUrl = cancelUrl,
             paymentUrl = paymentUrl,
             callbackUrl = callbackUrl,
-            termsOfServiceUrl = termsOfServiceUrl,
-            paymentToken = checkBuilderNotNull(paymentToken, "paymentToken")
+            termsOfServiceUrl = termsOfServiceUrl
         )
     }
 
@@ -132,7 +130,6 @@ data class PaymentOrderUrls(
             writeString(paymentUrl)
             writeString(callbackUrl)
             writeString(termsOfServiceUrl)
-            writeString(paymentToken)
         }
     }
     private constructor(parcel: Parcel) : this(
@@ -141,7 +138,6 @@ data class PaymentOrderUrls(
         cancelUrl = parcel.readString(),
         paymentUrl = parcel.readString(),
         callbackUrl = parcel.readString(),
-        termsOfServiceUrl = parcel.readString(),
-        paymentToken = checkNotNull(parcel.readString())
+        termsOfServiceUrl = parcel.readString()
     )
 }
