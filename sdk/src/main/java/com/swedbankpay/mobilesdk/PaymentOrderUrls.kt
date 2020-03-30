@@ -27,12 +27,6 @@ data class PaymentOrderUrls(
         private fun buildPaymentUrl(context: Context, backendUrl: HttpUrl, id: String) =
             backendUrl.newBuilder("sdk-callback/android-intent")
                 ?.addQueryParameter("package", context.packageName)
-                ?.apply {
-                    val port = backendUrl.port()
-                    if (port != HttpUrl.defaultPort(backendUrl.scheme())) {
-                        addQueryParameter("port", port.toString())
-                    }
-                }
                 ?.addQueryParameter("id", id)
                 ?.toString()
     }

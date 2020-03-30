@@ -234,11 +234,17 @@ internal class WebViewFragment : Fragment() {
         }
 
         private fun shouldOverrideUrlLoading(uri: Uri?): Boolean {
-            return uri != null && (
+            val handled = uri != null && (
                     attemptHandleByViewModel(uri)
                             || attemptHandleIntentUri(uri)
                             || attemptHandleByExternalApp(uri)
                     )
+            return handled || !webViewCanOpen(uri)
+        }
+
+        private fun webViewCanOpen(uri: Uri?) = when (uri?.scheme) {
+            "http", "https" -> true
+            else -> false
         }
 
         private fun attemptHandleByViewModel(uri: Uri): Boolean {
