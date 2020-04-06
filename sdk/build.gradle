@@ -55,7 +55,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.5'
 
     api 'joda-time:joda-time:2.10.5'
-    api 'org.threeten:threetenbp:1.4.1'
+    api 'org.threeten:threetenbp:1.4.3'
 
     testImplementation 'junit:junit:4.12'
     testImplementation 'androidx.test:core:1.2.0'
