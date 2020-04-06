@@ -44,7 +44,7 @@ dependencies {
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.0.0'
 
     implementation 'com.google.android.gms:play-services-base:17.1.0'
-    implementation 'com.google.android.gms:play-services-basement:17.1.1'
+    implementation 'com.google.android.gms:play-services-basement:17.2.1'
 
     // okhttp 3.12.x is the last version to support minSdkVersion < 21.
     // Supporting minSdkVersion 17 is not necessarily wise anymore,
