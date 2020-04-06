@@ -52,7 +52,7 @@ dependencies {
     // a higher minSdkVersion and thus use a newer okhttp.
     //noinspection GradleDependency
     implementation 'com.squareup.okhttp3:okhttp:3.12.6'
-    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.google.code.gson:gson:2.8.6'
 
     api 'joda-time:joda-time:2.10.5'
     api 'org.threeten:threetenbp:1.4.1'
