@@ -51,7 +51,7 @@ dependencies {
     // but we try our best anyway. Library user is free to have
     // a higher minSdkVersion and thus use a newer okhttp.
     //noinspection GradleDependency
-    implementation 'com.squareup.okhttp3:okhttp:3.12.6'
+    implementation 'com.squareup.okhttp3:okhttp:4.5.0'
     implementation 'com.google.code.gson:gson:2.8.5'
 
     api 'joda-time:joda-time:2.10.5'
