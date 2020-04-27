@@ -24,7 +24,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.util.size
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.swedbankpay.mobilesdk.R
 import java.net.URISyntaxException
 
@@ -110,7 +110,7 @@ internal class WebViewFragment : Fragment() {
                 // Redirect pages may require this.
                 domStorageEnabled = true
             }
-            val vm = ViewModelProviders.of(requireParentFragment())[InternalPaymentViewModel::class.java]
+            val vm = ViewModelProvider(requireParentFragment())[InternalPaymentViewModel::class.java]
             useBrowser = vm.useExternalBrowser
             addJavascriptInterface(vm.javascriptInterface, getString(R.string.swedbankpaysdk_javascript_interface_name))
 
@@ -249,7 +249,7 @@ internal class WebViewFragment : Fragment() {
 
         private fun attemptHandleByViewModel(uri: Uri): Boolean {
             val parentFragment = parentFragment ?: return false
-            val vm = ViewModelProviders.of(parentFragment)[InternalPaymentViewModel::class.java]
+            val vm = ViewModelProvider(parentFragment)[InternalPaymentViewModel::class.java]
             return vm.overrideNavigation(uri)
         }
 

@@ -9,9 +9,9 @@ import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import java.io.IOException
 
 /**
- * Convenience for `ViewModelProviders.of(activity).get(PaymentViewModel::class.java)`.
+ * Convenience for `ViewModelProvider(activity).get(PaymentViewModel::class.java)`.
  */
-val FragmentActivity.paymentViewModel get() = ViewModelProviders.of(this)[PaymentViewModel::class.java]
+val FragmentActivity.paymentViewModel get() = ViewModelProvider(this)[PaymentViewModel::class.java]
 
 /**
  * <a href="https://developer.android.com/reference/androidx/lifecycle/ViewModel" target="_blank">ViewModel</a>

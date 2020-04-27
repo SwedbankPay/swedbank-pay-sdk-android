@@ -85,7 +85,7 @@ internal fun parseProblem(response: Response, jsonString: String): Problem {
 }
 
 private fun parseProblem(status: Int, jsonString: String): Problem {
-    val json = JsonParser().parse(jsonString).asJsonObject
+    val json = JsonParser.parseString(jsonString).asJsonObject
     val problemStatus = json.status ?: status
     val problemSpace = when (problemStatus) {
         in 400..499 -> ProblemSpace.Client

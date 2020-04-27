@@ -10,7 +10,7 @@ import androidx.annotation.CallSuper
 import androidx.annotation.IntDef
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.swedbankpay.mobilesdk.PaymentFragment.ArgumentsBuilder
 import com.swedbankpay.mobilesdk.PaymentFragment.Companion.defaultConfiguration
@@ -191,7 +191,7 @@ open class PaymentFragment : Fragment() {
     @IntDef(RETRY_PROMPT, SUCCESS_MESSAGE, ERROR_MESSAGE, flag = true)
     annotation class DefaultUI
 
-    private val publicVm get() = ViewModelProviders.of(requireActivity()).run {
+    private val publicVm get() = ViewModelProvider(requireActivity()).run {
         val key = requireArguments().getString(ARG_VIEW_MODEL_PROVIDER_KEY)
         if (key == null) {
             get(PaymentViewModel::class.java)
@@ -199,7 +199,7 @@ open class PaymentFragment : Fragment() {
             get(key, PaymentViewModel::class.java)
         }
     }
-    private val vm get() = ViewModelProviders.of(this)[InternalPaymentViewModel::class.java]
+    private val vm get() = ViewModelProvider(this)[InternalPaymentViewModel::class.java]
 
     /**
      * Provides the [Configuration] for this PaymentFragment.
