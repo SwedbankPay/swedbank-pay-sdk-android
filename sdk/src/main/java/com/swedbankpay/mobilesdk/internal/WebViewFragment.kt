@@ -179,7 +179,8 @@ internal class WebViewFragment : Fragment() {
 
     private fun showJavascriptDialog(dialog: JSDialogFragment, result: JsResult) {
         if (webViewActive) {
-            val key = pendingJsResults.size
+            val size = pendingJsResults.size
+            val key = if (size == 0) 0 else pendingJsResults.keyAt(size - 1) + 1
             pendingJsResults.append(key, result)
             dialog.resultKey = key
             dialog.show(childFragmentManager, null)
