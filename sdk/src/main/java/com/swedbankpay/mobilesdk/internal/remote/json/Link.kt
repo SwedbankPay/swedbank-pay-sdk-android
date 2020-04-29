@@ -20,7 +20,7 @@ internal sealed class Link(
 ) {
     companion object {
         fun getDeserializer(response: Response): JsonDeserializer<Link?> {
-            val requestUrl = response.request().url()
+            val requestUrl = response.request.url
             return JsonDeserializer { element, type, _ ->
                 if (element.isJsonNull) return@JsonDeserializer null
 

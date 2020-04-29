@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.CertificatePinner
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.IOException
 
 /**
@@ -94,13 +95,13 @@ class Configuration private constructor(builder: Builder) {
         }
     }
 
-    internal val rootLink = Link.Root(HttpUrl.get(builder.backendUrl))
+    internal val rootLink = Link.Root(builder.backendUrl.toHttpUrl())
     internal val certificatePinner = builder.pinnerBuilder?.build()
     internal val requestDecorator = builder.requestDecorator
     internal val domainWhitelist =
         builder.domainWhitelist.let {
             if (it.isEmpty()) {
-                listOf(WhitelistedDomain(rootLink.href.host(), true))
+                listOf(WhitelistedDomain(rootLink.href.host, true))
             } else {
                 it.toList()
             }

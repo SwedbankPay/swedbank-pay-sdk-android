@@ -17,12 +17,14 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 
 internal object Api {
-    private val JSON_MEDIA_TYPE = MediaType.get("application/json")
-    private val PROBLEM_MEDIA_TYPE = MediaType.get("application/problem+json")
+    private val JSON_MEDIA_TYPE = "application/json".toMediaType()
+    private val PROBLEM_MEDIA_TYPE = "application/problem+json".toMediaType()
 
     private val lazyClient = lazy {
         OkHttpClient.Builder()
@@ -83,7 +85,7 @@ internal object Api {
         body: String?,
         userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
     ): Request {
-        val domain = url.host()
+        val domain = url.host
         if (configuration.domainWhitelist.none { it.matches(domain) }) {
             throw IOException("Non-whitelisted domain: $domain")
         }
@@ -95,7 +97,7 @@ internal object Api {
             }
         }.toHeaders()
 
-        val requestBody = body?.let { RequestBody.create(JSON_MEDIA_TYPE, it) }
+        val requestBody = body?.toRequestBody(JSON_MEDIA_TYPE)
 
         return Request.Builder()
             .url(url)
@@ -119,7 +121,7 @@ internal object Api {
                     try {
                         // Buffer the entire body so we can pass it to the error
                         // reporting system if needed.
-                        val body = it.body()?.string()
+                        val body = it.body?.string()
                         checkErrorResponse(it, body)
                         val entity = parseResponse(it, body, entityType)
                         result.complete(CacheableResult(entity, it.validUntilMillis))
@@ -141,13 +143,13 @@ internal object Api {
     }
 
     private fun MediaType?.checkEquals(expectedContentType: MediaType) {
-        if (this == null || type() != expectedContentType.type() || subtype() != expectedContentType.subtype()) {
+        if (this == null || type != expectedContentType.type || subtype != expectedContentType.subtype) {
             throw IOException("Invalid Content-Type: $this")
         }
     }
 
     private fun checkErrorResponse(response: Response, body: String?) {
-        val code = response.code()
+        val code = response.code
         if (code in 400..599) {
             throw RequestProblemException(getProblem(response, body))
         }
@@ -155,7 +157,7 @@ internal object Api {
 
     private fun getProblem(response: Response, body: String?): Problem {
         return try {
-            response.body()?.contentType().checkEquals(PROBLEM_MEDIA_TYPE)
+            response.body?.contentType().checkEquals(PROBLEM_MEDIA_TYPE)
             parseProblem(response, checkNotNull(body))
         } catch (_: Exception) {
             makeUnexpectedContentProblem(response, body)
@@ -167,7 +169,7 @@ internal object Api {
         // such as 204 No Content, because the API does not
         // use them currently.
         return try {
-            response.body()?.contentType().checkEquals(JSON_MEDIA_TYPE)
+            response.body?.contentType().checkEquals(JSON_MEDIA_TYPE)
             GsonBuilder()
                 .registerTypeHierarchyAdapter(Link::class.java, Link.getDeserializer(response))
                 .create()
@@ -195,9 +197,9 @@ internal object Api {
     }
 
     private val Response.validUntilMillis: Long?
-        get() = cacheControl().run {
-            maxAgeSeconds().takeIf {
-                it > 0 && !noStore() && !noCache()
+        get() = cacheControl.run {
+            maxAgeSeconds.takeIf {
+                it > 0 && !noStore && !noCache
             }
-        }?.times(1000L)?.plus(receivedResponseAtMillis())
+        }?.times(1000L)?.plus(receivedResponseAtMillis)
 }

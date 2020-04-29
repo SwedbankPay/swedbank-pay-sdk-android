@@ -62,8 +62,8 @@ private fun Parcel.readUnexpectedContentProblem(): Problem {
 }
 
 internal fun makeUnexpectedContentProblem(response: Response, body: String?): Problem {
-    val status = response.code()
-    val contentType = response.body()?.contentType()?.toString()
+    val status = response.code
+    val contentType = response.body?.contentType()?.toString()
     return makeUnexpectedContentProblem(status, contentType, body)
 }
 
@@ -78,7 +78,7 @@ private fun makeUnexpectedContentProblem(status: Int, contentType: String?, body
 
 internal fun parseProblem(response: Response, jsonString: String): Problem {
     return try {
-        parseProblem(response.code(), jsonString)
+        parseProblem(response.code, jsonString)
     } catch (e: Exception) {
         makeUnexpectedContentProblem(response, jsonString)
     }

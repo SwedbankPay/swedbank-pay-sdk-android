@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName
 import com.swedbankpay.mobilesdk.internal.checkBuilderNotNull
 import com.swedbankpay.mobilesdk.internal.makeCreator
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.*
 
 data class PaymentOrderUrls(
@@ -58,7 +59,7 @@ data class PaymentOrderUrls(
     ) : this(
         context = context,
         hostUrl = hostUrl,
-        backendUrl = HttpUrl.get(backendUrl),
+        backendUrl = backendUrl.toHttpUrl(),
         callbackUrl = callbackUrl,
         termsOfServiceUrl = termsOfServiceUrl,
         identifier = identifier
@@ -91,7 +92,7 @@ data class PaymentOrderUrls(
 
         @JvmOverloads
         fun fromContext(context: Context, backendUrl: String, identifier: String = UUID.randomUUID().toString()) = apply {
-            val backendHttpUrl = HttpUrl.get(backendUrl)
+            val backendHttpUrl = backendUrl.toHttpUrl()
             hostUrls = listOf(backendUrl)
             completeUrl = buildCompleteUrl(backendHttpUrl)
             cancelUrl = buildCancelUrl(backendHttpUrl)
