@@ -1,12 +1,16 @@
+import groovy.json.JsonSlurper
+
 apply plugin: 'com.android.library'
 
 apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
-apply plugin: 'org.jetbrains.dokka-android'
+apply plugin: 'org.jetbrains.dokka'
 
 apply plugin: 'maven-publish'
+
+apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion 29
@@ -29,9 +33,16 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
     dokka {
-        externalDocumentationLink {
-            url = new URL("https://developer.android.com/reference/")
-            packageListUrl = new URL("https://developer.android.com/reference/androidx/package-list")
+        configuration {
+            sourceLink {
+                path = 'sdk/src/main/java'
+                url = 'https://github.com/SwedbankPay/swedbank-pay-sdk-android/blob/dev/sdk/src/main/java'
+                lineSuffix = '#L'
+            }
+            externalDocumentationLink {
+                url = new URL("https://developer.android.com/reference/")
+                packageListUrl = new URL("https://developer.android.com/reference/androidx/package-list")
+            }
         }
     }
 }
@@ -77,19 +88,62 @@ task sourceJar(type: Jar) {
     archiveClassifier.set("sources")
 }
 
+static def readGithubReleaseEvent() {
+    def isRelease = System.getenv('GITHUB_EVENT_NAME') == 'release'
+    def path = isRelease ? System.getenv('GITHUB_EVENT_PATH') : null
+    def file = path ? new File(path) : null
+    def text = file?.text
+    return text ? new JsonSlurper().parseText(text) : null
+}
+
 afterEvaluate {
+    // Support for Github Actions based CI: create named versions from Github releases
+    def githubRelease = readGithubReleaseEvent()?.release
+    def githubTag = githubRelease?.tag_name
+
     publishing {
         publications {
-            // Creates a Maven publication called "release".
             release(MavenPublication) {
-                // Applies the component for the release build variant.
                 from components.release
                 artifact(sourceJar)
 
-                // You can then customize attributes of the publication as shown below.
+                // If you fork this library, you should use your own groupId and artifactId here
                 groupId = 'com.swedbankpay.mobilesdk'
                 artifactId = 'mobilesdk'
-                version = '1.0.0-beta14'
+                version = githubTag ?: 'local'
+            }
+        }
+    }
+
+    // The rest of this is specific to Bintray;
+    // you may not need this part in a fork if you always build everything locally.
+    // Environment variables are set by the Github Actions workflow.
+    if (githubTag) {
+        def bintrayUser = System.getenv('BINTRAY_USER')
+        def bintrayKey = System.getenv('BINTRAY_KEY')
+        def bintrayRepo = System.getenv('BINTRAY_REPO')
+        def bintrayPackage = System.getenv('BINTRAY_PKG')
+        def bintrayOrganization = System.getenv('BINTRAY_ORG')
+        if (bintrayUser && bintrayKey && bintrayRepo && bintrayPackage) {
+            def publishedAt = githubRelease.published_at
+            def releaseDate = publishedAt ? Instant.parse(publishedAt).toDate() : null
+
+            bintray {
+                user = bintrayUser
+                key = bintrayKey
+                publications = ['release']
+                publish = false
+                pkg {
+                    repo = bintrayRepo
+                    name = bintrayPackage
+                    userOrg = bintrayOrganization
+                    version {
+                        name = githubTag
+                        desc = githubRelease.body
+                        released = releaseDate
+                        vcsTag = githubTag
+                    }
+                }
             }
         }
     }

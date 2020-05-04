@@ -41,7 +41,7 @@ import com.swedbankpay.mobilesdk.internal.WebViewFragment
  *     ViewModelProviders.of(activity).get(PaymentViewModel.class)
  *
  * Optionally, you may specify a custom [ViewModelProvider][androidx.lifecycle.ViewModelProvider]
- * key by [ArgumentsBuilder.viewModelKey],
+ * key by [ArgumentsBuilder.viewModelProviderKey],
  * e.g. if you want to support multiple PaymentFragments in an Activity (not recommended).
  *
  * After configuring the PaymentFragment, [add][androidx.fragment.app.FragmentTransaction.add] it to

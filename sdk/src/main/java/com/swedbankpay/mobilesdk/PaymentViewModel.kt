@@ -146,7 +146,7 @@ class PaymentViewModel : AndroidViewModel {
      * For convenience, this property will retain the last-known state of a PaymentFragment
      * after it has been removed. When a new PaymentFragment is added to the same Activity,
      * this property will reflect that PaymentFragment from there on. To support multiple
-     * PaymentFragments in an Activity, see [PaymentFragment.ArgumentsBuilder.viewModelKey].
+     * PaymentFragments in an Activity, see [PaymentFragment.ArgumentsBuilder.viewModelProviderKey].
      *
      * Due to the semantics of [Transformations], you should be careful if accessing
      * this value using [LiveData.getValue] directly rather than by an [Observer].
