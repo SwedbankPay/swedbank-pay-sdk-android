@@ -281,12 +281,12 @@ open class PaymentFragment : Fragment() {
 
     private fun InternalPaymentViewModel.observeMessage() {
         messageTitle.observe(this@PaymentFragment, Observer {
-            view!!.findViewById<View>(R.id.swedbankpaysdk_message).visibility = if (it != null) View.VISIBLE else View.INVISIBLE
-            view!!.findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
+            requireView().findViewById<View>(R.id.swedbankpaysdk_message).visibility = if (it != null) View.VISIBLE else View.INVISIBLE
+            requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
         })
 
         messageBody.observe(this@PaymentFragment, Observer {
-            view!!.findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
+            requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
         })
 
         retryActionAvailable.observe(this@PaymentFragment, Observer {
@@ -296,7 +296,7 @@ open class PaymentFragment : Fragment() {
 
     private fun updateRefreshLayoutState() {
         val vm = this.vm
-        val swipeLayout = view!!.findViewById<SwipeRefreshLayout>(R.id.swedbankpaysdk_swipe_refresh_layout)
+        val swipeLayout = requireView().findViewById<SwipeRefreshLayout>(R.id.swedbankpaysdk_swipe_refresh_layout)
         val loading = vm.loading.value == true
         swipeLayout.isRefreshing = loading
         swipeLayout.isEnabled = loading || vm.retryActionAvailable.value == true

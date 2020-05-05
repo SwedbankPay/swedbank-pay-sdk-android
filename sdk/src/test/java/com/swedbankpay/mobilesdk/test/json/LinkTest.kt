@@ -2,7 +2,7 @@ package com.swedbankpay.mobilesdk.test.json
 
 import com.google.gson.GsonBuilder
 import com.swedbankpay.mobilesdk.internal.remote.json.Link
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -13,9 +13,9 @@ import kotlin.reflect.KClass
 class LinkTest {
 
     private fun parseLink(type: KClass<out Link>) {
-        val baseUrl = HttpUrl.get("https://test.invalid/")
+        val baseUrl = "https://test.invalid/".toHttpUrl()
         val path = "/path"
-        val resolvedUrl = HttpUrl.get("https://test.invalid/path")
+        val resolvedUrl = "https://test.invalid/path".toHttpUrl()
 
         val request = Request.Builder()
             .url(baseUrl)

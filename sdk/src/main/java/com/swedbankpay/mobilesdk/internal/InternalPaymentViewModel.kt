@@ -298,8 +298,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override val shouldProceedAutomatically get() = true
             override suspend fun getNextState(context: Context, configuration: Configuration): ProcessState {
                 return try {
-                    // see https://youtrack.jetbrains.com/issue/IDEA-209249
-                    @Suppress("BlockingMethodInNonBlockingContext")
                     val operations = configuration
                         .getTopLevelResources(context)
                         .consumers
@@ -403,8 +401,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                         paymentOrder.copy(payer = PaymentOrderPayer(it))
                     } ?: paymentOrder
                     val urls = paymentOrderOut.urls
-                    // see https://youtrack.jetbrains.com/issue/IDEA-209249
-                    @Suppress("BlockingMethodInNonBlockingContext")
                     val paymentOrderIn = configuration
                         .getTopLevelResources(context)
                         .paymentorders
