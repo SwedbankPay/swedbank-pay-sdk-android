@@ -2,7 +2,7 @@ name: Upload to Bintray
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   build:
@@ -17,6 +17,11 @@ jobs:
         java-version: 1.8
     - name: Build with Gradle
       run: ./gradlew bintrayUpload
+      env:
+        BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+        BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
+        BINTRAY_REPO: ${{ secrets.BINTRAY_REPO }}
+        BINTRAY_PKG: ${{ secrets.BINTRAY_PKG }}
       #env:
     # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
     # the publishing section of your build.gradle
