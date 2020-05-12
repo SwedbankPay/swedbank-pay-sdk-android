@@ -67,7 +67,7 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.6.0'
     implementation 'com.google.code.gson:gson:2.8.6'
 
-    api 'joda-time:joda-time:2.10.5'
+    api 'joda-time:joda-time:2.10.6'
     api 'org.threeten:threetenbp:1.4.4'
 
     testImplementation 'junit:junit:4.13'
