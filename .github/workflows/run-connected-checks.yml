@@ -1,0 +1,21 @@
+name: Run Connected Checks
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+
+jobs:
+  check:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Connected Checks
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 28
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 4096
+          script: ./gradlew connectedCheck
