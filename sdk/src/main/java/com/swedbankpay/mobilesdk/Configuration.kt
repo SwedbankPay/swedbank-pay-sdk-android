@@ -112,9 +112,6 @@ class Configuration private constructor(builder: Builder) {
 
     private var topLevelResources: CacheableResult<TopLevelResources>? = null
 
-    // Throws annontation for testing purposes.
-    // Without it, Mockito won't let us mock a throw.
-    @Throws(IOException::class)
     internal suspend fun getTopLevelResources(context: Context): TopLevelResources {
         withContext(Dispatchers.Main) {
             topLevelResources?.cachedValueIfValid

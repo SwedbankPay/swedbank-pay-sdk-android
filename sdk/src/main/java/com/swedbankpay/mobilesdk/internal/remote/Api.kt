@@ -4,14 +4,11 @@ import android.content.Context
 import com.google.android.gms.security.ProviderInstaller
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.Configuration
-import com.swedbankpay.mobilesdk.Problem
-import com.swedbankpay.mobilesdk.RequestDecorator
-import com.swedbankpay.mobilesdk.UserHeaders
+import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.internal.makeUnexpectedContentProblem
 import com.swedbankpay.mobilesdk.internal.parseProblem
-import com.swedbankpay.mobilesdk.internal.remote.json.Link
 import com.swedbankpay.mobilesdk.internal.remote.annotations.Required
+import com.swedbankpay.mobilesdk.internal.remote.json.Link
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +40,8 @@ internal object Api {
                 .build()
         } ?: client
     }
+
+    // ProviderInstaller will not work with Robolectric tests
     @TestOnly
     internal fun skipProviderInstallerForTests() {
         lazyClient.value

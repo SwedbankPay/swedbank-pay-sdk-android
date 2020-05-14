@@ -73,7 +73,6 @@ internal sealed class Link(
     }
 
     class Consumers(href: HttpUrl) : Link(href) {
-        @Throws(IOException::class) // for testing; see Configuration.getTopLevelResources
         suspend fun post(context: Context, configuration: Configuration, consumer: Consumer): ConsumerSession {
             val body = toJsonBody(consumer)
             return post(context, configuration, body) {
@@ -83,7 +82,6 @@ internal sealed class Link(
     }
 
     class PaymentOrders(href: HttpUrl) : Link(href) {
-        @Throws(IOException::class) // for testing
         suspend fun post(
             context: Context,
             configuration: Configuration,

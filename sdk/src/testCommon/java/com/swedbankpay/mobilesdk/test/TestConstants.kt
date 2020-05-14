@@ -1,9 +1,28 @@
 package com.swedbankpay.mobilesdk.test
 
-object TestConstants {
-    const val consumerIdentificationData = "idData"
+import com.swedbankpay.mobilesdk.Consumer
+import com.swedbankpay.mobilesdk.PaymentOrder
+import com.swedbankpay.mobilesdk.PaymentOrderUrls
+import java.util.*
+
+internal object TestConstants {
+    const val completeUrl = "https://completeurl.invalid/"
+    const val termsOfServiceUrl = "https://tosurl.invalid/"
+    const val paymentUrl = "https://paymenturl.invalid/"
+    val consumer = Consumer(shippingAddressRestrictedToCountryCodes = listOf("CC"))
+    val paymentOrder = PaymentOrder(
+        currency = Currency.getInstance("NOK"),
+        amount = 1L,
+        vatAmount = 0L,
+        description = "",
+        urls = PaymentOrderUrls(
+            hostUrls = listOf("https://hosturl.invalid/"),
+            completeUrl = completeUrl,
+            paymentUrl = paymentUrl,
+            termsOfServiceUrl = termsOfServiceUrl
+        )
+    )
     const val consumerProfileRef = "profile"
-    const val merchantData = "merchantData"
     const val viewConsumerSessionLink = "consumerLink"
     const val consumerSessionHtmlPage = "consumerHtml"
     const val consumerSessionErrorOrigin = "consumer"
@@ -11,16 +30,13 @@ object TestConstants {
     const val consumerSessionErrorDetails = "consumerErrDetails"
     const val consumerSessionError =
         """{"origin":"$consumerSessionErrorOrigin","messageId":"$consumerSessionErrorMessageId","details":"$consumerSessionErrorDetails"}"""
-    const val paymentOrderUrl = "https://paymenturl.invalid/"
     const val viewPaymentorderLink = "paymentLink"
     const val paymentorderHtmlPage = "paymentHtml"
-    const val paymentToSUrl = "https://tosurl.invalid/"
-    const val onPaymentTosEvent = """{"openUrl":"$paymentToSUrl"}"""
+
     const val paymentOrderErrorOrigin = "paymentmenu"
     const val paymentOrderErrorMessageId = "paymentErrId"
     const val paymentOrderErrorDetails = "paymentErrDetails"
     const val paymentOrderError =
         """{"origin":"$paymentOrderErrorOrigin","messageId":"$paymentOrderErrorMessageId","details":"$paymentOrderErrorDetails"}"""
-    const val paymentOrderFailureReason = "paymentFailureReason"
     const val consumerRetryableErrorMessage = "retryConsumer"
 }

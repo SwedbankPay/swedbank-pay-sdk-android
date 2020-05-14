@@ -5,9 +5,17 @@ import androidx.lifecycle.Observer
 import com.nhaarman.mockitokotlin2.*
 import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.internal.remote.json.*
-import okhttp3.HttpUrl
+import org.mockito.stubbing.OngoingStubbing
 
-fun <T> observing(liveData: LiveData<T>, f: (Observer<T>) -> Unit) {
+// Kotlin has no checked exceptions, but mocking a throw of a Java checked exception
+// results in org.mockito.exceptions.base.MockitoException: Checked exception is invalid for this method!
+// doAnswer provides a workaround
+// https://github.com/mockito/mockito/issues/1166
+// https://github.com/mockito/mockito/issues/1166#issuecomment-399008021
+// https://github.com/mockito/mockito/issues/1293#issuecomment-390921430
+internal infix fun <T> OngoingStubbing<T>.throwKt(t: Throwable) = doAnswer { throw t }
+
+internal fun <T> observing(liveData: LiveData<T>, f: (Observer<T>) -> Unit) {
     val observer = mock<Observer<T>>()
     liveData.observeForever(observer)
     f(observer)
@@ -30,28 +38,14 @@ internal fun mockConsumers(): Link.Consumers = mock {
     })
 }
 
-internal fun mockPaymentOrders(failureReason: String? = null): Link.PaymentOrders {
+internal fun mockPaymentOrders(): Link.PaymentOrders {
     val operations = operationsWith(
         "view-paymentorder",
         TestConstants.viewPaymentorderLink
     )
 
-    val href = HttpUrl.get(TestConstants.paymentOrderUrl)
-    val url = failureReason?.let {
-        val getResult = PaymentOrderIn().apply {
-            this.failureReason = failureReason
-            this.operations = operations
-        }
-        mock<Link.PaymentOrder> {
-            onGet(getResult)
-        }.also {
-            getResult.url = it
-        }
-    } ?: Link.PaymentOrder(href)
-
     return mock {
         onPost(PaymentOrderIn().apply {
-            this.url = url
             this.operations = operations
         })
     }
@@ -66,11 +60,7 @@ internal fun KStubbing<Link.Consumers>.onPost(consumerSession: ConsumerSession) 
 }
 
 internal fun KStubbing<Link.PaymentOrders>.onPost(paymentOrder: PaymentOrderIn) {
-    onBlocking { post(any(), any(), anyOrNull(), anyOrNull()) } doReturn paymentOrder
-}
-
-internal fun KStubbing<Link.PaymentOrder>.onGet(paymentOrder: PaymentOrderIn) {
-    onBlocking { get(any(), any()) } doReturn paymentOrder
+    onBlocking { post(any(), any(), any()) } doReturn paymentOrder
 }
 
 internal fun operationsWith(rel: String, href: String) = Operations().apply {

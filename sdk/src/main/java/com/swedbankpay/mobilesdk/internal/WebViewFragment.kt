@@ -243,6 +243,8 @@ internal class WebViewFragment : Fragment() {
         }
 
         private fun webViewCanOpen(uri: Uri?) = when (uri?.scheme) {
+            // Allow about:blank. This is mostly useful for testing.
+            "about" -> uri.schemeSpecificPart == "blank"
             "http", "https" -> true
             else -> false
         }
@@ -331,6 +333,8 @@ internal class WebViewFragment : Fragment() {
         private fun shouldStartActivity(uri: Uri, resolveInfo: ResolveInfo): Boolean {
             if(useBrowser) return true
             return when (uri.scheme) {
+                // Open about:blank in WebView (useful for testing)
+                "about" -> uri.schemeSpecificPart != "blank"
                 "http", "https" ->
                     // only open http(s) links in external apps if the intent filter is a "good" match
                     resolveInfo.match and IntentFilter.MATCH_CATEGORY_MASK >= IntentFilter.MATCH_CATEGORY_HOST
@@ -403,7 +407,7 @@ internal class WebViewFragment : Fragment() {
 
         var resultKey: Int
             get() = checkNotNull(arguments?.get(ARG_RESULT_KEY) as? Int)
-            set(value) = checkNotNull(arguments).putInt(ARG_RESULT_KEY, value)
+            set(value) = requireArguments().putInt(ARG_RESULT_KEY, value)
 
         protected abstract fun setView(builder: AlertDialog.Builder)
         protected abstract fun onConfirm(result: JsResult)
@@ -412,7 +416,7 @@ internal class WebViewFragment : Fragment() {
             return AlertDialog.Builder(requireContext(), theme)
                 .also {
                     setView(it)
-                    if (checkNotNull(arguments).getBoolean(ARG_HAS_CANCEL)) {
+                    if (requireArguments().getBoolean(ARG_HAS_CANCEL)) {
                         it.setNegativeButton("no", this)
                     }
                     it.setPositiveButton("yes", this)
@@ -425,7 +429,7 @@ internal class WebViewFragment : Fragment() {
             if (!resultSent) {
                 resultSent = true
                 (parentFragment as? WebViewFragment)?.consumePendingJsResult(this)?.let {
-                    if (checkNotNull(arguments).getBoolean(ARG_HAS_CANCEL)) {
+                    if (requireArguments().getBoolean(ARG_HAS_CANCEL)) {
                         it.cancel()
                     } else {
                         it.confirm()
@@ -447,7 +451,7 @@ internal class WebViewFragment : Fragment() {
 
         class Simple : JSDialogFragment() {
             override fun setView(builder: AlertDialog.Builder) {
-                builder.setMessage(checkNotNull(arguments).getString(ARG_MESSAGE))
+                builder.setMessage(requireArguments().getString(ARG_MESSAGE))
             }
 
             override fun onConfirm(result: JsResult) {
@@ -456,7 +460,7 @@ internal class WebViewFragment : Fragment() {
         }
         class Prompt : JSDialogFragment() {
             override fun setView(builder: AlertDialog.Builder) {
-                val args = checkNotNull(arguments)
+                val args = requireArguments()
 
                 @SuppressLint("InflateParams") // must use null as parent of dialog view
                 val view = LayoutInflater.from(builder.context).inflate(R.layout.swedbankpaysdk_webviewfragment_prompt, null)
