@@ -2,7 +2,10 @@
 
 ![Swedbank Pay SDK for Android][opengraph-image]
 
-[![Download](https://api.bintray.com/packages/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/images/download.svg?version=1.0.0-beta01) ](https://bintray.com/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/1.0.0-beta01/link)
+[![Download][download-badge]][download-link]
+![Run Checks][tests-badge]
+![License][license-badge]]
+[![Dependabot Status][dependabot-badge]][dependabot-link]
 
 The Swedbank Pay Android SDK enables simple embedding of [Swedbank Pay Checkout](https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/payex-checkout) to an Android application.
 
@@ -110,3 +113,9 @@ There are also some interfaces for Problems with common elements. Please refer t
 Swedbank Pay Android SDK is released under the [Apache 2.0 license](LICENSE).
 
 [opengraph-image]: https://repository-images.githubusercontent.com/209749704/df2ce180-53e8-11ea-95a5-490dbe7c7706
+[download-badge]: https://api.bintray.com/packages/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/images/download.svg?version=1.0.0-beta01
+[download-link]: https://bintray.com/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/1.0.0-beta01/link
+[tests-badge]: https://github.com/SwedbankPay/swedbank-pay-sdk-android/workflows/Run%20Checks/badge.svg
+[license-badge]: https://img.shields.io/github/license/SwedbankPay/swedbank-pay-sdk-android
+[dependabot-link]: https://dependabot.com
+[dependabot-badge]: https://api.dependabot.com/badges/status?host=github&repo=SwedbankPay/swedbank-pay-sdk-android
