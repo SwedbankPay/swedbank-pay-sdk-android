@@ -27,9 +27,15 @@ import org.mockito.quality.Strictness
 import org.robolectric.annotation.Config
 import java.io.IOException
 
+/**
+ * Tests for PaymentViewModel and InternalPaymentViewModel: Identified payment
+ */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.P])
 class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewModelProviderFactory {
+    /**
+     * STRICT_STUBS mockito rule for cleaner tests
+     */
     @get:Rule
     val rule: MockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS)
 
@@ -39,11 +45,17 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     @Mock
     private lateinit var configuration: Configuration
 
+    /**
+     * Use AndroidViewModelFactory when creating ViewModels for this test
+     */
     override fun getDefaultViewModelProviderFactory() = ViewModelProvider.AndroidViewModelFactory(application)
 
     private val viewModel get() = getViewModel<InternalPaymentViewModel>()
     private val publicViewModel get() = getViewModel<PaymentViewModel>()
 
+    /**
+     * Set up viewmodels
+     */
     @Before
     fun setup() {
         viewModel.let {
@@ -58,6 +70,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         useBrowser = false
     )
 
+    /**
+     * Check that a newly created viewmodel is in idle state
+     */
     @Test
     fun itShouldStartIdle() {
         observing(viewModel.uiState) {
@@ -71,6 +86,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to loading state when payment is started
+     */
     @Test
     fun itShouldMoveToLoadingState() {
         viewModel.apply {
@@ -84,6 +102,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to retryable-error state when top-level resources fail to load
+     */
     @Test
     fun itShouldMoveToRetryableErrorStateAfterTopLevelResourcesFailure() {
         val exception = IOException()
@@ -109,6 +130,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to retryable-error state when consumer-session fails to start
+     */
     @Test
     fun itShouldMoveToRetryableErrorStateAfterConsumersFailure() {
         val exception = IOException()
@@ -140,6 +164,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel attempts to start consumer-session again when instructed to retry
+     */
     @Test
     fun itShouldRetryConsumersAfterRetryFromRetryableError() {
         val exception = IOException()
@@ -195,6 +222,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to showing-html-content state after consumer-session is started successfully
+     */
     @Test
     fun itShouldMoveToHtmlContentState() {
         configuration.stub {
@@ -227,6 +257,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
 
     }
 
+    /**
+     * Check that viewmodel changes to showing-html-content state after a successful retry of starting consumer-session
+     */
     @Test
     fun itShouldMoveToHtmlContentStateAfterRetry() {
         val exception = IOException()
@@ -273,6 +306,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that the consumer-session html content is correct
+     */
     @Test
     fun itShouldShowExpectedHtmlPage() {
         application.stub {
@@ -299,6 +335,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to loading state after identification success
+     */
     @Test
     fun itShouldMoveToLoadingStateAfterOnConsumerProfileRefAvailable() {
         configuration.stub {
@@ -320,6 +359,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to html-content state after paymentorder created succefully
+     */
     @Test
     fun itShouldMoveToHtmlContentStateAfterOnConsumerProfileRefAvailable() {
         configuration.stub {
@@ -347,6 +389,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to retryable-error state when paymentorder fails to be created
+     */
     @Test
     fun itShouldMoveToRetryableErrorStateAfterPaymentOrdersFailure() {
         val exception = IOException()
@@ -372,6 +417,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel attempts to create paymentorder again when instructed to retry
+     */
     @Test
     fun itShouldRetryPaymentOrdersAfterRetryFromRetryableError() {
         val exception = IOException()
@@ -426,6 +474,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that the paymentorder html content is correct
+     */
     @Test
     fun itShouldShowExpectedHtmlPageAfterOnConsumerProfileRefAvailable() {
         application.stub {
@@ -453,6 +504,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to error state after onError callback in the consumer-session html content
+     */
     @Test
     fun itShouldMoveToFailureStateAfterOnIdentifyError() {
         configuration.stub {
@@ -474,6 +528,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to success state after it processes a navigation to completeUrl
+     */
     @Test
     fun itShouldMoveToSuccessStateAfterNavigationToCompleteUrl() {
         configuration.stub {
@@ -499,6 +556,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel notifies observers of InternalPaymentViewModel.termsOfServiceUrl after it processes a navigation to termsOfServiceUrl
+     */
     @Test
     fun itShouldNotifyTermsOfServiceUrlObserversAfterOnPaymentToS() {
         configuration.stub {
@@ -521,6 +581,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
+    /**
+     * Check that viewmodel changes to error state after onError callback in the paymentorder html content
+     */
     @Test
     fun itShouldMoveToFailureStateAfterOnError() {
         configuration.stub {

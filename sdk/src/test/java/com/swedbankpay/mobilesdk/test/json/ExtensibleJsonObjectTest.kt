@@ -12,6 +12,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
+/**
+ * Tests for ExtensibleJsonObject
+ */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.P])
 class ExtensibleJsonObjectTest {
@@ -38,12 +41,18 @@ class ExtensibleJsonObjectTest {
         Assert.assertEquals(testValue, extensionProperty.asString)
     }
 
+    /**
+     * Check that Consumer.extensionProperties are serialized correctly
+     */
     @Test
     fun testConsumer() {
         val consumer = TestConstants.consumer.copy(extensionProperties = testExtensionProperties)
         testExtensibleObject(consumer)
     }
 
+    /**
+     * Check that PaymentOrder.extensionProperties are serialized correctly
+     */
     @Test
     fun testPaymentOrder() {
         val paymentOrder = TestConstants.paymentOrder.copy(extensionProperties = testExtensionProperties)

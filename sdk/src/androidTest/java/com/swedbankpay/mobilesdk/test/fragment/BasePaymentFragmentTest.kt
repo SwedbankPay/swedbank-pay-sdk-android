@@ -36,25 +36,49 @@ import javax.xml.xpath.XPathFactory
 
 /*
 These tests can crash the Instrumentation if more that one is run at a time.
-The crashes do not seem to produce meaningful error traces, making it difficult
-to remedy this. For this reason, they are separated to individual classes
-and run with the Android Test Orchestrator
-(https://developer.android.com/training/testing/junit-runner#using-android-test-orchestrator)
-which clears the application state between each run.
-The crashes may be related to memory usage.
+
+ */
+/**
+ * Base class for instrumented PaymentFragment tests
+ *
+ * This class takes care of destroying the FragmentScenario used in the test after the test is done.
+ *
+ * These tests have a tendency to crash the instrumentation if more than one is run at a time.
+ * The crashes do not seem to produce meaningful error traces, making it difficult to remedy this.
+ * For this reason, they are separated to individual classes and run with the Android Test Orchestrator
+ * (https://developer.android.com/training/testing/junit-runner#using-android-test-orchestrator)
+ * which clears the application state between each run.
+ *
+ * The crashes may be related to memory usage, or possibly dexmaker-mockito-inline.
  */
 @RunWith(AndroidJUnit4::class)
 abstract class BasePaymentFragmentTest {
+    /**
+     * STRICT_STUBS mockito rule for cleaner tests
+     */
     @get:Rule
     val rule: MockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS)
 
+    /**
+     * The mock Configuration used in the test scenario.
+     * Each test case should stub this according to its own needs.
+     */
     @Mock
     protected lateinit var configuration: Configuration
 
+    /**
+     * The FragmentScenario used in the test
+     */
     protected lateinit var scenario: FragmentScenario<PaymentFragment>
 
+    /**
+     * A default set of arguments for PaymentFragment test scenarios
+     */
     protected val args get() = PaymentFragment.ArgumentsBuilder().paymentOrder(TestConstants.paymentOrder).build()
 
+    /**
+     * Create mock Configuration and set it as PaymentFragment.defaultConfiguration
+     */
     @Before
     fun setup() {
         configuration.stub {
@@ -63,12 +87,19 @@ abstract class BasePaymentFragmentTest {
 
         PaymentFragment.defaultConfiguration = configuration
     }
+
+    /**
+     * Destroy scenario and reset PaymentFragment.defaultConfiguration
+     */
     @After
     fun teardown() {
         scenario.moveToState(Lifecycle.State.DESTROYED)
         PaymentFragment.defaultConfiguration = null
     }
 
+    /**
+     * Stub the mock Configuration to successfully start an anonymous payment
+     */
     protected fun stubAnonymousMockPayment() {
         configuration.stub {
             onTopLevelResources(
@@ -80,6 +111,9 @@ abstract class BasePaymentFragmentTest {
         }
     }
 
+    /**
+     * Check that the WebView is showing the correct html content for viewing paymentorder
+     */
     protected fun <T> Web.WebInteraction<T>.checkIsShowingPaymentOrder() = this
         .check(
             WebViewAssertions.webContent(
@@ -105,11 +139,20 @@ abstract class BasePaymentFragmentTest {
 
     }
 
+    /**
+     * Matcher that accepts html documents containing no script tags
+     */
     protected class HasNoScriptsMatcher : TypeSafeMatcher<Document>() {
+        /**
+         * See [Matcher.describeTo]
+         */
         override fun describeTo(description: Description) {
             description.appendText("has no <script> elements")
         }
 
+        /**
+         * See [TypeSafeMatcher.matchesSafely]
+         */
         override fun matchesSafely(item: Document): Boolean {
             val xPath = XPathFactory.newInstance().newXPath()
             val expr = xPath.compile("//script")

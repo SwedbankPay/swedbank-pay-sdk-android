@@ -11,7 +11,14 @@ import com.swedbankpay.mobilesdk.paymentViewModel
 import com.swedbankpay.mobilesdk.test.TestConstants
 import org.junit.Test
 
+/**
+ * PaymentFragment test: completion
+ */
 class PaymentFragmentShouldReportSuccessAfterNavigationToCompleteUrl : BasePaymentFragmentTest() {
+    /**
+     * Check that PaymentFragment reports success
+     * after a navigation to completeUrl
+     */
     @Test
     fun test() {
         stubAnonymousMockPayment()

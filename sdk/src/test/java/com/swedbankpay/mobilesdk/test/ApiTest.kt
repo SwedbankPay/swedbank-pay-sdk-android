@@ -9,17 +9,26 @@ import com.swedbankpay.mobilesdk.internal.remote.RequestProblemException
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
+import org.junit.*
+import org.mockito.junit.MockitoJUnit
+import org.mockito.junit.MockitoRule
+import org.mockito.quality.Strictness
 
+/**
+ * Tests for HTTP requests made to the merchant backend
+ */
 class ApiTest {
     companion object {
         private const val consumersPath = "/consumers"
         private const val paymentordersPath = "/paymentorders"
         private const val rootResponse = """{"consumers":"$consumersPath","paymentorders":"$paymentordersPath"}"""
     }
+
+    /**
+     * STRICT_STUBS mockito rule for cleaner tests
+     */
+    @get:Rule
+    val rule: MockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS)
 
     private lateinit var server: MockWebServer
 
@@ -31,6 +40,9 @@ class ApiTest {
         setBody(body)
     }
 
+    /**
+     * Set up MockServer
+     */
     @Before
     fun setup() {
         Api.skipProviderInstallerForTests()
@@ -41,11 +53,17 @@ class ApiTest {
         configuration = Configuration.Builder(server.url("/").toString()).build()
     }
 
+    /**
+     * Shut down MockServer
+     */
     @After
     fun teardown() {
         server.shutdown()
     }
 
+    /**
+     * Check that root link is used in a GET request
+     */
     @Test
     fun rootLinkShouldIssueGetRequest() {
         server.enqueue(response("{}"))
@@ -58,6 +76,9 @@ class ApiTest {
         Assert.assertEquals("GET", request.method)
     }
 
+    /**
+     * Check that root link accepts a correctly formed json response
+     */
     @Test
     fun rootLinkShouldAcceptValidResponse() {
         server.enqueue(response(rootResponse))
@@ -68,6 +89,9 @@ class ApiTest {
         Assert.assertEquals(server.url(paymentordersPath), resources.paymentorders.href)
     }
 
+    /**
+     * Check that root link rejects an invalid response
+     */
     @Test(expected = RequestProblemException::class)
     fun rootLinkShouldRejectInvalidResponse() {
         server.enqueue(response("invalid"))
@@ -76,6 +100,9 @@ class ApiTest {
         }
     }
 
+    /**
+     * Check that consumers link is used in a POST request with correctly formed json body
+     */
     @Test
     fun consumersLinkShouldIssuePostRequest() {
         server.enqueue(response(rootResponse))
@@ -97,6 +124,9 @@ class ApiTest {
         Assert.assertTrue(body.asJsonObject.get("shippingAddressRestrictedToCountryCodes")?.isJsonArray == true)
     }
 
+    /**
+     * Check that paymentorders link is used in a POST request with correctly formed json body
+     */
     @Test
     fun paymentordersLinkShouldIssuePostRequest() {
         server.enqueue(response(rootResponse))

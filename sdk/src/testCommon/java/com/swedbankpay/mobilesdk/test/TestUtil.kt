@@ -15,7 +15,7 @@ import org.mockito.stubbing.OngoingStubbing
 // https://github.com/mockito/mockito/issues/1293#issuecomment-390921430
 internal infix fun <T> OngoingStubbing<T>.throwKt(t: Throwable) = doAnswer { throw t }
 
-fun <T> observing(liveData: LiveData<T>, f: (Observer<T>) -> Unit) {
+internal fun <T> observing(liveData: LiveData<T>, f: (Observer<T>) -> Unit) {
     val observer = mock<Observer<T>>()
     liveData.observeForever(observer)
     f(observer)

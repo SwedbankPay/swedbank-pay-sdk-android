@@ -12,7 +12,14 @@ import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.test.TestConstants
 import org.junit.Test
 
+/**
+ * PaymentFragment test: reload from CallbackActivity
+ */
 class PaymentFragmentShouldReloadPaymentorderPageAfterCallbackActivityStartedWithPaymentUrl : BasePaymentFragmentTest() {
+    /**
+     * Check that PaymentFragment correctly reloads the paymentorder page
+     * after CallbackActivity is started with paymentUrl
+     */
     @Test
     fun test() {
         stubAnonymousMockPayment()

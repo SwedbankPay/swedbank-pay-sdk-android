@@ -10,6 +10,9 @@ import org.junit.Assert
 import org.junit.Test
 import kotlin.reflect.KClass
 
+/**
+ * Tests for Links
+ */
 class LinkTest {
 
     private fun parseLink(type: KClass<out Link>) {
@@ -36,6 +39,9 @@ class LinkTest {
         Assert.assertEquals("link href is $resolvedUrl", link.href, resolvedUrl)
     }
 
+    /**
+     * Check that all Link subclasses are deserialized correctly
+     */
     @Test
     fun parseLinks() {
         Link::class.sealedSubclasses.forEach(::parseLink)

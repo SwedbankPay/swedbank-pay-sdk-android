@@ -5,7 +5,7 @@ import com.swedbankpay.mobilesdk.PaymentOrder
 import com.swedbankpay.mobilesdk.PaymentOrderUrls
 import java.util.*
 
-object TestConstants {
+internal object TestConstants {
     const val completeUrl = "https://completeurl.invalid/"
     const val termsOfServiceUrl = "https://tosurl.invalid/"
     const val paymentUrl = "https://paymenturl.invalid/"

@@ -25,9 +25,15 @@ import org.mockito.junit.MockitoRule
 import org.mockito.quality.Strictness
 import org.robolectric.annotation.Config
 
+/**
+ * Tests for PaymentViewModel and InternalPaymentViewModel: paymentUrl handling
+ */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.P])
 class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProviderFactory {
+    /**
+     * STRICT_STUBS mockito rule for cleaner tests
+     */
     @get:Rule
     val rule: MockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS)
 
@@ -37,10 +43,16 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
     @Mock
     private lateinit var configuration: Configuration
 
+    /**
+     * Use AndroidViewModelFactory when creating ViewModels for this test
+     */
     override fun getDefaultViewModelProviderFactory() = ViewModelProvider.AndroidViewModelFactory(application)
 
     private val viewModel get() = getViewModel<InternalPaymentViewModel>()
 
+    /**
+     * Set up viewmodels and mock paymentorder
+     */
     @Before
     fun setup() {
         application.stub {
@@ -70,6 +82,9 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
         }
     }
 
+    /**
+     * Check that viewmodel loads the paymentorder html content when the mock payment is started
+     */
     @Test
     fun itShouldLoadPaymentMenuHtml() {
         observing(viewModel.currentPage) {
@@ -78,6 +93,9 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
         }
     }
 
+    /**
+     * Check that viewmodel reloads the paymentorder html content after processing a navigation to paymentUrl
+     */
     @Test
     fun itShouldReloadPaymentMenuHtmlAfterNavigationToPaymentUrl() {
         observing(viewModel.currentPage) {
@@ -90,6 +108,9 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
         }
     }
 
+    /**
+     * Check that viewmodel reloads the paymentorder html content after CallbackActivity is started with paymentUrl
+     */
     @Test
     fun itShouldReloadPaymentMenuHtmlAfterCallbackActivityStartedWithPaymentUrl() {
         observing(viewModel.currentPage) {

@@ -7,7 +7,14 @@ import androidx.test.espresso.web.sugar.Web
 import com.swedbankpay.mobilesdk.test.TestConstants
 import org.junit.Test
 
+/**
+ * PaymentFragment test: reload from paymentUrl navigation
+ */
 class PaymentFragmentShouldReloadPaymentorderPageWhenItNavigatesToPaymentUrl : BasePaymentFragmentTest() {
+    /**
+     * Check that PaymentFragment correctly reloads the paymentorder page
+     * after a navigation to paymentUrl
+     */
     @Test
     fun test() {
         stubAnonymousMockPayment()

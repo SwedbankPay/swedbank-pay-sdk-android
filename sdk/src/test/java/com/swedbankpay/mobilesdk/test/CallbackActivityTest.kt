@@ -10,13 +10,30 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.nhaarman.mockitokotlin2.*
 import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import org.junit.Assert
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.junit.MockitoJUnit
+import org.mockito.junit.MockitoRule
+import org.mockito.quality.Strictness
 import org.robolectric.annotation.Config
 
+/**
+ * Tests for CallbackActivity
+ */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.P])
 class CallbackActivityTest {
+    /**
+     * STRICT_STUBS mockito rule for cleaner tests
+     */
+    @get:Rule
+    val rule: MockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS)
+
+    /**
+     * Check that CallbackActivity notifies observers of CallbackActivity.onCallbackUrlInvoked
+     * when started (with FLAG_ACTIVITY_NEW_TASK; this is how Chrome should invoke it)
+     */
     @Test
     fun itShouldNotifyObserversWhenStarted() {
         observing(CallbackActivity.onCallbackUrlInvoked) {
@@ -37,6 +54,10 @@ class CallbackActivityTest {
         }
     }
 
+    /**
+     * Check that CallbackActivity notifies observers of CallbackActivity.onCallbackUrlInvoked
+     * when started without FLAG_ACTIVITY_NEW_TASK.
+     */
     @Test
     fun itShouldNotifyObserversWhenStartedWithoutNewTaskFlag() {
         observing(CallbackActivity.onCallbackUrlInvoked) {
