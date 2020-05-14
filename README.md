@@ -4,7 +4,7 @@
 
 [![Download][download-badge]][download-link]
 ![Run Checks][tests-badge]
-![License][license-badge]]
+![License][license-badge]
 [![Dependabot Status][dependabot-badge]][dependabot-link]
 
 The Swedbank Pay Android SDK enables simple embedding of [Swedbank Pay Checkout](https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/payex-checkout) to an Android application.
