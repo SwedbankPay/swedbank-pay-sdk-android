@@ -250,18 +250,19 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun InternalPaymentViewModel.observeCurrentPage(baseUrl: String) {
-        currentPage.observe(this@PaymentFragment, Observer {
+        currentPage.observe(this@PaymentFragment, Observer { page ->
             val webFragment =
                 childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
             webFragment.apply {
-                reloadRequested = if (it == null) {
+                reloadRequested = if (page == null) {
                     clear()
                     false
                 } else {
+                    val loaded = load(baseUrl, page)
                     // only clear reload flag if WebViewFragment actually loaded the page
                     // This way we protect ourselves against arbitrary ordering of calls to
                     // this and onStart.
-                    !load(baseUrl, it)
+                    reloadRequested && !loaded
                 }
             }
         })

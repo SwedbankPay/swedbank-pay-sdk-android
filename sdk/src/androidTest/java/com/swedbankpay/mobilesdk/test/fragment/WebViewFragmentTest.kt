@@ -6,8 +6,7 @@ import androidx.fragment.app.testing.FragmentScenario
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.lifecycle.Lifecycle
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
@@ -70,8 +69,7 @@ class WebViewFragmentTest {
      * and the dialog is dismissed.
      */
     @Test
-    fun itShouldShowAlert() {
-        val alertText = "Alert"
+    fun itShouldShowAlertAndReturnOnClick() {
         testJsDialog(
             "alert('$alertText')",
             ""
@@ -93,13 +91,31 @@ class WebViewFragmentTest {
     }
 
     /**
+     * Check that WebViewFragment shows a dialog when alert() is called in javascript,
+     * and after the the dialog is dismissed by the user, alert() returns.
+     */
+    @Test
+    fun itShouldShowAlertAndReturnOnDismiss() {
+        testJsDialog(
+            "alert('$alertText')",
+            ""
+        ) {
+            onView(withId(android.R.id.message))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(alertText)))
+                .perform(pressBack())
+        }
+        onView(withId(android.R.id.message))
+            .check(doesNotExist())
+    }
+
+    /**
      * Check that WebViewFragment shows a dialog when confirm() is called in javascript,
      * and that after the "yes" button on the dialog is pressed, confirm() returns true
      * and the dialog is dismissed.
      */
     @Test
     fun itShouldShowConfirmAndReturnTrueForOk() {
-        val confirmText = "Confirm"
         testJsDialog(
             "confirm('$confirmText')",
             "true"
@@ -124,7 +140,7 @@ class WebViewFragmentTest {
      */
     @Test
     fun itShouldShowConfirmAndReturnFalseForCancel() {
-        val confirmText = "Confirm"
+
         testJsDialog(
             "confirm('$confirmText')",
             "false"
@@ -143,25 +159,42 @@ class WebViewFragmentTest {
     }
 
     /**
+     * Check that WebViewFragment shows a dialog when confirm() is called in javascript,
+     * and after the the dialog is dismissed by the user, confirm() returns false.
+     */
+    @Test
+    fun itShouldShowConfirmAndReturnFalseOnDismiss() {
+        testJsDialog(
+            "confirm('$confirmText')",
+            "false"
+        ) {
+            onView(withId(android.R.id.message))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(confirmText)))
+                .perform(pressBack())
+        }
+        onView(withId(android.R.id.message))
+            .check(doesNotExist())
+    }
+
+    /**
      * Check that WebViewFragment shows a dialog when prompt() is called in javascript,
      * and that after the "yes" button on the dialog is pressed,
      * prompt() returns the value entered and the dialog is dismissed.
      */
     @Test
     fun itShouldShowPromptAndReturnValueForOk() {
-        val hint = "hint"
-        val value = "value"
         testJsDialog(
-            "prompt('$promptText', '$hint')",
-            value
+            "prompt('$promptText', '$promptHint')",
+            promptValue
         ) {
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_value))
                 .check(matches(isDisplayed()))
-                .check(matches(withText(hint)))
-                .perform(replaceText(value))
+                .check(matches(withText(promptHint)))
+                .perform(replaceText(promptValue))
             onView(withId(android.R.id.button2))
                 .check(matches(isDisplayed()))
             onView(withId(android.R.id.button1))
@@ -179,9 +212,8 @@ class WebViewFragmentTest {
      */
     @Test
     fun itShouldShowPromptAndReturnNullForCancel() {
-        val hint = "hint"
         testJsDialog(
-            "prompt('$promptText', '$hint') === null ? 'null' : 'non-null'",
+            "prompt('$promptText', '$promptHint') === null ? 'null' : 'non-null'",
             "null"
         ) {
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
@@ -189,7 +221,7 @@ class WebViewFragmentTest {
                 .check(matches(withText(promptText)))
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_value))
                 .check(matches(isDisplayed()))
-                .check(matches(withText(hint)))
+                .check(matches(withText(promptHint)))
             onView(withId(android.R.id.button1))
                 .check(matches(isDisplayed()))
             onView(withId(android.R.id.button2))
@@ -207,9 +239,8 @@ class WebViewFragmentTest {
      */
     @Test
     fun itShouldShowPromptAndReturnNonnullForOk() {
-        val hint = "hint"
         testJsDialog(
-            "prompt('$promptText', '$hint') === null ? 'null' : 'non-null'",
+            "prompt('$promptText', '$promptHint') === null ? 'null' : 'non-null'",
             "non-null"
         ) {
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
@@ -217,10 +248,119 @@ class WebViewFragmentTest {
                 .check(matches(withText(promptText)))
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_value))
                 .check(matches(isDisplayed()))
-                .check(matches(withText(hint)))
+                .check(matches(withText(promptHint)))
                 .perform(replaceText(""))
             onView(withId(android.R.id.button2))
                 .check(matches(isDisplayed()))
+            onView(withId(android.R.id.button1))
+                .check(matches(isDisplayed()))
+                .perform(click())
+        }
+        onView(withId(android.R.id.message))
+            .check(doesNotExist())
+    }
+
+    /**
+     * Check that WebViewFragment shows a dialog when prompt() is called in javascript,
+     * and after the the dialog is dismissed by the user, prompt() returns null.
+     */
+    @Test
+    fun itShouldShowPromptAndReturnNullOnDismiss() {
+        testJsDialog(
+            "prompt('$promptText', '$promptHint') === null ? 'null' : 'non-null'",
+            "null"
+        ) {
+            onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(promptText)))
+                .perform(pressBack())
+        }
+        onView(withId(android.R.id.message))
+            .check(doesNotExist())
+    }
+
+    /**
+     * Check that if WebViewFragment is recreated while showing an alert, the dialog will be visible after the fragment is recreated,
+     * and that after the button on the dialog is pressed, alert() returns
+     * and the dialog is dismissed.
+     */
+    @Test
+    fun itShouldRetainAlertOverRecreate() {
+        testJsDialog(
+            "alert('$alertText')",
+            ""
+        ) {
+            onView(withId(android.R.id.message))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(alertText)))
+            scenario.apply {
+                recreate()
+                runBlocking { waitForDialogFragment() }
+            }
+            onView(withId(android.R.id.message))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(alertText)))
+            onView(withId(android.R.id.button1))
+                .check(matches(isDisplayed()))
+                .perform(click())
+        }
+        onView(withId(android.R.id.message))
+            .check(doesNotExist())
+    }
+
+    /**
+     * Check that if WebViewFragment is recreated while showing a confirm, the dialog will be visible after the fragment is recreated,
+     * and that after the "yes" button on the dialog is pressed, confirm() returns true
+     * and the dialog is dismissed.
+     */
+    fun itShouldRetainPromptOverRecreateAndReturnTrueForOk() {
+        testJsDialog(
+            "confirm('$confirmText')",
+            "true"
+        ) {
+            onView(withId(android.R.id.message))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(confirmText)))
+            scenario.apply {
+                recreate()
+                runBlocking { waitForDialogFragment() }
+            }
+            onView(withId(android.R.id.message))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(confirmText)))
+            onView(withId(android.R.id.button1))
+                .check(matches(isDisplayed()))
+                .perform(click())
+        }
+        onView(withId(android.R.id.message))
+            .check(doesNotExist())
+    }
+
+    /**
+     * Check that if WebViewFragment is recreated while showing a prompt, the dialog will be visible after the fragment is recreated,
+     * and that after the "yes" button on the dialog is pressed,
+     * prompt() returns the value entered and the dialog is dismissed.
+     */
+    @Test
+    fun itShouldRetainPromptOverRecreateAndReturnValueForOk() {
+        testJsDialog(
+            "prompt('$promptText', '$promptHint')",
+            promptValue
+        ) {
+            onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(promptText)))
+            scenario.apply {
+                recreate()
+                runBlocking { waitForDialogFragment() }
+            }
+            onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(promptText)))
+            onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_value))
+                .check(matches(isDisplayed()))
+                .check(matches(withText(promptHint)))
+                .perform(replaceText(promptValue))
             onView(withId(android.R.id.button1))
                 .check(matches(isDisplayed()))
                 .perform(click())
@@ -252,7 +392,11 @@ class WebViewFragmentTest {
         private const val delayStep = 100L
         private const val maxDelayStepCount = (timeout / delayStep).toInt()
 
+        private const val alertText = "Alert"
+        private const val confirmText = "Confirm"
         private const val promptText = "Prompt"
+        private const val promptHint = "hint"
+        private const val promptValue = "value"
 
         private inline fun FragmentScenario<WebViewParentFragment>.onWebViewFragment(
             crossinline f: (WebViewFragment) -> Unit) {
