@@ -149,7 +149,6 @@ class WebViewFragmentTest {
      */
     @Test
     fun itShouldShowPromptAndReturnValueForOk() {
-        val promptText = "Prompt"
         val hint = "hint"
         val value = "value"
         testJsDialog(
@@ -180,7 +179,6 @@ class WebViewFragmentTest {
      */
     @Test
     fun itShouldShowPromptAndReturnNullForCancel() {
-        val promptText = "Prompt"
         val hint = "hint"
         testJsDialog(
             "prompt('$promptText', '$hint') === null ? 'null' : 'non-null'",
@@ -209,7 +207,6 @@ class WebViewFragmentTest {
      */
     @Test
     fun itShouldShowPromptAndReturnNonnullForOk() {
-        val promptText = "Prompt"
         val hint = "hint"
         testJsDialog(
             "prompt('$promptText', '$hint') === null ? 'null' : 'non-null'",
@@ -254,6 +251,8 @@ class WebViewFragmentTest {
 
         private const val delayStep = 100L
         private const val maxDelayStepCount = (timeout / delayStep).toInt()
+
+        private const val promptText = "Prompt"
 
         private inline fun FragmentScenario<WebViewParentFragment>.onWebViewFragment(
             crossinline f: (WebViewFragment) -> Unit) {
