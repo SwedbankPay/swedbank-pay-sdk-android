@@ -110,6 +110,11 @@ dependencies {
     androidTestUtil 'androidx.test:orchestrator:1.2.0'
 }
 
+task dokkaJekyll(type: org.jetbrains.dokka.gradle.DokkaTask) {
+    outputFormat = 'jekyll'
+    outputDirectory = System.getenv('DOKKA_JEKYLL_DIR') ?: "$buildDir/jekyll"
+}
+
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
     archiveClassifier.set("sources")
