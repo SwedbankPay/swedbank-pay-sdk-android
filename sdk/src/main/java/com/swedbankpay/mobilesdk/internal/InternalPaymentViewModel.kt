@@ -110,6 +110,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     var useExternalBrowser: Boolean = false
         private set
 
+    var debugIntentUris = false
+
     override fun onCleared() {
         super.onCleared()
         CallbackActivity.onCallbackUrlInvoked.removeObserver(callbackUrlObserver)

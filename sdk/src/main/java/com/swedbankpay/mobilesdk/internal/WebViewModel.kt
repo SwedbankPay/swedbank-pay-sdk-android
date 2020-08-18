@@ -15,7 +15,10 @@ import android.webkit.*
 import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.R
 import okhttp3.internal.toHexString
-import java.net.URISyntaxException
+
+private fun <T> MutableLiveData<List<T>>.add(t: T) {
+    value = value?.plus(t) ?: listOf(t)
+}
 
 internal class WebViewModel(application: Application) : AndroidViewModel(application) {
     sealed class JSDialogInfo<T : JsResult>(
@@ -25,14 +28,6 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         class Alert(message: String?, result: JsResult) : JSDialogInfo<JsResult>(message, result)
         class Confirm(message: String?, result: JsResult) : JSDialogInfo<JsResult>(message, result)
         class Prompt(message: String?, result: JsPromptResult, val defaultValue: String?) : JSDialogInfo<JsPromptResult>(message, result)
-    }
-
-    private companion object {
-        private val INTENT_URI_FLAGS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            Intent.URI_ANDROID_APP_SCHEME or Intent.URI_INTENT_SCHEME
-        } else {
-            Intent.URI_INTENT_SCHEME
-        }
     }
 
     // Yes, a View is part of a ViewModel. Blasphemy.
@@ -48,7 +43,8 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     private var currentBaseUrl: String? = null
     private var lastRootHtml: String? = null
 
-    val failedIntentUris = MutableLiveData<List<Uri>>()
+    val intentUris = MutableLiveData<List<Uri>>()
+    val externalAppIntents = MutableLiveData<List<Intent>>()
 
     private val javascriptDialogs = MutableLiveData<Map<String, JSDialogInfo<*>>>()
     val javascriptDialogTags = Transformations.map(javascriptDialogs) { it?.keys ?: emptySet() }
@@ -176,62 +172,26 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
 
         private fun attemptHandleIntentUri(uri: Uri): Boolean {
             val scheme = uri.scheme
-            if (scheme != "intent" && scheme != "android-app") return false
-
-            val success = try {
-                val intent = getIntentUriIntent(uri)
-                intent?.let(getApplication<Application>()::startActivity)
-                intent != null
-            } catch (_: Exception) {
-                false
+            val isIntentUri = scheme == "intent" || scheme == "android-app"
+            if (isIntentUri) {
+                // Further handling is in the WebViewFragment,
+                // as starting an Activity requires an Activity context.
+                intentUris.add(uri)
             }
-            if (!success) {
-                failedIntentUris.apply {
-                    value = value?.plus(uri) ?: listOf(uri)
-                }
-            }
-
-            // Always intercept "intent" or "android-app" uris,
-            // as the WebView would choke on them anyway.
-            return true
-        }
-
-        private fun getIntentUriIntent(uri: Uri): Intent? {
-            val intent = try {
-                Intent.parseUri(uri.toString(), INTENT_URI_FLAGS)
-            } catch (_: URISyntaxException) {
-                null
-            }
-            intent?.addCategory(Intent.CATEGORY_BROWSABLE)
-            val resolvedIntent = intent?.takeIf {
-                getApplication<Application>().packageManager
-                    .resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY) != null
-            }
-            return resolvedIntent ?: intent?.let(::getFallbackIntent)
-        }
-
-        private fun getFallbackIntent(intent: Intent): Intent? {
-            return intent.getStringExtra("browser_fallback_url")
-                ?.let(Uri::parse)
-                ?.let { Intent(Intent.ACTION_VIEW, it) }
-                ?.apply { addCategory(Intent.CATEGORY_BROWSABLE) }
-                ?.takeIf {
-                    getApplication<Application>().packageManager
-                        .resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY) != null
-                }
+            return isIntentUri
         }
 
         private fun attemptHandleByExternalApp(uri: Uri): Boolean {
-            getExternalAppIntent(uri)?.let {
-                it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                try {
-                    getApplication<Application>().startActivity(it)
-                    return true
-                } catch (_: Exception) {}
-            }
-            // Don't intercept the load if an activity was not actually started;
-            // this allows the iframe or whatnot to get the error.
-            return false
+            // Check if a matching activity can be found here,
+            // so that the WebView can know of failed navigations
+            // to app urls. (N.B! Such is a legacy approach to launching
+            // apps from web content, but we might as well do our best
+            // to support it.)
+            val intent = getExternalAppIntent(uri)
+            // Further handling is in the WebViewFragment,
+            // as starting an Activity requires an Activity context.
+            intent?.let(externalAppIntents::add)
+            return intent != null
         }
 
         private fun getExternalAppIntent(uri: Uri): Intent? {

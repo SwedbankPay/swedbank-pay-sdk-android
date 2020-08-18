@@ -2,9 +2,11 @@ package com.swedbankpay.mobilesdk.internal
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -39,15 +41,26 @@ internal class WebViewFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        webViewModel.failedIntentUris.observe(this, Observer {
+        val vm = webViewModel
+        vm.intentUris.observe(this, Observer {
             if (it?.isNotEmpty() == true) {
                 for (uri in it) {
-                    showIntentUriErrorDialog(uri)
+                    handleIntentUri(uri)
                 }
-                webViewModel.failedIntentUris.value = null
+                webViewModel.intentUris.value = null
             }
         })
-        webViewModel.javascriptDialogTags.observe(this, Observer {
+        vm.externalAppIntents.observe(this, Observer {
+            if (it?.isNotEmpty() == true) {
+                val context = requireContext()
+                for (intent in it) {
+                    context.startActivity(intent)
+                }
+                webViewModel.externalAppIntents.value = null
+            }
+        })
+
+        vm.javascriptDialogTags.observe(this, Observer {
             ensureJSDialogFragments(it)
         })
     }
@@ -99,6 +112,86 @@ internal class WebViewFragment : Fragment() {
         return true
     }
 
+    private fun handleIntentUri(uri: Uri) {
+        try {
+            val intent = getIntentUriIntent(uri)
+            val context = requireContext()
+            try {
+                context.startActivity(intent)
+            } catch (e: ActivityNotFoundException) {
+                throw IntentUriException(
+                    uri,
+                    "Failed to Start Activity",
+                    e
+                )
+            }
+        } catch (e: IntentUriException) {
+            showIntentUriErrorDialog(e)
+        }
+    }
+
+    private fun getIntentUriIntent(uri: Uri): Intent? {
+        val intent = try {
+            Intent.parseUri(uri.toString(), INTENT_URI_FLAGS)
+        } catch (e: URISyntaxException) {
+            throw IntentUriException(uri, "Syntax error", e)
+        }
+        intent?.addCategory(Intent.CATEGORY_BROWSABLE)
+        val resolvedIntent = intent?.takeIf {
+            requireContext().packageManager
+                .resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY) != null
+        }
+        return resolvedIntent
+            ?: intent?.let(::getFallbackIntent)
+            ?: throw IntentUriException(uri, getNoMatchingActivityMessage(intent), null)
+
+    }
+
+    private fun getFallbackIntent(intent: Intent): Intent? {
+        return intent.getStringExtra("browser_fallback_url")
+            ?.let(Uri::parse)
+            ?.let { Intent(Intent.ACTION_VIEW, it) }
+            ?.apply { addCategory(Intent.CATEGORY_BROWSABLE) }
+            ?.takeIf {
+                requireContext().packageManager
+                    .resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY) != null
+            }
+    }
+
+    private fun getNoMatchingActivityMessage(intent: Intent?): String {
+        val extraMessage = intent?.let {
+            val pm = requireContext().packageManager
+            val matchesWithoutDefault = pm.resolveActivity(it, 0) != null
+            it.removeCategory(Intent.CATEGORY_BROWSABLE)
+            val matchesWithoutBrowsable = pm.resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY) != null
+            val matchesWithoutEither = pm.resolveActivity(it, 0) != null
+
+            when {
+                matchesWithoutDefault && matchesWithoutBrowsable ->
+                    "(matches without CATEGORY_BROWSABLE, matches without MATCH_DEFAULT_ONLY)"
+                matchesWithoutDefault && !matchesWithoutBrowsable ->
+                    "(matches without MATCH_DEFAULT_ONLY)"
+                !matchesWithoutDefault && matchesWithoutBrowsable ->
+                    "(matches without CATEGORY_BROWSABLE)"
+                matchesWithoutEither ->
+                    "(matches without either CATEGORY_BROWSABLE or MATCH_DEFAULT_ONLY)"
+                else -> null
+            }
+        }
+
+        return when (extraMessage) {
+            null -> "No Matching Activity"
+            else -> "No Matching Activity $extraMessage"
+        }
+    }
+
+    private fun showIntentUriErrorDialog(exception: IntentUriException) {
+        val parent = parentFragment
+        val parentVm = parent?.let(::ViewModelProvider)?.get<InternalPaymentViewModel>()
+        val verbose = parentVm?.debugIntentUris == true
+        IntentUriErrorDialogFragment.newInstance(exception, verbose).show(childFragmentManager, null)
+    }
+
     private fun ensureJSDialogFragments(tags: Set<String>) {
         val manager = childFragmentManager
 
@@ -114,11 +207,7 @@ internal class WebViewFragment : Fragment() {
         }
     }
 
-    private fun showIntentUriErrorDialog(uri: Uri) {
-        ErrorDialogFragment.newInstance(uri).show(childFragmentManager, null)
-    }
-
-    class JSDialogFragment : DialogFragment(), DialogInterface.OnClickListener {
+    internal class JSDialogFragment : DialogFragment(), DialogInterface.OnClickListener {
 
         private val webViewModel get() = (parentFragment as? WebViewFragment)?.webViewModel
 
@@ -193,13 +282,41 @@ internal class WebViewFragment : Fragment() {
         }
     }
 
-    class ErrorDialogFragment : DialogFragment() {
+    internal class IntentUriException(
+        val uri: Uri,
+        message: String?,
+        cause: Throwable?
+    ) : Exception(message, cause)
+
+    internal class IntentUriErrorDialogFragment : DialogFragment() {
         companion object {
             const val ARG_URI = "U"
+            const val ARG_EXTRA_MESSAGE = "E"
 
-            fun newInstance(uri: Uri) = ErrorDialogFragment().apply {
+            internal fun newInstance(exception: IntentUriException, verbose: Boolean) = IntentUriErrorDialogFragment().apply {
                 arguments = Bundle().apply {
-                    putString(ARG_URI, uri.toString())
+                    putString(ARG_URI, exception.uri.toString())
+                    if (verbose) {
+                        putString(ARG_EXTRA_MESSAGE, buildExtraMessage(exception))
+                    }
+                }
+            }
+
+            private fun buildExtraMessage(exception: IntentUriException): String {
+                return buildString {
+                    appendln(exception.message)
+                    appendln(exception.uri)
+                    for (cause in exception.causes) {
+                        appendln()
+                        append(cause.toString())
+                    }
+                }
+            }
+
+            private val IntentUriException.causes get() = generateSequence(cause) {
+                when (val next = it.cause) {
+                    it -> null
+                    else -> next
                 }
             }
         }
@@ -217,7 +334,13 @@ internal class WebViewFragment : Fragment() {
 
         private fun Context.formatMessage(): String {
             val packageName = getFailingPackage() ?: getString(R.string.swedbankpaysdk_intent_failure_unknown)
-            return getString(R.string.swedbankpaysdk_intent_failure_body, packageName)
+            val message = getString(R.string.swedbankpaysdk_intent_failure_body, packageName)
+            val extraMessage = arguments?.getString(ARG_EXTRA_MESSAGE)
+            return if (extraMessage == null) {
+                message
+            } else {
+                "$message\n$extraMessage"
+            }
         }
 
 
