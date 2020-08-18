@@ -78,9 +78,10 @@ open class PaymentFragment : Fragment() {
         private var consumer: Consumer? = null
         private var paymentOrder: PaymentOrder? = null
         private var viewModelKey: String? = null
-        private var useExternalBrowser: Boolean = false
+        private var useExternalBrowser = false
         @DefaultUI
         private var enabledDefaultUI = RETRY_PROMPT
+        private var debugIntentUris = false
 
         /**
          * Sets a consumer for this payment.
@@ -133,6 +134,12 @@ open class PaymentFragment : Fragment() {
         }
 
         /**
+         * Enables or disables verbose error dialogs when Android Intent Uris
+         * do not function correctly.
+         */
+        fun debugIntentUris(debugIntentUris: Boolean) = apply { this.debugIntentUris = debugIntentUris }
+
+        /**
          * Adds the values in this ArgumentsBuilder to a [Bundle].
          * @param bundle the [Bundle] to populate
          * @return the bundle
@@ -143,6 +150,7 @@ open class PaymentFragment : Fragment() {
             putBoolean(ARG_USE_BROWSER, useExternalBrowser)
             viewModelKey?.let { putString(ARG_VIEW_MODEL_PROVIDER_KEY, it) }
             putInt(ARG_ENABLED_DEFAULT_UI, enabledDefaultUI)
+            putBoolean(ARG_DEBUG_INTENT_URIS, debugIntentUris)
         }
 
         /**
@@ -182,6 +190,7 @@ open class PaymentFragment : Fragment() {
         const val ARG_PAYMENT_ORDER = "com.swedbankpay.mobilesdk.ARG_PAYMENT_ORDER"
         const val ARG_VIEW_MODEL_PROVIDER_KEY = "com.swedbankpay.mobilesdk.ARG_VIEW_MODEL_PROVIDER_KEY"
         const val ARG_ENABLED_DEFAULT_UI = "com.swedbankpay.mobilesdk.ARG_DEFAULT_UI"
+        const val ARG_DEBUG_INTENT_URIS = "com.swedbankpay.mobilesdk.ARG_DEBUG_INTENT_URIS"
 
         private const val STATE_VM = "com.swedbankpay.mobilesdk.STATE_VM"
     }
@@ -233,9 +242,11 @@ open class PaymentFragment : Fragment() {
         // cache them for us.
         val vm = vm
         val publicVm = publicVm
+        val arguments = requireArguments()
         vm.configuration = configuration
         vm.publicVm = publicVm
-        vm.enabledDefaultUI.value = requireArguments().getInt(ARG_ENABLED_DEFAULT_UI)
+        vm.enabledDefaultUI.value = arguments.getInt(ARG_ENABLED_DEFAULT_UI)
+        vm.debugIntentUris = arguments.getBoolean(ARG_DEBUG_INTENT_URIS)
         vm.observeLoading()
         vm.observeCurrentPage(configuration.rootLink.href.toString())
         vm.observeMessage()
