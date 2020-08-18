@@ -2,6 +2,7 @@ package com.swedbankpay.mobilesdk.internal
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -117,7 +118,7 @@ internal class WebViewFragment : Fragment() {
             val context = requireContext()
             try {
                 context.startActivity(intent)
-            } catch (e: Exception) {
+            } catch (e: ActivityNotFoundException) {
                 throw IntentUriException(
                     uri,
                     "Failed to Start Activity",
@@ -206,7 +207,7 @@ internal class WebViewFragment : Fragment() {
         }
     }
 
-    class JSDialogFragment : DialogFragment(), DialogInterface.OnClickListener {
+    internal class JSDialogFragment : DialogFragment(), DialogInterface.OnClickListener {
 
         private val webViewModel get() = (parentFragment as? WebViewFragment)?.webViewModel
 
@@ -281,18 +282,18 @@ internal class WebViewFragment : Fragment() {
         }
     }
 
-    class IntentUriException(
+    internal class IntentUriException(
         val uri: Uri,
         message: String?,
         cause: Throwable?
     ) : Exception(message, cause)
 
-    class IntentUriErrorDialogFragment : DialogFragment() {
+    internal class IntentUriErrorDialogFragment : DialogFragment() {
         companion object {
             const val ARG_URI = "U"
             const val ARG_EXTRA_MESSAGE = "E"
 
-            fun newInstance(exception: IntentUriException, verbose: Boolean) = IntentUriErrorDialogFragment().apply {
+            internal fun newInstance(exception: IntentUriException, verbose: Boolean) = IntentUriErrorDialogFragment().apply {
                 arguments = Bundle().apply {
                     putString(ARG_URI, exception.uri.toString())
                     if (verbose) {
