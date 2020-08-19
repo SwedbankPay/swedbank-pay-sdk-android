@@ -4,7 +4,6 @@ import android.webkit.JavascriptInterface
 import androidx.annotation.AnyThread
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.swedbankpay.mobilesdk.internal.remote.json.OnPaymentToSEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

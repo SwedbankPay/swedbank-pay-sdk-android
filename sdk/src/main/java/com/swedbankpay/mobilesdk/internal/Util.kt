@@ -1,13 +1,7 @@
 package com.swedbankpay.mobilesdk.internal
 
-import android.os.Build
-import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.JsonWriter
-import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
-import java.util.*
 
 internal const val LOG_TAG = "SwedbankPay"
 
@@ -44,22 +38,6 @@ internal fun Parcel.readOptionalBoolean() = readOptional(::readBooleanCompat)
 internal fun Parcel.writeOptionalLong(l: Long?) = writeOptional(::writeLong, l)
 internal fun Parcel.readOptionalLong() = readOptional(::readLong)
 
-
-internal fun String.ensureSuffix(suffix: Char): String {
-    return if (endsWith(suffix)) {
-        this
-    } else {
-        "$this$suffix"
-    }
-}
-
-internal fun String.substringAfterPrefix(prefix: String): String? {
-    return if (startsWith(prefix)) {
-        substring(prefix.length)
-    } else {
-        null
-    }
-}
 
 internal fun <T : Any> checkBuilderNotNull(value: T?, fieldName: String) =
     checkNotNull(value) { "$fieldName not set" }

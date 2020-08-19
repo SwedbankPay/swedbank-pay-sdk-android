@@ -19,7 +19,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.get
 import com.swedbankpay.mobilesdk.R
@@ -42,7 +41,7 @@ internal class WebViewFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         val vm = webViewModel
-        vm.intentUris.observe(this, Observer {
+        vm.intentUris.observe(this, {
             if (it?.isNotEmpty() == true) {
                 for (uri in it) {
                     handleIntentUri(uri)
@@ -50,7 +49,7 @@ internal class WebViewFragment : Fragment() {
                 webViewModel.intentUris.value = null
             }
         })
-        vm.externalAppIntents.observe(this, Observer {
+        vm.externalAppIntents.observe(this, {
             if (it?.isNotEmpty() == true) {
                 val context = requireContext()
                 for (intent in it) {
@@ -60,7 +59,7 @@ internal class WebViewFragment : Fragment() {
             }
         })
 
-        vm.javascriptDialogTags.observe(this, Observer {
+        vm.javascriptDialogTags.observe(this, {
             ensureJSDialogFragments(it)
         })
     }
@@ -304,10 +303,10 @@ internal class WebViewFragment : Fragment() {
 
             private fun buildExtraMessage(exception: IntentUriException): String {
                 return buildString {
-                    appendln(exception.message)
-                    appendln(exception.uri)
+                    appendLine(exception.message)
+                    appendLine(exception.uri)
                     for (cause in exception.causes) {
-                        appendln()
+                        appendLine()
                         append(cause.toString())
                     }
                 }

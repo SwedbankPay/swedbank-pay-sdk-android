@@ -54,7 +54,7 @@ class UserHeaders internal constructor() {
      * @param value the value of the header
      * @throws IllegalArgumentException if name or value is invalid
      */
-    fun set(name: String, value: String) = apply { builder.set(name, value) }
+    fun set(name: String, value: String) = apply { builder[name] = value }
 
     /**
      * Adds a header to the request.
@@ -82,7 +82,7 @@ class UserHeaders internal constructor() {
      * @param value the value of the header
      * @throws IllegalArgumentException if name or value is invalid
      */
-    fun set(name: String, value: Date) = apply { builder.set(name, value) }
+    fun set(name: String, value: Date) = apply { builder[name] = value }
 
     /**
      * Adds a header without validating the value.

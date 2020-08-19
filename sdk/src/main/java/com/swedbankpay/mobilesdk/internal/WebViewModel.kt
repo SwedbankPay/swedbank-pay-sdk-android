@@ -38,6 +38,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     // and "view" presentation. As long as it does not offer an API to
     // its internal view model, this remains the only way to persist it
     // (saveState/restoreState would seem to do that, but they are insufficient).
+    @SuppressLint("StaticFieldLeak") // we will release it in onCleared()
     private var webView: WebView? = null
 
     private var currentBaseUrl: String? = null

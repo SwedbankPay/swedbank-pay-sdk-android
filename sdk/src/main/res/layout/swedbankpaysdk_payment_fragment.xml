@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <fragment
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/swedbankpaysdk_root_web_view_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

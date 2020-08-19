@@ -8,9 +8,7 @@ import com.swedbankpay.mobilesdk.internal.remote.json.TopLevelResources
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.CertificatePinner
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import java.io.IOException
 
 /**
  * The Swedbank Pay configuration for your application.

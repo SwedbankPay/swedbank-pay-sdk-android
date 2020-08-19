@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Response
-import java.io.IOException
 
 internal sealed class Link(
     val href: HttpUrl

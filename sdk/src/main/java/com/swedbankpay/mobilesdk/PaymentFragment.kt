@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,7 +10,6 @@ import android.widget.TextView
 import androidx.annotation.CallSuper
 import androidx.annotation.IntDef
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.swedbankpay.mobilesdk.PaymentFragment.ArgumentsBuilder
@@ -129,6 +129,7 @@ open class PaymentFragment : Fragment() {
          *
          * @param defaultUI the default UI to enable
          */
+        @SuppressLint("WrongConstant")
         fun setEnabledDefaultUI(@DefaultUI vararg defaultUI: Int) = apply {
             enabledDefaultUI = defaultUI.fold(0, Int::or)
         }
@@ -178,11 +179,13 @@ open class PaymentFragment : Fragment() {
          * Default UI flag: a laconic success message
          * See [ArgumentsBuilder.setEnabledDefaultUI]
          */
+        @SuppressLint("ShiftFlags") // something wrong with lint + kotlin (!?)
         const val SUCCESS_MESSAGE = 1 shl 1
         /**
          * Default UI flag: a less laconic, though a bit technical, error message
          * See [ArgumentsBuilder.setEnabledDefaultUI]
          */
+        @SuppressLint("ShiftFlags")
         const val ERROR_MESSAGE = 1 shl 2
 
         const val ARG_CONSUMER = "com.swedbankpay.mobilesdk.ARG_CONSUMER"
@@ -255,13 +258,13 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun InternalPaymentViewModel.observeLoading() {
-        loading.observe(this@PaymentFragment, Observer {
+        loading.observe(this@PaymentFragment, {
             updateRefreshLayoutState()
         })
     }
 
     private fun InternalPaymentViewModel.observeCurrentPage(baseUrl: String) {
-        currentPage.observe(this@PaymentFragment, Observer { page ->
+        currentPage.observe(this@PaymentFragment, { page ->
             val webFragment =
                 childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
             webFragment.apply {
@@ -292,16 +295,16 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun InternalPaymentViewModel.observeMessage() {
-        messageTitle.observe(this@PaymentFragment, Observer {
+        messageTitle.observe(this@PaymentFragment, {
             requireView().findViewById<View>(R.id.swedbankpaysdk_message).visibility = if (it != null) View.VISIBLE else View.INVISIBLE
             requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
         })
 
-        messageBody.observe(this@PaymentFragment, Observer {
+        messageBody.observe(this@PaymentFragment, {
             requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
         })
 
-        retryActionAvailable.observe(this@PaymentFragment, Observer {
+        retryActionAvailable.observe(this@PaymentFragment, {
             updateRefreshLayoutState()
         })
     }
@@ -315,7 +318,7 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun InternalPaymentViewModel.observeTermsOfServicePressed() {
-        termsOfServiceUrl.observe(this@PaymentFragment, Observer { url ->
+        termsOfServiceUrl.observe(this@PaymentFragment, { url ->
             if (url != null) {
                 context?.let {
                     it.startActivity(
@@ -328,7 +331,7 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun PaymentViewModel.observeRetryPreviousPressed() {
-        onRetryPreviousAction.observe(this@PaymentFragment, Observer {
+        onRetryPreviousAction.observe(this@PaymentFragment, {
             if (it != null) {
                 vm.retryFromRetryableError()
             }

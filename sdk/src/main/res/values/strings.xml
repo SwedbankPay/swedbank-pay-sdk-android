@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="swedbankpaysdk_retryable_error_title">Communication Error</string>
-    <string name="swedbankpaysdk_retry_button">Retry</string>
     <string name="swedbankpaysdk_failed_init_consumer">Could not initialize identification.</string>
     <string name="swedbankpaysdk_failed_create_payment">Could not initialize payment.</string>
     <string name="swedbankpaysdk_bad_init_request_title">Unable to Start Payment at This Time</string>
-    <string name="swedbankpaysdk_bad_init_request_message">Code: %d</string>
     <string name="swedbankpaysdk_terminal_failure_title">Configuration Error</string>
     <string name="swedbankpaysdk_terminal_failure_message">ID: %s</string>
     <string name="swedbankpaysdk_payment_success">Payment succeeded</string>
