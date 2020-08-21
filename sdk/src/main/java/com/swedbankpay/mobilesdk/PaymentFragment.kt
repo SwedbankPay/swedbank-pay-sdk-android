@@ -319,14 +319,7 @@ open class PaymentFragment : Fragment() {
 
     private fun InternalPaymentViewModel.observeTermsOfServicePressed() {
         termsOfServiceUrl.observe(this@PaymentFragment, { url ->
-            if (url != null) {
-                context?.let {
-                    it.startActivity(
-                        Intent(it, ToSActivity::class.java)
-                            .putExtra(ToSActivity.EXTRA_URL, url)
-                    )
-                }
-            }
+            url?.let(::onTermsOfServiceClick)
         })
     }
 
@@ -351,6 +344,20 @@ open class PaymentFragment : Fragment() {
                 }
                 val useExternal = getBoolean(ARG_USE_BROWSER)
                 vm.start(consumer, paymentOrder, useExternal)
+            }
+        }
+    }
+
+    private fun onTermsOfServiceClick(url: String) {
+        val handled = publicVm.onTermsOfServiceClickListener
+            ?.onTermsOfServiceClick(this, url) == true
+
+        if (!handled) {
+            context?.let {
+                it.startActivity(
+                    Intent(it, ToSActivity::class.java)
+                        .putExtra(ToSActivity.EXTRA_URL, url)
+                )
             }
         }
     }

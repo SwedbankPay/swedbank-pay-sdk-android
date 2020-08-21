@@ -116,6 +116,22 @@ class PaymentViewModel : AndroidViewModel {
         val terminalFailure: TerminalFailure?
     )
 
+    /**
+     * Interface you can implement to be notified when the user clicks on
+     * the Terms of Service link in the Payment Menu, and optionally override
+     * the behaviour.
+     */
+    fun interface OnTermsOfServiceClickListener {
+        /**
+         * Called when the user clicks on the Terms of Service link in the Payment Menu.
+         *
+         * @param paymentFragment the [PaymentFragment] the user is interacting with
+         * @param url the Terms of Service url
+         * @return `true` if you handled the event yourself and wish to disable the default behaviour, `false` if you want to let the SDK show the ToS web page.
+         */
+        fun onTermsOfServiceClick(paymentFragment: PaymentFragment, url: String): Boolean
+    }
+
     private val internalVm = MutableLiveData<InternalPaymentViewModel>()
 
     private val internalState = Transformations.switchMap(internalVm) {
@@ -138,6 +154,8 @@ class PaymentViewModel : AndroidViewModel {
     override fun onCleared() {
         super.onCleared()
         internalVm.value = null
+        onTermsOfServiceClickListener = null
+        onTermsOfServiceClickListenerOwner = null
     }
 
     /**
@@ -187,6 +205,43 @@ class PaymentViewModel : AndroidViewModel {
      * See notes at [richState].
      */
     val state = Transformations.map(richState) { it.state }
+
+    internal var onTermsOfServiceClickListener: OnTermsOfServiceClickListener? = null
+    private var onTermsOfServiceClickListenerOwner: LifecycleOwner? = null
+        set(value) {
+            field?.lifecycle?.removeObserver(onTermsOfServiceClickListenerLifecycleObserver)
+            field = value
+            value?.lifecycle?.addObserver(onTermsOfServiceClickListenerLifecycleObserver)
+        }
+    private val onTermsOfServiceClickListenerLifecycleObserver =
+        LifecycleEventObserver { source, _ ->
+            if (source.lifecycle.currentState == Lifecycle.State.DESTROYED) {
+                onTermsOfServiceClickListener = null
+                onTermsOfServiceClickListenerOwner = null
+            }
+        }
+
+    /**
+     * Set an OnTermsOfServiceClickListener to be notified when the user clicks on the Terms of Service link
+     * in the Payment Menu.
+     *
+     * Optionally, you may provide a [LifecycleOwner] that this listener is bound to.
+     * It will then be automatically removed when the LifecycleOwner is destroyed.
+     * If you do not provide a LifecycleOwner, be careful not to leak expensive objects here.
+     *
+     * @param lifecycleOwner: the LifecycleOwner to bind the listener to, or `null` to keep the listener until the next call to this method
+     * @param listener the OnTermsOfServiceClickListener to set, or `null` to remove the listener
+     */
+    fun setOnTermsOfServiceClickListener(
+        lifecycleOwner: LifecycleOwner?,
+        listener: OnTermsOfServiceClickListener?
+    ) {
+        onTermsOfServiceClickListener = listener
+        onTermsOfServiceClickListenerOwner = when (listener) {
+            null -> null
+            else -> lifecycleOwner
+        }
+    }
 
     /**
      * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR], attempts the previous
