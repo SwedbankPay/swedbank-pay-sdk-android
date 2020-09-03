@@ -1,6 +1,8 @@
 package com.swedbankpay.mobilesdk.internal.remote
 
 import android.content.Context
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException
+import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.security.ProviderInstaller
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
@@ -30,7 +32,13 @@ internal object Api {
     private suspend fun getClient(context: Context, configuration: Configuration): OkHttpClient {
         if (!lazyClient.isInitialized()) {
             withContext(Dispatchers.IO) {
-                ProviderInstaller.installIfNeeded(context)
+                try {
+                    ProviderInstaller.installIfNeeded(context)
+                } catch (_: GooglePlayServicesNotAvailableException) {
+                    // ignored for compatibility with non-Google environments
+                } catch (_: GooglePlayServicesRepairableException) {
+                    // ditto
+                }
             }
         }
         val client = lazyClient.value
