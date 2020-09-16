@@ -48,31 +48,31 @@ internal sealed class Link(
 
     protected suspend inline fun <reified T : Any> get(
         context: Context,
-        configuration: Configuration,
+        configuration: MerchantBackendConfiguration,
         noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
     ) = getCacheable<T>(context, configuration, userHeadersBuilder).value
 
     protected suspend inline fun <reified T : Any> getCacheable(
         context: Context,
-        configuration: Configuration,
+        configuration: MerchantBackendConfiguration,
         noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
     ) = Api.get(context, configuration, href, userHeadersBuilder, T::class.java)
 
     protected suspend inline fun <reified T : Any> post(
         context: Context,
-        configuration: Configuration,
+        configuration: MerchantBackendConfiguration,
         body: String,
         noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
     ) = Api.post(context, configuration, href, body, userHeadersBuilder, T::class.java).value
 
     class Root(href: HttpUrl) : Link(href) {
-        suspend fun get(context: Context, configuration: Configuration) = getCacheable<TopLevelResources>(context, configuration) {
+        suspend fun get(context: Context, configuration: MerchantBackendConfiguration) = getCacheable<TopLevelResources>(context, configuration) {
             decorateGetTopLevelResources(it)
         }
     }
 
     class Consumers(href: HttpUrl) : Link(href) {
-        suspend fun post(context: Context, configuration: Configuration, consumer: Consumer): ConsumerSession {
+        suspend fun post(context: Context, configuration: MerchantBackendConfiguration, consumer: Consumer): ConsumerSession {
             val body = toJsonBody(consumer)
             return post(context, configuration, body) {
                 decorateInitiateConsumerSession(it, body, consumer)
@@ -83,7 +83,7 @@ internal sealed class Link(
     class PaymentOrders(href: HttpUrl) : Link(href) {
         suspend fun post(
             context: Context,
-            configuration: Configuration,
+            configuration: MerchantBackendConfiguration,
             paymentOrder: PaymentOrder
         ): PaymentOrderIn {
             val body = toJsonBody(Body(paymentOrder))

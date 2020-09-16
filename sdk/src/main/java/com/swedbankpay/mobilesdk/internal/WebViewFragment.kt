@@ -100,7 +100,7 @@ internal class WebViewFragment : Fragment() {
         webViewModel.clearContent()
     }
 
-    fun load(baseUrl: String, htmlString: String): Boolean {
+    fun load(baseUrl: String?, htmlString: String): Boolean {
         val vm = webViewModel
         if (restored) {
             restored = false

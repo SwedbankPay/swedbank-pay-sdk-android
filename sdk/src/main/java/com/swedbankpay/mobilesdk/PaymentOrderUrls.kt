@@ -16,7 +16,7 @@ data class PaymentOrderUrls(
     @SerializedName("cancelUrl") val cancelUrl: String? = null,
     @SerializedName("paymentUrl") val paymentUrl: String? = null,
     @SerializedName("callbackUrl") val callbackUrl: String? = null,
-    @SerializedName("termsOfServiceUrl") val termsOfServiceUrl: String? = null//,
+    @SerializedName("termsOfServiceUrl") val termsOfServiceUrl: String? = null
 ) : Parcelable {
     companion object {
         @Suppress("unused")

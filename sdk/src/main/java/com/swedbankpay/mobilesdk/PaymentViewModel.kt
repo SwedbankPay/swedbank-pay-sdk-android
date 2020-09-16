@@ -6,7 +6,6 @@ import android.app.Application
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
-import java.io.IOException
 
 /**
  * Convenience for `ViewModelProvider(activity).get(PaymentViewModel::class.java)`.
@@ -47,10 +46,11 @@ class PaymentViewModel : AndroidViewModel {
             override val isFinal get() = false
         },
         /**
-         * Payment completed successfully. You should hide the [PaymentFragment] and show
-         * a success message.
+         * Payment is complete. You should hide the [PaymentFragment].
+         * This status does not signal anything of whether the payment was successful.
+         * You need to check the status from your servers.
          */
-        SUCCESS {
+        COMPLETE {
             /** `true` */
             override val isFinal get() = true
         },
@@ -100,10 +100,14 @@ class PaymentViewModel : AndroidViewModel {
          */
         val retryableErrorMessage: String?,
         /**
-         * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR], and it was caused
-         * by am [IOException], this property contains that exception.
+         * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR] or
+         * [FAILURE][State.FAILURE], and it was caused by an [Exception],
+         * this property contains that exception.
+         *
+         * Notably, an [IllegalStateException] is an indication that your configuration
+         * is broken and should be fixed. Please consult the exception message.
          */
-        val ioException: IOException?,
+        val exception: Exception?,
         /**
          * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR] or [FAILURE][State.FAILURE],
          * and it was caused by a problem response, this property contains an object describing the problem.
@@ -179,7 +183,8 @@ class PaymentViewModel : AndroidViewModel {
             is InternalPaymentViewModel.UIState.HtmlContent -> State.IN_PROGRESS
             is InternalPaymentViewModel.UIState.InitializationError -> State.FAILURE
             is InternalPaymentViewModel.UIState.RetryableError -> State.RETRYABLE_ERROR
-            InternalPaymentViewModel.UIState.Success -> State.SUCCESS
+            is InternalPaymentViewModel.UIState.ConfigurationError -> State.FAILURE
+            InternalPaymentViewModel.UIState.Complete -> State.COMPLETE
             InternalPaymentViewModel.UIState.Canceled -> State.CANCELED
             is InternalPaymentViewModel.UIState.Failure -> State.FAILURE
         }
@@ -187,7 +192,11 @@ class PaymentViewModel : AndroidViewModel {
             ?.message
             ?.takeUnless { it == 0 }
             ?.let(getApplication<Application>()::getString)
-        val ioException = (it as? InternalPaymentViewModel.UIState.RetryableError)?.ioException
+        val exception = when (it) {
+            is InternalPaymentViewModel.UIState.RetryableError -> it.exception
+            is InternalPaymentViewModel.UIState.ConfigurationError -> it.exception
+            else -> null
+        }
         val problem = when (it) {
             is InternalPaymentViewModel.UIState.InitializationError -> it.problem
             is InternalPaymentViewModel.UIState.RetryableError -> it.problem
@@ -196,7 +205,7 @@ class PaymentViewModel : AndroidViewModel {
 
         val terminalFailure = (it as? InternalPaymentViewModel.UIState.Failure)?.terminalFailure
 
-        RichState(state, retryableErrorMessage, ioException, problem, terminalFailure)
+        RichState(state, retryableErrorMessage, exception, problem, terminalFailure)
     }
 
     /**

@@ -2,8 +2,8 @@ package com.swedbankpay.mobilesdk.test
 
 import com.google.gson.JsonParser
 import com.nhaarman.mockitokotlin2.mock
-import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.Consumer
+import com.swedbankpay.mobilesdk.MerchantBackendConfiguration
 import com.swedbankpay.mobilesdk.internal.remote.Api
 import com.swedbankpay.mobilesdk.internal.remote.RequestProblemException
 import kotlinx.coroutines.runBlocking
@@ -32,7 +32,7 @@ class ApiTest {
 
     private lateinit var server: MockWebServer
 
-    private lateinit var configuration: Configuration
+    private lateinit var configuration: MerchantBackendConfiguration
 
     private fun response(body: String) = MockResponse().apply {
         setResponseCode(200)
@@ -50,7 +50,7 @@ class ApiTest {
         server = MockWebServer()
         server.start()
 
-        configuration = Configuration.Builder(server.url("/").toString()).build()
+        configuration = MerchantBackendConfiguration.Builder(server.url("/").toString()).build()
     }
 
     /**

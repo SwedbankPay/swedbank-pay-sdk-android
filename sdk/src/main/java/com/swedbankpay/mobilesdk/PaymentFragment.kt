@@ -3,6 +3,7 @@ package com.swedbankpay.mobilesdk
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +18,7 @@ import com.swedbankpay.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import com.swedbankpay.mobilesdk.internal.ToSActivity
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
+import java.io.Serializable
 
 /**
  * A [Fragment] that handles a payment process.
@@ -25,15 +27,15 @@ import com.swedbankpay.mobilesdk.internal.WebViewFragment
  * and cannot be reused. You must create a new PaymentFragment for every payment
  * the user makes.
  *
- * You need a [Configuration] object for system-level setup. Obtain one
- * from a [Configuration.Builder]. Usually you only need one [Configuration], which
- * you can set as [defaultConfiguration]. For advanced use-cases, override [getConfiguration]
- * instead.
+ * You need a [Configuration] object for system-level setup.
+ * Usually you only need one [Configuration], which
+ * you can set as [defaultConfiguration].
+ * For advanced use-cases, override [getConfiguration] instead.
  *
  * You must set the [arguments][setArguments] of a PaymentFragment before use.
- * The argument [Bundle] is created by [ArgumentsBuilder].
- * The arguments must contain a [PaymentOrder] to create.
- * See [ArgumentsBuilder] for further options.
+ * The argument [Bundle] is easiest to create by [ArgumentsBuilder].
+ * Alternatively, you may prepare the Bundle yourself and set appropriate
+ * values for the ARG_* keys defined in [PaymentFragment.Companion].
  *
  * You may observe the state of the PaymentFragment via [PaymentViewModel].
  * Access the PaymentViewModel through the containing [activity][androidx.fragment.app.FragmentActivity]:
@@ -41,7 +43,7 @@ import com.swedbankpay.mobilesdk.internal.WebViewFragment
  *     ViewModelProviders.of(activity).get(PaymentViewModel.class)
  *
  * Optionally, you may specify a custom [ViewModelProvider][androidx.lifecycle.ViewModelProvider]
- * key by [ArgumentsBuilder.viewModelProviderKey],
+ * key by [ArgumentsBuilder.viewModelProviderKey] or [ARG_VIEW_MODEL_PROVIDER_KEY],
  * e.g. if you want to support multiple PaymentFragments in an Activity (not recommended).
  *
  * After configuring the PaymentFragment, [add][androidx.fragment.app.FragmentTransaction.add] it to
@@ -55,9 +57,11 @@ import com.swedbankpay.mobilesdk.internal.WebViewFragment
  * Subclassing notes
  * -----------------
  *
- * The correct functioning of PaymentFragment depends on the argument [Bundle] being
- * created with [ArgumentsBuilder]. If your subclass needs custom arguments,
- * you should add the default arguments to your argument [Bundle] by [ArgumentsBuilder.build].
+ * The correct functioning of PaymentFragment depends on the argument [Bundle] having
+ * the expected values for the keys defined in [PaymentFragment.Companion],
+ * which is easiest to ensure by using [ArgumentsBuilder].
+ * If your subclass needs custom arguments, you should add the default arguments
+ * to your argument [Bundle] by [ArgumentsBuilder.build].
  *
  * If you override [onCreateView], you must call the superclass implementation and add the [View]
  * returned by that method to your layout (or use it as the return value).
@@ -67,7 +71,7 @@ import com.swedbankpay.mobilesdk.internal.WebViewFragment
  * All [Bundle] keys used by PaymentFragment are namespaced by a "com.swedbankpay.mobilesdk" prefix,
  * so they should not conflict with any custom keys.
  *
- * @constructor Creates a new, unconfigured instance of PaymentFragment. It must be [configured][ArgumentsBuilder] before use.
+ * @constructor Creates a new instance of PaymentFragment. You must set the [proper arguments][ArgumentsBuilder] before use.
  */
 open class PaymentFragment : Fragment() {
     /**
@@ -75,8 +79,10 @@ open class PaymentFragment : Fragment() {
      */
     @Suppress("unused")
     class ArgumentsBuilder {
+        private var useCheckin = false
         private var consumer: Consumer? = null
         private var paymentOrder: PaymentOrder? = null
+        private var userData: Any? = null
         private var viewModelKey: String? = null
         private var useExternalBrowser = false
         @DefaultUI
@@ -84,16 +90,51 @@ open class PaymentFragment : Fragment() {
         private var debugIntentUris = false
 
         /**
+         * Enables or disables checkin for this payment.
+         * Mostly useful for using [userData] and a custom [Configuration].
+         * @param useCheckin `true` to use checkin, `false` to skip it
+         */
+        fun useCheckin(useCheckin: Boolean) = apply { this.useCheckin = useCheckin }
+
+        /**
          * Sets a consumer for this payment.
+         * Also enables or disables checkin based on the argument:
+         * If `consumer` is `null`, disables checkin;
+         * if consumer `consumer` is not `null`, enables checkin.
+         * If you wish to override this, call [useCheckin] afterwards.
          * @param consumer the consumer making this payment
          */
-        fun consumer(consumer: Consumer?) = apply { this.consumer = consumer }
+        fun consumer(consumer: Consumer?) = apply {
+            this.consumer = consumer
+            useCheckin = consumer != null
+        }
 
         /**
          * Sets the payment order to create
          * @param paymentOrder the payment order to create
          */
-        fun paymentOrder(paymentOrder: PaymentOrder) = apply { this.paymentOrder = paymentOrder }
+        fun paymentOrder(paymentOrder: PaymentOrder?) = apply { this.paymentOrder = paymentOrder }
+
+        /**
+         * Sets custom data for the payment.
+         *
+         * [MerchantBackendConfiguration] does not use this parameter.
+         * If you create a custom [Configuration], you may set any [android.os.Parcelable]
+         * or [Serializable] object here, and receive it in your [Configuration] callbacks.
+         * Note that due to possible saving and restoring of the argument bundle, you should
+         * not rely on receiving the same object as you set here, but an equal one.
+         *
+         * Note that passing general Serializable objects is not recommended.
+         * [String] has special treatment and is okay to pass here.
+         *
+         * @param userData data for your [Configuration]
+         */
+        fun userData(userData: Any?) = apply {
+            require(userData == null || userData is Parcelable || userData is Serializable) {
+                "userData must be Parcelable or Serializable"
+            }
+            this.userData = userData
+        }
 
         /**
          * Sets the key used on the containing [activity's][androidx.fragment.app.FragmentActivity]
@@ -146,8 +187,16 @@ open class PaymentFragment : Fragment() {
          * @return the bundle
          */
         fun build(bundle: Bundle) = bundle.apply {
+            putBoolean(ARG_USE_CHECKIN, useCheckin)
             putParcelable(ARG_CONSUMER, consumer)
             putParcelable(ARG_PAYMENT_ORDER, paymentOrder)
+            userData?.let {
+                when (it) {
+                    is Parcelable -> putParcelable(ARG_USER_DATA, it)
+                    is String -> putString(ARG_USER_DATA, it)
+                    is Serializable -> putSerializable(ARG_USER_DATA, it)
+                }
+            }
             putBoolean(ARG_USE_BROWSER, useExternalBrowser)
             viewModelKey?.let { putString(ARG_VIEW_MODEL_PROVIDER_KEY, it) }
             putInt(ARG_ENABLED_DEFAULT_UI, enabledDefaultUI)
@@ -158,7 +207,7 @@ open class PaymentFragment : Fragment() {
          * Convenience for `build(Bundle())`.
          * @return a new [Bundle] with the configuration from this ArgumentsBuilder
          */
-        fun build() = build(Bundle(4))
+        fun build() = build(Bundle(8))
     }
 
     companion object {
@@ -188,11 +237,56 @@ open class PaymentFragment : Fragment() {
         @SuppressLint("ShiftFlags")
         const val ERROR_MESSAGE = 1 shl 2
 
+        /**
+         * Argument key: Any data that you may need in your [Configuration] to prepare the checkin
+         * and payment menu for this payment. You will receive this value as the `userData` argument
+         * in your [Configuration.postConsumers] and [Configuration.postPaymentorders] methods.
+         *
+         * Value must be [android.os.Parcelable] or [Serializable].
+         */
+        const val ARG_USER_DATA = "com.swedbankpay.mobilesdk.USER_DATA"
+
+        /**
+         * Argument key: `true` to do checkin before payment menu to get a consumerProfileRef
+         */
+        const val ARG_USE_CHECKIN = "com.swedbankpay.mobilesdk.ARG_USE_CHECKIN"
+
+        /**
+         * Argument key: a [Consumer] object to prepare checkin.
+         * You will receive this value in your [Configuration.postConsumers].
+         */
         const val ARG_CONSUMER = "com.swedbankpay.mobilesdk.ARG_CONSUMER"
-        const val ARG_USE_BROWSER = "com.swedbankpay.mobilesdk.ARG_USE_BROWSER"
+
+        /**
+         * Argument key: a [PaymentOrder] object to prepare the payment menu.
+         * You will receive this value in your [Configuration.postPaymentorders].
+         */
         const val ARG_PAYMENT_ORDER = "com.swedbankpay.mobilesdk.ARG_PAYMENT_ORDER"
+
+        /**
+         * Argument key: the `key` to use in [ViewModelProvider.get] to retrieve the
+         * [PaymentViewModel] of this PaymentFragment. Use this if you have multiple
+         * PaymentFragments in the same Activity (not recommended).
+         */
         const val ARG_VIEW_MODEL_PROVIDER_KEY = "com.swedbankpay.mobilesdk.ARG_VIEW_MODEL_PROVIDER_KEY"
+
+        /**
+         * Argument key: the enabled deafult UI.
+         * A bitwise combination of [RETRY_PROMPT], [SUCCESS_MESSAGE], and/or [ERROR_MESSAGE]
+         */
         const val ARG_ENABLED_DEFAULT_UI = "com.swedbankpay.mobilesdk.ARG_DEFAULT_UI"
+
+        /**
+         * Argument key: if `true`, any navigation to out of the payment menu will be done
+         * in the web browser app instead. This can be useful for debugging, but is not
+         * recommended for general use.
+         */
+        const val ARG_USE_BROWSER = "com.swedbankpay.mobilesdk.ARG_USE_BROWSER"
+
+        /**
+         * Argument key: if `true`, will add debugging information to the error dialog when
+         * a web site attempts to start an Activity but fails.
+         */
         const val ARG_DEBUG_INTENT_URIS = "com.swedbankpay.mobilesdk.ARG_DEBUG_INTENT_URIS"
 
         private const val STATE_VM = "com.swedbankpay.mobilesdk.STATE_VM"
@@ -251,7 +345,7 @@ open class PaymentFragment : Fragment() {
         vm.enabledDefaultUI.value = arguments.getInt(ARG_ENABLED_DEFAULT_UI)
         vm.debugIntentUris = arguments.getBoolean(ARG_DEBUG_INTENT_URIS)
         vm.observeLoading()
-        vm.observeCurrentPage(configuration.rootLink.href.toString())
+        vm.observeCurrentPage()
         vm.observeMessage()
         vm.observeTermsOfServicePressed()
         publicVm.observeRetryPreviousPressed()
@@ -263,16 +357,16 @@ open class PaymentFragment : Fragment() {
         })
     }
 
-    private fun InternalPaymentViewModel.observeCurrentPage(baseUrl: String) {
-        currentPage.observe(this@PaymentFragment, { page ->
+    private fun InternalPaymentViewModel.observeCurrentPage() {
+        currentHtmlContent.observe(this@PaymentFragment, {
             val webFragment =
                 childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
             webFragment.apply {
-                reloadRequested = if (page == null) {
+                reloadRequested = if (it == null) {
                     clear()
                     false
                 } else {
-                    val loaded = load(baseUrl, page)
+                    val loaded = load(it.baseUrl, it.getWebViewPage(requireContext()))
                     // only clear reload flag if WebViewFragment actually loaded the page
                     // This way we protect ourselves against arbitrary ordering of calls to
                     // this and onStart.
@@ -285,11 +379,9 @@ open class PaymentFragment : Fragment() {
     private fun reloadPaymentMenu() {
         vm.apply {
             reloadRequested = false
-            getPaymentMenuWebPage()?.let { page ->
-                configuration?.rootLink?.href?.toString()?.let { baseUrl ->
-                    val webFragment = childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
-                    webFragment.load(baseUrl, page)
-                }
+            getPaymentMenuHtmlContent()?.let {
+                val webFragment = childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
+                webFragment.load(it.baseUrl, it.getWebViewPage(requireContext()))
             }
         }
     }
@@ -338,12 +430,12 @@ open class PaymentFragment : Fragment() {
             vm.resumeFromSavedState(checkNotNull(savedInstanceState.getBundle(STATE_VM)))
         } else {
             requireArguments().apply {
+                val useCheckin = getBoolean(ARG_USE_CHECKIN)
                 val consumer = getParcelable<Consumer>(ARG_CONSUMER)
-                val paymentOrder = checkNotNull(getParcelable<PaymentOrder>(ARG_PAYMENT_ORDER)) {
-                    "Fragment $this@PaymentFragment does not have a PaymentFragment.ARG_PAYMENT_ORDER argument."
-                }
+                val paymentOrder = getParcelable<PaymentOrder>(ARG_PAYMENT_ORDER)
+                val userData = get(ARG_USER_DATA)
                 val useExternal = getBoolean(ARG_USE_BROWSER)
-                vm.start(consumer, paymentOrder, useExternal)
+                vm.start(useCheckin, consumer, paymentOrder, userData, useExternal)
             }
         }
     }

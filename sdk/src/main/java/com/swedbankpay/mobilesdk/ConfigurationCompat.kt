@@ -1,26 +1,23 @@
 package com.swedbankpay.mobilesdk
 
 import android.content.Context
+import androidx.annotation.WorkerThread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
- * The Swedbank Pay configuration for your application.
+ * Java compatibility wrapper for [Configuration].
  *
- * You need a Configuration to use [PaymentFragment].
- * If you want to use a custom way of communicating with your services,
- * you can create a subclass of Configuration.
- * If you wish to use the specified Merchant Backend API,
- * create a [MerchantBackendConfiguration] using [MerchantBackendConfiguration.Builder].
- *
- * In most cases, it is enough to set a
- * [default Configuration][PaymentFragment.defaultConfiguration].
- * However, for more advanced situations, you may override [PaymentFragment.getConfiguration]
- * to provide a Configuration dynamically.
- *
- * N.B! Configuration is specified as `suspend` functions, i.e. Kotlin coroutines.
- * As Java does not support these, a [compatibility class][ConfigurationCompat]
- * is provided.
+ * For each callback defined in [Configuration], this class
+ * contains a corresponding callback but without the suspend modifier.
+ * The suspending methods of [Configuration] invoke the corresponding
+ * regular methods using the
+ * [IO Dispatcher](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-i-o.html).
+ * This means your callbacks run in a background thread, so be careful with synchronization.
  */
-abstract class Configuration {
+@Suppress("unused")
+abstract class ConfigurationCompat : Configuration() {
     /**
      * Called by [PaymentFragment] when it needs to start a consumer identification
      * session. Your implementation must ultimately make the call to Swedbank Pay API
@@ -31,7 +28,8 @@ abstract class Configuration {
      * @param userData the user data object set as the PaymentFragment argument
      * @return ViewConsumerIdentificationInfo describing the consumer identification session
      */
-    abstract suspend fun postConsumers(
+    @WorkerThread
+    abstract fun postConsumersCompat(
         context: Context,
         consumer: Consumer?,
         userData: Any?
@@ -48,10 +46,32 @@ abstract class Configuration {
      * @param consumerProfileRef if a checkin was performed first, the `consumerProfileRef` from checkin
      * @return ViewPaymentOrderInfo describing the payment order
      */
-    abstract suspend fun postPaymentorders(
+    @WorkerThread
+    abstract fun postPaymentordersCompat(
         context: Context,
         paymentOrder: PaymentOrder?,
         userData: Any?,
         consumerProfileRef: String?
     ): ViewPaymentOrderInfo
+
+    final override suspend fun postConsumers(
+        context: Context,
+        consumer: Consumer?,
+        userData: Any?
+    ) = requestCompat {
+        postConsumersCompat(context, consumer, userData)
+    }
+
+    final override suspend fun postPaymentorders(
+        context: Context,
+        paymentOrder: PaymentOrder?,
+        userData: Any?,
+        consumerProfileRef: String?
+    ) = requestCompat {
+        postPaymentordersCompat(context, paymentOrder, userData, consumerProfileRef)
+    }
+
+    private suspend fun <T> requestCompat(f: suspend CoroutineScope.() -> T): T {
+        return withContext(Dispatchers.IO, f)
+    }
 }

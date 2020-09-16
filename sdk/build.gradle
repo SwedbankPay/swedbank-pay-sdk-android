@@ -84,7 +84,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-base:17.4.0'
     implementation 'com.google.android.gms:play-services-basement:17.4.0'
 
-    def okhttp_version = '4.8.1'
+    def okhttp_version = '4.9.0'
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
     testImplementation "com.squareup.okhttp3:mockwebserver:$okhttp_version"
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:$okhttp_version"
@@ -100,8 +100,8 @@ dependencies {
     testImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     testImplementation 'androidx.test.espresso:espresso-intents:3.2.0'
     testImplementation 'org.robolectric:robolectric:4.4'
-    testImplementation 'org.mockito:mockito-core:3.5.10'
-    testImplementation 'org.mockito:mockito-inline:3.5.10'
+    testImplementation 'org.mockito:mockito-core:3.5.11'
+    testImplementation 'org.mockito:mockito-inline:3.5.11'
     testImplementation 'com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0'
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 

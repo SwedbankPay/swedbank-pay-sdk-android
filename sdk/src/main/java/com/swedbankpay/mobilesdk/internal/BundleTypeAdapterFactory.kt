@@ -22,10 +22,12 @@ internal object BundleTypeAdapterFactory : TypeAdapterFactory {
                     else -> {
                         out.beginObject()
                         for (key in bundle.keySet()) {
-                            out.name(key)
-                            when (val value = bundle[key]) {
-                                null -> out.nullValue()
-                                else -> gson.toJson(value, value.javaClass, out)
+                            if (key != null) {
+                                out.name(key)
+                                when (val value = bundle[key]) {
+                                    null -> out.nullValue()
+                                    else -> gson.toJson(value, value.javaClass, out)
+                                }
                             }
                         }
                         out.endObject()

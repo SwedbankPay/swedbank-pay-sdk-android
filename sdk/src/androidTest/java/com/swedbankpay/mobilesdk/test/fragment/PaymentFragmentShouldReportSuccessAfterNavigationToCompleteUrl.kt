@@ -53,6 +53,6 @@ class PaymentFragmentShouldReportSuccessAfterNavigationToCompleteUrl : BasePayme
             it.requireActivity().paymentViewModel.state.removeObserver(observer)
         }
 
-        verify(observer).onChanged(PaymentViewModel.State.SUCCESS)
+        verify(observer).onChanged(PaymentViewModel.State.COMPLETE)
     }
 }

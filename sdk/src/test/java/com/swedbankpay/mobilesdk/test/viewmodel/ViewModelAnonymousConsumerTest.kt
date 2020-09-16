@@ -12,8 +12,6 @@ import com.swedbankpay.mobilesdk.PaymentViewModel
 import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import com.swedbankpay.mobilesdk.test.*
-import com.swedbankpay.mobilesdk.test.mockPaymentOrders
-import com.swedbankpay.mobilesdk.test.mockTopLevelResources
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -64,30 +62,23 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
 
     private fun stubConfigurationSuccess() {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    null,
-                    mockPaymentOrders()
-                )
-            )
+            onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
     }
 
     private fun stubConfigurationPaymentOrdersFailure(t: Throwable) {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    null,
-                    mock {
-                        onBlocking { post(any(), any(), any()) } throwKt t
-                    })
-            )
+            onBlocking {
+                postPaymentorders(any(), anyOrNull(), anyOrNull(), anyOrNull())
+            } throwKt t
         }
     }
 
     private fun InternalPaymentViewModel.startAnonymousTestPayment() = start(
+        useCheckin = false,
         consumer = null,
         paymentOrder = TestConstants.paymentOrder,
+        userData = null,
         useBrowser = false
     )
 
@@ -99,7 +90,7 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
         observing(viewModel.uiState) {
             verify(it, never()).onChanged(anyOrNull())
         }
-        observing(viewModel.currentPage) {
+        observing(viewModel.currentHtmlContent) {
             verify(it, never()).onChanged(anyOrNull())
         }
         observing(publicViewModel.state) {
@@ -123,9 +114,9 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
         }
     }
 
-    /**
+    /*
      * Check that viewmodel changes to retryable-error state when top-level resources fail to load
-     */
+     *
     @Test
     fun itShouldMoveToRetryableErrorStateAfterTopLevelResourcesFailure() {
         val exception = IOException()
@@ -150,7 +141,7 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
                 TestConstants.consumerRetryableErrorMessage
             )
         }
-    }
+    }*/
 
     /**
      * Check that viewmodel changes to showing-html-content state after payment is started and loads successfully
@@ -164,6 +155,7 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
                 verify(it).onChanged(
                     refEq(
                         InternalPaymentViewModel.UIState.HtmlContent(
+                            TestConstants.hostUrl,
                             R.string.swedbankpaysdk_view_paymentorder_template,
                             TestConstants.viewPaymentorderLink
                         )
@@ -257,8 +249,10 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
         viewModel.apply {
             startAnonymousTestPayment()
             javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
-            observing(currentPage) {
-                verify(it).onChanged(TestConstants.paymentorderHtmlPage)
+            observing(currentHtmlContent) {
+                verify(it).onChanged(argThat {
+                    getWebViewPage(application) == TestConstants.paymentorderHtmlPage
+                })
                 verifyNoMoreInteractions(it)
             }
         }
@@ -274,11 +268,11 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
             startAnonymousTestPayment()
             overrideNavigation(Uri.parse(TestConstants.completeUrl))
             observing(uiState) {
-                verify(it).onChanged(InternalPaymentViewModel.UIState.Success)
+                verify(it).onChanged(InternalPaymentViewModel.UIState.Complete)
                 verifyNoMoreInteractions(it)
             }
             observing(publicViewModel.state) {
-                verify(it).onChanged(PaymentViewModel.State.SUCCESS)
+                verify(it).onChanged(PaymentViewModel.State.COMPLETE)
                 verifyNoMoreInteractions(it)
             }
         }

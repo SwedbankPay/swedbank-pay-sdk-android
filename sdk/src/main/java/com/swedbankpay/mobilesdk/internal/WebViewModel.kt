@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.webkit.*
@@ -41,7 +40,6 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     @SuppressLint("StaticFieldLeak") // we will release it in onCleared()
     private var webView: WebView? = null
 
-    private var currentBaseUrl: String? = null
     private var lastRootHtml: String? = null
 
     val intentUris = MutableLiveData<List<Uri>>()
@@ -111,7 +109,6 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     fun isShowingContentRootedAt(htmlString: String) = htmlString == lastRootHtml
 
     fun clearContent() {
-        currentBaseUrl = null
         lastRootHtml = null
         javascriptDialogs.value = null
         requireWebView().apply {
@@ -120,8 +117,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    fun loadContent(baseUrl: String, htmlString: String) {
-        currentBaseUrl = baseUrl
+    fun loadContent(baseUrl: String?, htmlString: String) {
         lastRootHtml = htmlString
         javascriptDialogs.value = null
         requireWebView().apply {
@@ -133,12 +129,6 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     private inner class MyWebViewClient(
         private val parentViewModel: InternalPaymentViewModel
     ) : WebViewClient() {
-        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-            if (url != currentBaseUrl) {
-                currentBaseUrl = null
-            }
-        }
-
         override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
             return shouldOverrideUrlLoading(url?.let(Uri::parse))
         }

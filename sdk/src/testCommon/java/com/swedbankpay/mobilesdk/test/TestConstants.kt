@@ -1,11 +1,10 @@
 package com.swedbankpay.mobilesdk.test
 
-import com.swedbankpay.mobilesdk.Consumer
-import com.swedbankpay.mobilesdk.PaymentOrder
-import com.swedbankpay.mobilesdk.PaymentOrderUrls
+import com.swedbankpay.mobilesdk.*
 import java.util.*
 
 internal object TestConstants {
+    const val hostUrl = "https://hosturl.invalid/"
     const val completeUrl = "https://completeurl.invalid/"
     const val termsOfServiceUrl = "https://tosurl.invalid/"
     const val paymentUrl = "https://paymenturl.invalid/"
@@ -16,7 +15,7 @@ internal object TestConstants {
         vatAmount = 0L,
         description = "",
         urls = PaymentOrderUrls(
-            hostUrls = listOf("https://hosturl.invalid/"),
+            hostUrls = listOf(hostUrl),
             completeUrl = completeUrl,
             paymentUrl = paymentUrl,
             termsOfServiceUrl = termsOfServiceUrl
@@ -39,4 +38,18 @@ internal object TestConstants {
     const val paymentOrderError =
         """{"origin":"$paymentOrderErrorOrigin","messageId":"$paymentOrderErrorMessageId","details":"$paymentOrderErrorDetails"}"""
     const val consumerRetryableErrorMessage = "retryConsumer"
+
+    val viewConsumerIdentificationInfo = object : ViewConsumerIdentificationInfo {
+        override val webViewBaseUrl get() = hostUrl
+        override val viewConsumerIdentification get() = viewConsumerSessionLink
+    }
+
+    val viewPaymentorderInfo = object : ViewPaymentOrderInfo {
+        override val webViewBaseUrl get() = hostUrl
+        override val viewPaymentOrder get() = viewPaymentorderLink
+        override val completeUrl get() = TestConstants.completeUrl
+        override val cancelUrl: String? get() = null
+        override val paymentUrl get() = TestConstants.paymentUrl
+        override val termsOfServiceUrl get() = TestConstants.termsOfServiceUrl
+    }
 }

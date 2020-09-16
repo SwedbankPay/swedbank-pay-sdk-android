@@ -42,7 +42,7 @@ internal fun InternalPaymentViewModel.verifyIsInRetryableErrorState(
             if (message != null) {
                 Assert.assertEquals(message, retryableErrorMessage)
             }
-            Assert.assertEquals(ioException, this.ioException)
+            Assert.assertEquals(ioException, this.exception)
             Assert.assertEquals(problem, this.problem)
             Assert.assertNull(terminalFailure)
         }

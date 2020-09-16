@@ -6,16 +6,11 @@ import androidx.test.espresso.web.assertion.WebViewAssertions
 import androidx.test.espresso.web.matcher.DomMatchers
 import androidx.test.espresso.web.sugar.Web
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.stub
 import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.PaymentFragment
-import com.swedbankpay.mobilesdk.internal.remote.json.Link
 import com.swedbankpay.mobilesdk.test.TestConstants
-import com.swedbankpay.mobilesdk.test.mockPaymentOrders
-import com.swedbankpay.mobilesdk.test.mockTopLevelResources
-import com.swedbankpay.mobilesdk.test.onTopLevelResources
-import okhttp3.HttpUrl.Companion.toHttpUrl
+import com.swedbankpay.mobilesdk.test.onPostPaymentorders
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers
@@ -81,10 +76,6 @@ abstract class BasePaymentFragmentTest {
      */
     @Before
     fun setup() {
-        configuration.stub {
-            on { rootLink } doReturn Link.Root("https://rootlink.invalid".toHttpUrl())
-        }
-
         PaymentFragment.defaultConfiguration = configuration
     }
 
@@ -102,12 +93,7 @@ abstract class BasePaymentFragmentTest {
      */
     protected fun stubAnonymousMockPayment() {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    null,
-                    mockPaymentOrders()
-                )
-            )
+            onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
     }
 

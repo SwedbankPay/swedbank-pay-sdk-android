@@ -64,19 +64,16 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
         }
 
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    null,
-                    mockPaymentOrders()
-                )
-            )
+            onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
 
         viewModel.let {
             it.configuration = configuration
             it.start(
+                useCheckin = false,
                 consumer = null,
                 paymentOrder = TestConstants.paymentOrder,
+                userData = null,
                 useBrowser =  false
             )
         }
@@ -87,8 +84,10 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
      */
     @Test
     fun itShouldLoadPaymentMenuHtml() {
-        observing(viewModel.currentPage) {
-            verify(it).onChanged(TestConstants.paymentorderHtmlPage)
+        observing(viewModel.currentHtmlContent) {
+            verify(it).onChanged(argThat {
+                getWebViewPage(application) == TestConstants.paymentorderHtmlPage
+            })
             verifyNoMoreInteractions(it)
         }
     }
@@ -98,12 +97,14 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
      */
     @Test
     fun itShouldReloadPaymentMenuHtmlAfterNavigationToPaymentUrl() {
-        observing(viewModel.currentPage) {
+        observing(viewModel.currentHtmlContent) {
             viewModel.overrideNavigation(Uri.parse(TestConstants.paymentUrl))
             verify(
                 it,
                 times(2)
-            ).onChanged(TestConstants.paymentorderHtmlPage)
+            ).onChanged(argThat {
+                getWebViewPage(application) == TestConstants.paymentorderHtmlPage
+            })
             verifyNoMoreInteractions(it)
         }
     }
@@ -113,7 +114,7 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
      */
     @Test
     fun itShouldReloadPaymentMenuHtmlAfterCallbackActivityStartedWithPaymentUrl() {
-        observing(viewModel.currentPage) {
+        observing(viewModel.currentHtmlContent) {
             val callbackIntent =
                 Intent(ApplicationProvider.getApplicationContext(), CallbackActivity::class.java)
                     .setData(Uri.parse(TestConstants.paymentUrl))
@@ -122,7 +123,9 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
             verify(
                 it,
                 times(2)
-            ).onChanged(TestConstants.paymentorderHtmlPage)
+            ).onChanged(argThat {
+                getWebViewPage(application) == TestConstants.paymentorderHtmlPage
+            })
             verifyNoMoreInteractions(it)
         }
     }
