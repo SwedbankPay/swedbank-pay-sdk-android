@@ -84,7 +84,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-base:17.4.0'
     implementation 'com.google.android.gms:play-services-basement:17.4.0'
 
-    def okhttp_version = '4.8.1'
+    def okhttp_version = '4.9.0'
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
     testImplementation "com.squareup.okhttp3:mockwebserver:$okhttp_version"
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:$okhttp_version"
