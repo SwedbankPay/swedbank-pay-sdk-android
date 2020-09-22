@@ -4,7 +4,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.nhaarman.mockitokotlin2.*
 import com.swedbankpay.mobilesdk.Configuration
-import com.swedbankpay.mobilesdk.internal.remote.json.*
+import com.swedbankpay.mobilesdk.ViewConsumerIdentificationInfo
+import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
 import org.mockito.stubbing.OngoingStubbing
 
 // Kotlin has no checked exceptions, but mocking a throw of a Java checked exception
@@ -22,50 +23,10 @@ internal fun <T> observing(liveData: LiveData<T>, f: (Observer<T>) -> Unit) {
     liveData.removeObserver(observer)
 }
 
-internal fun mockTopLevelResources(consumers: Link.Consumers?, paymentorders: Link.PaymentOrders?): TopLevelResources {
-    return TopLevelResources().apply {
-        consumers?.let { this.consumers = it }
-        paymentorders?.let { this.paymentorders = it }
-    }
+internal fun KStubbing<Configuration>.onPostConsumers(info: ViewConsumerIdentificationInfo) {
+    onBlocking { postConsumers(any(), anyOrNull(), anyOrNull()) } doReturn info
 }
 
-internal fun mockConsumers(): Link.Consumers = mock {
-    onPost(ConsumerSession().apply {
-        operations = operationsWith(
-            "view-consumer-identification",
-            TestConstants.viewConsumerSessionLink
-        )
-    })
-}
-
-internal fun mockPaymentOrders(): Link.PaymentOrders {
-    val operations = operationsWith(
-        "view-paymentorder",
-        TestConstants.viewPaymentorderLink
-    )
-
-    return mock {
-        onPost(PaymentOrderIn().apply {
-            this.operations = operations
-        })
-    }
-}
-
-internal fun KStubbing<Configuration>.onTopLevelResources(topLevelResources: TopLevelResources) {
-    onBlocking { getTopLevelResources(any()) } doReturn topLevelResources
-}
-
-internal fun KStubbing<Link.Consumers>.onPost(consumerSession: ConsumerSession) {
-    onBlocking { post(any(), any(), any()) } doReturn consumerSession
-}
-
-internal fun KStubbing<Link.PaymentOrders>.onPost(paymentOrder: PaymentOrderIn) {
-    onBlocking { post(any(), any(), any()) } doReturn paymentOrder
-}
-
-internal fun operationsWith(rel: String, href: String) = Operations().apply {
-    add(Operation().apply {
-        this.rel = rel
-        this.href = href
-    })
+internal fun KStubbing<Configuration>.onPostPaymentorders(info: ViewPaymentOrderInfo) {
+    onBlocking { postPaymentorders(any(), anyOrNull(), anyOrNull(), anyOrNull()) } doReturn info
 }

@@ -11,23 +11,34 @@ import com.swedbankpay.mobilesdk.internal.remote.ExtensibleJsonObject
 import com.swedbankpay.mobilesdk.internal.writeEnum
 import java.util.*
 
-
+/**
+ * Description a payment order.
+ *
+ * This class mirrors the body the Swedbank Pay
+ * [POST /psp/paymentorders](https://developer.swedbankpay.com/checkout/other-features#creating-a-payment-order)
+ * endpoint, and is designed to work together with [Configuration.MerchantBackend]
+ * and a server implementing the
+ * [Merchant Backend API](https://https://developer.swedbankpay.com/modules-sdks/mobile-sdk/merchant-backend),
+ * but you can also use it with your custom [Configuration].
+ *
+ * Please refer to the Swedbank Pay documentation for the meaning of the payment order properties.
+ */
 data class PaymentOrder(
-    @SerializedName("operation") val operation: PaymentOrderOperation = Defaults.operation,
+    @SerializedName("operation") val operation: PaymentOrderOperation = PaymentOrderOperation.PURCHASE,
     @SerializedName("currency") val currency: Currency,
     @SerializedName("amount") val amount: Long,
     @SerializedName("vatAmount") val vatAmount: Long,
     @SerializedName("description") val description: String,
-    @SerializedName("userAgent") val userAgent: String = Defaults.userAgent,
-    @SerializedName("language") val language: Language = Defaults.language,
-    @SerializedName("generateRecurrenceToken") val generateRecurrenceToken: Boolean = Defaults.generateRecurrenceToken,
-    @SerializedName("restrictedToInstruments") val restrictedToInstruments: List<String>? = Defaults.restrictedToInstruments,
+    @SerializedName("userAgent") val userAgent: String = DEFAULT_USER_AGENT,
+    @SerializedName("language") val language: Language = Language.ENGLISH,
+    @SerializedName("generateRecurrenceToken") val generateRecurrenceToken: Boolean = false,
+    @SerializedName("restrictedToInstruments") val restrictedToInstruments: List<String>? = null,
     @SerializedName("urls") val urls: PaymentOrderUrls,
-    @SerializedName("payeeInfo") val payeeInfo: PayeeInfo = Defaults.payeeInfo,
-    @SerializedName("payer") val payer: PaymentOrderPayer? = Defaults.payer,
-    @SerializedName("orderItems") val orderItems: List<OrderItem>? = Defaults.orderItems,
-    @SerializedName("riskIndicator") val riskIndicator: RiskIndicator? = Defaults.riskIndicator,
-    @SerializedName("disablePaymentMenu") val disablePaymentMenu: Boolean = Defaults.disablePaymentMenu,
+    @SerializedName("payeeInfo") val payeeInfo: PayeeInfo = PayeeInfo(),
+    @SerializedName("payer") val payer: PaymentOrderPayer? = null,
+    @SerializedName("orderItems") val orderItems: List<OrderItem>? = null,
+    @SerializedName("riskIndicator") val riskIndicator: RiskIndicator? = null,
+    @SerializedName("disablePaymentMenu") val disablePaymentMenu: Boolean = false,
 
     /** @hide */
     @Transient override val extensionProperties: Bundle? = null
@@ -36,26 +47,33 @@ data class PaymentOrder(
         @Suppress("unused")
         @JvmField
         val CREATOR = makeCreator(::PaymentOrder)
+
+        /**
+         * Default value for the [userAgent] property.
+         *
+         * Value is of the format "SwedbankPaySDK-Android/${SDK_VERSION}"
+         */
+        const val DEFAULT_USER_AGENT = "SwedbankPaySDK-Android/${BuildConfig.VERSION_NAME}"
     }
 
     @Suppress("unused")
     class Builder {
-        private var operation = Defaults.operation
+        private var operation = PaymentOrderOperation.PURCHASE
         private var currency: Currency? = null
         private var amount: Long? = null
         private var vatAmount: Long? = null
         private var description: String? = null
-        private var userAgent = Defaults.userAgent
-        private var language = Defaults.language
-        private var generateRecurrenceToken = Defaults.generateRecurrenceToken
-        private var restrictedToInstruments = Defaults.restrictedToInstruments
+        private var userAgent = DEFAULT_USER_AGENT
+        private var language = Language.ENGLISH
+        private var generateRecurrenceToken = false
+        private var restrictedToInstruments: List<String>? = null
         private var urls: PaymentOrderUrls? = null
-        private var payeeInfo = Defaults.payeeInfo
-        private var payer = Defaults.payer
-        private var orderItems = Defaults.orderItems
-        private var riskIndicator = Defaults.riskIndicator
+        private var payeeInfo = PayeeInfo()
+        private var payer: PaymentOrderPayer? = null
+        private var orderItems: List<OrderItem>? = null
+        private var riskIndicator: RiskIndicator? = null
         private var extensionProperties: Bundle? = null
-        private var disablePaymentMenu = Defaults.disablePaymentMenu
+        private var disablePaymentMenu = false
 
         fun operation(operation: PaymentOrderOperation) = apply { this.operation = operation }
         fun currency(currency: Currency) = apply { this.currency = currency }
@@ -97,18 +115,7 @@ data class PaymentOrder(
         )
     }
 
-    private object Defaults {
-        val operation = PaymentOrderOperation.PURCHASE
-        const val userAgent = "SwedbankPaySDK-Android/${BuildConfig.VERSION_NAME}"
-        val language = Language.ENGLISH
-        const val generateRecurrenceToken = false
-        val restrictedToInstruments: List<String>? = null
-        val payeeInfo = PayeeInfo()
-        val payer: PaymentOrderPayer? = null
-        val orderItems: List<OrderItem>? = null
-        val riskIndicator: RiskIndicator? = null
-        const val disablePaymentMenu = false
-    }
+
 
     override fun describeContents() = 0
     override fun writeToParcel(parcel: Parcel, flags: Int) {

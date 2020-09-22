@@ -29,7 +29,10 @@ internal object Api {
         OkHttpClient.Builder()
             .build()
     }
-    private suspend fun getClient(context: Context, configuration: Configuration): OkHttpClient {
+    private suspend fun getClient(
+        context: Context,
+        configuration: MerchantBackendConfiguration
+    ): OkHttpClient {
         if (!lazyClient.isInitialized()) {
             withContext(Dispatchers.IO) {
                 try {
@@ -57,7 +60,7 @@ internal object Api {
 
     suspend fun <T : Any> get(
         context: Context,
-        configuration: Configuration,
+        configuration: MerchantBackendConfiguration,
         url: HttpUrl,
         userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit,
         entityType: Class<T>
@@ -65,7 +68,7 @@ internal object Api {
 
     suspend fun <T : Any> post(
         context: Context,
-        configuration: Configuration,
+        configuration: MerchantBackendConfiguration,
         url: HttpUrl,
         body: String,
         userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit,
@@ -74,7 +77,7 @@ internal object Api {
 
     private suspend fun <T : Any> request(
         context: Context,
-        configuration: Configuration,
+        configuration: MerchantBackendConfiguration,
         method: String,
         url: HttpUrl,
         body: String?,
@@ -86,7 +89,7 @@ internal object Api {
     }
 
     private suspend fun buildRequest(
-        configuration: Configuration,
+        configuration: MerchantBackendConfiguration,
         method: String,
         url: HttpUrl,
         body: String?,
@@ -115,7 +118,7 @@ internal object Api {
 
     private suspend fun <T : Any> executeRequest(
         context: Context,
-        configuration: Configuration,
+        configuration: MerchantBackendConfiguration,
         request: Request,
         entityType: Class<T>
     ): CacheableResult<T> {

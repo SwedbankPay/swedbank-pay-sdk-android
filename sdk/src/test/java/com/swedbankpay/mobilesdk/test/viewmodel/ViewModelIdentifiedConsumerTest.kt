@@ -13,9 +13,6 @@ import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import com.swedbankpay.mobilesdk.test.*
 import com.swedbankpay.mobilesdk.test.TestConstants.paymentOrder
-import com.swedbankpay.mobilesdk.test.mockConsumers
-import com.swedbankpay.mobilesdk.test.mockPaymentOrders
-import com.swedbankpay.mobilesdk.test.mockTopLevelResources
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -65,8 +62,10 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     }
 
     private fun InternalPaymentViewModel.startIdentifiedTestPayment() = start(
+        useCheckin = true,
         consumer = TestConstants.consumer,
         paymentOrder = paymentOrder,
+        userData = null,
         useBrowser = false
     )
 
@@ -78,7 +77,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         observing(viewModel.uiState) {
             verify(it, never()).onChanged(anyOrNull())
         }
-        observing(viewModel.currentPage) {
+        observing(viewModel.currentHtmlContent) {
             verify(it, never()).onChanged(anyOrNull())
         }
         observing(publicViewModel.state) {
@@ -102,9 +101,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
     }
 
-    /**
+    /*
      * Check that viewmodel changes to retryable-error state when top-level resources fail to load
-     */
+     *
     @Test
     fun itShouldMoveToRetryableErrorStateAfterTopLevelResourcesFailure() {
         val exception = IOException()
@@ -128,7 +127,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                 TestConstants.consumerRetryableErrorMessage
             )
         }
-    }
+    }*/
 
     /**
      * Check that viewmodel changes to retryable-error state when consumer-session fails to start
@@ -142,16 +141,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             } doReturn TestConstants.consumerRetryableErrorMessage
         }
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mock {
-                        onBlocking {
-                            post(any(), any(), any())
-                        } throwKt exception
-                    },
-                    null
-                )
-            )
+            onBlocking { postConsumers(any(), anyOrNull(), anyOrNull()) } throwKt exception
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -171,16 +161,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     fun itShouldRetryConsumersAfterRetryFromRetryableError() {
         val exception = IOException()
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mock {
-                        onBlocking {
-                            post(any(), any(), any())
-                        } throwKt exception
-                    },
-                    null
-                )
-            )
+            onBlocking { postConsumers(any(), anyOrNull(), anyOrNull()) } throwKt exception
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -228,12 +209,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     @Test
     fun itShouldMoveToHtmlContentState() {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    null
-                )
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
         }
 
         viewModel.apply {
@@ -242,6 +218,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                 verify(it).onChanged(
                     refEq(
                         InternalPaymentViewModel.UIState.HtmlContent(
+                            TestConstants.hostUrl,
                             R.string.swedbankpaysdk_view_consumer_identification_template,
                             TestConstants.viewConsumerSessionLink
                         )
@@ -264,27 +241,13 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     fun itShouldMoveToHtmlContentStateAfterRetry() {
         val exception = IOException()
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mock {
-                        onBlocking {
-                            post(any(), any(), any())
-                        } throwKt exception
-                    },
-                    null
-                )
-            )
+            onBlocking { postConsumers(any(), anyOrNull(), anyOrNull()) } throwKt exception
         }
         viewModel.apply {
             startIdentifiedTestPayment()
 
             this@ViewModelIdentifiedConsumerTest.configuration.stub {
-                onTopLevelResources(
-                    mockTopLevelResources(
-                        mockConsumers(),
-                        null
-                    )
-                )
+                onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
             }
 
             retryFromRetryableError()
@@ -292,6 +255,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                 verify(it).onChanged(
                     refEq(
                         InternalPaymentViewModel.UIState.HtmlContent(
+                            TestConstants.hostUrl,
                             R.string.swedbankpaysdk_view_consumer_identification_template,
                             TestConstants.viewConsumerSessionLink
                         )
@@ -319,17 +283,14 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             } doReturn TestConstants.consumerSessionHtmlPage
         }
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    null
-                )
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
         }
         viewModel.apply {
             startIdentifiedTestPayment()
-            observing(currentPage) {
-                verify(it).onChanged(TestConstants.consumerSessionHtmlPage)
+            observing(currentHtmlContent) {
+                verify(it).onChanged(argThat {
+                    getWebViewPage(application) == TestConstants.consumerSessionHtmlPage
+                })
                 verifyNoMoreInteractions(it)
             }
         }
@@ -341,12 +302,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     @Test
     fun itShouldMoveToLoadingStateAfterOnConsumerProfileRefAvailable() {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    null
-                )
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -365,12 +321,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     @Test
     fun itShouldMoveToHtmlContentStateAfterOnConsumerProfileRefAvailable() {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    mockPaymentOrders()
-                )
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
+            onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -379,6 +331,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                 verify(it).onChanged(
                     refEq(
                         InternalPaymentViewModel.UIState.HtmlContent(
+                            TestConstants.hostUrl,
                             R.string.swedbankpaysdk_view_paymentorder_template,
                             TestConstants.viewPaymentorderLink
                         )
@@ -396,13 +349,10 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     fun itShouldMoveToRetryableErrorStateAfterPaymentOrdersFailure() {
         val exception = IOException()
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    mock {
-                        onBlocking { post(any(), any(), any()) } throwKt exception
-                    })
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
+            onBlocking {
+                postPaymentorders(any(), anyOrNull(), anyOrNull(), anyOrNull())
+            } throwKt exception
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -424,13 +374,10 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     fun itShouldRetryPaymentOrdersAfterRetryFromRetryableError() {
         val exception = IOException()
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    mock {
-                        onBlocking { post(any(), any(), any()) } throwKt exception
-                    })
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
+            onBlocking {
+                postPaymentorders(any(), anyOrNull(), anyOrNull(), anyOrNull())
+            } throwKt exception
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -487,18 +434,16 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             } doReturn TestConstants.paymentorderHtmlPage
         }
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    mockPaymentOrders()
-                )
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
+            onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
         viewModel.apply {
             startIdentifiedTestPayment()
             javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
-            observing(currentPage) {
-                verify(it).onChanged(TestConstants.paymentorderHtmlPage)
+            observing(currentHtmlContent) {
+                verify(it).onChanged(argThat {
+                    getWebViewPage(application) == TestConstants.paymentorderHtmlPage
+                })
                 verifyNoMoreInteractions(it)
             }
         }
@@ -510,12 +455,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     @Test
     fun itShouldMoveToFailureStateAfterOnIdentifyError() {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    null
-                )
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -534,23 +474,19 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     @Test
     fun itShouldMoveToSuccessStateAfterNavigationToCompleteUrl() {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    mockPaymentOrders()
-                )
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
+            onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
         viewModel.apply {
             startIdentifiedTestPayment()
             javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
             overrideNavigation(Uri.parse(TestConstants.completeUrl))
             observing(uiState) {
-                verify(it).onChanged(InternalPaymentViewModel.UIState.Success)
+                verify(it).onChanged(InternalPaymentViewModel.UIState.Complete)
                 verifyNoMoreInteractions(it)
             }
             observing(publicViewModel.state) {
-                verify(it).onChanged(PaymentViewModel.State.SUCCESS)
+                verify(it).onChanged(PaymentViewModel.State.COMPLETE)
                 verifyNoMoreInteractions(it)
             }
         }
@@ -562,12 +498,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     @Test
     fun itShouldNotifyTermsOfServiceUrlObserversAfterOnPaymentToS() {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    mockPaymentOrders()
-                )
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
+            onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -587,12 +519,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     @Test
     fun itShouldMoveToFailureStateAfterOnError() {
         configuration.stub {
-            onTopLevelResources(
-                mockTopLevelResources(
-                    mockConsumers(),
-                    mockPaymentOrders()
-                )
-            )
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
+            onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
         viewModel.apply {
             startIdentifiedTestPayment()

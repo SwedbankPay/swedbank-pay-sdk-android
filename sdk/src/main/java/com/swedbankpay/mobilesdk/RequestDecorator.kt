@@ -3,6 +3,8 @@ package com.swedbankpay.mobilesdk
 /**
  * Callback for adding custom headers to backend requests.
  *
+ * For simple use-cases, see the [withHeaders] factory methods.
+ *
  * All requests made to the merchant backend will call back to
  * the [decorateAnyRequest] method. This is a good place to add
  * API keys and session tokens and the like. Afterwards each request
@@ -30,6 +32,53 @@ package com.swedbankpay.mobilesdk
  * @constructor
  */
 abstract class RequestDecorator {
+    @Suppress("unused")
+    companion object {
+        /**
+         * Create a RequestDecorator that attaches the specified headers to all SDK requests.
+         *
+         * @param namesAndValues the header names and values, alternating
+         */
+        @JvmStatic
+        fun withHeaders(vararg namesAndValues: String): RequestDecorator {
+            require(namesAndValues.size % 2 == 0) { "namesAndValues must contain alternating header names and values" }
+            return SimpleDecorator(namesAndValues)
+        }
+
+        /**
+         * Create a RequestDecorator that attaches the specified headers to all SDK requests.
+         *
+         * @param headers map of header names to corresponding values
+         */
+        @JvmStatic
+        fun withHeaders(headers: Map<String, String>): RequestDecorator {
+            val namesAndValues = arrayOfNulls<String>(2 * headers.size)
+            var i = 0
+            for ((name, value) in headers) {
+                namesAndValues[i++] = name
+                namesAndValues[i++] = value
+            }
+            @Suppress("UNCHECKED_CAST")
+            return SimpleDecorator(namesAndValues as Array<out String>)
+        }
+
+        private class SimpleDecorator(
+            private val namesAndValues: Array<out String>
+        ) : RequestDecorator() {
+            override suspend fun decorateAnyRequest(
+                userHeaders: UserHeaders,
+                method: String,
+                url: String,
+                body: String?
+            ) {
+                for (i in namesAndValues.indices step 2) {
+                    val name = namesAndValues[i]
+                    val value = namesAndValues[i + 1]
+                    userHeaders.add(name, value)
+                }
+            }
+        }
+    }
 
     /**
      * Override this method to add custom headers to all backend requests.
