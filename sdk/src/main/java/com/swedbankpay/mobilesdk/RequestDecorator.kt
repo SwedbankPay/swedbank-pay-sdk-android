@@ -1,7 +1,5 @@
 package com.swedbankpay.mobilesdk
 
-import android.os.Bundle
-
 /**
  * Callback for adding custom headers to backend requests.
  *
@@ -44,20 +42,7 @@ abstract class RequestDecorator {
         @JvmStatic
         fun withHeaders(vararg namesAndValues: String): RequestDecorator {
             require(namesAndValues.size % 2 == 0) { "namesAndValues must contain alternating header names and values" }
-            return object : RequestDecorator() {
-                override suspend fun decorateAnyRequest(
-                    userHeaders: UserHeaders,
-                    method: String,
-                    url: String,
-                    body: String?
-                ) {
-                    for (i in namesAndValues.indices step 2) {
-                        val name = namesAndValues[i]
-                        val value = namesAndValues[i + 1]
-                        userHeaders.add(name, value)
-                    }
-                }
-            }
+            return SimpleDecorator(namesAndValues)
         }
 
         /**
@@ -74,7 +59,24 @@ abstract class RequestDecorator {
                 namesAndValues[i++] = value
             }
             @Suppress("UNCHECKED_CAST")
-            return withHeaders(*namesAndValues as Array<String>)
+            return SimpleDecorator(namesAndValues as Array<out String>)
+        }
+
+        private class SimpleDecorator(
+            private val namesAndValues: Array<out String>
+        ) : RequestDecorator() {
+            override suspend fun decorateAnyRequest(
+                userHeaders: UserHeaders,
+                method: String,
+                url: String,
+                body: String?
+            ) {
+                for (i in namesAndValues.indices step 2) {
+                    val name = namesAndValues[i]
+                    val value = namesAndValues[i + 1]
+                    userHeaders.add(name, value)
+                }
+            }
         }
     }
 
