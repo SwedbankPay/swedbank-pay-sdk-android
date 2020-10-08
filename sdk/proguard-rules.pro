@@ -24,3 +24,5 @@
 -keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.internal.remote.json.Link* {
     <init>(okhttp3.HttpUrl);
 }
+
+-keepnames class com.swedbankpay.mobilesdk.internal.WebViewFragment

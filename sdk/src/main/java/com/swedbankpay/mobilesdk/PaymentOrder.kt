@@ -16,7 +16,7 @@ import java.util.*
  *
  * This class mirrors the body the Swedbank Pay
  * [POST /psp/paymentorders](https://developer.swedbankpay.com/checkout/other-features#creating-a-payment-order)
- * endpoint, and is designed to work together with [Configuration.MerchantBackend]
+ * endpoint, and is designed to work together with [MerchantBackendConfiguration]
  * and a server implementing the
  * [Merchant Backend API](https://https://developer.swedbankpay.com/modules-sdks/mobile-sdk/merchant-backend),
  * but you can also use it with your custom [Configuration].
@@ -31,7 +31,9 @@ data class PaymentOrder(
     @SerializedName("description") val description: String,
     @SerializedName("userAgent") val userAgent: String = DEFAULT_USER_AGENT,
     @SerializedName("language") val language: Language = Language.ENGLISH,
+    @SerializedName("instrument") val instrument: String? = null,
     @SerializedName("generateRecurrenceToken") val generateRecurrenceToken: Boolean = false,
+    @SerializedName("generatePaymentToken") val generatePaymentToken: Boolean? = null,
     @SerializedName("restrictedToInstruments") val restrictedToInstruments: List<String>? = null,
     @SerializedName("urls") val urls: PaymentOrderUrls,
     @SerializedName("payeeInfo") val payeeInfo: PayeeInfo = PayeeInfo(),
@@ -65,7 +67,9 @@ data class PaymentOrder(
         private var description: String? = null
         private var userAgent = DEFAULT_USER_AGENT
         private var language = Language.ENGLISH
+        private var instrument: String? = null
         private var generateRecurrenceToken = false
+        private var generatePaymentToken = false
         private var restrictedToInstruments: List<String>? = null
         private var urls: PaymentOrderUrls? = null
         private var payeeInfo = PayeeInfo()
@@ -82,7 +86,9 @@ data class PaymentOrder(
         fun description(description: String) = apply { this.description = description }
         fun userAgent(userAgent: String) = apply { this.userAgent = userAgent }
         fun language(language: Language) = apply { this.language = language }
+        fun instrument(instrument: String?) = apply { this.instrument = instrument }
         fun generateRecurrenceToken(generateRecurrenceToken: Boolean) = apply { this.generateRecurrenceToken = generateRecurrenceToken }
+        fun generatePaymentToken(generatePaymentToken: Boolean) = apply { this.generatePaymentToken = generatePaymentToken }
         fun restrictedToInstruments(restrictedToInstruments: List<String>?) = apply { this.restrictedToInstruments = restrictedToInstruments }
         fun urls(urls: PaymentOrderUrls) = apply { this.urls = urls }
         fun payeeInfo(payeeInfo: PayeeInfo) = apply { this.payeeInfo = payeeInfo }
@@ -102,7 +108,9 @@ data class PaymentOrder(
             description = checkBuilderNotNull(description, "description"),
             userAgent = userAgent,
             language = language,
+            instrument = instrument,
             generateRecurrenceToken = generateRecurrenceToken,
+            generatePaymentToken = generatePaymentToken,
             restrictedToInstruments = restrictedToInstruments,
             urls = checkBuilderNotNull(urls, "urls"),
             payeeInfo = payeeInfo,
@@ -115,8 +123,6 @@ data class PaymentOrder(
         )
     }
 
-
-
     override fun describeContents() = 0
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.apply {
@@ -128,6 +134,7 @@ data class PaymentOrder(
             writeString(userAgent)
             writeEnum(language)
             writeBooleanCompat(generateRecurrenceToken)
+            writeOptionalBoolean(generatePaymentToken)
             writeStringList(restrictedToInstruments)
             writeParcelable(urls, flags)
             writeParcelable(payeeInfo, flags)
@@ -148,6 +155,7 @@ data class PaymentOrder(
         userAgent = checkNotNull(parcel.readString()),
         language = checkNotNull(parcel.readEnum<Language>()),
         generateRecurrenceToken = parcel.readBooleanCompat(),
+        generatePaymentToken = parcel.readOptionalBoolean(),
         restrictedToInstruments = parcel.createStringArrayList(),
         urls = checkNotNull(parcel.readParcelable()),
         payeeInfo = checkNotNull(parcel.readParcelable()),

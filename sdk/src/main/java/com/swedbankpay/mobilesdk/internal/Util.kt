@@ -38,6 +38,5 @@ internal fun Parcel.readOptionalBoolean() = readOptional(::readBooleanCompat)
 internal fun Parcel.writeOptionalLong(l: Long?) = writeOptional(::writeLong, l)
 internal fun Parcel.readOptionalLong() = readOptional(::readLong)
 
-
 internal fun <T : Any> checkBuilderNotNull(value: T?, fieldName: String) =
     checkNotNull(value) { "$fieldName not set" }

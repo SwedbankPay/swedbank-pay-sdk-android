@@ -147,7 +147,13 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                             || attemptHandleIntentUri(uri)
                             || attemptHandleByExternalApp(uri)
                     )
-            return handled || !webViewCanOpen(uri)
+            val override = handled || !webViewCanOpen(uri)
+            if (!override) {
+                // loadDataWithBaseURL does not call into here,
+                // so any calls here mean we are going to show a page other than the root page
+                parentViewModel.webViewShowingRootPage.value = false
+            }
+            return override
         }
 
         private fun webViewCanOpen(uri: Uri?) = when (uri?.scheme) {

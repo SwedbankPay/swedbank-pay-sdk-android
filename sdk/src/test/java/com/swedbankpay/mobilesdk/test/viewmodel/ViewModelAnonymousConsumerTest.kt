@@ -66,13 +66,18 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
         }
     }
 
-    private fun stubConfigurationPaymentOrdersFailure(t: Throwable) {
+    private fun stubConfigurationPaymentOrdersRetryableError(e: Exception) {
         configuration.stub {
             onBlocking {
                 postPaymentorders(any(), anyOrNull(), anyOrNull(), anyOrNull())
-            } throwKt t
+            } throwKt e
+
+            onBlocking {
+                shouldRetryAfterPostPaymentordersException(e)
+            } doReturn true
         }
     }
+
 
     private fun InternalPaymentViewModel.startAnonymousTestPayment() = start(
         useCheckin = false,
@@ -103,12 +108,13 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
      */
     @Test
     fun itShouldMoveToLoadingState() {
+        stubConfigurationSuccess()
         viewModel.apply {
             observing(uiState) { internalState ->
                 observing(publicViewModel.state) { publicState ->
                     startAnonymousTestPayment()
                     verify(internalState).onChanged(InternalPaymentViewModel.UIState.Loading)
-                    verify(publicState).onChanged(PaymentViewModel.State.IN_PROGRESS)
+                    verify(publicState, atLeastOnce()).onChanged(PaymentViewModel.State.IN_PROGRESS)
                 }
             }
         }
@@ -154,7 +160,7 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
             observing(uiState) {
                 verify(it).onChanged(
                     refEq(
-                        InternalPaymentViewModel.UIState.HtmlContent(
+                        InternalPaymentViewModel.UIState.PlainHtmlContent(
                             TestConstants.hostUrl,
                             R.string.swedbankpaysdk_view_paymentorder_template,
                             TestConstants.viewPaymentorderLink
@@ -172,12 +178,11 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
     @Test
     fun itShouldMoveToRetryableErrorStateAfterPaymentOrdersFailure() {
         val exception = IOException()
-        stubConfigurationPaymentOrdersFailure(exception)
+        stubConfigurationPaymentOrdersRetryableError(exception)
         viewModel.apply {
             startAnonymousTestPayment()
             observing(uiState) {
                 verifyIsInRetryableErrorState(
-                    null,
                     exception,
                     R.string.swedbankpaysdk_failed_create_payment
                 )
@@ -191,7 +196,7 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
     @Test
     fun itShouldRetryPaymentOrdersAfterRetryFromRetryableError() {
         val exception = IOException()
-        stubConfigurationPaymentOrdersFailure(exception)
+        stubConfigurationPaymentOrdersRetryableError(exception)
         viewModel.apply {
             startAnonymousTestPayment()
             observing(uiState) { internalState ->
@@ -203,7 +208,6 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
                         verify().onChanged(
                             refEq(
                                 InternalPaymentViewModel.UIState.RetryableError(
-                                    null,
                                     exception,
                                     R.string.swedbankpaysdk_failed_create_payment
                                 )
@@ -213,7 +217,6 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
                         verify().onChanged(
                             refEq(
                                 InternalPaymentViewModel.UIState.RetryableError(
-                                    null,
                                     exception,
                                     R.string.swedbankpaysdk_failed_create_payment
                                 )

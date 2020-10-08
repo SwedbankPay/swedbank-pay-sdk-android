@@ -3,252 +3,117 @@ package com.swedbankpay.mobilesdk
 import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import com.swedbankpay.mobilesdk.internal.asIntOrNull
+import com.swedbankpay.mobilesdk.internal.asStringOrNull
 import com.swedbankpay.mobilesdk.internal.makeCreator
-import com.swedbankpay.mobilesdk.internal.readProblem
-import com.swedbankpay.mobilesdk.internal.writeProblem
+import java.io.Serializable
 
 /**
- * Base class for any problems encountered in the payment.
+ * An RFC 7807 HTTP API Problem Details object.
  *
- * Problems always result from communication with the backend;
- * lower-level network errors are not represented by Problems,
- * but rather by IOExceptions as is usual.
+ * The SDK defines a subclass of Problem for problems expected to be
+ * reported from a server implementing the Merchant Backend API.
  *
- * Swedbank interfaces, as well as the example merchant backend,
- * report problems using the Problem Details for HTTP APIs
- * protocol (https://tools.ietf.org/html/rfc7807), specifically the
- * json representation. Your custom merchant backend is enouraged to
- * do so as well. These classes provide a convenient java representation
- * of the problems so your client code does not need to deal with the raw
- * json. Any custom problem cases you add to your merchant backend will
- * be reported as "Unknown" problems, and you will have to implement
- * parsing for those in your client, of course.
+ * There is a [subclass][com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendProblem]
+ * for problems expected to be reported by a server implementing the
+ * Merchant Backend API.
  *
- * All problems are either [Client] or [Server] problems. A Client
- * problem is one where there was something wrong with the request
- * the client app sent to the service. A Client problem always implies an
- * HTTP response status in the Client Error range, 400-499.
- *
- * A Server problem in one where the service understood the request, but
- * could not fulfill it. If the backend responds in an unexpected
- * manner, the situation will be interpreted as a Server error, unless
- * the response status is in 400-499, in which case it is still considered a
- * Client error.
- *
- * This separation to Client and Server errors provides a crude but often
- * effective way of distinguishing between temporary service unavailability
- * and permanent configuration errors. Indeed, the PaymentFragment will internally
- * consider any Client errors to be fatal, but most Server errors to be retryable.
- *
- * Client and Server errors are further divided to specific types. See individual
- * class documentation for details.
- *
- * There are also several interfaces defined for related problem types.
- * They are:
- *
- *  - [ProperProblem]: problems actually parsed from a application/problem+json object
- *  - [SwedbankPayProblem]: problems originating from Swedbank Pay backends
- *  - [UnknownProblem]: problems of an unknown [type][https://tools.ietf.org/html/rfc7807#section-3.1]
- *  - [UnexpectedContentProblem]: (pseudo-)problems where the response was not application/problem+json
+ * IMPORTANT: Problem synchronizes on itself, so you should never synchronize
+ * on a Problem object yourself.
  */
 @Suppress("unused")
-sealed class Problem : Parcelable {
+open class Problem : Parcelable, Serializable {
+    companion object {
+        @JvmField
+        val CREATOR = makeCreator(::Problem)
+    }
+
+    // JsonObject is not Serializable so we mark it as transient
+    // and recreate it if needed
+    @Transient
+    @Volatile
+    private var _jsonObject: JsonObject?
     /**
-     * Base class for [Problems][Problem] caused by the service refusing or
-     * not understanding a request sent to it by the client.
+     * The raw RFC 7807 object parsed as a Gson JsonObject.
      *
-     * A Client Problem always implies a HTTP status in 400-499.
+     * N.B! From an API stability perspective, please consider this property
+     * an implementation detail. It is, however, exposed for convenience.
      */
-    sealed class Client : Problem() {
-        /**
-         * Base class for [Client] Problems defined by the example backend.
-         */
-        sealed class MobileSDK(
-            override val raw: JsonObject,
-            override val status: Int
-        ) : Client(), ProperProblem {
-            /**
-             * The merchant backend rejected the request because its authentication headers were invalid.
-             */
-            class Unauthorized(raw: JsonObject, status: Int,
-                               /**
-                                * An optional message describing the reason for the rejection.
-                                */
-                               val message: String?
-            ) : MobileSDK(raw, status)
-
-            /**
-             * The merchant backend did not understand the request.
-             */
-            class InvalidRequest(raw: JsonObject, status: Int,
-                                 /**
-                                  * An optional message describing the error
-                                  */
-                                 val message: String?
-            ) : MobileSDK(raw, status)
+    val jsonObject: JsonObject
+        get() = _jsonObject ?: synchronized(this) {
+            // Yes, we are effectively reimplementing lazy here.
+            // We have little choice, however, as lazy does not provide
+            // an implementation that marks the payload as transient,
+            // which we require here for Serializable.
+            _jsonObject ?: JsonParser.parseString(raw).asJsonObject.also {
+                _jsonObject = it
+            }
         }
 
-        /**
-         * Base class for [Client] problems defined by the Swedbank Pay backend.
-         * [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems]
-         */
-        sealed class SwedbankPay(
-            override val raw: JsonObject,
-            override val title: String?,
-            override val status: Int,
-            override val detail: String?,
-            override val instance: String?,
-            override val action: SwedbankPayAction?,
-            override val problems: List<SwedbankPaySubproblem>
-        ) : Client(), SwedbankPayProblem {
-            /**
-             * The request could not be handled because the request was malformed somehow (e.g. an invalid field value)
-             */
-            class InputError(raw: JsonObject, title: String?, status: Int, detail: String?, instance: String?, action: SwedbankPayAction?, problems: List<SwedbankPaySubproblem>)
-                : SwedbankPay(raw, title, status, detail, instance, action, problems)
-            /**
-             * The request was understood, but the service is refusing to fulfill it. You may not have access to the requested resource.
-             */
-            class Forbidden(raw: JsonObject, title: String?, status: Int, detail: String?, instance: String?, action: SwedbankPayAction?, problems: List<SwedbankPaySubproblem>)
-                : SwedbankPay(raw, title, status, detail, instance, action, problems)
-            /**
-             * The requested resource was not found.
-             */
-            class NotFound(raw: JsonObject, title: String?, status: Int, detail: String?, instance: String?, action: SwedbankPayAction?, problems: List<SwedbankPaySubproblem>)
-                : SwedbankPay(raw, title, status, detail, instance, action, problems)
-        }
+    /**
+     * The raw RFC 7807 object.
+     */
+    val raw: String
 
-        /**
-         * [Client] problem with an unrecognized type.
-         */
-        class Unknown(
-            override val raw: JsonObject,
-            override val type: String,
-            override val title: String?,
-            override val status: Int,
-            override val detail: String?,
-            override val instance: String?
-        ) : Client(), UnknownProblem
+    /**
+     * RFC 7807 default property: a URI reference that identifies the problem type.
+     *
+     * Defaults to "about:blank" if not present in the JSON.
+     */
+    val type get() = jsonObject.get("type")?.asStringOrNull ?: "about:blank"
+    /**
+     * RFC 7807 default property: a short summary of the problem.
+     */
+    val title get() = jsonObject.get("title")?.asStringOrNull
+    /**
+     * RFC 7807 default property: the HTTP status code
+     *
+     * This should always be the same as the actual HTTP status code
+     * reported by the server.
+     */
+    val status: Int? get() = jsonObject.get("status").asIntOrNull
+    /**
+     * RFC 7807 default property: a detailed explanation of the problem
+     */
+    val detail get() = jsonObject.get("detail")?.asStringOrNull
+    /**
+     * RFC 7807 default property: a URI reference that identifies the specific
+     * occurrence of the problem
+     */
+    val instance get() = jsonObject.get("instance")?.asStringOrNull
 
-        /**
-         * Pseudo-problem, not actually parsed from an application/problem+json response.
-         * This problem is emitted if the server response is in an unexpected format and the
-         * HTTP status is in the Client Error range (400-499).
-         */
-        class UnexpectedContent(
-            override val status: Int,
-            override val contentType: String?,
-            override val body: String?
-        ) : Client(), UnexpectedContentProblem
+    /**
+     * Interprets a Gson JsonObject as a Problem.
+     *
+     * N.B! From an API stability perspective, please consider this constructor
+     * an implementation detail. It is, however, exposed for convenience.
+     */
+    constructor(jsonObject: JsonObject) {
+        _jsonObject = jsonObject
+        raw = jsonObject.toString()
     }
 
     /**
-     * Base class for [Problems][Problem] caused by the service backend.
+     * Parses a Problem from a String.
      *
-     * Any unexpected response where the HTTP status is outside 400-499
-     * results in a Server Problem; usually it means the status was in 500-599.
+     * @throws IllegalArgumentException if `raw`  does not represent a JSON object
      */
-    sealed class Server : Problem() {
-        /**
-         * Base class for [Server] Problems defined by the example backend.
-         */
-        sealed class MobileSDK(
-            override val raw: JsonObject,
-            override val status: Int
-        ) : Server(), ProperProblem {
-            /**
-             * The merchant backend timed out trying to connect to the Swedbank Pay backend.
-             */
-            class BackendConnectionTimeout(raw: JsonObject, status: Int,
-                                           /**
-                                            * An optional message describing the error
-                                            */
-                                           val message: String?
-            ) : MobileSDK(raw, status)
-
-            /**
-             * The merchant backend failed to connect to the Swedbank Pay backend.
-             */
-            class BackendConnectionFailure(raw: JsonObject, status: Int,
-                                           /**
-                                            * An optional message describing the error
-                                            */
-                                           val message: String?
-            ) : MobileSDK(raw, status)
-
-            /**
-             * The merchant backend received an invalid response from the Swedbank Pay backend.
-             */
-            class InvalidBackendResponse(raw: JsonObject, status: Int,
-                                         /**
-                                          * The HTTP status code received from the Swedback Pay backend
-                                          */
-                                         val backendStatus: Int,
-                                         /**
-                                          * The unrecognized body received from the Swedback Pay backend
-                                          */
-                                         val body: String?
-            ) : MobileSDK(raw, status)
+    constructor(raw: String) {
+        val jsonObject = try {
+            JsonParser.parseString(raw).asJsonObject
+        } catch (e: Exception) {
+            throw IllegalArgumentException("$raw is not a JSON object", e)
         }
-
-        /**
-         * Base class for [Server] problems defined by the Swedbank Pay backend.
-         * [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems]
-         */
-        sealed class SwedbankPay(
-            override val raw: JsonObject,
-            override val title: String?,
-            override val status: Int,
-            override val detail: String?,
-            override val instance: String?,
-            override val action: SwedbankPayAction?,
-            override val problems: List<SwedbankPaySubproblem>
-        ) : Server(), SwedbankPayProblem {
-            /**
-             * General internal error in Swedbank Pay systems.
-             */
-            class SystemError(raw: JsonObject, title: String?, status: Int, detail: String?, instance: String?, action: SwedbankPayAction?, problems: List<SwedbankPaySubproblem>)
-                : SwedbankPay(raw, title, status, detail, instance, action, problems)
-
-            /**
-             * There is a problem with your merchant configuration.
-             */
-            class ConfigurationError(raw: JsonObject, title: String?, status: Int, detail: String?, instance: String?, action: SwedbankPayAction?, problems: List<SwedbankPaySubproblem>)
-                : SwedbankPay(raw, title, status, detail, instance, action, problems)
-        }
-
-        /**
-         * [Server] problem with an unrecognized type.
-         */
-        class Unknown(
-            override val raw: JsonObject,
-            override val type: String,
-            override val title: String?,
-            override val status: Int,
-            override val detail: String?,
-            override val instance: String?
-        ) : Server(), UnknownProblem
-
-        /**
-         * Pseudo-problem, not actually parsed from an application/problem+json response.
-         * This problem is emitted if the server response is in an unexpected format and the
-         * HTTP status is not in the Client Error range.
-         */
-        class UnexpectedContent(
-            override val status: Int,
-            override val contentType: String?,
-            override val body: String?
-        ) : Server(), UnexpectedContentProblem
+        _jsonObject = jsonObject
+        this.raw = raw
     }
 
     override fun describeContents() = 0
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeProblem(this)
+        parcel.writeString(raw)
     }
-    companion object {
-        @Suppress("unused")
-        @JvmField val CREATOR = makeCreator { parcel ->
-            parcel.readProblem()
-        }
-    }
+    constructor(parcel: Parcel) : this(
+        checkNotNull(parcel.readString())
+    )
 }

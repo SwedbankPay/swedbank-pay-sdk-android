@@ -1,10 +1,24 @@
-package com.swedbankpay.mobilesdk
+package com.swedbankpay.mobilesdk.merchantbackend
 
 /**
  * A Problem defined by the Swedbank Pay backend.
  * [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems]
  */
-interface SwedbankPayProblem : ProperProblem {
+interface SwedbankPayProblem {
+    /**
+     * The raw application/problem+json object.
+     */
+    val raw: String
+    /**
+     * RFC 7807 default property: a URI reference that identifies the problem type.
+     *
+     * Defaults to "about:blank" if not present in the JSON.
+     */
+    val type: String
+    /**
+     * The HTTP status.
+     */
+    val status: Int?
     /**
      * Human-readable description of the problem
      */

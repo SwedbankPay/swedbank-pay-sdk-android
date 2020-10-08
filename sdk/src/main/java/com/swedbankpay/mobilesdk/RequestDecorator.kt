@@ -125,12 +125,20 @@ abstract class RequestDecorator {
     ) {}
 
     /**
-     * Override this method to add custom headers to the GET {paymentorder} request.
+     * Override this method to add custom headers to the PATCH {setInstrument} request of a payment order.
      *
      * The default implementation does nothing.
      *
      * @param userHeaders headers added to this will be sent with the request
-     * @param url the URL being requested
+     * @param url the url of the request
+     * @param body the body of the request
+     * @param instrument the instrument used to create the request body
      */
-    open suspend fun decorateGetPaymentOrder(userHeaders: UserHeaders, url: String) {}
+    open suspend fun decoratePaymentOrderSetInstrument(
+        userHeaders: UserHeaders,
+        url: String,
+        body: String,
+        instrument: String
+    ) {}
+
 }

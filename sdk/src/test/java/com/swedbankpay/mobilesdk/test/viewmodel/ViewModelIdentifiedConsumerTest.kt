@@ -90,12 +90,15 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
      */
     @Test
     fun itShouldMoveToLoadingState() {
+        configuration.stub {
+            onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
+        }
         viewModel.apply {
             observing(uiState) { internalState ->
                 observing(publicViewModel.state) { publicState ->
                     startIdentifiedTestPayment()
                     verify(internalState).onChanged(InternalPaymentViewModel.UIState.Loading)
-                    verify(publicState).onChanged(PaymentViewModel.State.IN_PROGRESS)
+                    verify(publicState, atLeastOnce()).onChanged(PaymentViewModel.State.IN_PROGRESS)
                 }
             }
         }
@@ -142,11 +145,13 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         }
         configuration.stub {
             onBlocking { postConsumers(any(), anyOrNull(), anyOrNull()) } throwKt exception
+            onBlocking {
+                shouldRetryAfterPostConsumersException(exception)
+            } doReturn true
         }
         viewModel.apply {
             startIdentifiedTestPayment()
             verifyIsInRetryableErrorState(
-                null,
                 exception,
                 R.string.swedbankpaysdk_failed_init_consumer,
                 TestConstants.consumerRetryableErrorMessage
@@ -162,6 +167,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         val exception = IOException()
         configuration.stub {
             onBlocking { postConsumers(any(), anyOrNull(), anyOrNull()) } throwKt exception
+            onBlocking {
+                shouldRetryAfterPostConsumersException(exception)
+            } doReturn true
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -173,7 +181,6 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                         verify().onChanged(
                             refEq(
                                 InternalPaymentViewModel.UIState.RetryableError(
-                                    null,
                                     exception,
                                     R.string.swedbankpaysdk_failed_init_consumer
                                 )
@@ -183,7 +190,6 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                         verify().onChanged(
                             refEq(
                                 InternalPaymentViewModel.UIState.RetryableError(
-                                    null,
                                     exception,
                                     R.string.swedbankpaysdk_failed_init_consumer
                                 )
@@ -217,7 +223,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             observing(uiState) {
                 verify(it).onChanged(
                     refEq(
-                        InternalPaymentViewModel.UIState.HtmlContent(
+                        InternalPaymentViewModel.UIState.PlainHtmlContent(
                             TestConstants.hostUrl,
                             R.string.swedbankpaysdk_view_consumer_identification_template,
                             TestConstants.viewConsumerSessionLink
@@ -242,6 +248,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         val exception = IOException()
         configuration.stub {
             onBlocking { postConsumers(any(), anyOrNull(), anyOrNull()) } throwKt exception
+            onBlocking {
+                shouldRetryAfterPostConsumersException(exception)
+            } doReturn true
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -254,7 +263,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             observing(uiState) {
                 verify(it).onChanged(
                     refEq(
-                        InternalPaymentViewModel.UIState.HtmlContent(
+                        InternalPaymentViewModel.UIState.PlainHtmlContent(
                             TestConstants.hostUrl,
                             R.string.swedbankpaysdk_view_consumer_identification_template,
                             TestConstants.viewConsumerSessionLink
@@ -303,11 +312,12 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     fun itShouldMoveToLoadingStateAfterOnConsumerProfileRefAvailable() {
         configuration.stub {
             onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
+            onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
         viewModel.apply {
             startIdentifiedTestPayment()
             observing(uiState) {
-                verify(it).onChanged(isA<InternalPaymentViewModel.UIState.HtmlContent>())
+                verify(it).onChanged(isA<InternalPaymentViewModel.UIState.PlainHtmlContent>())
                 verifyNoMoreInteractions(it)
                 javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
                 verify(it).onChanged(InternalPaymentViewModel.UIState.Loading)
@@ -330,7 +340,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             observing(uiState) {
                 verify(it).onChanged(
                     refEq(
-                        InternalPaymentViewModel.UIState.HtmlContent(
+                        InternalPaymentViewModel.UIState.PlainHtmlContent(
                             TestConstants.hostUrl,
                             R.string.swedbankpaysdk_view_paymentorder_template,
                             TestConstants.viewPaymentorderLink
@@ -353,13 +363,15 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             onBlocking {
                 postPaymentorders(any(), anyOrNull(), anyOrNull(), anyOrNull())
             } throwKt exception
+            onBlocking {
+                shouldRetryAfterPostPaymentordersException(exception)
+            } doReturn true
         }
         viewModel.apply {
             startIdentifiedTestPayment()
             javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
             observing(uiState) {
                 verifyIsInRetryableErrorState(
-                    null,
                     exception,
                     R.string.swedbankpaysdk_failed_create_payment
                 )
@@ -378,6 +390,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             onBlocking {
                 postPaymentorders(any(), anyOrNull(), anyOrNull(), anyOrNull())
             } throwKt exception
+            onBlocking {
+                shouldRetryAfterPostPaymentordersException(exception)
+            } doReturn true
         }
         viewModel.apply {
             startIdentifiedTestPayment()
@@ -391,7 +406,6 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                         verify().onChanged(
                             refEq(
                                 InternalPaymentViewModel.UIState.RetryableError(
-                                    null,
                                     exception,
                                     R.string.swedbankpaysdk_failed_create_payment
                                 )
@@ -401,7 +415,6 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                         verify().onChanged(
                             refEq(
                                 InternalPaymentViewModel.UIState.RetryableError(
-                                    null,
                                     exception,
                                     R.string.swedbankpaysdk_failed_create_payment
                                 )

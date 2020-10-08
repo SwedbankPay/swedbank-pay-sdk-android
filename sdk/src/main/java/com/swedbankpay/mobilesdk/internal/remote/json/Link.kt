@@ -1,6 +1,7 @@
 package com.swedbankpay.mobilesdk.internal.remote.json
 
 import android.content.Context
+import android.os.Parcel
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonSyntaxException
@@ -9,9 +10,11 @@ import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.internal.BundleTypeAdapterFactory
 import com.swedbankpay.mobilesdk.internal.remote.Api
 import com.swedbankpay.mobilesdk.internal.remote.ExtensibleJsonObject
+import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 
 internal sealed class Link(
@@ -46,35 +49,50 @@ internal sealed class Link(
         }
     }
 
-    protected suspend inline fun <reified T : Any> get(
+    protected suspend inline fun <reified T : Any> performRequestCacheable(
         context: Context,
         configuration: MerchantBackendConfiguration,
+        method: String,
+        body: String?,
         noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
-    ) = getCacheable<T>(context, configuration, userHeadersBuilder).value
+    ) = Api.request(
+        context = context,
+        configuration = configuration,
+        method = method,
+        url = href,
+        body = body,
+        userHeadersBuilder = userHeadersBuilder,
+        entityType = T::class.java
+    )
 
-    protected suspend inline fun <reified T : Any> getCacheable(
+    protected suspend inline fun <reified T : Any> performRequest(
         context: Context,
         configuration: MerchantBackendConfiguration,
+        method: String,
+        body: String?,
         noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
-    ) = Api.get(context, configuration, href, userHeadersBuilder, T::class.java)
-
-    protected suspend inline fun <reified T : Any> post(
-        context: Context,
-        configuration: MerchantBackendConfiguration,
-        body: String,
-        noinline userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit
-    ) = Api.post(context, configuration, href, body, userHeadersBuilder, T::class.java).value
+    ) = performRequestCacheable<T>(
+        context, configuration, method, body, userHeadersBuilder
+    ).value
 
     class Root(href: HttpUrl) : Link(href) {
-        suspend fun get(context: Context, configuration: MerchantBackendConfiguration) = getCacheable<TopLevelResources>(context, configuration) {
-            decorateGetTopLevelResources(it)
-        }
+        suspend fun get(context: Context, configuration: MerchantBackendConfiguration) =
+            performRequestCacheable<TopLevelResources>(
+                context, configuration,
+                "GET", null
+            ) {
+                decorateGetTopLevelResources(it)
+            }
     }
 
     class Consumers(href: HttpUrl) : Link(href) {
-        suspend fun post(context: Context, configuration: MerchantBackendConfiguration, consumer: Consumer): ConsumerSession {
+        suspend fun post(
+            context: Context,
+            configuration: MerchantBackendConfiguration,
+            consumer: Consumer
+        ): ConsumerSession {
             val body = toJsonBody(consumer)
-            return post(context, configuration, body) {
+            return performRequest(context, configuration, "POST", body) {
                 decorateInitiateConsumerSession(it, body, consumer)
             }
         }
@@ -87,7 +105,7 @@ internal sealed class Link(
             paymentOrder: PaymentOrder
         ): PaymentOrderIn {
             val body = toJsonBody(Body(paymentOrder))
-            return post(context, configuration, body) {
+            return performRequest(context, configuration, "POST", body) {
                 decorateCreatePaymentOrder(it, body, paymentOrder)
             }
         }
@@ -98,4 +116,26 @@ internal sealed class Link(
             val paymentorder: PaymentOrder
         )
     }
+
+    class PaymentOrderSetInstrument(href: HttpUrl) : Link(href) {
+        suspend fun patch(
+            context: Context,
+            configuration: MerchantBackendConfiguration,
+            instrument: String
+        ): PaymentOrderIn {
+            val body = toJsonBody(mapOf(
+                "paymentorder" to mapOf(
+                    "operation" to "SetInstrument",
+                    "instrument" to instrument
+                )
+            ))
+            return performRequest(context, configuration, "PATCH", body) {
+                decoratePaymentOrderSetInstrument(it, href.toString(), body, instrument)
+            }
+        }
+    }
 }
+
+internal fun Parcel.writeLink(l: Link?) = writeString(l?.href?.toString())
+internal inline fun <T : Link> Parcel.readLink(constructor: (HttpUrl) -> T) =
+    readString()?.toHttpUrl()?.let(constructor)

@@ -6,13 +6,13 @@
     <string name="swedbankpaysdk_bad_init_request_title">Unable to Start Payment at This Time</string>
     <string name="swedbankpaysdk_terminal_failure_title">Configuration Error</string>
     <string name="swedbankpaysdk_terminal_failure_message">ID: %s</string>
-    <string name="swedbankpaysdk_payment_success">Payment succeeded</string>
+    <string name="swedbankpaysdk_payment_complete">Payment complete</string>
     <string name="swedbankpaysdk_payment_failed">Payment failed</string>
     <string name="swedbankpaysdk_pull_to_refresh">Pull down to retry.</string>
-    <string name="swedbankpaysdk_intent_failure_title">Error</string>
+    <string name="swedbankpaysdk_error_dialog_title">Error</string>
     <string name="swedbankpaysdk_intent_failure_body">Unable to launch app: %s</string>
     <string name="swedbankpaysdk_intent_failure_unknown">&lt;unknown&gt;</string>
-    <string name="swedbankpaysdk_intent_failure_close">Close</string>
+    <string name="swedbankpaysdk_dialog_close">Close</string>
     <string name="swedbankpaysdk_js_prompt_hint">Input</string>
     
     <string name="swedbankpaysdk_problem_unauthorized">Unauthorized</string>
@@ -27,7 +27,13 @@
     <string name="swedbankpaysdk_problem_configuration_error">Invalid configuration. Please contact the merchant.</string>
 
     <string name="swedbankpaysdk_problem_unknown">Unexpected error</string>
-    <string name="swedbankpaysdk_problem_unexpected_content">Received unrecognizable response from service.</string>
+
+    <string name="swedbankpaysdk_unexpected_response">Received unrecognizable response from service.</string>
+
+    <string name="swedbankpaysdk_update_instrument_failed">Unable to change instrument</string>
+
+    <string name="swedbankpaysdk_merchantbackend_invalid_instrument_format">%s is not valid for this payment</string>
 
     <string name="swedbankpaysdk_tos">Terms of Service</string>
+    <string name="swedbankpaysdk_instrument_spinner_title">Instrument</string>
 </resources>
