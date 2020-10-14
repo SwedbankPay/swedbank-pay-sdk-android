@@ -3,9 +3,9 @@ package com.swedbankpay.mobilesdk.test
 import com.google.gson.JsonParser
 import com.nhaarman.mockitokotlin2.mock
 import com.swedbankpay.mobilesdk.Consumer
-import com.swedbankpay.mobilesdk.MerchantBackendConfiguration
+import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration
 import com.swedbankpay.mobilesdk.internal.remote.Api
-import com.swedbankpay.mobilesdk.internal.remote.RequestProblemException
+import com.swedbankpay.mobilesdk.merchantbackend.UnexpectedResponseException
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -92,7 +92,7 @@ class ApiTest {
     /**
      * Check that root link rejects an invalid response
      */
-    @Test(expected = RequestProblemException::class)
+    @Test(expected = UnexpectedResponseException::class)
     fun rootLinkShouldRejectInvalidResponse() {
         server.enqueue(response("invalid"))
         runBlocking {

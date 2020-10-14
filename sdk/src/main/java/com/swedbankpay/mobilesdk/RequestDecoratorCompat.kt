@@ -68,14 +68,21 @@ open class RequestDecoratorCompat : RequestDecorator() {
     ) {}
 
     /**
-     * Override this method to add custom headers to the GET {paymentorder} request.
+     * Override this method to add custom headers to the PATCH {setInstrument} request of a payment order.
      *
      * The default implementation does nothing.
      *
      * @param userHeaders headers added to this will be sent with the request
-     * @param url the URL being requested
+     * @param url the url of the request
+     * @param body the body of the request
+     * @param instrument the instrument used to create the request body
      */
-    open fun decorateGetPaymentOrderCompat(userHeaders: UserHeaders, url: String) {}
+    open fun decoratePaymentOrderSetInstrumentCompat(
+        userHeaders: UserHeaders,
+        url: String,
+        body: String,
+        instrument: String
+    ) {}
 
     private suspend fun decorateCompat(f: suspend CoroutineScope.() -> Unit) {
         withContext(Dispatchers.IO, f)
@@ -112,10 +119,12 @@ open class RequestDecoratorCompat : RequestDecorator() {
         decorateCreatePaymentOrderCompat(userHeaders, body, paymentOrder)
     }
 
-    final override suspend fun decorateGetPaymentOrder(
+    final override suspend fun decoratePaymentOrderSetInstrument(
         userHeaders: UserHeaders,
-        url: String
+        url: String,
+        body: String,
+        instrument: String
     ) = decorateCompat {
-        decorateGetPaymentOrderCompat(userHeaders, url)
+        decoratePaymentOrderSetInstrumentCompat(userHeaders, url, body, instrument)
     }
 }

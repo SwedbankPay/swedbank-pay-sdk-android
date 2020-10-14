@@ -1,4 +1,6 @@
-package com.swedbankpay.mobilesdk
+package com.swedbankpay.mobilesdk.merchantbackend
+
+import java.io.Serializable
 
 /**
  * Object detailing the reason for a [SwedbankPayProblem].
@@ -15,4 +17,4 @@ class SwedbankPaySubproblem(
      * A description of what was wrong
      */
     val description: String?
-)
+) : Serializable

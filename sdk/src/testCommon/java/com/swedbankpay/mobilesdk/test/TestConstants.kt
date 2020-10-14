@@ -44,12 +44,12 @@ internal object TestConstants {
         override val viewConsumerIdentification get() = viewConsumerSessionLink
     }
 
-    val viewPaymentorderInfo = object : ViewPaymentOrderInfo {
-        override val webViewBaseUrl get() = hostUrl
-        override val viewPaymentOrder get() = viewPaymentorderLink
-        override val completeUrl get() = TestConstants.completeUrl
-        override val cancelUrl: String? get() = null
-        override val paymentUrl get() = TestConstants.paymentUrl
-        override val termsOfServiceUrl get() = TestConstants.termsOfServiceUrl
-    }
+    val viewPaymentorderInfo = ViewPaymentOrderInfo(
+        webViewBaseUrl = hostUrl,
+        viewPaymentOrder = viewPaymentorderLink,
+        completeUrl = TestConstants.completeUrl,
+        cancelUrl = null,
+        paymentUrl = TestConstants.paymentUrl,
+        termsOfServiceUrl = TestConstants.termsOfServiceUrl
+    )
 }

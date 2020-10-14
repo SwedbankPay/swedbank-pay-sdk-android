@@ -1,6 +1,8 @@
-package com.swedbankpay.mobilesdk
+package com.swedbankpay.mobilesdk.merchantbackend
 
 import android.content.Context
+import com.swedbankpay.mobilesdk.*
+import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration.Builder
 import com.swedbankpay.mobilesdk.internal.remote.CacheableResult
 import com.swedbankpay.mobilesdk.internal.remote.WhitelistedDomain
 import com.swedbankpay.mobilesdk.internal.remote.json.Link
@@ -10,6 +12,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.CertificatePinner
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.IOException
+import kotlin.Exception
 
 /**
  * A [Configuration] class for the Merchant Backend API.
@@ -34,8 +37,47 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             it.toList()
         }
     }
+    private val enabledInstruments = builder.enabledInstruments ?: mapOf(
+        PaymentOrderOperation.PURCHASE to listOf(
+            PaymentInstruments.CREDIT_CARD,
+            PaymentInstruments.SWISH,
+            PaymentInstruments.INVOICE
+        ),
+        PaymentOrderOperation.VERIFY to listOf(
+            PaymentInstruments.CREDIT_CARD,
+            PaymentInstruments.INVOICE
+        )
+    )
 
     private var topLevelResources: CacheableResult<TopLevelResources>? = null
+
+    override fun getErrorMessage(context: Context, exception: Exception): String? {
+        return when (exception) {
+            is RequestProblemException ->
+                context.getProblemErrorMessage(exception.problem)
+
+            else -> super.getErrorMessage(context, exception)
+        }
+    }
+
+    override fun getUpdateInstrumentFailureMessage(
+        context: Context,
+        instrument: String,
+        exception: Exception
+    ): String {
+        return if (
+            exception is RequestProblemException &&
+            exception.problem is MerchantBackendProblem.Client
+        ) {
+            val displayName = getInstrumentDisplayName(context, instrument)
+            context.getString(
+                R.string.swedbankpaysdk_merchantbackend_invalid_instrument_format,
+                displayName
+            )
+        } else {
+            super.getUpdateInstrumentFailureMessage(context, instrument, exception)
+        }
+    }
 
     override suspend fun postConsumers(
         context: Context,
@@ -56,6 +98,16 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         }
     }
 
+    override suspend fun shouldRetryAfterPostConsumersException(exception: Exception): Boolean {
+        return when (exception) {
+            is RequestProblemException -> exception.problem.let {
+                it is MerchantBackendProblem.Server && it !is MerchantBackendProblem.Server.SwedbankPay.ConfigurationError
+            }
+
+            else -> super.shouldRetryAfterPostConsumersException(exception)
+        }
+    }
+
     override suspend fun postPaymentorders(
         context: Context,
         paymentOrder: PaymentOrder?,
@@ -70,22 +122,66 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
                 payer = PaymentOrderPayer(consumerProfileRef = it)
             )
         } ?: paymentOrder
-        val operations = getTopLevelResources(context)
+        val paymentOrderIn = getTopLevelResources(context)
             .paymentorders
             .post(context, this, paymentOrderOut)
-            .operations
+
         val viewPaymentOrder =
-            operations.find("view-paymentorder")?.href
+            paymentOrderIn.operations.find("view-paymentorder")?.href
                 ?: throw IOException("Missing required operation")
         val urls = paymentOrder.urls
-        return object : ViewPaymentOrderInfo {
-            override val webViewBaseUrl = backendUrl
-            override val viewPaymentOrder = viewPaymentOrder
-            override val completeUrl by urls::completeUrl
-            override val cancelUrl by urls::cancelUrl
-            override val paymentUrl by urls::paymentUrl
-            override val termsOfServiceUrl by urls::termsOfServiceUrl
+
+        val setInstrument = paymentOrderIn.mobileSDK?.setInstrument
+        val validInstruments = setInstrument?.let { _ ->
+            enabledInstruments[paymentOrder.operation]
         }
+        val instrument = validInstruments?.let { _ ->
+            paymentOrder.instrument
+        }
+
+        return ViewPaymentOrderInfo(
+            webViewBaseUrl = backendUrl,
+            viewPaymentOrder = viewPaymentOrder,
+            completeUrl = urls.completeUrl,
+            cancelUrl = urls.cancelUrl,
+            paymentUrl = urls.paymentUrl,
+            termsOfServiceUrl = urls.termsOfServiceUrl,
+            instrument = instrument,
+            validInstruments = validInstruments,
+            userData = setInstrument?.href?.toString()
+        )
+    }
+
+    override suspend fun shouldRetryAfterPostPaymentordersException(exception: Exception): Boolean {
+        return when (exception) {
+            is RequestProblemException -> exception.problem.let {
+                it is MerchantBackendProblem.Server && it !is MerchantBackendProblem.Server.SwedbankPay.ConfigurationError
+            }
+
+            else -> super.shouldRetryAfterPostPaymentordersException(exception)
+        }
+    }
+
+    override suspend fun patchUpdatePaymentorderSetinstrument(
+        context: Context,
+        paymentOrder: PaymentOrder?,
+        userData: Any?,
+        viewPaymentOrderInfo: ViewPaymentOrderInfo,
+        instrument: String
+    ): ViewPaymentOrderInfo {
+        val linkHref = viewPaymentOrderInfo.userData as String
+        val link = Link.PaymentOrderSetInstrument(linkHref.toHttpUrl())
+        val paymentOrderIn = link.patch(context, this, instrument)
+
+        val viewPaymentOrder =
+            paymentOrderIn.operations.find("view-paymentorder")?.href
+        val setInstrument = paymentOrderIn.mobileSDK?.setInstrument
+
+        return viewPaymentOrderInfo.copy(
+            viewPaymentOrder = viewPaymentOrder ?: viewPaymentOrderInfo.viewPaymentOrder,
+            instrument = instrument,
+            userData = setInstrument?.href?.toString() ?: linkHref
+        )
     }
 
     private suspend fun getTopLevelResources(context: Context): TopLevelResources {
@@ -117,6 +213,7 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         internal var pinnerBuilder: CertificatePinner.Builder? = null
         internal var requestDecorator: RequestDecorator? = null
         internal val domainWhitelist = ArrayList<WhitelistedDomain>()
+        internal var enabledInstruments: Map<PaymentOrderOperation, List<String>>? = null
 
         /**
          * Creates a [Configuration] object using the current values of the Builder.
@@ -177,5 +274,37 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         fun whitelistDomain(domain: String, includeSubdomains: Boolean) = apply {
             domainWhitelist.add(WhitelistedDomain(domain, includeSubdomains))
         }
+
+        /**
+         * Set instruments available for instrument mode payments.
+         *
+         * This API will be removed when we can get this info from the backend instead.
+         */
+        fun enabledInstruments(enabledInstruments: Map<PaymentOrderOperation, List<String>>) = apply {
+            this.enabledInstruments = enabledInstruments
+        }
     }
+}
+
+private fun Context.getProblemErrorMessage(problem: Problem) = when (problem) {
+    is MerchantBackendProblem -> getFriendlyDescription(problem)
+    else -> problem.title ?: problem.detail ?: getString(R.string.swedbankpaysdk_problem_unknown)
+}
+
+private fun Context.getFriendlyDescription(merchantBackendProblem: MerchantBackendProblem): String {
+    val resId = when (merchantBackendProblem) {
+        is MerchantBackendProblem.Client.MobileSDK.Unauthorized -> R.string.swedbankpaysdk_problem_unauthorized
+        is MerchantBackendProblem.Client.MobileSDK.InvalidRequest -> R.string.swedbankpaysdk_problem_invalid_request
+        is MerchantBackendProblem.Client.SwedbankPay.InputError -> R.string.swedbankpaysdk_problem_input_error
+        is MerchantBackendProblem.Client.SwedbankPay.Forbidden -> R.string.swedbankpaysdk_problem_forbidden
+        is MerchantBackendProblem.Client.SwedbankPay.NotFound -> R.string.swedbankpaysdk_problem_not_found
+        is MerchantBackendProblem.Client.Unknown -> R.string.swedbankpaysdk_problem_unknown
+        is MerchantBackendProblem.Server.MobileSDK.BackendConnectionTimeout -> R.string.swedbankpaysdk_problem_backend_connection_timeout
+        is MerchantBackendProblem.Server.MobileSDK.BackendConnectionFailure -> R.string.swedbankpaysdk_problem_backend_connection_failure
+        is MerchantBackendProblem.Server.MobileSDK.InvalidBackendResponse -> R.string.swedbankpaysdk_problem_invalid_backend_response
+        is MerchantBackendProblem.Server.SwedbankPay.SystemError -> R.string.swedbankpaysdk_problem_system_error
+        is MerchantBackendProblem.Server.SwedbankPay.ConfigurationError -> R.string.swedbankpaysdk_problem_configuration_error
+        is MerchantBackendProblem.Server.Unknown -> R.string.swedbankpaysdk_problem_unknown
+    }
+    return getString(resId)
 }

@@ -6,15 +6,14 @@ import com.nhaarman.mockitokotlin2.refEq
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.swedbankpay.mobilesdk.PaymentViewModel
-import com.swedbankpay.mobilesdk.Problem
+import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendProblem
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import com.swedbankpay.mobilesdk.test.observing
 import org.junit.Assert
 import java.io.IOException
 
 internal fun InternalPaymentViewModel.verifyIsInRetryableErrorState(
-    problem: Problem?,
-    ioException: IOException?,
+    ioException: IOException,
     @StringRes messageId: Int,
     message: String? = null
 ) {
@@ -22,7 +21,6 @@ internal fun InternalPaymentViewModel.verifyIsInRetryableErrorState(
         verify(it).onChanged(
             refEq(
                 InternalPaymentViewModel.UIState.RetryableError(
-                    null,
                     ioException,
                     messageId
                 )
@@ -43,7 +41,6 @@ internal fun InternalPaymentViewModel.verifyIsInRetryableErrorState(
                 Assert.assertEquals(message, retryableErrorMessage)
             }
             Assert.assertEquals(ioException, this.exception)
-            Assert.assertEquals(problem, this.problem)
             Assert.assertNull(terminalFailure)
         }
         verifyNoMoreInteractions(it)
@@ -71,7 +68,6 @@ internal fun InternalPaymentViewModel.verifyIsInFailureStateWithTerminalFailure(
         verify(it).onChanged(argument.capture())
         val richState = argument.firstValue
         Assert.assertEquals(PaymentViewModel.State.FAILURE, richState.state)
-        Assert.assertNull(richState.problem)
         Assert.assertNotNull(richState.terminalFailure)
         Assert.assertEquals(origin, richState.terminalFailure?.origin)
         Assert.assertEquals(messageId, richState.terminalFailure?.messageId)

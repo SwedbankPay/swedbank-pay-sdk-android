@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk
+package com.swedbankpay.mobilesdk.merchantbackend
 
 /**
  * Action to take to correct a problem reported by the Swedbank Pay

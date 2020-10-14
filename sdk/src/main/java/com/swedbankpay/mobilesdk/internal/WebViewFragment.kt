@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -32,6 +33,11 @@ internal class WebViewFragment : Fragment() {
             Intent.URI_INTENT_SCHEME
         }
     }
+
+    private val internalPaymentViewModelProvider get() = ViewModelProvider(requireParentFragment())
+
+    private val internalPaymentViewModel get() = internalPaymentViewModelProvider
+        .get<InternalPaymentViewModel>()
 
     private val webViewModel get() = ViewModelProvider(this).get<WebViewModel>()
 
@@ -62,6 +68,8 @@ internal class WebViewFragment : Fragment() {
         vm.javascriptDialogTags.observe(this, {
             ensureJSDialogFragments(it)
         })
+
+
     }
 
     override fun onCreateView(
@@ -72,8 +80,13 @@ internal class WebViewFragment : Fragment() {
         restored = savedInstanceState != null
 
         return webViewModel.apply {
-            setup(inflater.context, ViewModelProvider(requireParentFragment()))
-        }.requireWebView()
+            setup(inflater.context, internalPaymentViewModelProvider)
+        }.requireWebView().apply {
+            internalPaymentViewModel.updatingPaymentOrder.observe(viewLifecycleOwner) {
+                Log.d(LOG_TAG, "WebView enabled ${it != true}")
+                isEnabled = it != true
+            }
+        }
     }
 
     override fun onPause() {
@@ -323,9 +336,9 @@ internal class WebViewFragment : Fragment() {
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             val context = requireContext()
             return AlertDialog.Builder(context, theme)
-                .setTitle(R.string.swedbankpaysdk_intent_failure_title)
+                .setTitle(R.string.swedbankpaysdk_error_dialog_title)
                 .setMessage(context.formatMessage())
-                .setNeutralButton(R.string.swedbankpaysdk_intent_failure_close) { dialog, _ ->
+                .setNeutralButton(R.string.swedbankpaysdk_dialog_close) { dialog, _ ->
                     dialog.dismiss()
                 }
                 .create()
@@ -341,7 +354,6 @@ internal class WebViewFragment : Fragment() {
                 "$message\n$extraMessage"
             }
         }
-
 
         private fun getFailingPackage(): String? {
             val uri = arguments?.getString(ARG_URI)

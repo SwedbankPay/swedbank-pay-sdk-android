@@ -7,10 +7,13 @@ import com.google.android.gms.security.ProviderInstaller
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
 import com.swedbankpay.mobilesdk.*
-import com.swedbankpay.mobilesdk.internal.makeUnexpectedContentProblem
 import com.swedbankpay.mobilesdk.internal.parseProblem
 import com.swedbankpay.mobilesdk.internal.remote.annotations.Required
 import com.swedbankpay.mobilesdk.internal.remote.json.Link
+import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration
+import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendProblem
+import com.swedbankpay.mobilesdk.merchantbackend.RequestProblemException
+import com.swedbankpay.mobilesdk.merchantbackend.UnexpectedResponseException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -58,31 +61,14 @@ internal object Api {
         lazyClient.value
     }
 
-    suspend fun <T : Any> get(
-        context: Context,
-        configuration: MerchantBackendConfiguration,
-        url: HttpUrl,
-        userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit,
-        entityType: Class<T>
-    ) = request(context, configuration, "GET", url, null, userHeadersBuilder, entityType)
-
-    suspend fun <T : Any> post(
-        context: Context,
-        configuration: MerchantBackendConfiguration,
-        url: HttpUrl,
-        body: String,
-        userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit,
-        entityType: Class<T>
-    ) = request(context, configuration, "POST", url, body, userHeadersBuilder, entityType)
-
-    private suspend fun <T : Any> request(
-        context: Context,
-        configuration: MerchantBackendConfiguration,
-        method: String,
-        url: HttpUrl,
-        body: String?,
-        userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit,
-        entityType: Class<T>
+    suspend fun <T : Any> request(
+    context: Context,
+    configuration: MerchantBackendConfiguration,
+    method: String,
+    url: HttpUrl,
+    body: String?,
+    userHeadersBuilder: suspend RequestDecorator.(UserHeaders) -> Unit,
+    entityType: Class<T>
     ): CacheableResult<T> {
         val request = buildRequest(configuration, method, url, body, userHeadersBuilder)
         return executeRequest(context, configuration, request, entityType)
@@ -165,12 +151,14 @@ internal object Api {
         }
     }
 
-    private fun getProblem(response: Response, body: String?): Problem {
+    private fun getProblem(response: Response, body: String?): MerchantBackendProblem {
+        val status = response.code
+        val contentType = response.body?.contentType()
         return try {
-            response.body?.contentType().checkEquals(PROBLEM_MEDIA_TYPE)
-            parseProblem(response, checkNotNull(body))
-        } catch (_: Exception) {
-            makeUnexpectedContentProblem(response, body)
+            contentType.checkEquals(PROBLEM_MEDIA_TYPE)
+            parseProblem(status, checkNotNull(body))
+        } catch (e: Exception) {
+            throw UnexpectedResponseException(status, contentType?.toString(), body, e)
         }
     }
 
@@ -178,19 +166,16 @@ internal object Api {
         // Note: This does not support responses without a body,
         // such as 204 No Content, because the API does not
         // use them currently.
+        val contentType = response.body?.contentType()
         return try {
-            response.body?.contentType().checkEquals(JSON_MEDIA_TYPE)
+            contentType.checkEquals(JSON_MEDIA_TYPE)
             GsonBuilder()
                 .registerTypeHierarchyAdapter(Link::class.java, Link.getDeserializer(response))
                 .create()
                 .fromJson(checkNotNull(body), entityType)
                 .also(::validateResponse)
         } catch (e: Exception) {
-            throw RequestProblemException(
-                makeUnexpectedContentProblem(
-                    response,
-                    body
-                ), e)
+            throw UnexpectedResponseException(response.code, contentType?.toString(), body, e)
         }
     }
 

@@ -100,24 +100,36 @@ class PaymentViewModel : AndroidViewModel {
          */
         val retryableErrorMessage: String?,
         /**
-         * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR] or
-         * [FAILURE][State.FAILURE], and it was caused by an [Exception],
+         * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR], or
+         * [FAILURE][State.FAILURE] caused by an [Exception],
          * this property contains that exception.
          *
-         * Notably, an [IllegalStateException] is an indication that your configuration
-         * is broken and should be fixed. Please consult the exception message.
+         * The exception is of any type thrown by your [Configuration].
+         *
+         * When using [MerchantBackendConfiguration], you should be prepared for
+         * [java.io.IOException] in general, and
+         * [com.swedbankpay.mobilesdk.merchantbackend.RequestProblemException] in particular.
+         * If [com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration]
+         * throws an [IllegalStateException], it means you are not using it correctly;
+         * please refer to the exception message for advice.
          */
         val exception: Exception?,
-        /**
-         * If the current state is [RETRYABLE_ERROR][State.RETRYABLE_ERROR] or [FAILURE][State.FAILURE],
-         * and it was caused by a problem response, this property contains an object describing the problem.
-         */
-        val problem: Problem?,
         /**
          * If the current state is [FAILURE][State.FAILURE], and it was caused by an onError
          * callback from the Chekout API, this property contains an object describing the error.
          */
-        val terminalFailure: TerminalFailure?
+        val terminalFailure: TerminalFailure?,
+        /**
+         * If the current state is [IN_PROGRESS][State.IN_PROGRESS], and the payment is in
+         * instrument mode, this list contains the valid instruments for the payment.
+         * Note that this list is the same as what was returned from your [Configuration].
+         */
+        val validInstruments: List<String>?,
+        /**
+         * If the current state is [IN_PROGRESS][State.IN_PROGRESS], and the payment is in
+         * instrument mode, the current instrument, else `null`.
+         */
+        val instrument: String?
     )
 
     /**
@@ -180,10 +192,11 @@ class PaymentViewModel : AndroidViewModel {
         val state = when (it) {
             null -> State.IDLE
             InternalPaymentViewModel.UIState.Loading -> State.IN_PROGRESS
-            is InternalPaymentViewModel.UIState.HtmlContent -> State.IN_PROGRESS
+            is InternalPaymentViewModel.UIState.PlainHtmlContent -> State.IN_PROGRESS
+            is InternalPaymentViewModel.UIState.InstrumentModePaymentOrder -> State.IN_PROGRESS
+            is InternalPaymentViewModel.UIState.UpdatingPaymentOrder -> State.IN_PROGRESS
             is InternalPaymentViewModel.UIState.InitializationError -> State.FAILURE
             is InternalPaymentViewModel.UIState.RetryableError -> State.RETRYABLE_ERROR
-            is InternalPaymentViewModel.UIState.ConfigurationError -> State.FAILURE
             InternalPaymentViewModel.UIState.Complete -> State.COMPLETE
             InternalPaymentViewModel.UIState.Canceled -> State.CANCELED
             is InternalPaymentViewModel.UIState.Failure -> State.FAILURE
@@ -194,18 +207,38 @@ class PaymentViewModel : AndroidViewModel {
             ?.let(getApplication<Application>()::getString)
         val exception = when (it) {
             is InternalPaymentViewModel.UIState.RetryableError -> it.exception
-            is InternalPaymentViewModel.UIState.ConfigurationError -> it.exception
-            else -> null
-        }
-        val problem = when (it) {
-            is InternalPaymentViewModel.UIState.InitializationError -> it.problem
-            is InternalPaymentViewModel.UIState.RetryableError -> it.problem
             else -> null
         }
 
         val terminalFailure = (it as? InternalPaymentViewModel.UIState.Failure)?.terminalFailure
 
-        RichState(state, retryableErrorMessage, exception, problem, terminalFailure)
+        val validInstruments: List<String>?
+        val instrument: String?
+        when (it) {
+            is InternalPaymentViewModel.UIState.InstrumentModePaymentOrder -> {
+                validInstruments = it.instruments
+                instrument = validInstruments[it.selectedInstrumentIndex]
+            }
+
+            is InternalPaymentViewModel.UIState.UpdatingPaymentOrder -> {
+                validInstruments = it.instruments
+                instrument = it.previousInstrument
+            }
+
+            else -> {
+                validInstruments = null
+                instrument = null
+            }
+        }
+
+        RichState(
+            state,
+            retryableErrorMessage,
+            exception,
+            terminalFailure,
+            validInstruments,
+            instrument,
+        )
     }
 
     /**
@@ -214,6 +247,26 @@ class PaymentViewModel : AndroidViewModel {
      * See notes at [richState].
      */
     val state = Transformations.map(richState) { it.state }
+
+    /**
+     * If the current state is [IN_PROGRESS][State.IN_PROGRESS], and the payment is in
+     * instrument mode, and the instrument failed to update, you can get the error message
+     * here.
+     */
+    val lastUpdateInstrumentErrorMessage: MutableLiveData<String> =
+        MediatorLiveData<String>().apply {
+            var source: LiveData<String>? = null
+            addSource(internalVm) { vm ->
+                val newSource = vm?.updatePaymentOrderErrorMessage
+                if (newSource != source) {
+                    source?.let(::removeSource)
+                    source = newSource
+                    newSource?.let { addSource(it) { message ->
+                        message?.let(::setValue)
+                    } }
+                }
+            }
+        }
 
     internal var onTermsOfServiceClickListener: OnTermsOfServiceClickListener? = null
     private var onTermsOfServiceClickListenerOwner: LifecycleOwner? = null
@@ -266,4 +319,10 @@ class PaymentViewModel : AndroidViewModel {
         onRetryPreviousAction.value = Unit
         onRetryPreviousAction.value = null
     }
+
+    /**
+     * If the current state is [IN_PROGRESS][State.IN_PROGRESS], and the payment is in
+     * instrument mode, sets the instrument.
+     */
+    fun setInstrument(instrument: String) = internalVm.value?.setInstrument(instrument)
 }

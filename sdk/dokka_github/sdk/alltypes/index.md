@@ -148,7 +148,7 @@ Java compatibility wrapper for [RequestDecorator](../com.swedbankpay.mobilesdk/-
 
 |
 
-##### [com.swedbankpay.mobilesdk.SwedbankPayAction](../com.swedbankpay.mobilesdk/-swedbank-pay-action.md)
+##### [com.swedbankpay.mobilesdk.merchantbackend.SwedbankPayAction](../com.swedbankpay.mobilesdk/-swedbank-pay-action.md)
 
 Action to take to correct a problem reported by the Swedbank Pay
 backend.
@@ -156,7 +156,7 @@ backend.
 
 |
 
-##### [com.swedbankpay.mobilesdk.SwedbankPayProblem](../com.swedbankpay.mobilesdk/-swedbank-pay-problem/index.md)
+##### [com.swedbankpay.mobilesdk.merchantbackend.SwedbankPayProblem](../com.swedbankpay.mobilesdk/-swedbank-pay-problem/index.md)
 
 A Problem defined by the Swedbank Pay backend.
 [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems](https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems)
@@ -164,7 +164,7 @@ A Problem defined by the Swedbank Pay backend.
 
 |
 
-##### [com.swedbankpay.mobilesdk.SwedbankPaySubproblem](../com.swedbankpay.mobilesdk/-swedbank-pay-subproblem/index.md)
+##### [com.swedbankpay.mobilesdk.merchantbackend.SwedbankPaySubproblem](../com.swedbankpay.mobilesdk/-swedbank-pay-subproblem/index.md)
 
 Object detailing the reason for a [SwedbankPayProblem](../com.swedbankpay.mobilesdk/-swedbank-pay-problem/index.md).
 
