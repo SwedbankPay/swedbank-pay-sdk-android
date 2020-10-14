@@ -275,6 +275,11 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             domainWhitelist.add(WhitelistedDomain(domain, includeSubdomains))
         }
 
+        /**
+         * Set instruments available for instrument mode payments.
+         *
+         * This API will be removed when we can get this info from the backend instead.
+         */
         fun enabledInstruments(enabledInstruments: Map<PaymentOrderOperation, List<String>>) = apply {
             this.enabledInstruments = enabledInstruments
         }

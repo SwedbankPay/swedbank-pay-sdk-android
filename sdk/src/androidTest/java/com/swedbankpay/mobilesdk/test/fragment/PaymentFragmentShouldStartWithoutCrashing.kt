@@ -13,6 +13,8 @@ class PaymentFragmentShouldStartWithoutCrashing : BasePaymentFragmentTest() {
      */
     @Test
     fun test() {
+        stubAnonymousMockPayment()
+
         scenario = launchFragmentInContainer(args)
     }
 }
