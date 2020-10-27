@@ -17,10 +17,7 @@ import androidx.test.espresso.web.sugar.Web
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
 import com.swedbankpay.mobilesdk.test.R
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.hamcrest.Matchers
 import org.junit.After
 import org.junit.Assert
@@ -369,14 +366,18 @@ class WebViewFragmentTest {
             .check(doesNotExist())
     }
 
-    private fun testJsDialog(dialogScript: String, expectedResult: String, dialogInteraction: () -> Unit) {
-        val script = "document.getElementById('testResult').textContent = $dialogScript"
-        GlobalScope.launch {
+    private fun testJsDialog(
+        dialogScript: String,
+        expectedResult: String,
+        dialogInteraction: () -> Unit
+    ) = runBlocking {
+        val webViewInteraction = async(Dispatchers.IO) {
+            val script = "document.getElementById('testResult').textContent = $dialogScript"
             Web.onWebView().perform(SimpleAtom(script))
         }
-        runBlocking { scenario.waitForDialogFragment() }
+        scenario.waitForDialogFragment()
         dialogInteraction()
-        Web.onWebView().check(
+        webViewInteraction.await().check(
             WebViewAssertions.webContent(
                 DomMatchers.elementByXPath(
                     "//*[@id='testResult']",

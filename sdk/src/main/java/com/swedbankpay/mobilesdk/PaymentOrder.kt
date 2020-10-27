@@ -53,9 +53,9 @@ data class PaymentOrder(
         /**
          * Default value for the [userAgent] property.
          *
-         * Value is of the format "SwedbankPaySDK-Android/${SDK_VERSION}"
+         * Value is of the format "SwedbankPaySDK-Android/SDK_VERSION"
          */
-        const val DEFAULT_USER_AGENT = "SwedbankPaySDK-Android/${BuildConfig.VERSION_NAME}"
+        const val DEFAULT_USER_AGENT = "SwedbankPaySDK-Android/${BuildConfig.SDK_VERSION}"
     }
 
     @Suppress("unused")
