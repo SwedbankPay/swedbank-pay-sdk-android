@@ -53,23 +53,12 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         }
     }
 
-    val updatePaymentOrderErrorMessage = MutableLiveData<String>()
-
-    data class InstrumentInfo(
-        val instruments: List<String>,
-        val selectedInstrumentIndex: Int
-    )
-    val instrumentInfo: LiveData<InstrumentInfo> = MediatorLiveData<InstrumentInfo>().apply {
+    val showingPaymentMenu = MediatorLiveData<Boolean>().apply {
         val observer = Observer<Any?> {
-            val state = uiState.value
-            if (state is UIState.InstrumentModePaymentOrder &&
-                webViewShowingRootPage.value == true) {
-                value = InstrumentInfo(state.instruments, state.selectedInstrumentIndex)
-            } else if (state !is UIState.UpdatingPaymentOrder) {
-                value = null
-            }
+            value = processState.value is ProcessState.Paying
+                    && webViewShowingRootPage.value == true
         }
-        addSource(uiState, observer)
+        addSource(processState, observer)
         addSource(webViewShowingRootPage, observer)
     }
 
@@ -204,9 +193,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         }
     }
 
-    fun setInstrument(instrument: String) {
+    fun updatePaymentOrder(updateInfo: Any?) {
         processState.value
-            ?.getStateForSettingInstrument(instrument)
+            ?.getStateForUpdatingPaymentOrder(updateInfo)
             ?.let(::setProcessState)
     }
 
@@ -250,40 +239,40 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         open val asHtmlContent: HtmlContent? get() = null
 
         object Loading : UIState()
-        class PlainHtmlContent(
+        class ViewConsumerIdentification(
             override val baseUrl: String?,
-            @StringRes private val template: Int,
-            private val link: String
+            val viewConsumerIdentification: String
         ) : UIState(), HtmlContent {
             override val asHtmlContent get() = this
             override fun getWebViewPage(context: Context): String {
-                return context.getString(template, link)
+                return context.getString(
+                    R.string.swedbankpaysdk_view_consumer_identification_template,
+                    viewConsumerIdentification
+                )
             }
         }
-        class InstrumentModePaymentOrder(
-            override val baseUrl: String?,
-            private val viewPaymentorder: String,
-            val instruments: List<String>,
-            val selectedInstrumentIndex: Int
+        class ViewPaymentOrder(
+            val viewPaymentOrderInfo: ViewPaymentOrderInfo,
+            val updateException: Exception?
         ): UIState(), HtmlContent {
             override val asHtmlContent get() = this
+            override val baseUrl get() = viewPaymentOrderInfo.webViewBaseUrl
             override fun getWebViewPage(context: Context): String {
-                return context.getString(R.string.swedbankpaysdk_view_paymentorder_template, viewPaymentorder)
+                return context.getString(
+                    R.string.swedbankpaysdk_view_paymentorder_template,
+                    viewPaymentOrderInfo.viewPaymentOrder
+                )
             }
         }
-        class UpdatingPaymentOrder(
-            val instruments: List<String>?,
-            val previousInstrument: String?,
-        ) : UIState()
+
+        object UpdatingPaymentOrder : UIState()
         class InitializationError(val exception: Exception) : UIState()
-        class RetryableError(/*val problem: Problem?, */val exception: Exception, @StringRes val message: Int) : UIState()
-        //class ConfigurationError(val exception: IllegalStateException) : UIState()
+        class RetryableError(val exception: Exception, @StringRes val message: Int) : UIState()
         object Complete : UIState()
         object Canceled : UIState()
         class Failure(val terminalFailure: TerminalFailure?) : UIState()
     }
 
-    @Suppress("unused") // The IDE does not understand @JvmField val CREATOR
     private sealed class ProcessState : Parcelable {
         abstract val uiState: UIState
 
@@ -291,6 +280,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         open val isRetryableErrorState get() = false
         open suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration) = this
         open fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState? = null
+        open fun getStateForUpdatingPaymentOrder(updateInfo: Any?): ProcessState? = null
         open fun getStateForSettingInstrument(instrument: String): ProcessState? = null
 
         override fun describeContents() = 0
@@ -342,7 +332,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val paymentOrder: PaymentOrder?,
             private val userData: Any?,
             private val retryable: Boolean,
-            //private val problem: Problem?,
             private val exception: Exception
         ) : ProcessState() {
             companion object { @JvmField val CREATOR =
@@ -387,9 +376,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 makeCreator(::IdentifyingConsumer)
             }
 
-            override val uiState get() = UIState.PlainHtmlContent(
+            override val uiState get() = UIState.ViewConsumerIdentification(
                 baseUrl,
-                R.string.swedbankpaysdk_view_consumer_identification_template,
                 viewConsumerIdentification
             )
 
@@ -427,7 +415,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 return try {
                     val viewPaymentOrderInfo = configuration
                         .postPaymentorders(vm.getApplication(), paymentOrder, userData, consumerProfileRef)
-                    Paying(paymentOrder, userData, viewPaymentOrderInfo)
+                    Paying(paymentOrder, userData, viewPaymentOrderInfo, null)
                 } catch (e: Exception) {
                     val retryable = configuration.shouldRetryAfterPostPaymentordersException(e)
                     FailedCreatePaymentOrder(consumerProfileRef, paymentOrder, userData, retryable, e)
@@ -488,100 +476,68 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class Paying(
             private val paymentOrder: PaymentOrder?,
             private val userData: Any?,
-            val viewPaymentOrderInfo: ViewPaymentOrderInfo
+            val viewPaymentOrderInfo: ViewPaymentOrderInfo,
+            val updateException: Exception?
         ) : ProcessState() {
             companion object { @JvmField val CREATOR = makeCreator(::Paying) }
 
-            override val uiState: UIState
-                get() {
-                    val instrument = viewPaymentOrderInfo.instrument
-                    if (instrument != null) {
-                        var instruments = viewPaymentOrderInfo.validInstruments ?: emptyList()
-                        var instrumentIndex = instruments.indexOf(instrument)
-                        if (instrumentIndex < 0) {
-                            // This should not happen with correct configurations,
-                            // but we try to recover anyway.
-                            instruments = instruments.plus(instrument)
-                            instrumentIndex = instruments.lastIndex
-                        }
-                        if (instruments.size > 1) {
-                            return UIState.InstrumentModePaymentOrder(
-                                viewPaymentOrderInfo.webViewBaseUrl,
-                                viewPaymentOrderInfo.viewPaymentOrder,
-                                instruments,
-                                instrumentIndex
-                            )
-                        }
-                    }
+            override val uiState
+                get() = UIState.ViewPaymentOrder(viewPaymentOrderInfo, updateException)
 
-                    return UIState.PlainHtmlContent(
-                        viewPaymentOrderInfo.webViewBaseUrl,
-                        R.string.swedbankpaysdk_view_paymentorder_template,
-                        viewPaymentOrderInfo.viewPaymentOrder
-                    )
-                }
-
-
-            override fun getStateForSettingInstrument(instrument: String) = when (instrument) {
-                viewPaymentOrderInfo.instrument -> null
-                else -> SettingInstrument(paymentOrder, userData, viewPaymentOrderInfo, instrument)
+            override fun getStateForUpdatingPaymentOrder(updateInfo: Any?): ProcessState? {
+                return UpdatingPaymentOrder(paymentOrder, userData, viewPaymentOrderInfo, updateInfo)
             }
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {
                 parcel.writeParcelable(paymentOrder, flags)
                 parcel.writeUserData(userData, flags)
                 parcel.writeParcelable(viewPaymentOrderInfo, flags)
-            }
-            constructor(parcel: Parcel) : this(
-                paymentOrder = parcel.readParcelable(),
-                userData = parcel.readUserData(),
-                viewPaymentOrderInfo = checkNotNull(parcel.readParcelable())
-            )
-        }
-
-        class SettingInstrument(
-            private val paymentOrder: PaymentOrder?,
-            private val userData: Any?,
-            private val viewPaymentOrderInfo: ViewPaymentOrderInfo,
-            private val instrument: String
-        ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::SettingInstrument) }
-
-            override val uiState get() = UIState.UpdatingPaymentOrder(
-                viewPaymentOrderInfo.validInstruments,
-                viewPaymentOrderInfo.instrument
-            )
-
-            override val shouldProceedAutomatically get() = true
-            override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
-                val viewPaymentOrderInfo = try {
-                    delay(1000)
-                    configuration.patchUpdatePaymentorderSetinstrument(
-                        vm.getApplication(), paymentOrder, userData, viewPaymentOrderInfo, instrument
-                    )
-                } catch (e: Exception) {
-                    vm.updatePaymentOrderErrorMessage.value = configuration
-                        .getUpdateInstrumentFailureMessage(
-                            vm.getApplication(),
-                            instrument,
-                            e
-                        )
-                    this.viewPaymentOrderInfo
-                }
-                return Paying(paymentOrder, userData, viewPaymentOrderInfo)
-            }
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeParcelable(paymentOrder, flags)
-                parcel.writeUserData(userData, flags)
-                parcel.writeParcelable(viewPaymentOrderInfo, flags)
-                parcel.writeString(instrument)
+                parcel.writeSerializable(updateException)
             }
             constructor(parcel: Parcel) : this(
                 paymentOrder = parcel.readParcelable(),
                 userData = parcel.readUserData(),
                 viewPaymentOrderInfo = checkNotNull(parcel.readParcelable()),
-                instrument = checkNotNull(parcel.readString())
+                updateException = parcel.readSerializable() as? Exception
+            )
+        }
+
+        class UpdatingPaymentOrder(
+            private val paymentOrder: PaymentOrder?,
+            private val userData: Any?,
+            private val viewPaymentOrderInfo: ViewPaymentOrderInfo,
+            private val updateInfo: Any?
+        ) : ProcessState() {
+            companion object { @JvmField val CREATOR = makeCreator(::UpdatingPaymentOrder) }
+
+            override val uiState get() = UIState.UpdatingPaymentOrder
+
+            override val shouldProceedAutomatically get() = true
+            override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
+                var exception: Exception? = null
+                val viewPaymentOrderInfo = try {
+                    delay(1000)
+                    configuration.updatePaymentOrder(
+                        vm.getApplication(), paymentOrder, userData, viewPaymentOrderInfo, updateInfo
+                    )
+                } catch (e: Exception) {
+                    exception = e
+                    this.viewPaymentOrderInfo
+                }
+                return Paying(paymentOrder, userData, viewPaymentOrderInfo, exception)
+            }
+
+            override fun writeToParcel(parcel: Parcel, flags: Int) {
+                parcel.writeParcelable(paymentOrder, flags)
+                parcel.writeUserData(userData, flags)
+                parcel.writeParcelable(viewPaymentOrderInfo, flags)
+                parcel.writeUserData(updateInfo, flags)
+            }
+            constructor(parcel: Parcel) : this(
+                paymentOrder = parcel.readParcelable(),
+                userData = parcel.readUserData(),
+                viewPaymentOrderInfo = checkNotNull(parcel.readParcelable()),
+                updateInfo = parcel.readUserData()
             )
         }
 

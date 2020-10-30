@@ -60,25 +60,6 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         }
     }
 
-    override fun getUpdateInstrumentFailureMessage(
-        context: Context,
-        instrument: String,
-        exception: Exception
-    ): String {
-        return if (
-            exception is RequestProblemException &&
-            exception.problem is MerchantBackendProblem.Client
-        ) {
-            val displayName = getInstrumentDisplayName(context, instrument)
-            context.getString(
-                R.string.swedbankpaysdk_merchantbackend_invalid_instrument_format,
-                displayName
-            )
-        } else {
-            super.getUpdateInstrumentFailureMessage(context, instrument, exception)
-        }
-    }
-
     override suspend fun postConsumers(
         context: Context,
         consumer: Consumer?,
@@ -162,16 +143,28 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         }
     }
 
-    override suspend fun patchUpdatePaymentorderSetinstrument(
+    override suspend fun updatePaymentOrder(
         context: Context,
         paymentOrder: PaymentOrder?,
         userData: Any?,
         viewPaymentOrderInfo: ViewPaymentOrderInfo,
-        instrument: String
+        updateInfo: Any?
     ): ViewPaymentOrderInfo {
-        val linkHref = viewPaymentOrderInfo.userData as String
+        val instrument = requireNotNull(updateInfo as? String) {
+            "Unexpected updateInfo $updateInfo (expected String)"
+        }
+        val linkHref = checkNotNull(viewPaymentOrderInfo.userData as? String) {
+            "Payment order is not in instrument mode"
+        }
         val link = Link.PaymentOrderSetInstrument(linkHref.toHttpUrl())
-        val paymentOrderIn = link.patch(context, this, instrument)
+        val paymentOrderIn = try {
+            link.patch(context, this, instrument)
+        } catch (e: RequestProblemException) {
+            throw when (e.problem) {
+                is MerchantBackendProblem.Client -> InvalidInstrumentException(instrument, e)
+                else -> e
+            }
+        }
 
         val viewPaymentOrder =
             paymentOrderIn.operations.find("view-paymentorder")?.href

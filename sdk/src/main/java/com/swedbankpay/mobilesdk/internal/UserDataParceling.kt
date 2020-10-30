@@ -28,7 +28,7 @@ internal fun Parcel.writeUserData(userData: Any?, flags: Int) {
         }
     }
 }
-internal fun Parcel.readUserData() = when (readInt()) {
+internal fun Parcel.readUserData(): Any? = when (readInt()) {
     USER_DATA_NULL -> null
     USER_DATA_PARCELABLE -> readParcelable(InternalPaymentViewModel::class.java.classLoader)
     USER_DATA_STRING -> readString()

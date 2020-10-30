@@ -51,12 +51,18 @@ data class ViewPaymentOrderInfo(
     val termsOfServiceUrl: String? = null,
 
     /**
-     * If the payment order is in instrument mode, the current instrument
+     * If the payment order is in instrument mode, the current instrument.
+     *
+     * The SDK does not use this value, but it may be useful if you have
+     * customized instrument selection.
      */
     val instrument: String? = null,
 
     /**
-     * If the payment order is in instrument mode, all the valid instruments for it
+     * If the payment order is in instrument mode, all the valid instruments for it.
+     * 
+     * The SDK does not use this value, but it may be useful if you have
+     * customized instrument selection.
      */
     val validInstruments: List<String>? = null,
 

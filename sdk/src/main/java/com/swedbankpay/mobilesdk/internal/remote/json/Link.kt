@@ -135,7 +135,3 @@ internal sealed class Link(
         }
     }
 }
-
-internal fun Parcel.writeLink(l: Link?) = writeString(l?.href?.toString())
-internal inline fun <T : Link> Parcel.readLink(constructor: (HttpUrl) -> T) =
-    readString()?.toHttpUrl()?.let(constructor)

@@ -17,6 +17,10 @@
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
+-keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.TerminalFailure {
+    <init>();
+}
+
 -keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.internal.remote.json.* {
     <init>();
 }
@@ -24,5 +28,3 @@
 -keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.internal.remote.json.Link* {
     <init>(okhttp3.HttpUrl);
 }
-
--keepnames class com.swedbankpay.mobilesdk.internal.WebViewFragment
