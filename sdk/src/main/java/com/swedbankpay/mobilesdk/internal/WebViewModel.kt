@@ -79,6 +79,9 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
 
                     // Redirect pages may require this.
                     domStorageEnabled = true
+
+                    builtInZoomControls = true
+                    displayZoomControls = false
                 }
 
                 webChromeClient = MyWebChromeClient()

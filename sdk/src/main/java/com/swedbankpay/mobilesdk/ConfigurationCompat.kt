@@ -79,24 +79,25 @@ abstract class ConfigurationCompat : Configuration() {
     }
 
     /**
-     * Called by [PaymentFragment] when it needs to update the instrument of a payment order.
+     * Called by [PaymentFragment] when it needs to update a payment order.
      *
-     * If you do not use instrument mode payments, you do not need to override this method.
+     * If you do not update payment orders after they have been created,
+     * you do not need to override this method.
      *
      * @param context an application context
      * @param paymentOrder the [PaymentOrder] object set as the PaymentFragment argument
      * @param userData the user data object set as the PaymentFragment argument
      * @param viewPaymentOrderInfo the current [ViewPaymentOrderInfo] as returned from a call to this or [postPaymentorders]
-     * @param instrument the instrument to set
+     * @param updateInfo the updateInfo value from the [PaymentViewModel.updatePaymentOrder] call
      * @return ViewPaymentOrderInfo describing the payment order with the changed instrument
      */
     @WorkerThread
-    open fun patchUpdatePaymentorderSetinstrumentCompat(
+    open fun updatePaymentOrderCompat(
         context: Context,
         paymentOrder: PaymentOrder?,
         userData: Any?,
         viewPaymentOrderInfo: ViewPaymentOrderInfo,
-        instrument: String
+        updateInfo: Any?
     ): ViewPaymentOrderInfo = viewPaymentOrderInfo
 
     final override suspend fun postConsumers(
@@ -128,19 +129,19 @@ abstract class ConfigurationCompat : Configuration() {
         shouldRetryAfterPostPaymentordersExceptionCompat(exception)
     }
 
-    final override suspend fun patchUpdatePaymentorderSetinstrument(
+    final override suspend fun updatePaymentOrder(
         context: Context,
         paymentOrder: PaymentOrder?,
         userData: Any?,
         viewPaymentOrderInfo: ViewPaymentOrderInfo,
-        instrument: String
+        updateInfo: Any?
     ) = requestCompat {
-        patchUpdatePaymentorderSetinstrumentCompat(
+        updatePaymentOrderCompat(
             context,
             paymentOrder,
             userData,
             viewPaymentOrderInfo,
-            instrument
+            updateInfo
         )
     }
 

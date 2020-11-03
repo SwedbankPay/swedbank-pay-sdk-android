@@ -96,62 +96,24 @@ abstract class Configuration {
     }
 
     /**
-     * Called by [PaymentFragment] when it needs to update the instrument of a payment order.
+     * Called by [PaymentFragment] when it needs to update a payment order.
      *
-     * If you do not use instrument mode payments, you do not need to override this method.
+     * If you do not update payment orders after they have been created,
+     * you do not need to override this method.
      *
      * @param context an application context
      * @param paymentOrder the [PaymentOrder] object set as the PaymentFragment argument
      * @param userData the user data object set as the PaymentFragment argument
      * @param viewPaymentOrderInfo the current [ViewPaymentOrderInfo] as returned from a call to this or [postPaymentorders]
-     * @param instrument the instrument to set
+     * @param updateInfo the updateInfo value from the [PaymentViewModel.updatePaymentOrder] call
      * @return ViewPaymentOrderInfo describing the payment order with the changed instrument
      */
-    open suspend fun patchUpdatePaymentorderSetinstrument(
+    open suspend fun updatePaymentOrder(
         context: Context,
         paymentOrder: PaymentOrder?,
         userData: Any?,
         viewPaymentOrderInfo: ViewPaymentOrderInfo,
-        instrument: String
+        updateInfo: Any?
     ): ViewPaymentOrderInfo = viewPaymentOrderInfo
-
-    /**
-     * Called by [PaymentFragment] when it needs to show an instrument name to the user.
-     *
-     * If you do not use instrument mode payments, you do not need to override this method.
-     *
-     * @param context an application context
-     * @param instrument the payment instrument
-     * @return a human-readable name of `instrument`
-     */
-    open fun getInstrumentDisplayName(
-        context: Context,
-        instrument: String
-    ): String {
-        return when (instrument) {
-            PaymentInstruments.CREDIT_CARD -> "Card"
-            PaymentInstruments.SWISH -> "Swish"
-            PaymentInstruments.INVOICE -> "Invoice"
-            else -> instrument
-        }
-    }
-
-    /**
-     * Called by [PaymentFragment] when it needs to show an error message
-     * because updating the payment instrument failed
-     *
-     * If you do not use instrument mode payments, you do not need to override this method.
-     *
-     * @param context an application context
-     * @param instrument the payment instrument that failed
-     * @param exception the exception that caused the failure
-     */
-    open fun getUpdateInstrumentFailureMessage(
-        context: Context,
-        instrument: String,
-        exception: Exception
-    ): String {
-        return context.getString(R.string.swedbankpaysdk_update_instrument_failed)
-    }
 }
 

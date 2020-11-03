@@ -1,21 +1,15 @@
 package com.swedbankpay.mobilesdk
 
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
 import android.widget.TextView
 import androidx.annotation.CallSuper
 import androidx.annotation.IntDef
-import androidx.core.widget.ContentLoadingProgressBar
-import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -93,7 +87,7 @@ open class PaymentFragment : Fragment() {
         private var viewModelKey: String? = null
         private var useExternalBrowser = false
         @DefaultUI
-        private var enabledDefaultUI = RETRY_PROMPT or UPDATE_PAYMENTORDER_ERROR_DIALOG
+        private var enabledDefaultUI = RETRY_PROMPT
         private var debugIntentUris = false
 
         /**
@@ -165,8 +159,6 @@ open class PaymentFragment : Fragment() {
          *  - [RETRY_PROMPT], a prompt to retry a failed request that can reasonably be retried
          *  - [COMPLETE_MESSAGE], a laconic completion message
          *  - [ERROR_MESSAGE] a less laconic, though a bit technical, error message
-         *  - [INSTRUMENT_SPINNER]
-         *  - [UPDATE_PAYMENTORDER_ERROR_DIALOG] an error dialog when the payment order fails to update
          *
          * If a default UI is not enabled, the fragment will be blank instead.
          *
@@ -248,20 +240,6 @@ open class PaymentFragment : Fragment() {
          */
         @SuppressLint("ShiftFlags")
         const val ERROR_MESSAGE = 1 shl 2
-        /**
-         * Default UI flag: an error dialog show if the instrument could not be updated
-         * in an instrument mode payment order
-         * See [ArgumentsBuilder.setEnabledDefaultUI]
-         */
-        @SuppressLint("ShiftFlags")
-        const val INSTRUMENT_SPINNER = 1 shl 3
-        /**
-         * Default UI flag: an error dialog show if the instrument could not be updated
-         * in an instrument mode payment order
-         * See [ArgumentsBuilder.setEnabledDefaultUI]
-         */
-        @SuppressLint("ShiftFlags")
-        const val UPDATE_PAYMENTORDER_ERROR_DIALOG = 1 shl 4
 
         /**
          * Argument key: Any data that you may need in your [Configuration] to prepare the checkin
@@ -324,8 +302,6 @@ open class PaymentFragment : Fragment() {
         RETRY_PROMPT,
         COMPLETE_MESSAGE,
         ERROR_MESSAGE,
-        INSTRUMENT_SPINNER,
-        UPDATE_PAYMENTORDER_ERROR_DIALOG,
         flag = true
     )
     annotation class DefaultUI
@@ -379,10 +355,7 @@ open class PaymentFragment : Fragment() {
         vm.debugIntentUris = arguments.getBoolean(ARG_DEBUG_INTENT_URIS)
         vm.observeLoading()
         vm.observeCurrentPage()
-        vm.observeInstruments()
-        vm.observeUpdating()
         vm.observeMessage()
-        vm.observeUpdateErrorMessage()
         vm.observeTermsOfServicePressed()
         publicVm.observeRetryPreviousPressed()
     }
@@ -428,69 +401,6 @@ open class PaymentFragment : Fragment() {
         }
     }
 
-    private fun InternalPaymentViewModel.observeInstruments() {
-        instrumentInfo.observe(this@PaymentFragment) { info ->
-            val view = requireView()
-            val title = view.findViewById<TextView>(R.id.swedbankpaysdk_instrument_title)
-            val spinner = view.findViewById<Spinner>(R.id.swedbankpaysdk_instrument_spinner)
-
-            spinner.onItemSelectedListener = null
-
-            val enabledUi = requireArguments().getInt(ARG_ENABLED_DEFAULT_UI)
-            if (info == null || enabledUi and INSTRUMENT_SPINNER == 0) {
-                title.visibility = View.GONE
-                spinner.visibility = View.GONE
-                spinner.adapter = null
-            } else {
-                title.visibility = View.VISIBLE
-                spinner.visibility = View.VISIBLE
-
-                val context = requireContext()
-                val instruments = info.instruments
-                val items = instruments.map {
-                    configuration?.getInstrumentDisplayName(context, it) ?: it
-                }
-                spinner.adapter = ArrayAdapter(
-                    context,
-                    android.R.layout.simple_spinner_item,
-                    items
-                )
-                spinner.setSelection(info.selectedInstrumentIndex)
-
-                spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                    override fun onItemSelected(
-                        parent: AdapterView<*>?,
-                        view: View?,
-                        position: Int,
-                        id: Long
-                    ) {
-                        vm.setInstrument(instruments[position])
-                    }
-
-                    override fun onNothingSelected(parent: AdapterView<*>?) {}
-                }
-            }
-        }
-    }
-
-    private fun InternalPaymentViewModel.observeUpdating() {
-        updatingPaymentOrder.observe(this@PaymentFragment) {
-            val updating = it == true
-            requireView().apply {
-                val progressBar = findViewById<ContentLoadingProgressBar>(
-                    R.id.swedbankpaysdk_updating_indicator
-                )
-                if (updating) {
-                    progressBar.show()
-                } else {
-                    progressBar.hide()
-                }
-
-                findViewById<Spinner>(R.id.swedbankpaysdk_instrument_spinner).isEnabled = !updating
-            }
-        }
-    }
-
     private fun InternalPaymentViewModel.observeMessage() {
         messageTitle.observe(this@PaymentFragment, {
             requireView().findViewById<View>(R.id.swedbankpaysdk_message).visibility = if (it != null) View.VISIBLE else View.INVISIBLE
@@ -512,18 +422,6 @@ open class PaymentFragment : Fragment() {
         val loading = vm.loading.value == true
         swipeLayout.isRefreshing = loading
         swipeLayout.isEnabled = loading || vm.retryActionAvailable.value == true
-    }
-
-    private fun InternalPaymentViewModel.observeUpdateErrorMessage() {
-        updatePaymentOrderErrorMessage.observe(this@PaymentFragment) {
-            if (it != null) {
-                updatePaymentOrderErrorMessage.value = null
-                val enabledUi = requireArguments().getInt(ARG_ENABLED_DEFAULT_UI)
-                if (enabledUi and UPDATE_PAYMENTORDER_ERROR_DIALOG != 0) {
-                    showErrorDialog(it)
-                }
-            }
-        }
     }
 
     private fun InternalPaymentViewModel.observeTermsOfServicePressed() {
@@ -576,6 +474,14 @@ open class PaymentFragment : Fragment() {
             swipeRefreshLayout.setOnRefreshListener {
                 vm.retryFromRetryableError()
             }
+
+            childFragmentManager.apply {
+                if (findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) == null) {
+                    beginTransaction()
+                        .add(R.id.swedbankpaysdk_root_web_view_fragment, WebViewFragment())
+                        .commit()
+                }
+            }
         }
     }
 
@@ -590,32 +496,5 @@ open class PaymentFragment : Fragment() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBundle(STATE_VM, Bundle().also(vm::saveState))
-    }
-
-    private fun showErrorDialog(message: String) {
-        UpdatePaymentOrderErrorDialogFragment
-            .newInstance(message)
-            .show(childFragmentManager, null)
-    }
-
-    internal class UpdatePaymentOrderErrorDialogFragment : DialogFragment() {
-        companion object {
-            const val ARG_MESSAGE = "M"
-
-            fun newInstance(message: String) = UpdatePaymentOrderErrorDialogFragment().apply {
-                arguments = Bundle(1).apply {
-                    putString(ARG_MESSAGE, message)
-                }
-            }
-        }
-
-        override fun onCreateDialog(savedInstanceState: Bundle?) =
-            AlertDialog.Builder(requireContext(), theme)
-                .setTitle(R.string.swedbankpaysdk_error_dialog_title)
-                .setMessage(requireArguments().getString(ARG_MESSAGE))
-                .setNeutralButton(R.string.swedbankpaysdk_dialog_close) { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .create()
     }
 }

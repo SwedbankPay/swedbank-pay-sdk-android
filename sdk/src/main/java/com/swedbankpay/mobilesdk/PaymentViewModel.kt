@@ -3,9 +3,11 @@
 package com.swedbankpay.mobilesdk
 
 import android.app.Application
+import android.os.Parcelable
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
+import java.io.Serializable
 
 /**
  * Convenience for `ViewModelProvider(activity).get(PaymentViewModel::class.java)`.
@@ -42,6 +44,14 @@ class PaymentViewModel : AndroidViewModel {
          * Payment is active and is waiting either for user interaction or backend response
          */
         IN_PROGRESS {
+            /** `false` */
+            override val isFinal get() = false
+        },
+
+        /**
+         * Payment order is being updated (because you called [updatePaymentOrder]).
+         */
+        UPDATING_PAYMENT_ORDER {
             /** `false` */
             override val isFinal get() = false
         },
@@ -106,8 +116,9 @@ class PaymentViewModel : AndroidViewModel {
          *
          * The exception is of any type thrown by your [Configuration].
          *
-         * When using [MerchantBackendConfiguration], you should be prepared for
-         * [java.io.IOException] in general, and
+         * When using
+         * [com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration],
+         * you should be prepared for [java.io.IOException] in general, and
          * [com.swedbankpay.mobilesdk.merchantbackend.RequestProblemException] in particular.
          * If [com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration]
          * throws an [IllegalStateException], it means you are not using it correctly;
@@ -120,16 +131,19 @@ class PaymentViewModel : AndroidViewModel {
          */
         val terminalFailure: TerminalFailure?,
         /**
-         * If the current state is [IN_PROGRESS][State.IN_PROGRESS], and the payment is in
-         * instrument mode, this list contains the valid instruments for the payment.
-         * Note that this list is the same as what was returned from your [Configuration].
+         * If the current state is [IN_PROGRESS][State.IN_PROGRESS] or
+         * [UPDATING_PAYMENT_ORDER][State.UPDATING_PAYMENT_ORDER], the [ViewPaymentOrderInfo]
+         * object describing the current payment order. If the state is `UPDATING_PAYMENT_ORDER`,
+         * this is the last-known `ViewPaymentOrderInfo`.
          */
-        val validInstruments: List<String>?,
+        val viewPaymentOrderInfo: ViewPaymentOrderInfo?,
         /**
-         * If the current state is [IN_PROGRESS][State.IN_PROGRESS], and the payment is in
-         * instrument mode, the current instrument, else `null`.
+         * If the current state is [IN_PROGRESS][State.IN_PROGRESS], and an attempt to update the
+         * payment order failed, the cause of the failure.
+         *
+         * The exception is of any type thrown by your [Configuration].
          */
-        val instrument: String?
+        val updateException: Exception?
     )
 
     /**
@@ -192,52 +206,38 @@ class PaymentViewModel : AndroidViewModel {
         val state = when (it) {
             null -> State.IDLE
             InternalPaymentViewModel.UIState.Loading -> State.IN_PROGRESS
-            is InternalPaymentViewModel.UIState.PlainHtmlContent -> State.IN_PROGRESS
-            is InternalPaymentViewModel.UIState.InstrumentModePaymentOrder -> State.IN_PROGRESS
-            is InternalPaymentViewModel.UIState.UpdatingPaymentOrder -> State.IN_PROGRESS
+            is InternalPaymentViewModel.UIState.ViewConsumerIdentification -> State.IN_PROGRESS
+            is InternalPaymentViewModel.UIState.ViewPaymentOrder -> State.IN_PROGRESS
+            is InternalPaymentViewModel.UIState.UpdatingPaymentOrder -> State.UPDATING_PAYMENT_ORDER
             is InternalPaymentViewModel.UIState.InitializationError -> State.FAILURE
             is InternalPaymentViewModel.UIState.RetryableError -> State.RETRYABLE_ERROR
             InternalPaymentViewModel.UIState.Complete -> State.COMPLETE
             InternalPaymentViewModel.UIState.Canceled -> State.CANCELED
             is InternalPaymentViewModel.UIState.Failure -> State.FAILURE
         }
+
         val retryableErrorMessage = (it as? InternalPaymentViewModel.UIState.RetryableError)
             ?.message
             ?.takeUnless { it == 0 }
             ?.let(getApplication<Application>()::getString)
+
         val exception = when (it) {
+            is InternalPaymentViewModel.UIState.InitializationError -> it.exception
             is InternalPaymentViewModel.UIState.RetryableError -> it.exception
             else -> null
         }
 
         val terminalFailure = (it as? InternalPaymentViewModel.UIState.Failure)?.terminalFailure
 
-        val validInstruments: List<String>?
-        val instrument: String?
-        when (it) {
-            is InternalPaymentViewModel.UIState.InstrumentModePaymentOrder -> {
-                validInstruments = it.instruments
-                instrument = validInstruments[it.selectedInstrumentIndex]
-            }
-
-            is InternalPaymentViewModel.UIState.UpdatingPaymentOrder -> {
-                validInstruments = it.instruments
-                instrument = it.previousInstrument
-            }
-
-            else -> {
-                validInstruments = null
-                instrument = null
-            }
-        }
+        val paymentOrderState = it as? InternalPaymentViewModel.UIState.ViewPaymentOrder
 
         RichState(
             state,
             retryableErrorMessage,
             exception,
             terminalFailure,
-            validInstruments,
-            instrument,
+            paymentOrderState?.viewPaymentOrderInfo,
+            paymentOrderState?.updateException,
         )
     }
 
@@ -249,24 +249,12 @@ class PaymentViewModel : AndroidViewModel {
     val state = Transformations.map(richState) { it.state }
 
     /**
-     * If the current state is [IN_PROGRESS][State.IN_PROGRESS], and the payment is in
-     * instrument mode, and the instrument failed to update, you can get the error message
-     * here.
+     * `true` if the payment menu is currently shown in the [PaymentFragment],
+     * `false` otherwise.
+     *
+     * You can use this property to control the visibility of a customized instrument chooser.
      */
-    val lastUpdateInstrumentErrorMessage: MutableLiveData<String> =
-        MediatorLiveData<String>().apply {
-            var source: LiveData<String>? = null
-            addSource(internalVm) { vm ->
-                val newSource = vm?.updatePaymentOrderErrorMessage
-                if (newSource != source) {
-                    source?.let(::removeSource)
-                    source = newSource
-                    newSource?.let { addSource(it) { message ->
-                        message?.let(::setValue)
-                    } }
-                }
-            }
-        }
+    val showingPaymentMenu = Transformations.switchMap(internalVm) { it.showingPaymentMenu }
 
     internal var onTermsOfServiceClickListener: OnTermsOfServiceClickListener? = null
     private var onTermsOfServiceClickListenerOwner: LifecycleOwner? = null
@@ -321,8 +309,22 @@ class PaymentViewModel : AndroidViewModel {
     }
 
     /**
-     * If the current state is [IN_PROGRESS][State.IN_PROGRESS], and the payment is in
-     * instrument mode, sets the instrument.
+     * Attempts to update the ongoing payment order.
+     * The meaning of `updateInfo` is up to your  [Configuration.updatePaymentOrder]
+     * implementation.
+     *
+     * If you are using
+     * [com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration],
+     * and the payment order is in instrument mode, you can set the instrument
+     * by calling this with a `String` argument specifying the new instrument;
+     * see [PaymentInstruments].
+     *
+     * @param updateInfo any data you need to perform the update. Must be [android.os.Parcelable] or [Serializable]
      */
-    fun setInstrument(instrument: String) = internalVm.value?.setInstrument(instrument)
+    fun updatePaymentOrder(updateInfo: Any?) {
+        require(updateInfo is Parcelable? || updateInfo is Serializable?) {
+            "updateInfo must be Parcelable or Serializable"
+        }
+        internalVm.value?.updatePaymentOrder(updateInfo)
+    }
 }

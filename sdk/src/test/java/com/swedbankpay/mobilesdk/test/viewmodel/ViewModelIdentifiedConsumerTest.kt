@@ -223,9 +223,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             observing(uiState) {
                 verify(it).onChanged(
                     refEq(
-                        InternalPaymentViewModel.UIState.PlainHtmlContent(
+                        InternalPaymentViewModel.UIState.ViewConsumerIdentification(
                             TestConstants.hostUrl,
-                            R.string.swedbankpaysdk_view_consumer_identification_template,
                             TestConstants.viewConsumerSessionLink
                         )
                     )
@@ -263,9 +262,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             observing(uiState) {
                 verify(it).onChanged(
                     refEq(
-                        InternalPaymentViewModel.UIState.PlainHtmlContent(
+                        InternalPaymentViewModel.UIState.ViewConsumerIdentification(
                             TestConstants.hostUrl,
-                            R.string.swedbankpaysdk_view_consumer_identification_template,
                             TestConstants.viewConsumerSessionLink
                         )
                     )
@@ -317,7 +315,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         viewModel.apply {
             startIdentifiedTestPayment()
             observing(uiState) {
-                verify(it).onChanged(isA<InternalPaymentViewModel.UIState.PlainHtmlContent>())
+                verify(it).onChanged(
+                    isA<InternalPaymentViewModel.UIState.ViewConsumerIdentification>()
+                )
                 verifyNoMoreInteractions(it)
                 javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
                 verify(it).onChanged(InternalPaymentViewModel.UIState.Loading)
@@ -340,10 +340,9 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
             observing(uiState) {
                 verify(it).onChanged(
                     refEq(
-                        InternalPaymentViewModel.UIState.PlainHtmlContent(
-                            TestConstants.hostUrl,
-                            R.string.swedbankpaysdk_view_paymentorder_template,
-                            TestConstants.viewPaymentorderLink
+                        InternalPaymentViewModel.UIState.ViewPaymentOrder(
+                            TestConstants.viewPaymentorderInfo,
+                            null
                         )
                     )
                 )

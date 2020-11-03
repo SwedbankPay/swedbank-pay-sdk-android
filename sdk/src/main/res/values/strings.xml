@@ -30,10 +30,6 @@
 
     <string name="swedbankpaysdk_unexpected_response">Received unrecognizable response from service.</string>
 
-    <string name="swedbankpaysdk_update_instrument_failed">Unable to change instrument</string>
-
-    <string name="swedbankpaysdk_merchantbackend_invalid_instrument_format">%s is not valid for this payment</string>
-
     <string name="swedbankpaysdk_tos">Terms of Service</string>
     <string name="swedbankpaysdk_instrument_spinner_title">Instrument</string>
 </resources>

@@ -160,10 +160,9 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
             observing(uiState) {
                 verify(it).onChanged(
                     refEq(
-                        InternalPaymentViewModel.UIState.PlainHtmlContent(
-                            TestConstants.hostUrl,
-                            R.string.swedbankpaysdk_view_paymentorder_template,
-                            TestConstants.viewPaymentorderLink
+                        InternalPaymentViewModel.UIState.ViewPaymentOrder(
+                            TestConstants.viewPaymentorderInfo,
+                            null
                         )
                     )
                 )
