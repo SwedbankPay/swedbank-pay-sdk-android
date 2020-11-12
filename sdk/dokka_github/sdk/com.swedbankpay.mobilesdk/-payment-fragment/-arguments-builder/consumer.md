@@ -5,6 +5,10 @@
 `fun consumer(consumer: `[`Consumer`](../../-consumer/index.md)`?): ArgumentsBuilder`
 
 Sets a consumer for this payment.
+Also enables or disables checkin based on the argument:
+If `consumer` is `null`, disables checkin;
+if consumer `consumer` is not `null`, enables checkin.
+If you wish to override this, call [useCheckin](use-checkin.md) afterwards.
 
 ### Parameters
 

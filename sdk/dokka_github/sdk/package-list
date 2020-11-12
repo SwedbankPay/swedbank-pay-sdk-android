@@ -2,3 +2,4 @@ $dokka.format:gfm
 $dokka.linkExtension:md
 $dokka.location:com.swedbankpay.mobilesdk$paymentViewModel#androidx.fragment.app.FragmentActivitycom.swedbankpay.mobilesdk/androidx.fragment.app.-fragment-activity/payment-view-model.md
 com.swedbankpay.mobilesdk
+com.swedbankpay.mobilesdk.merchantbackend

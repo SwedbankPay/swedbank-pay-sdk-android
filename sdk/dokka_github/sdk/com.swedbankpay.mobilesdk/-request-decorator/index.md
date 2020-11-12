@@ -6,6 +6,8 @@
 
 Callback for adding custom headers to backend requests.
 
+For simple use-cases, see the [withHeaders](with-headers.md) factory methods.
+
 All requests made to the merchant backend will call back to
 the [decorateAnyRequest](decorate-any-request.md) method. This is a good place to add
 API keys and session tokens and the like. Afterwards each request
@@ -43,9 +45,15 @@ are regular methods running in a background thread.
 |---|---|
 | [decorateAnyRequest](decorate-any-request.md) | Override this method to add custom headers to all backend requests.`open suspend fun decorateAnyRequest(userHeaders: `[`UserHeaders`](../-user-headers/index.md)`, method: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, url: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, body: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
 | [decorateCreatePaymentOrder](decorate-create-payment-order.md) | Override this method to add custom headers to the POST {paymentorders} request.`open suspend fun decorateCreatePaymentOrder(userHeaders: `[`UserHeaders`](../-user-headers/index.md)`, body: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, paymentOrder: `[`PaymentOrder`](../-payment-order/index.md)`): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
-| [decorateGetPaymentOrder](decorate-get-payment-order.md) | Override this method to add custom headers to the GET {paymentorder} request.`open suspend fun decorateGetPaymentOrder(userHeaders: `[`UserHeaders`](../-user-headers/index.md)`, url: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
 | [decorateGetTopLevelResources](decorate-get-top-level-resources.md) | Override this method to add custom headers to the backend entry point request.`open suspend fun decorateGetTopLevelResources(userHeaders: `[`UserHeaders`](../-user-headers/index.md)`): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
 | [decorateInitiateConsumerSession](decorate-initiate-consumer-session.md) | Override this method to add custom headers to the POST {consumers} request.`open suspend fun decorateInitiateConsumerSession(userHeaders: `[`UserHeaders`](../-user-headers/index.md)`, body: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, consumer: `[`Consumer`](../-consumer/index.md)`): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
+| [decoratePaymentOrderSetInstrument](decorate-payment-order-set-instrument.md) | Override this method to add custom headers to the PATCH {setInstrument} request of a payment order.`open suspend fun decoratePaymentOrderSetInstrument(userHeaders: `[`UserHeaders`](../-user-headers/index.md)`, url: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, body: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, instrument: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
+
+### Companion Object Functions
+
+| Name | Summary |
+|---|---|
+| [withHeaders](with-headers.md) | Create a RequestDecorator that attaches the specified headers to all SDK requests.`fun withHeaders(vararg namesAndValues: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): `[`RequestDecorator`](./index.md)<br>`fun withHeaders(headers: `[`Map`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html)`<`[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`>): `[`RequestDecorator`](./index.md) |
 
 ### Inheritors
 

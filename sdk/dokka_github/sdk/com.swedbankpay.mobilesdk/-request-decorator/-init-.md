@@ -6,6 +6,8 @@
 
 Callback for adding custom headers to backend requests.
 
+For simple use-cases, see the [withHeaders](with-headers.md) factory methods.
+
 All requests made to the merchant backend will call back to
 the [decorateAnyRequest](decorate-any-request.md) method. This is a good place to add
 API keys and session tokens and the like. Afterwards each request

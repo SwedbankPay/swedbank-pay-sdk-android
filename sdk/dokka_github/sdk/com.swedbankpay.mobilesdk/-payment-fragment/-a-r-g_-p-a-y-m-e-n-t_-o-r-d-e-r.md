@@ -3,3 +3,7 @@
 # ARG_PAYMENT_ORDER
 
 `const val ARG_PAYMENT_ORDER: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
+
+Argument key: a [PaymentOrder](../-payment-order/index.md) object to prepare the payment menu.
+You will receive this value in your [Configuration.postPaymentorders](../-configuration/post-paymentorders.md).
+

@@ -13,6 +13,13 @@ The Swedbank Pay configuration for your application.
 
 |
 
+##### [com.swedbankpay.mobilesdk.ConfigurationCompat](../com.swedbankpay.mobilesdk/-configuration-compat/index.md)
+
+Java compatibility wrapper for [Configuration](../com.swedbankpay.mobilesdk/-configuration/index.md).
+
+
+|
+
 ##### [com.swedbankpay.mobilesdk.Consumer](../com.swedbankpay.mobilesdk/-consumer/index.md)
 
 A consumer to identify using the [checkin](https://developer.swedbankpay.com/checkout/checkin) flow.
@@ -39,6 +46,14 @@ Product delivery timeframe for a [RiskIndicator](../com.swedbankpay.mobilesdk/-r
 
 |
 
+##### [com.swedbankpay.mobilesdk.merchantbackend.InvalidInstrumentException](../com.swedbankpay.mobilesdk.merchantbackend/-invalid-instrument-exception/index.md)
+
+Reported as the [com.swedbankpay.mobilesdk.PaymentViewModel.RichState.updateException](../com.swedbankpay.mobilesdk/-payment-view-model/-rich-state/update-exception.md)
+if the instrument was not valid for the payment order.
+
+
+|
+
 ##### [com.swedbankpay.mobilesdk.ItemType](../com.swedbankpay.mobilesdk/-item-type/index.md)
 
 The type of an [OrderItem](../com.swedbankpay.mobilesdk/-order-item/index.md).
@@ -49,6 +64,20 @@ The type of an [OrderItem](../com.swedbankpay.mobilesdk/-order-item/index.md).
 ##### [com.swedbankpay.mobilesdk.Language](../com.swedbankpay.mobilesdk/-language/index.md)
 
 Languages supported by checkin and payment menu.
+
+
+|
+
+##### [com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration](../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-configuration/index.md)
+
+A [Configuration](../com.swedbankpay.mobilesdk/-configuration/index.md) class for the Merchant Backend API.
+
+
+|
+
+##### [com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendProblem](../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-problem/index.md)
+
+Base class for any problems encountered in the payment.
 
 
 |
@@ -72,7 +101,16 @@ A [Fragment](#) that handles a payment process.
 
 |
 
+##### [com.swedbankpay.mobilesdk.PaymentInstruments](../com.swedbankpay.mobilesdk/-payment-instruments/index.md)
+
+Constant values for common payment instruments
+
+
+|
+
 ##### [com.swedbankpay.mobilesdk.PaymentOrder](../com.swedbankpay.mobilesdk/-payment-order/index.md)
+
+Description a payment order.
 
 
 |
@@ -107,14 +145,7 @@ for communicating with a [PaymentFragment](../com.swedbankpay.mobilesdk/-payment
 
 ##### [com.swedbankpay.mobilesdk.Problem](../com.swedbankpay.mobilesdk/-problem/index.md)
 
-Base class for any problems encountered in the payment.
-
-
-|
-
-##### [com.swedbankpay.mobilesdk.ProperProblem](../com.swedbankpay.mobilesdk/-proper-problem/index.md)
-
-A Problem parsed from an application/problem+json object.
+An RFC 7807 HTTP API Problem Details object.
 
 
 |
@@ -138,6 +169,14 @@ Java compatibility wrapper for [RequestDecorator](../com.swedbankpay.mobilesdk/-
 
 |
 
+##### [com.swedbankpay.mobilesdk.merchantbackend.RequestProblemException](../com.swedbankpay.mobilesdk.merchantbackend/-request-problem-exception/index.md)
+
+IOException containing an RFC 7807 Problem object
+describing the error.
+
+
+|
+
 ##### [com.swedbankpay.mobilesdk.RiskIndicator](../com.swedbankpay.mobilesdk/-risk-indicator/index.md)
 
 
@@ -148,7 +187,7 @@ Java compatibility wrapper for [RequestDecorator](../com.swedbankpay.mobilesdk/-
 
 |
 
-##### [com.swedbankpay.mobilesdk.merchantbackend.SwedbankPayAction](../com.swedbankpay.mobilesdk/-swedbank-pay-action.md)
+##### [com.swedbankpay.mobilesdk.merchantbackend.SwedbankPayAction](../com.swedbankpay.mobilesdk.merchantbackend/-swedbank-pay-action.md)
 
 Action to take to correct a problem reported by the Swedbank Pay
 backend.
@@ -156,7 +195,7 @@ backend.
 
 |
 
-##### [com.swedbankpay.mobilesdk.merchantbackend.SwedbankPayProblem](../com.swedbankpay.mobilesdk/-swedbank-pay-problem/index.md)
+##### [com.swedbankpay.mobilesdk.merchantbackend.SwedbankPayProblem](../com.swedbankpay.mobilesdk.merchantbackend/-swedbank-pay-problem/index.md)
 
 A Problem defined by the Swedbank Pay backend.
 [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems](https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems)
@@ -164,9 +203,9 @@ A Problem defined by the Swedbank Pay backend.
 
 |
 
-##### [com.swedbankpay.mobilesdk.merchantbackend.SwedbankPaySubproblem](../com.swedbankpay.mobilesdk/-swedbank-pay-subproblem/index.md)
+##### [com.swedbankpay.mobilesdk.merchantbackend.SwedbankPaySubproblem](../com.swedbankpay.mobilesdk.merchantbackend/-swedbank-pay-subproblem/index.md)
 
-Object detailing the reason for a [SwedbankPayProblem](../com.swedbankpay.mobilesdk/-swedbank-pay-problem/index.md).
+Object detailing the reason for a [SwedbankPayProblem](../com.swedbankpay.mobilesdk.merchantbackend/-swedbank-pay-problem/index.md).
 
 
 |
@@ -178,16 +217,10 @@ Describes a terminal error condition signaled by an onError callback from Swedba
 
 |
 
-##### [com.swedbankpay.mobilesdk.UnexpectedContentProblem](../com.swedbankpay.mobilesdk/-unexpected-content-problem/index.md)
+##### [com.swedbankpay.mobilesdk.merchantbackend.UnexpectedResponseException](../com.swedbankpay.mobilesdk.merchantbackend/-unexpected-response-exception/index.md)
 
-A Pseudo-Problem where the server response was entirely unrecognized.
-
-
-|
-
-##### [com.swedbankpay.mobilesdk.UnknownProblem](../com.swedbankpay.mobilesdk/-unknown-problem/index.md)
-
-A Problem whose [type](../com.swedbankpay.mobilesdk/-unknown-problem/type.md) was not recognized.
+The server returned a response that [MerchantBackendConfiguration](../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-configuration/index.md)
+was not prepared for.
 
 
 |
@@ -195,5 +228,19 @@ A Problem whose [type](../com.swedbankpay.mobilesdk/-unknown-problem/type.md) wa
 ##### [com.swedbankpay.mobilesdk.UserHeaders](../com.swedbankpay.mobilesdk/-user-headers/index.md)
 
 Builder for custom headers.
+
+
+|
+
+##### [com.swedbankpay.mobilesdk.ViewConsumerIdentificationInfo](../com.swedbankpay.mobilesdk/-view-consumer-identification-info/index.md)
+
+Data required to show the checkin view.
+
+
+|
+
+##### [com.swedbankpay.mobilesdk.ViewPaymentOrderInfo](../com.swedbankpay.mobilesdk/-view-payment-order-info/index.md)
+
+Data required to show the payment menu.
 
 

@@ -2,7 +2,7 @@
 
 # paymentOrder
 
-`fun paymentOrder(paymentOrder: `[`PaymentOrder`](../../-payment-order/index.md)`): ArgumentsBuilder`
+`fun paymentOrder(paymentOrder: `[`PaymentOrder`](../../-payment-order/index.md)`?): ArgumentsBuilder`
 
 Sets the payment order to create
 

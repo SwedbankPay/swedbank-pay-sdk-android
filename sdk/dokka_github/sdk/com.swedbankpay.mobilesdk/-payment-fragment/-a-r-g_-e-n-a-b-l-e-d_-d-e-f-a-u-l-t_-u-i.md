@@ -3,3 +3,7 @@
 # ARG_ENABLED_DEFAULT_UI
 
 `const val ARG_ENABLED_DEFAULT_UI: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
+
+Argument key: the enabled deafult UI.
+A bitwise combination of [RETRY_PROMPT](-r-e-t-r-y_-p-r-o-m-p-t.md), [COMPLETE_MESSAGE](-c-o-m-p-l-e-t-e_-m-e-s-s-a-g-e.md), and/or [ERROR_MESSAGE](-e-r-r-o-r_-m-e-s-s-a-g-e.md)
+

@@ -2,57 +2,37 @@
 
 # Problem
 
-`sealed class Problem : `[`Parcelable`](https://developer.android.com/reference/android/os/Parcelable.html)
+`open class Problem : `[`Parcelable`](https://developer.android.com/reference/android/os/Parcelable.html)`, `[`Serializable`](https://docs.oracle.com/javase/6/docs/api/java/io/Serializable.html)
 
-Base class for any problems encountered in the payment.
+An RFC 7807 HTTP API Problem Details object.
 
-Problems always result from communication with the backend;
-lower-level network errors are not represented by Problems,
-but rather by IOExceptions as is usual.
+The SDK defines a subclass of Problem for problems expected to be
+reported from a server implementing the Merchant Backend API.
 
-Swedbank interfaces, as well as the example merchant backend,
-report problems using the Problem Details for HTTP APIs
-protocol (https://tools.ietf.org/html/rfc7807), specifically the
-json representation. Your custom merchant backend is enouraged to
-do so as well. These classes provide a convenient java representation
-of the problems so your client code does not need to deal with the raw
-json. Any custom problem cases you add to your merchant backend will
-be reported as "Unknown" problems, and you will have to implement
-parsing for those in your client, of course.
+There is a [subclass](../../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-problem/index.md)
+for problems expected to be reported by a server implementing the
+Merchant Backend API.
 
-All problems are either [Client](-client/index.md) or [Server](-server/index.md) problems. A Client
-problem is one where there was something wrong with the request
-the client app sent to the service. A Client problem always implies an
-HTTP response status in the Client Error range, 400-499.
+IMPORTANT: Problem synchronizes on itself, so you should never synchronize
+on a Problem object yourself.
 
-A Server problem in one where the service understood the request, but
-could not fulfill it. If the backend responds in an unexpected
-manner, the situation will be interpreted as a Server error, unless
-the response status is in 400-499, in which case it is still considered a
-Client error.
-
-This separation to Client and Server errors provides a crude but often
-effective way of distinguishing between temporary service unavailability
-and permanent configuration errors. Indeed, the PaymentFragment will internally
-consider any Client errors to be fatal, but most Server errors to be retryable.
-
-Client and Server errors are further divided to specific types. See individual
-class documentation for details.
-
-There are also several interfaces defined for related problem types.
-They are:
-
-* [ProperProblem](../-proper-problem/index.md): problems actually parsed from a application/problem+json object
-* [SwedbankPayProblem](../-swedbank-pay-problem/index.md): problems originating from Swedbank Pay backends
-* [UnknownProblem](../-unknown-problem/index.md): problems of an unknown [type](https://tools.ietf.org/html/rfc7807#section-3.1)
-* [UnexpectedContentProblem](../-unexpected-content-problem/index.md): (pseudo-)problems where the response was not application/problem+json
-
-### Types
+### Constructors
 
 | Name | Summary |
 |---|---|
-| [Client](-client/index.md) | Base class for [Problems](./index.md) caused by the service refusing or not understanding a request sent to it by the client.`sealed class Client : `[`Problem`](./index.md) |
-| [Server](-server/index.md) | Base class for [Problems](./index.md) caused by the service backend.`sealed class Server : `[`Problem`](./index.md) |
+| [&lt;init&gt;](-init-.md) | Interprets a Gson JsonObject as a Problem.`Problem(jsonObject: JsonObject)`<br>Parses a Problem from a String.`Problem(raw: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`)``Problem(parcel: `[`Parcel`](https://developer.android.com/reference/android/os/Parcel.html)`)` |
+
+### Properties
+
+| Name | Summary |
+|---|---|
+| [detail](detail.md) | RFC 7807 default property: a detailed explanation of the problem`val detail: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
+| [instance](instance.md) | RFC 7807 default property: a URI reference that identifies the specific occurrence of the problem`val instance: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
+| [jsonObject](json-object.md) | The raw RFC 7807 object parsed as a Gson JsonObject.`val jsonObject: JsonObject` |
+| [raw](raw.md) | The raw RFC 7807 object.`val raw: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
+| [status](status.md) | RFC 7807 default property: the HTTP status code`val status: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`?` |
+| [title](title.md) | RFC 7807 default property: a short summary of the problem.`val title: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
+| [type](type.md) | RFC 7807 default property: a URI reference that identifies the problem type.`val type: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
 
 ### Functions
 
@@ -66,3 +46,9 @@ They are:
 | Name | Summary |
 |---|---|
 | [CREATOR](-c-r-e-a-t-o-r.md) | `val CREATOR: `[`Creator`](https://developer.android.com/reference/android/os/Parcelable/Creator.html)`<`[`Problem`](./index.md)`>` |
+
+### Inheritors
+
+| Name | Summary |
+|---|---|
+| [MerchantBackendProblem](../../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-problem/index.md) | Base class for any problems encountered in the payment.`sealed class MerchantBackendProblem : `[`Problem`](./index.md) |

@@ -20,7 +20,9 @@
 | [description](description.md) | `fun description(description: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): Builder` |
 | [disablePaymentMenu](disable-payment-menu.md) | `fun disablePaymentMenu(disablePaymentMenu: `[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)`): Builder` |
 | [extensionProperties](extension-properties.md) | `fun extensionProperties(extensionProperties: `[`Bundle`](https://developer.android.com/reference/android/os/Bundle.html)`?): Builder` |
+| [generatePaymentToken](generate-payment-token.md) | `fun generatePaymentToken(generatePaymentToken: `[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)`): Builder` |
 | [generateRecurrenceToken](generate-recurrence-token.md) | `fun generateRecurrenceToken(generateRecurrenceToken: `[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)`): Builder` |
+| [instrument](instrument.md) | `fun instrument(instrument: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
 | [language](language.md) | `fun language(language: `[`Language`](../../-language/index.md)`): Builder` |
 | [operation](operation.md) | `fun operation(operation: `[`PaymentOrderOperation`](../../-payment-order-operation/index.md)`): Builder` |
 | [orderItems](order-items.md) | `fun orderItems(orderItems: `[`List`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)`<`[`OrderItem`](../../-order-item/index.md)`>?): Builder` |

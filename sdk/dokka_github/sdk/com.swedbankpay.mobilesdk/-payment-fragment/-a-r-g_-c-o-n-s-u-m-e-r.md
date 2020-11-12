@@ -3,3 +3,7 @@
 # ARG_CONSUMER
 
 `const val ARG_CONSUMER: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
+
+Argument key: a [Consumer](../-consumer/index.md) object to prepare checkin.
+You will receive this value in your [Configuration.postConsumers](../-configuration/post-consumers.md).
+
