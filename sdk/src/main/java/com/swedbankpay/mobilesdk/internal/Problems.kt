@@ -38,7 +38,7 @@ private fun parseClientProblem(json: JsonObject) = when (json.type) {
         MerchantBackendProblem.Client.SwedbankPay.Forbidden(json)
     "https://api.payex.com/psp/errordetail/notfound" ->
         MerchantBackendProblem.Client.SwedbankPay.NotFound(json)
-    else -> throw IllegalArgumentException()
+    else -> MerchantBackendProblem.Client.Unknown(json)
 }
 
 private fun parseServerProblem(json: JsonObject) = when (json.type) {
@@ -50,7 +50,7 @@ private fun parseServerProblem(json: JsonObject) = when (json.type) {
         MerchantBackendProblem.Server.SwedbankPay.SystemError(json)
     "https://api.payex.com/psp/errordetail/configurationerror" ->
         MerchantBackendProblem.Server.SwedbankPay.ConfigurationError(json)
-    else -> throw IllegalArgumentException()
+    else -> MerchantBackendProblem.Server.Unknown(json)
 }
 
 // a https://api.payex.com/psp/errordetail/mobilesdk/badgateway
