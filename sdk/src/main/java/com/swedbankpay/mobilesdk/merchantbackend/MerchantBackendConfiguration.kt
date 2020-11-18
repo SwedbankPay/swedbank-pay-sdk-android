@@ -73,10 +73,10 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             .operations
         val viewConsumerIdentification = operations.find("view-consumer-identification")?.href
             ?: throw IOException("Missing required operation")
-        return object : ViewConsumerIdentificationInfo {
-            override val webViewBaseUrl = backendUrl
-            override val viewConsumerIdentification = viewConsumerIdentification
-        }
+        return ViewConsumerIdentificationInfo(
+            webViewBaseUrl = backendUrl,
+            viewConsumerIdentification = viewConsumerIdentification
+        )
     }
 
     override suspend fun shouldRetryAfterPostConsumersException(exception: Exception): Boolean {
