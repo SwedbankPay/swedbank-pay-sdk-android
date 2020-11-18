@@ -39,17 +39,17 @@ internal object TestConstants {
         """{"origin":"$paymentOrderErrorOrigin","messageId":"$paymentOrderErrorMessageId","details":"$paymentOrderErrorDetails"}"""
     const val consumerRetryableErrorMessage = "retryConsumer"
 
-    val viewConsumerIdentificationInfo = object : ViewConsumerIdentificationInfo {
-        override val webViewBaseUrl get() = hostUrl
-        override val viewConsumerIdentification get() = viewConsumerSessionLink
-    }
+    val viewConsumerIdentificationInfo = ViewConsumerIdentificationInfo(
+        webViewBaseUrl = hostUrl,
+        viewConsumerIdentification = viewConsumerSessionLink
+    )
 
     val viewPaymentorderInfo = ViewPaymentOrderInfo(
         webViewBaseUrl = hostUrl,
         viewPaymentOrder = viewPaymentorderLink,
-        completeUrl = TestConstants.completeUrl,
+        completeUrl = completeUrl,
         cancelUrl = null,
-        paymentUrl = TestConstants.paymentUrl,
-        termsOfServiceUrl = TestConstants.termsOfServiceUrl
+        paymentUrl = paymentUrl,
+        termsOfServiceUrl = termsOfServiceUrl
     )
 }
