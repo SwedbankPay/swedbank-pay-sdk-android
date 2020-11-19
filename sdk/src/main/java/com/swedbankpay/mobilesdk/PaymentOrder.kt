@@ -16,7 +16,8 @@ import java.util.*
  *
  * This class mirrors the body the Swedbank Pay
  * [POST /psp/paymentorders](https://developer.swedbankpay.com/checkout/other-features#creating-a-payment-order)
- * endpoint, and is designed to work together with [MerchantBackendConfiguration]
+ * endpoint, and is designed to work together with
+ * [MerchantBackendConfiguration][com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration]
  * and a server implementing the
  * [Merchant Backend API](https://https://developer.swedbankpay.com/modules-sdks/mobile-sdk/merchant-backend),
  * but you can also use it with your custom [Configuration].
@@ -34,6 +35,7 @@ data class PaymentOrder(
     @SerializedName("instrument") val instrument: String? = null,
     @SerializedName("generateRecurrenceToken") val generateRecurrenceToken: Boolean = false,
     @SerializedName("generatePaymentToken") val generatePaymentToken: Boolean? = null,
+    @SerializedName("disableStoredPaymentDetails") val disableStoredPaymentDetails: Boolean? = null,
     @SerializedName("restrictedToInstruments") val restrictedToInstruments: List<String>? = null,
     @SerializedName("urls") val urls: PaymentOrderUrls,
     @SerializedName("payeeInfo") val payeeInfo: PayeeInfo = PayeeInfo(),
@@ -70,6 +72,7 @@ data class PaymentOrder(
         private var instrument: String? = null
         private var generateRecurrenceToken = false
         private var generatePaymentToken = false
+        private var disableStoredPaymentDetails = false
         private var restrictedToInstruments: List<String>? = null
         private var urls: PaymentOrderUrls? = null
         private var payeeInfo = PayeeInfo()
@@ -89,6 +92,7 @@ data class PaymentOrder(
         fun instrument(instrument: String?) = apply { this.instrument = instrument }
         fun generateRecurrenceToken(generateRecurrenceToken: Boolean) = apply { this.generateRecurrenceToken = generateRecurrenceToken }
         fun generatePaymentToken(generatePaymentToken: Boolean) = apply { this.generatePaymentToken = generatePaymentToken }
+        fun disableStoredPaymentDetails(disableStoredPaymentDetails: Boolean) = apply { this.disableStoredPaymentDetails = disableStoredPaymentDetails }
         fun restrictedToInstruments(restrictedToInstruments: List<String>?) = apply { this.restrictedToInstruments = restrictedToInstruments }
         fun urls(urls: PaymentOrderUrls) = apply { this.urls = urls }
         fun payeeInfo(payeeInfo: PayeeInfo) = apply { this.payeeInfo = payeeInfo }
@@ -111,6 +115,7 @@ data class PaymentOrder(
             instrument = instrument,
             generateRecurrenceToken = generateRecurrenceToken,
             generatePaymentToken = generatePaymentToken,
+            disableStoredPaymentDetails = disableStoredPaymentDetails,
             restrictedToInstruments = restrictedToInstruments,
             urls = checkBuilderNotNull(urls, "urls"),
             payeeInfo = payeeInfo,
