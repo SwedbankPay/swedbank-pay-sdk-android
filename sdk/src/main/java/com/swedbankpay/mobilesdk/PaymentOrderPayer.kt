@@ -8,7 +8,8 @@ import com.swedbankpay.mobilesdk.internal.makeCreator
 data class PaymentOrderPayer(
     @SerializedName("consumerProfileRef") val consumerProfileRef: String? = null,
     @SerializedName("email") val email: String? = null,
-    @SerializedName("msisdn") val msisdn: String? = null
+    @SerializedName("msisdn") val msisdn: String? = null,
+    @SerializedName("payerReference") val payerReference: String? = null
 ) : Parcelable {
     companion object {
         @Suppress("unused")
@@ -21,15 +22,18 @@ data class PaymentOrderPayer(
         private var consumerProfileRef: String? = null
         private var email: String? = null
         private var msisdn: String? = null
+        private var payerReference: String? = null
 
         fun consumerProfileRef(consumerProfileRef: String?) = apply { this.consumerProfileRef = consumerProfileRef }
         fun email(email: String?) = apply { this.email = email }
         fun msisdn(msisdn: String?) = apply { this.msisdn = msisdn }
+        fun payerReference(payerReference: String?) = apply { this.payerReference = payerReference}
 
         fun build() = PaymentOrderPayer(
             consumerProfileRef = consumerProfileRef,
             email = email,
-            msisdn = msisdn
+            msisdn = msisdn,
+            payerReference = payerReference
         )
     }
 
