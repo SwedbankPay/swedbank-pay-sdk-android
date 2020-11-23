@@ -5,5 +5,6 @@ import com.google.gson.annotations.SerializedName
 @Suppress("unused")
 enum class PaymentOrderOperation {
     @SerializedName("Purchase") PURCHASE,
-    @SerializedName("Verify") VERIFY
+    @SerializedName("Verify") VERIFY,
+    @SerializedName("Recur") RECUR
 }

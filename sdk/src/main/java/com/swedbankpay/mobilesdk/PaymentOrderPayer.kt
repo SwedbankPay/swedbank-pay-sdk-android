@@ -42,10 +42,12 @@ data class PaymentOrderPayer(
         parcel.writeString(consumerProfileRef)
         parcel.writeString(email)
         parcel.writeString(msisdn)
+        parcel.writeString(payerReference)
     }
     private constructor(parcel: Parcel) : this(
         consumerProfileRef = parcel.readString(),
         email = parcel.readString(),
-        msisdn = parcel.readString()
+        msisdn = parcel.readString(),
+        payerReference = parcel.readString()
     )
 }
