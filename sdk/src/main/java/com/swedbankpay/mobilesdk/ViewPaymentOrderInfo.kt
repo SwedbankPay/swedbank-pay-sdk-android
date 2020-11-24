@@ -64,7 +64,7 @@ data class ViewPaymentOrderInfo(
      * The SDK does not use this value, but it may be useful if you have
      * customized instrument selection.
      */
-    val validInstruments: List<String>? = null,
+    val availableInstruments: List<String>? = null,
 
     /**
      * Any [Parcelable] or [Serializable] (`String` is fine) object you may need
@@ -96,7 +96,7 @@ data class ViewPaymentOrderInfo(
         parcel.writeString(paymentUrl)
         parcel.writeString(termsOfServiceUrl)
         parcel.writeString(instrument)
-        parcel.writeStringList(validInstruments)
+        parcel.writeStringList(availableInstruments)
         parcel.writeUserData(userData, flags)
     }
 
@@ -108,7 +108,7 @@ data class ViewPaymentOrderInfo(
         paymentUrl = parcel.readString(),
         termsOfServiceUrl = parcel.readString(),
         instrument = parcel.readString(),
-        validInstruments = parcel.createStringArrayList(),
+        availableInstruments = parcel.createStringArrayList(),
         userData = parcel.readUserData()
     )
 }
