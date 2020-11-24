@@ -37,17 +37,6 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             it.toList()
         }
     }
-    private val enabledInstruments = builder.enabledInstruments ?: mapOf(
-        PaymentOrderOperation.PURCHASE to listOf(
-            PaymentInstruments.CREDIT_CARD,
-            PaymentInstruments.SWISH,
-            PaymentInstruments.INVOICE
-        ),
-        PaymentOrderOperation.VERIFY to listOf(
-            PaymentInstruments.CREDIT_CARD,
-            PaymentInstruments.INVOICE
-        )
-    )
 
     private var topLevelResources: CacheableResult<TopLevelResources>? = null
 
@@ -113,11 +102,11 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         val urls = paymentOrder.urls
 
         val setInstrument = paymentOrderIn.mobileSDK?.setInstrument
-        val validInstruments = setInstrument?.let { _ ->
-            enabledInstruments[paymentOrder.operation]
+        val availableInstruments = setInstrument?.let { _ ->
+            paymentOrderIn.paymentOrder?.availableInstruments
         }
-        val instrument = validInstruments?.let { _ ->
-            paymentOrder.instrument
+        val instrument = availableInstruments?.let { _ ->
+            paymentOrderIn.paymentOrder?.instrument
         }
 
         return ViewPaymentOrderInfo(
@@ -128,7 +117,7 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             paymentUrl = urls.paymentUrl,
             termsOfServiceUrl = urls.termsOfServiceUrl,
             instrument = instrument,
-            validInstruments = validInstruments,
+            availableInstruments = availableInstruments,
             userData = setInstrument?.href?.toString()
         )
     }
@@ -169,10 +158,13 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         val viewPaymentOrder =
             paymentOrderIn.operations.find("view-paymentorder")?.href
         val setInstrument = paymentOrderIn.mobileSDK?.setInstrument
+        val availableInstruments = paymentOrderIn.paymentOrder?.availableInstruments
+        val instrumentIn = paymentOrderIn.paymentOrder?.instrument
 
         return viewPaymentOrderInfo.copy(
             viewPaymentOrder = viewPaymentOrder ?: viewPaymentOrderInfo.viewPaymentOrder,
-            instrument = instrument,
+            availableInstruments = availableInstruments ?: viewPaymentOrderInfo.availableInstruments,
+            instrument = instrumentIn ?: instrument,
             userData = setInstrument?.href?.toString() ?: linkHref
         )
     }
