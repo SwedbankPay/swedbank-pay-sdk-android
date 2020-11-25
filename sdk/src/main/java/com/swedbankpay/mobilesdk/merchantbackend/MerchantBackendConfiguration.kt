@@ -14,6 +14,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.IOException
 import kotlin.Exception
 
+private fun List<Operation>.find(rel: String) = firstOrNull { it.rel == rel }
+
 /**
  * A [Configuration] class for the Merchant Backend API.
  *
@@ -198,7 +200,6 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         internal var pinnerBuilder: CertificatePinner.Builder? = null
         internal var requestDecorator: RequestDecorator? = null
         internal val domainWhitelist = ArrayList<WhitelistedDomain>()
-        internal var enabledInstruments: Map<PaymentOrderOperation, List<String>>? = null
 
         /**
          * Creates a [Configuration] object using the current values of the Builder.
@@ -258,15 +259,6 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
          */
         fun whitelistDomain(domain: String, includeSubdomains: Boolean) = apply {
             domainWhitelist.add(WhitelistedDomain(domain, includeSubdomains))
-        }
-
-        /**
-         * Set instruments available for instrument mode payments.
-         *
-         * This API will be removed when we can get this info from the backend instead.
-         */
-        fun enabledInstruments(enabledInstruments: Map<PaymentOrderOperation, List<String>>) = apply {
-            this.enabledInstruments = enabledInstruments
         }
     }
 }
