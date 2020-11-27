@@ -72,7 +72,7 @@ open class Problem : Parcelable, Serializable {
      * This should always be the same as the actual HTTP status code
      * reported by the server.
      */
-    val status: Int? get() = jsonObject.get("status").asIntOrNull
+    val status: Int? get() = jsonObject.get("status")?.asIntOrNull
     /**
      * RFC 7807 default property: a detailed explanation of the problem
      */

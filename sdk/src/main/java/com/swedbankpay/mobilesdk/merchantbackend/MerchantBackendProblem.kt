@@ -90,15 +90,15 @@ sealed class MerchantBackendProblem(jsonObject: JsonObject) : Problem(jsonObject
          */
         sealed class SwedbankPay(jsonObject: JsonObject) : Client(jsonObject), SwedbankPayProblem {
             override val action: SwedbankPayAction?
-                get() = jsonObject["action"].asStringOrNull
+                get() = jsonObject["action"]?.asStringOrNull
 
             override val problems = (this@SwedbankPay.jsonObject["problems"] as? JsonArray)
                     ?.asSequence().orEmpty()
                     .filterIsInstance<JsonObject>()
                     .map {
                         SwedbankPaySubproblem(
-                            it["name"].asStringOrNull,
-                            it["description"].asStringOrNull
+                            it["name"]?.asStringOrNull,
+                            it["description"]?.asStringOrNull
                         )
                     }
                     .toList()
@@ -179,15 +179,15 @@ sealed class MerchantBackendProblem(jsonObject: JsonObject) : Problem(jsonObject
          */
         sealed class SwedbankPay(jsonObject: JsonObject) : Server(jsonObject), SwedbankPayProblem {
             override val action: SwedbankPayAction?
-                get() = jsonObject["action"].asStringOrNull
+                get() = jsonObject["action"]?.asStringOrNull
 
             override val problems = (this@SwedbankPay.jsonObject["problems"] as? JsonArray)
                 ?.asSequence().orEmpty()
                 .filterIsInstance<JsonObject>()
                 .map {
                     SwedbankPaySubproblem(
-                        it["name"].asStringOrNull,
-                        it["description"].asStringOrNull
+                        it["name"]?.asStringOrNull,
+                        it["description"]?.asStringOrNull
                     )
                 }
                 .toList()
