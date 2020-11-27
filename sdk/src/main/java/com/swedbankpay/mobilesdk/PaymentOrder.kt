@@ -34,8 +34,8 @@ data class PaymentOrder(
     @SerializedName("language") val language: Language = Language.ENGLISH,
     @SerializedName("instrument") val instrument: String? = null,
     @SerializedName("generateRecurrenceToken") val generateRecurrenceToken: Boolean = false,
-    @SerializedName("generatePaymentToken") val generatePaymentToken: Boolean? = null,
-    @SerializedName("disableStoredPaymentDetails") val disableStoredPaymentDetails: Boolean? = null,
+    @SerializedName("generatePaymentToken") val generatePaymentToken: Boolean = false,
+    @SerializedName("disableStoredPaymentDetails") val disableStoredPaymentDetails: Boolean = false,
     @SerializedName("restrictedToInstruments") val restrictedToInstruments: List<String>? = null,
     @SerializedName("urls") val urls: PaymentOrderUrls,
     @SerializedName("payeeInfo") val payeeInfo: PayeeInfo = PayeeInfo(),
@@ -44,6 +44,7 @@ data class PaymentOrder(
     @SerializedName("riskIndicator") val riskIndicator: RiskIndicator? = null,
     @SerializedName("disablePaymentMenu") val disablePaymentMenu: Boolean = false,
     @SerializedName("recurrenceToken") val recurrenceToken: String? = null,
+    @SerializedName("paymentToken") val paymentToken: String? = null,
 
     /** @hide */
     @Transient override val extensionProperties: Bundle? = null
@@ -83,6 +84,7 @@ data class PaymentOrder(
         private var extensionProperties: Bundle? = null
         private var disablePaymentMenu = false
         private var recurrenceToken: String? = null
+        private var paymentToken: String? = null
 
         fun operation(operation: PaymentOrderOperation) = apply { this.operation = operation }
         fun currency(currency: Currency) = apply { this.currency = currency }
@@ -103,6 +105,7 @@ data class PaymentOrder(
         fun riskIndicator(riskIndicator: RiskIndicator?) = apply { this.riskIndicator = riskIndicator }
         fun disablePaymentMenu(disablePaymentMenu: Boolean) = apply { this.disablePaymentMenu = disablePaymentMenu }
         fun recurrenceToken(recurrenceToken: String?) = apply { this.recurrenceToken = recurrenceToken }
+        fun paymentToken(paymentToken: String?) = apply { this.paymentToken = paymentToken }
 
         /** @hide */
         fun extensionProperties(extensionProperties: Bundle?) = apply { this.extensionProperties = extensionProperties }
@@ -127,6 +130,7 @@ data class PaymentOrder(
             riskIndicator = riskIndicator,
             disablePaymentMenu = disablePaymentMenu,
             recurrenceToken = recurrenceToken,
+            paymentToken = paymentToken,
 
             extensionProperties = extensionProperties
         )
@@ -143,8 +147,8 @@ data class PaymentOrder(
             writeString(userAgent)
             writeEnum(language)
             writeBooleanCompat(generateRecurrenceToken)
-            writeOptionalBoolean(generatePaymentToken)
-            writeOptionalBoolean(disableStoredPaymentDetails)
+            writeBooleanCompat(generatePaymentToken)
+            writeBooleanCompat(disableStoredPaymentDetails)
             writeStringList(restrictedToInstruments)
             writeParcelable(urls, flags)
             writeParcelable(payeeInfo, flags)
@@ -153,6 +157,7 @@ data class PaymentOrder(
             writeParcelable(riskIndicator, flags)
             writeBooleanCompat(disablePaymentMenu)
             writeString(recurrenceToken)
+            writeString(paymentToken)
 
             writeBundle(extensionProperties)
         }
@@ -166,8 +171,8 @@ data class PaymentOrder(
         userAgent = checkNotNull(parcel.readString()),
         language = checkNotNull(parcel.readEnum<Language>()),
         generateRecurrenceToken = parcel.readBooleanCompat(),
-        generatePaymentToken = parcel.readOptionalBoolean(),
-        disableStoredPaymentDetails = parcel.readOptionalBoolean(),
+        generatePaymentToken = parcel.readBooleanCompat(),
+        disableStoredPaymentDetails = parcel.readBooleanCompat(),
         restrictedToInstruments = parcel.createStringArrayList(),
         urls = checkNotNull(parcel.readParcelable()),
         payeeInfo = checkNotNull(parcel.readParcelable()),
@@ -176,6 +181,7 @@ data class PaymentOrder(
         riskIndicator = parcel.readParcelable(),
         disablePaymentMenu = parcel.readBooleanCompat(),
         recurrenceToken = parcel.readString(),
+        paymentToken = parcel.readString(),
 
         extensionProperties = parcel.readBundle(PaymentOrder::class.java.classLoader)
     )
