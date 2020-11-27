@@ -43,7 +43,6 @@ data class PaymentOrder(
     @SerializedName("orderItems") val orderItems: List<OrderItem>? = null,
     @SerializedName("riskIndicator") val riskIndicator: RiskIndicator? = null,
     @SerializedName("disablePaymentMenu") val disablePaymentMenu: Boolean = false,
-    @SerializedName("recurrenceToken") val recurrenceToken: String? = null,
     @SerializedName("paymentToken") val paymentToken: String? = null,
 
     /** @hide */
@@ -83,7 +82,6 @@ data class PaymentOrder(
         private var riskIndicator: RiskIndicator? = null
         private var extensionProperties: Bundle? = null
         private var disablePaymentMenu = false
-        private var recurrenceToken: String? = null
         private var paymentToken: String? = null
 
         fun operation(operation: PaymentOrderOperation) = apply { this.operation = operation }
@@ -104,7 +102,6 @@ data class PaymentOrder(
         fun orderItems(orderItems: List<OrderItem>?) = apply { this.orderItems = orderItems }
         fun riskIndicator(riskIndicator: RiskIndicator?) = apply { this.riskIndicator = riskIndicator }
         fun disablePaymentMenu(disablePaymentMenu: Boolean) = apply { this.disablePaymentMenu = disablePaymentMenu }
-        fun recurrenceToken(recurrenceToken: String?) = apply { this.recurrenceToken = recurrenceToken }
         fun paymentToken(paymentToken: String?) = apply { this.paymentToken = paymentToken }
 
         /** @hide */
@@ -129,7 +126,6 @@ data class PaymentOrder(
             orderItems = orderItems,
             riskIndicator = riskIndicator,
             disablePaymentMenu = disablePaymentMenu,
-            recurrenceToken = recurrenceToken,
             paymentToken = paymentToken,
 
             extensionProperties = extensionProperties
@@ -156,7 +152,6 @@ data class PaymentOrder(
             writeTypedList(orderItems)
             writeParcelable(riskIndicator, flags)
             writeBooleanCompat(disablePaymentMenu)
-            writeString(recurrenceToken)
             writeString(paymentToken)
 
             writeBundle(extensionProperties)
@@ -180,7 +175,6 @@ data class PaymentOrder(
         orderItems = parcel.createTypedArrayList(OrderItem.CREATOR),
         riskIndicator = parcel.readParcelable(),
         disablePaymentMenu = parcel.readBooleanCompat(),
-        recurrenceToken = parcel.readString(),
         paymentToken = parcel.readString(),
 
         extensionProperties = parcel.readBundle(PaymentOrder::class.java.classLoader)
