@@ -44,6 +44,7 @@ data class PaymentOrder(
     @SerializedName("riskIndicator") val riskIndicator: RiskIndicator? = null,
     @SerializedName("disablePaymentMenu") val disablePaymentMenu: Boolean = false,
     @SerializedName("paymentToken") val paymentToken: String? = null,
+    @SerializedName("initiatingSystemUserAgent") val initiatingSystemUserAgent: String? = null,
 
     /** @hide */
     @Transient override val extensionProperties: Bundle? = null
@@ -83,6 +84,7 @@ data class PaymentOrder(
         private var extensionProperties: Bundle? = null
         private var disablePaymentMenu = false
         private var paymentToken: String? = null
+        private var initiatingSystemUserAgent: String? = null
 
         fun operation(operation: PaymentOrderOperation) = apply { this.operation = operation }
         fun currency(currency: Currency) = apply { this.currency = currency }
@@ -103,6 +105,7 @@ data class PaymentOrder(
         fun riskIndicator(riskIndicator: RiskIndicator?) = apply { this.riskIndicator = riskIndicator }
         fun disablePaymentMenu(disablePaymentMenu: Boolean) = apply { this.disablePaymentMenu = disablePaymentMenu }
         fun paymentToken(paymentToken: String?) = apply { this.paymentToken = paymentToken }
+        fun initiatingSystemUserAgent(initiatingSystemUserAgent: String?) = apply { this.initiatingSystemUserAgent = initiatingSystemUserAgent }
 
         /** @hide */
         fun extensionProperties(extensionProperties: Bundle?) = apply { this.extensionProperties = extensionProperties }
@@ -127,6 +130,7 @@ data class PaymentOrder(
             riskIndicator = riskIndicator,
             disablePaymentMenu = disablePaymentMenu,
             paymentToken = paymentToken,
+            initiatingSystemUserAgent = initiatingSystemUserAgent,
 
             extensionProperties = extensionProperties
         )
@@ -153,6 +157,7 @@ data class PaymentOrder(
             writeParcelable(riskIndicator, flags)
             writeBooleanCompat(disablePaymentMenu)
             writeString(paymentToken)
+            writeString(initiatingSystemUserAgent)
 
             writeBundle(extensionProperties)
         }
@@ -176,6 +181,7 @@ data class PaymentOrder(
         riskIndicator = parcel.readParcelable(),
         disablePaymentMenu = parcel.readBooleanCompat(),
         paymentToken = parcel.readString(),
+        initiatingSystemUserAgent = parcel.readString(),
 
         extensionProperties = parcel.readBundle(PaymentOrder::class.java.classLoader)
     )
