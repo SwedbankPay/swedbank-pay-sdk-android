@@ -97,7 +97,7 @@ dependencies {
 
     implementation 'com.google.code.gson:gson:2.8.6'
 
-    api 'joda-time:joda-time:2.10.8'
+    api 'joda-time:joda-time:2.10.9'
     api 'org.threeten:threetenbp:1.5.0'
 
     testImplementation 'junit:junit:4.13.1'
