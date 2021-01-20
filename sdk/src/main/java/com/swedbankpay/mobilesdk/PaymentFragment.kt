@@ -36,7 +36,7 @@ import java.io.Serializable
  * You must set the [arguments][setArguments] of a PaymentFragment before use.
  * The argument [Bundle] is easiest to create by [ArgumentsBuilder].
  * Alternatively, you may prepare the Bundle yourself and set appropriate
- * values for the ARG_* keys defined in [PaymentFragment.Companion].
+ * values for the ARG_* keys.
  *
  * You may observe the state of the PaymentFragment via [PaymentViewModel].
  * Access the PaymentViewModel through the containing [activity][androidx.fragment.app.FragmentActivity]:
@@ -59,8 +59,7 @@ import java.io.Serializable
  * -----------------
  *
  * The correct functioning of PaymentFragment depends on the argument [Bundle] having
- * the expected values for the keys defined in [PaymentFragment.Companion],
- * which is easiest to ensure by using [ArgumentsBuilder].
+ * the expected values for the ARG_* keys, which is easiest to ensure by using [ArgumentsBuilder].
  * If your subclass needs custom arguments, you should add the default arguments
  * to your argument [Bundle] by [ArgumentsBuilder.build].
  *
@@ -162,10 +161,8 @@ open class PaymentFragment : Fragment() {
          *
          * If a default UI is not enabled, the fragment will be blank instead.
          *
-         * The default is to only enable RETRY_PROMPT and UPDATE_PAYMENTORDER_ERROR_DIALOG.
-         * This is often useful, as a custom retry prompt is likely unnecessary,
-         * and failures in updating a payment order (i.e. setting the instrument)
-         * are unlikely enough not to warrant customized UI, but the success and error states
+         * The default is to only enable RETRY_PROMPT. This is often useful,
+         * as a custom retry prompt is likely unnecessary, but the success and error states
          * should cause the fragment to be dismissed.
          *
          * To disable everything, pass an empty argument list here (a value of 0 also works).

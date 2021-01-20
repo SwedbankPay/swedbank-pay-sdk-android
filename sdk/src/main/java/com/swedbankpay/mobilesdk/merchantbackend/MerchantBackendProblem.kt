@@ -72,14 +72,14 @@ sealed class MerchantBackendProblem(jsonObject: JsonObject) : Problem(jsonObject
             /**
              * The merchant backend rejected the request because its authentication headers were invalid.
              *
-             * The [detail] property may optionally contain a message describing the error.
+             * The [detail][Problem.detail] property may optionally contain a message describing the error.
              */
             class Unauthorized internal constructor(jsonObject: JsonObject) : MobileSDK(jsonObject)
 
             /**
              * The merchant backend did not understand the request.
              *
-             * The [detail] property may optionally contain a message describing the error.
+             * The [detail][Problem.detail] property may optionally contain a message describing the error.
              */
             class InvalidRequest internal constructor(jsonObject: JsonObject) : MobileSDK(jsonObject)
         }
@@ -144,14 +144,14 @@ sealed class MerchantBackendProblem(jsonObject: JsonObject) : Problem(jsonObject
             /**
              * The merchant backend timed out trying to connect to the Swedbank Pay backend.
              *
-             * The [detail] property may optionally contain a message describing the error.
+             * The [detail][Problem.detail] property may optionally contain a message describing the error.
              */
             class BackendConnectionTimeout(jsonObject: JsonObject) : MobileSDK(jsonObject)
 
             /**
              * The merchant backend failed to connect to the Swedbank Pay backend.
              *
-             * The [detail] property may optionally contain a message describing the error
+             * The [detail][Problem.detail] property may optionally contain a message describing the error
              */
             class BackendConnectionFailure(jsonObject: JsonObject) : MobileSDK(jsonObject)
 

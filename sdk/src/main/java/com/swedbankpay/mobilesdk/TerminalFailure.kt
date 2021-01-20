@@ -8,10 +8,7 @@ import com.swedbankpay.mobilesdk.internal.makeCreator
 /**
  * Describes a terminal error condition signaled by an onError callback from Swedbank Pay.
  *
- * See
- * [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/consumers-resource/#HOnError]
- * and
- * [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/payment-orders-resource/#HOnError].
+ * See [https://developer.swedbankpay.com/checkout/other-features#onerror]
  */
 @Suppress("unused")
 class TerminalFailure internal constructor() : Parcelable {
