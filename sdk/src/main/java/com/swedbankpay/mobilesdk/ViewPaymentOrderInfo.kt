@@ -70,7 +70,7 @@ data class ViewPaymentOrderInfo(
      * Any [Parcelable] or [Serializable] (`String` is fine) object you may need
      * for your [Configuration].
      *
-     * See [Configuration.patchUpdatePaymentorderSetinstrument]; you will receive this
+     * See [Configuration.updatePaymentOrder]; you will receive this
      * `ViewPaymentOrderInfo` object there.
      */
     val userData: Any? = null

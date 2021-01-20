@@ -5,13 +5,44 @@ import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
 import com.swedbankpay.mobilesdk.internal.makeCreator
 
+/**
+ * Information about the payee (recipient) of a payment order
+ */
 @Suppress("unused")
 data class PayeeInfo(
+    /**
+     * The unique identifier of this payee set by Swedbank Pay.
+     *
+     * This is usually the Merchant ID. However, usually best idea to set this value in your backend
+     * instead. Thus, this property defaults to the empty string, but it is included in the data
+     * model for completeness.
+     */
     @SerializedName("payeeId") val payeeId: String = "",
+    /**
+     * [A unique reference for this operation](https://developer.swedbankpay.com/checkout/other-features#payee-reference).
+     *
+     * Like [payeeId], this is usually best to set in your backend, and this property thus defaults
+     * to the empty string.
+     */
     @SerializedName("payeeReference") val payeeReference: String = "",
+    /**
+     * Name of the payee, usually the name of the merchant.
+     */
     @SerializedName("payeeName") val payeeName: String? = null,
+    /**
+     * A product category or number sent in from the payee/merchant.
+     *
+     * This is not validated by Swedbank Pay, but will be passed through the payment process and may
+     * be used in the settlement process.
+     */
     @SerializedName("productCategory") val productCategory: String? = null,
+    /**
+     * A reference to your own merchant system.
+     */
     @SerializedName("orderReference") val orderReference: String? = null,
+    /**
+     * Used for split settlement.
+     */
     @SerializedName("subsite") val subsite: String? = null
 ) : Parcelable {
     companion object {
