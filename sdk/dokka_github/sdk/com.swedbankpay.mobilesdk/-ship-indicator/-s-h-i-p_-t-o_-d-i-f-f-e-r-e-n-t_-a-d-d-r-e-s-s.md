@@ -3,3 +3,6 @@
 # SHIP_TO_DIFFERENT_ADDRESS
 
 `val SHIP_TO_DIFFERENT_ADDRESS: `[`ShipIndicator`](index.md)
+
+Ship to an address different to the cardholder's billing address
+

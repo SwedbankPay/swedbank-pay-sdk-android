@@ -2,4 +2,7 @@
 
 # preOrderPurchaseIndicator
 
-`val preOrderPurchaseIndicator: `[`PurchaseIndicator`](../-purchase-indicator/index.md)`?`
+`val preOrderPurchaseIndicator: `[`PreOrderPurchaseIndicator`](../-pre-order-purchase-indicator/index.md)`?`
+
+Indicates whether this is a pre-order. See [PreOrderPurchaseIndicator](../-pre-order-purchase-indicator/index.md) for options.
+

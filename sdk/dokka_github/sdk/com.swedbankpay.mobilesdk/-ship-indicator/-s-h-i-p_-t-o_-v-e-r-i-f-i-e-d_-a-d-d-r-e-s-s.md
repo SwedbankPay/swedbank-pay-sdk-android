@@ -3,3 +3,6 @@
 # SHIP_TO_VERIFIED_ADDRESS
 
 `val SHIP_TO_VERIFIED_ADDRESS: `[`ShipIndicator`](index.md)
+
+Ship to another verified address on file with the merchant
+

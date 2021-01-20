@@ -3,3 +3,6 @@
 # giftCardPurchase
 
 `val giftCardPurchase: `[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)`?`
+
+`true` if this is a purchase of a gift card
+

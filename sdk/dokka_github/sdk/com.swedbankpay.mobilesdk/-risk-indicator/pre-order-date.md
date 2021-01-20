@@ -3,3 +3,9 @@
 # preOrderDate
 
 `val preOrderDate: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
+
+If this is a pre-order, the expected date that the merchandise will be available on.
+
+Format is `YYYYMMDD`. You can use [formatPreOrderDate](format-pre-order-date.md) to format some common local-date
+types correctly.
+

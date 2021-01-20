@@ -3,3 +3,6 @@
 # city
 
 `val city: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
+
+City of the payer
+

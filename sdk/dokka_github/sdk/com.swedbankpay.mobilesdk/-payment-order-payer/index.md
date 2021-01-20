@@ -4,6 +4,8 @@
 
 `data class PaymentOrderPayer : `[`Parcelable`](https://developer.android.com/reference/android/os/Parcelable.html)
 
+Information about the payer of a payment order
+
 ### Types
 
 | Name | Summary |
@@ -14,15 +16,16 @@
 
 | Name | Summary |
 |---|---|
-| [&lt;init&gt;](-init-.md) | `PaymentOrderPayer(consumerProfileRef: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, email: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, msisdn: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null)` |
+| [&lt;init&gt;](-init-.md) | Information about the payer of a payment order`PaymentOrderPayer(consumerProfileRef: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, email: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, msisdn: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, payerReference: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null)` |
 
 ### Properties
 
 | Name | Summary |
 |---|---|
-| [consumerProfileRef](consumer-profile-ref.md) | `val consumerProfileRef: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [email](email.md) | `val email: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [msisdn](msisdn.md) | `val msisdn: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
+| [consumerProfileRef](consumer-profile-ref.md) | A consumer profile reference obtained through the Checkin flow.`val consumerProfileRef: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
+| [email](email.md) | The email address of the payer.`val email: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
+| [msisdn](msisdn.md) | The phone number of the payer.`val msisdn: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
+| [payerReference](payer-reference.md) | An opaque, unique reference to the payer. Alternative to the other fields.`val payerReference: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
 
 ### Functions
 

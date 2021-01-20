@@ -3,3 +3,6 @@
 # deliveryEmailAddress
 
 `val deliveryEmailAddress: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
+
+For electronic delivery, the e-mail address where the merchandise is delivered
+

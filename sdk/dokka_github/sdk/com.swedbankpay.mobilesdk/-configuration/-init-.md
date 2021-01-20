@@ -10,7 +10,10 @@ You need a Configuration to use [PaymentFragment](../-payment-fragment/index.md)
 If you want to use a custom way of communicating with your services,
 you can create a subclass of Configuration.
 If you wish to use the specified Merchant Backend API,
-create a [MerchantBackendConfiguration](#) using [MerchantBackendConfiguration.Builder](#).
+create a
+[MerchantBackendConfiguration](../../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-configuration/index.md)
+using
+[MerchantBackendConfiguration.Builder](../../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-configuration/-builder/index.md).
 
 In most cases, it is enough to set a
 [default Configuration](../-payment-fragment/default-configuration.md).

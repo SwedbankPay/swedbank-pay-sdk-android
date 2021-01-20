@@ -2,4 +2,4 @@
 
 # reOrderPurchaseIndicator
 
-`fun reOrderPurchaseIndicator(indicator: `[`PurchaseIndicator`](../../-purchase-indicator/index.md)`): Builder`
+`fun reOrderPurchaseIndicator(indicator: `[`ReOrderPurchaseIndicator`](../../-re-order-purchase-indicator/index.md)`): Builder`

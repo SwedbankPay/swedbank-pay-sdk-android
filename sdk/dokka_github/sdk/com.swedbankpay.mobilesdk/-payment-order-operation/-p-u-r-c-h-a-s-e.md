@@ -3,3 +3,6 @@
 # PURCHASE
 
 `PURCHASE`
+
+A purchase, i.e. a single payment
+

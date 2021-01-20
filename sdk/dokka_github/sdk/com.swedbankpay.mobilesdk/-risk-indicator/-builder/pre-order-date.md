@@ -2,4 +2,4 @@
 
 # preOrderDate
 
-`fun preOrderDate(date: `[`Any`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)`): Builder`
+`fun preOrderDate(date: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): Builder`

@@ -68,6 +68,13 @@ Languages supported by checkin and payment menu.
 
 |
 
+##### [com.swedbankpay.mobilesdk.merchantbackend.MerchantBackend](../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend/index.md)
+
+Additional utilities supported by the Merchant Backend
+
+
+|
+
 ##### [com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration](../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-configuration/index.md)
 
 A [Configuration](../com.swedbankpay.mobilesdk/-configuration/index.md) class for the Merchant Backend API.
@@ -82,6 +89,13 @@ Base class for any problems encountered in the payment.
 
 |
 
+##### [com.swedbankpay.mobilesdk.merchantbackend.Operation](../com.swedbankpay.mobilesdk.merchantbackend/-operation/index.md)
+
+Swedbank Pay Operation. Operations are invoked by making an HTTP request.
+
+
+|
+
 ##### [com.swedbankpay.mobilesdk.OrderItem](../com.swedbankpay.mobilesdk/-order-item/index.md)
 
 An item being paid for, part of a [PaymentOrder](../com.swedbankpay.mobilesdk/-payment-order/index.md).
@@ -90,6 +104,22 @@ An item being paid for, part of a [PaymentOrder](../com.swedbankpay.mobilesdk/-p
 |
 
 ##### [com.swedbankpay.mobilesdk.PayeeInfo](../com.swedbankpay.mobilesdk/-payee-info/index.md)
+
+Information about the payee (recipient) of a payment order
+
+
+|
+
+##### [com.swedbankpay.mobilesdk.merchantbackend.PayerOwnedPaymentTokens](../com.swedbankpay.mobilesdk.merchantbackend/-payer-owned-payment-tokens/index.md)
+
+Payload of [PayerOwnedPaymentTokensResponse](../com.swedbankpay.mobilesdk.merchantbackend/-payer-owned-payment-tokens-response/index.md)
+
+
+|
+
+##### [com.swedbankpay.mobilesdk.merchantbackend.PayerOwnedPaymentTokensResponse](../com.swedbankpay.mobilesdk.merchantbackend/-payer-owned-payment-tokens-response/index.md)
+
+Response to [MerchantBackend.getPayerOwnedPaymentTokens](../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend/get-payer-owned-payment-tokens.md)
 
 
 |
@@ -117,15 +147,26 @@ Description a payment order.
 
 ##### [com.swedbankpay.mobilesdk.PaymentOrderOperation](../com.swedbankpay.mobilesdk/-payment-order-operation/index.md)
 
+Type of operation the payment order performs
+
 
 |
 
 ##### [com.swedbankpay.mobilesdk.PaymentOrderPayer](../com.swedbankpay.mobilesdk/-payment-order-payer/index.md)
 
+Information about the payer of a payment order
+
 
 |
 
 ##### [com.swedbankpay.mobilesdk.PaymentOrderUrls](../com.swedbankpay.mobilesdk/-payment-order-urls/index.md)
+
+A set of URLs relevant to a payment order.
+
+
+|
+
+##### [com.swedbankpay.mobilesdk.merchantbackend.PaymentTokenInfo](../com.swedbankpay.mobilesdk.merchantbackend/-payment-token-info/index.md)
 
 
 |
@@ -140,6 +181,15 @@ for communicating with a [PaymentFragment](../com.swedbankpay.mobilesdk/-payment
 
 ##### [com.swedbankpay.mobilesdk.PickUpAddress](../com.swedbankpay.mobilesdk/-pick-up-address/index.md)
 
+Pick-up address data for [RiskIndicator](../com.swedbankpay.mobilesdk/-risk-indicator/index.md).
+
+
+|
+
+##### [com.swedbankpay.mobilesdk.PreOrderPurchaseIndicator](../com.swedbankpay.mobilesdk/-pre-order-purchase-indicator/index.md)
+
+Purchase indicator values for [RiskIndicator](../com.swedbankpay.mobilesdk/-risk-indicator/index.md).
+
 
 |
 
@@ -150,7 +200,9 @@ An RFC 7807 HTTP API Problem Details object.
 
 |
 
-##### [com.swedbankpay.mobilesdk.PurchaseIndicator](../com.swedbankpay.mobilesdk/-purchase-indicator/index.md)
+##### [com.swedbankpay.mobilesdk.ReOrderPurchaseIndicator](../com.swedbankpay.mobilesdk/-re-order-purchase-indicator/index.md)
+
+Re-order purchase indicator values for [RiskIndicator](../com.swedbankpay.mobilesdk/-risk-indicator/index.md).
 
 
 |
@@ -179,10 +231,14 @@ describing the error.
 
 ##### [com.swedbankpay.mobilesdk.RiskIndicator](../com.swedbankpay.mobilesdk/-risk-indicator/index.md)
 
+Optional information to reduce the risk factor of a payment.
+
 
 |
 
 ##### [com.swedbankpay.mobilesdk.ShipIndicator](../com.swedbankpay.mobilesdk/-ship-indicator/index.md)
+
+Shipping method for [RiskIndicator](../com.swedbankpay.mobilesdk/-risk-indicator/index.md).
 
 
 |

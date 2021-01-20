@@ -18,3 +18,4 @@
 | [consumerProfileRef](consumer-profile-ref.md) | `fun consumerProfileRef(consumerProfileRef: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
 | [email](email.md) | `fun email(email: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
 | [msisdn](msisdn.md) | `fun msisdn(msisdn: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
+| [payerReference](payer-reference.md) | `fun payerReference(payerReference: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |

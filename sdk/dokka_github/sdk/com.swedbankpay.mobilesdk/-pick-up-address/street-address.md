@@ -3,3 +3,6 @@
 # streetAddress
 
 `val streetAddress: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
+
+Street address of the payer
+

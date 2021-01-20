@@ -2,4 +2,4 @@
 
 # preOrderPurchaseIndicator
 
-`fun preOrderPurchaseIndicator(indicator: `[`PurchaseIndicator`](../../-purchase-indicator/index.md)`): Builder`
+`fun preOrderPurchaseIndicator(indicator: `[`PreOrderPurchaseIndicator`](../../-pre-order-purchase-indicator/index.md)`): Builder`

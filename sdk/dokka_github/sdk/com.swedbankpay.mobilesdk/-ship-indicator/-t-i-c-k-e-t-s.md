@@ -3,3 +3,6 @@
 # TICKETS
 
 `val TICKETS: `[`ShipIndicator`](index.md)
+
+Travel and event tickets, no shipping
+

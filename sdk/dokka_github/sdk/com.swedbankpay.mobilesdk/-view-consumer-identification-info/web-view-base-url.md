@@ -2,7 +2,7 @@
 
 # webViewBaseUrl
 
-`abstract val webViewBaseUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
+`val webViewBaseUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
 
 The url to use as the [android.webkit.WebView](https://developer.android.com/reference/android/webkit/WebView.html) page url
 when showing the checkin UI. If `null`, defaults to

@@ -3,3 +3,6 @@
 # deliveryTimeFrameIndicator
 
 `val deliveryTimeFrameIndicator: `[`DeliveryTimeFrameIndicator`](../-delivery-time-frame-indicator/index.md)`?`
+
+Indicator of merchandise delivery timeframe. See [DeliveryTimeFrameIndicator](../-delivery-time-frame-indicator/index.md) for options.
+

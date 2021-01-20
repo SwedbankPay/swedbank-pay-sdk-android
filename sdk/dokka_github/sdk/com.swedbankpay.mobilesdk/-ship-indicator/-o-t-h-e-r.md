@@ -3,3 +3,6 @@
 # OTHER
 
 `val OTHER: `[`ShipIndicator`](index.md)
+
+Other, e.g. gaming, digital service
+

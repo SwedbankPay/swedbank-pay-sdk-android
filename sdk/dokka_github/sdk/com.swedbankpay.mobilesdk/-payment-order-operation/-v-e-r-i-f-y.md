@@ -3,3 +3,9 @@
 # VERIFY
 
 `VERIFY`
+
+Pre-verification of a payment method. This operation will not charge the payment method,
+but it can create a token for future payments.
+
+See [PaymentOrder.generateRecurrenceToken](../-payment-order/generate-recurrence-token.md), [PaymentOrder.generatePaymentToken](../-payment-order/generate-payment-token.md)
+

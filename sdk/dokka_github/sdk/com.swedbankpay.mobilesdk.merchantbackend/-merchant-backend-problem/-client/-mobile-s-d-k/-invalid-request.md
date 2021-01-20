@@ -6,5 +6,5 @@
 
 The merchant backend did not understand the request.
 
-The [detail](#) property may optionally contain a message describing the error.
+The [detail](../../../../com.swedbankpay.mobilesdk/-problem/detail.md) property may optionally contain a message describing the error.
 

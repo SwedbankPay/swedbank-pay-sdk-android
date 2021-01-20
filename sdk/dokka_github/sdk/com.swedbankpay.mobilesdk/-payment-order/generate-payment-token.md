@@ -2,4 +2,4 @@
 
 # generatePaymentToken
 
-`val generatePaymentToken: `[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)`?`
+`val generatePaymentToken: `[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)

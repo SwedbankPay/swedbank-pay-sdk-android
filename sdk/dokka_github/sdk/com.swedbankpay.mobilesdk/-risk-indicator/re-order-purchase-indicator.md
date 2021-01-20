@@ -2,4 +2,8 @@
 
 # reOrderPurchaseIndicator
 
-`val reOrderPurchaseIndicator: `[`PurchaseIndicator`](../-purchase-indicator/index.md)`?`
+`val reOrderPurchaseIndicator: `[`ReOrderPurchaseIndicator`](../-re-order-purchase-indicator/index.md)`?`
+
+Indicates whether this is a re-order of previously purchased merchandise.
+See [ReOrderPurchaseIndicator](../-re-order-purchase-indicator/index.md) for options.
+

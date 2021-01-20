@@ -6,8 +6,13 @@
 
 | Name | Summary |
 |---|---|
+| [MerchantBackend](-merchant-backend/index.md) | Additional utilities supported by the Merchant Backend`object MerchantBackend` |
 | [MerchantBackendConfiguration](-merchant-backend-configuration/index.md) | A [Configuration](../com.swedbankpay.mobilesdk/-configuration/index.md) class for the Merchant Backend API.`class MerchantBackendConfiguration : `[`Configuration`](../com.swedbankpay.mobilesdk/-configuration/index.md) |
 | [MerchantBackendProblem](-merchant-backend-problem/index.md) | Base class for any problems encountered in the payment.`sealed class MerchantBackendProblem : `[`Problem`](../com.swedbankpay.mobilesdk/-problem/index.md) |
+| [Operation](-operation/index.md) | Swedbank Pay Operation. Operations are invoked by making an HTTP request.`data class Operation` |
+| [PayerOwnedPaymentTokens](-payer-owned-payment-tokens/index.md) | Payload of [PayerOwnedPaymentTokensResponse](-payer-owned-payment-tokens-response/index.md)`data class PayerOwnedPaymentTokens` |
+| [PayerOwnedPaymentTokensResponse](-payer-owned-payment-tokens-response/index.md) | Response to [MerchantBackend.getPayerOwnedPaymentTokens](-merchant-backend/get-payer-owned-payment-tokens.md)`data class PayerOwnedPaymentTokensResponse` |
+| [PaymentTokenInfo](-payment-token-info/index.md) | `data class PaymentTokenInfo` |
 | [SwedbankPayAction](-swedbank-pay-action.md) | Action to take to correct a problem reported by the Swedbank Pay backend.`typealias SwedbankPayAction = `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
 | [SwedbankPayProblem](-swedbank-pay-problem/index.md) | A Problem defined by the Swedbank Pay backend. [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems](https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems)`interface SwedbankPayProblem` |
 | [SwedbankPaySubproblem](-swedbank-pay-subproblem/index.md) | Object detailing the reason for a [SwedbankPayProblem](-swedbank-pay-problem/index.md).`class SwedbankPaySubproblem : `[`Serializable`](https://docs.oracle.com/javase/6/docs/api/java/io/Serializable.html) |

@@ -3,3 +3,6 @@
 # coAddress
 
 `val coAddress: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
+
+C/O address of the payer
+

@@ -3,3 +3,6 @@
 # DIGITAL_GOODS
 
 `val DIGITAL_GOODS: `[`ShipIndicator`](index.md)
+
+Digital goods, no physical delivery
+

@@ -18,7 +18,7 @@ For advanced use-cases, override [getConfiguration](get-configuration.md) instea
 You must set the [arguments](#) of a PaymentFragment before use.
 The argument [Bundle](https://developer.android.com/reference/android/os/Bundle.html) is easiest to create by [ArgumentsBuilder](-arguments-builder/index.md).
 Alternatively, you may prepare the Bundle yourself and set appropriate
-values for the ARG_* keys defined in [PaymentFragment.Companion](#).
+values for the ARG_* keys.
 
 You may observe the state of the PaymentFragment via [PaymentViewModel](../-payment-view-model/index.md).
 Access the PaymentViewModel through the containing [activity](#):
@@ -42,8 +42,7 @@ The containing [activity](#) should observe
 Subclassing notes
 
 The correct functioning of PaymentFragment depends on the argument [Bundle](https://developer.android.com/reference/android/os/Bundle.html) having
-the expected values for the keys defined in [PaymentFragment.Companion](#),
-which is easiest to ensure by using [ArgumentsBuilder](-arguments-builder/index.md).
+the expected values for the ARG_* keys, which is easiest to ensure by using [ArgumentsBuilder](-arguments-builder/index.md).
 If your subclass needs custom arguments, you should add the default arguments
 to your argument [Bundle](https://developer.android.com/reference/android/os/Bundle.html) by [ArgumentsBuilder.build](-arguments-builder/build.md).
 

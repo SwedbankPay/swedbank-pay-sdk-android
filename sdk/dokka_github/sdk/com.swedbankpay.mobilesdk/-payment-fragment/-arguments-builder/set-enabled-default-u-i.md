@@ -14,10 +14,8 @@ There are four:
 
 If a default UI is not enabled, the fragment will be blank instead.
 
-The default is to only enable RETRY_PROMPT and UPDATE_PAYMENTORDER_ERROR_DIALOG.
-This is often useful, as a custom retry prompt is likely unnecessary,
-and failures in updating a payment order (i.e. setting the instrument)
-are unlikely enough not to warrant customized UI, but the success and error states
+The default is to only enable RETRY_PROMPT. This is often useful,
+as a custom retry prompt is likely unnecessary, but the success and error states
 should cause the fragment to be dismissed.
 
 To disable everything, pass an empty argument list here (a value of 0 also works).

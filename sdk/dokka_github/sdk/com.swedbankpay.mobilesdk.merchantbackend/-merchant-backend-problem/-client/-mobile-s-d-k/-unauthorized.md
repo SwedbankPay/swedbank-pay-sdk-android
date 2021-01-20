@@ -6,5 +6,5 @@
 
 The merchant backend rejected the request because its authentication headers were invalid.
 
-The [detail](#) property may optionally contain a message describing the error.
+The [detail](../../../../com.swedbankpay.mobilesdk/-problem/detail.md) property may optionally contain a message describing the error.
 
