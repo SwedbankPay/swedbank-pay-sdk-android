@@ -21,28 +21,126 @@ import java.util.*
  * and a server implementing the
  * [Merchant Backend API](https://https://developer.swedbankpay.com/modules-sdks/mobile-sdk/merchant-backend),
  * but you can also use it with your custom [Configuration].
- *
- * Please refer to the Swedbank Pay documentation for the meaning of the payment order properties.
  */
 data class PaymentOrder(
+    /**
+     * The operation to perform
+     */
     @SerializedName("operation") val operation: PaymentOrderOperation = PaymentOrderOperation.PURCHASE,
+
+    /**
+     * Currency to use
+     */
     @SerializedName("currency") val currency: Currency,
+
+    /**
+     * Payment amount, including VAT
+     *
+     * Denoted in the smallest monetary unit applicable, typically 1/100.
+     * E.g. 50.00 SEK would be represented as `5000`.
+     */
     @SerializedName("amount") val amount: Long,
+
+    /**
+     * Amount of VAT included in the payment
+     *
+     * Denoted in the smallest monetary unit applicable, typically 1/100.
+     * E.g. 50.00 SEK would be represented as `5000`.
+     */
     @SerializedName("vatAmount") val vatAmount: Long,
+
+    /**
+     * A description of the payment order
+     */
     @SerializedName("description") val description: String,
+
+    /**
+     * User-agent of the payer.
+     *
+     * Defaults to `"SwedbankPaySDK-Android/{version}"`.
+     */
     @SerializedName("userAgent") val userAgent: String = DEFAULT_USER_AGENT,
+
+    /**
+     * Language to use in the payment menu
+     */
     @SerializedName("language") val language: Language = Language.ENGLISH,
+
+    /**
+     * The payment instrument to use in instrument mode.
+     */
     @SerializedName("instrument") val instrument: String? = null,
+
+    /**
+     * If `true`, the a recurrence token will be created from this payment order
+     *
+     * The recurrence token should be retrieved by your server from Swedbank Pay.
+     * Your server can then use the token for recurring server-to-server payments.
+     */
     @SerializedName("generateRecurrenceToken") val generateRecurrenceToken: Boolean = false,
+
+    /**
+     * If `true`, a payment token will be created from this payment order
+     *
+     * You must also set [PaymentOrderPayer.payerReference] to generate a payment token.
+     * The payment token can be used later to reuse the same payment details;
+     * see [paymentToken].
+     */
     @SerializedName("generatePaymentToken") val generatePaymentToken: Boolean = false,
+
+    /**
+     * If `true`, the payment menu will not show any stored payment details.
+     *
+     * This is useful mainly if you are implementing a custom UI for stored
+     * payment details.
+     */
     @SerializedName("disableStoredPaymentDetails") val disableStoredPaymentDetails: Boolean = false,
+
+    /**
+     * If set, only shows the specified payment instruments in the payment menu
+     */
     @SerializedName("restrictedToInstruments") val restrictedToInstruments: List<String>? = null,
+
+    /**
+     * A set of URLs related to the payment.
+     *
+     * See [PaymentOrderUrls] for details.
+     */
     @SerializedName("urls") val urls: PaymentOrderUrls,
+
+    /**
+     * Information about the payee (recipient)
+     */
     @SerializedName("payeeInfo") val payeeInfo: PayeeInfo = PayeeInfo(),
+
+    /**
+     *  Information about the payer
+     */
     @SerializedName("payer") val payer: PaymentOrderPayer? = null,
+
+    /**
+     * A list of items that are being paid for by this payment order.
+     *
+     * If used, the sum of the [OrderItem.amount] and [OrderItem.vatAmount] should match
+     * [amount]` and [vatAmount] of this payment order.
+     */
     @SerializedName("orderItems") val orderItems: List<OrderItem>? = null,
+
+    /**
+     * A collection of additional data to minimize the risk of 3-D Secure strong authentication.
+     *
+     * For best user experience, you should fill this field as completely as possible.
+     */
     @SerializedName("riskIndicator") val riskIndicator: RiskIndicator? = null,
     @SerializedName("disablePaymentMenu") val disablePaymentMenu: Boolean = false,
+
+    /**
+     * A payment token to use for this payment.
+     *
+     * You must also set [PaymentOrderPayer.payerReference] to use a payment token;
+     * the `payerReference` must match the one used when the payment token
+     * was generated.
+     */
     @SerializedName("paymentToken") val paymentToken: String? = null,
     @SerializedName("initiatingSystemUserAgent") val initiatingSystemUserAgent: String? = null,
 
