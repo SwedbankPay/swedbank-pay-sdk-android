@@ -21,7 +21,7 @@ support, please wait for a future, stable release.
 Gradle:
 ```gradle
 dependencies {
-  implementation 'com.swedbankpay.mobilesdk:mobilesdk:1.0.0-beta28'
+  implementation 'com.swedbankpay.mobilesdk:mobilesdk:1.0.0-beta29'
 }
 ```
 
@@ -36,8 +36,8 @@ To explore a working app using the SDK, see the [Example Project](https://github
 Swedbank Pay Android SDK is released under the [Apache 2.0 license](LICENSE).
 
 [opengraph-image]: https://repository-images.githubusercontent.com/209749704/df2ce180-53e8-11ea-95a5-490dbe7c7706
-[download-badge]: https://api.bintray.com/packages/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/images/download.svg?version=1.0.0-beta28
-[download-link]: https://bintray.com/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/1.0.0-beta28/link
+[download-badge]: https://api.bintray.com/packages/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/images/download.svg
+[download-link]: https://bintray.com/swedbankpay/swedbank-pay-sdk-android/swedbank-pay-sdk-android/_latestVersion
 [tests-badge]: https://github.com/SwedbankPay/swedbank-pay-sdk-android/workflows/Run%20Checks/badge.svg
 [license-badge]: https://img.shields.io/github/license/SwedbankPay/swedbank-pay-sdk-android
 [dependabot-link]: https://dependabot.com
