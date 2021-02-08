@@ -97,7 +97,7 @@ dependencies {
 
     implementation 'com.google.code.gson:gson:2.8.6'
 
-    compileOnly 'joda-time:joda-time:2.10.9'
+    compileOnly 'joda-time:joda-time:2.10.10'
     compileOnly 'org.threeten:threetenbp:1.5.0'
 
     testImplementation 'junit:junit:4.13.1'
