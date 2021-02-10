@@ -10,7 +10,29 @@ apply plugin: 'org.jetbrains.dokka'
 
 apply plugin: 'maven-publish'
 
+apply plugin: 'signing'
+
+apply plugin: 'org.ajoberstar.grgit'
+
 apply plugin: 'com.jfrog.bintray'
+
+// Support for Github Actions based CI: create named versions from Github releases
+static def readGithubReleaseEvent() {
+    def isRelease = System.getenv('GITHUB_EVENT_NAME') == 'release'
+    def path = isRelease ? System.getenv('GITHUB_EVENT_PATH') : null
+    def file = path ? new File(path) : null
+    def text = file?.text
+    return text ? new JsonSlurper().parseText(text) : null
+}
+
+static def getSnapshotVersionName(grgit) {
+    return "${grgit.describe(tags: true)}${grgit.status().isClean() ? '' : '-dirty'}-SNAPSHOT"
+}
+
+def githubReleaseEvent = readGithubReleaseEvent()
+
+def versionName = githubReleaseEvent?.release?.tag_name
+        ?: (grgit ? getSnapshotVersionName(grgit) : 'local')
 
 android {
     compileSdkVersion 29
@@ -20,6 +42,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'proguard-rules.pro'
         testInstrumentationRunnerArguments clearPackageData: 'true'
+        buildConfigField('String', 'SDK_VERSION', "\"$versionName\"")
     }
     sourceSets {
         def testCommon = 'src/testCommon/java'
@@ -40,15 +63,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
-    }
-    buildTypes {
-        release {
-            def version = readGithubReleaseEvent()?.release?.tag_name ?: 'snapshot'
-            buildConfigField('String', 'SDK_VERSION', "\"$version\"")
-        }
-        debug {
-            buildConfigField('String', 'SDK_VERSION', '"debug"')
-        }
     }
     dokka {
         configuration {
@@ -87,10 +101,10 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
-    implementation 'com.google.android.gms:play-services-base:17.5.0'
-    implementation 'com.google.android.gms:play-services-basement:17.5.0'
+    implementation 'com.google.android.gms:play-services-base:17.6.0'
+    implementation 'com.google.android.gms:play-services-basement:17.6.0'
 
-    def okhttp_version = '4.9.0'
+    def okhttp_version = '4.9.1'
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
     testImplementation "com.squareup.okhttp3:mockwebserver:$okhttp_version"
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:$okhttp_version"
@@ -128,68 +142,89 @@ task dokkaGithub(type: org.jetbrains.dokka.gradle.DokkaTask) {
     outputDirectory ="$projectDir/dokka_github"
 }
 
+task dokkaJavadoc(type: org.jetbrains.dokka.gradle.DokkaTask) {
+    outputFormat = 'javadoc'
+    outputDirectory = "$buildDir/javadoc"
+}
+
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    archiveClassifier.set("sources")
+    archiveClassifier.set('sources')
 }
 
-static def readGithubReleaseEvent() {
-    def isRelease = System.getenv('GITHUB_EVENT_NAME') == 'release'
-    def path = isRelease ? System.getenv('GITHUB_EVENT_PATH') : null
-    def file = path ? new File(path) : null
-    def text = file?.text
-    return text ? new JsonSlurper().parseText(text) : null
+task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
+    from "$buildDir/javadoc"
+    archiveClassifier.set('javadoc')
 }
+
+
 
 afterEvaluate {
-    // Support for Github Actions based CI: create named versions from Github releases
-    def githubRelease = readGithubReleaseEvent()?.release
-    def githubTag = githubRelease?.tag_name
-
     publishing {
         publications {
             release(MavenPublication) {
                 from components.release
-                artifact(sourceJar)
+                artifact sourceJar
+                artifact javadocJar
 
                 // If you fork this library, you should use your own groupId and artifactId here
                 groupId = 'com.swedbankpay.mobilesdk'
                 artifactId = 'mobilesdk'
-                version = githubTag ?: 'local'
+                version = versionName
+
+                pom {
+                    name = "$groupId:$artifactId"
+                    description = 'A library for integrating Swedbank Pay payments into an Android application'
+                    url = 'https://developer.swedbankpay.com/modules-sdks/mobile-sdk/'
+
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            name = 'Pertti Kröger'
+                            email = 'pertti@qvik.fi'
+                            organization = 'Qvik'
+                            organizationUrl = "https://qvik.com/"
+                        }
+                    }
+
+                    scm {
+                        connection = 'scm:git:git://github.com/SwedbankPay/swedbank-pay-sdk-android.git'
+                        developerConnection = 'scm:git:ssh://github.com:SwedbankPay/swedbank-pay-sdk-android.git'
+                        url = 'https://github.com/SwedbankPay/swedbank-pay-sdk-android'
+                    }
+                }
+            }
+        }
+
+        repositories {
+            maven {
+                name = "Central"
+
+                def snapshotUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
+                def stagingUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+                url = githubReleaseEvent ? stagingUrl : snapshotUrl
+
+                credentials {
+                    username = System.getenv('OSSRH_USER')
+                    password = System.getenv('OSSRH_PASSWORD')
+                }
             }
         }
     }
 
-    // The rest of this is specific to Bintray;
-    // you may not need this part in a fork if you always build everything locally.
-    // Environment variables are set by the Github Actions workflow.
-    if (githubTag) {
-        def bintrayUser = System.getenv('BINTRAY_USER')
-        def bintrayKey = System.getenv('BINTRAY_KEY')
-        def bintrayRepo = System.getenv('BINTRAY_REPO')
-        def bintrayPackage = System.getenv('BINTRAY_PKG')
-        def bintrayOrganization = System.getenv('BINTRAY_ORG')
-        if (bintrayUser && bintrayKey && bintrayRepo && bintrayPackage) {
-            def publishedAt = githubRelease.published_at
-            def releaseDate = publishedAt ? Instant.parse(publishedAt).toDate() : null
-
-            bintray {
-                user = bintrayUser
-                key = bintrayKey
-                publications = ['release']
-                publish = false
-                pkg {
-                    repo = bintrayRepo
-                    name = bintrayPackage
-                    userOrg = bintrayOrganization
-                    version {
-                        name = githubTag
-                        desc = githubRelease.body
-                        released = releaseDate
-                        vcsTag = githubTag
-                    }
-                }
-            }
+    signing {
+        def signingKey = System.getenv('SIGNING_KEY')
+        def signingKeyPassword = System.getenv('SIGNING_KEY_PASSWORD')
+        if (signingKey && signingKeyPassword) {
+            def signingKeyId = System.getenv('SIGNING_KEY_ID')
+            useInMemoryPgpKeys(signingKeyId, signingKey, signingKeyPassword)
+            sign publishing.publications.release
         }
     }
 }
