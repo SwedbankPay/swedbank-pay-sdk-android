@@ -16,10 +16,10 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Gradle
-      run: ./gradlew bintrayUpload
+      run: ./gradlew publishReleasePublicationToCentralRepository
       env:
-        BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
-        BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
-        BINTRAY_REPO: swedbank-pay-sdk-android
-        BINTRAY_PKG: swedbank-pay-sdk-android
-        BINTRAY_ORG: swedbankpay
+        SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+        SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        OSSRH_USER: ${{ secrets.OSSRH_USER }}
+        OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
