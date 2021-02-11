@@ -1,8 +1,9 @@
-name: Upload to Bintray
+name: Publish to Maven Central
 
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   build:
