@@ -19,6 +19,7 @@ jobs:
       run: ./gradlew publishReleasePublicationToCentralRepository
       env:
         SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
         SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         OSSRH_USER: ${{ secrets.OSSRH_USER }}
         OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
