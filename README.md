@@ -28,7 +28,7 @@ To explore a working app using the SDK, see the [Example Project](https://github
 
 Swedbank Pay Android SDK is released under the [Apache 2.0 license](LICENSE).
 
-[opengraph-image]: https://repository-images.githubusercontent.com/209749704/df2ce180-53e8-11ea-95a5-490dbe7c7706
+[opengraph-image]: https://repository-images.githubusercontent.com/209749704/e2c62080-6d3d-11eb-807c-120df6645b06
 [download-badge]: https://maven-badges.herokuapp.com/maven-central/com.swedbankpay.mobilesdk/mobilesdk/badge.svg
 [download-link]: https://search.maven.org/artifact/com.swedbankpay.mobilesdk/mobilesdk
 [tests-badge]: https://github.com/SwedbankPay/swedbank-pay-sdk-android/workflows/Run%20Checks/badge.svg
