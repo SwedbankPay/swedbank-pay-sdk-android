@@ -28,8 +28,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         checkCallbacks()
     }
 
-    private val processState = MutableLiveData<ProcessState>()
-    private val moveToNextStateJob = MutableLiveData<Job>()
+    private val processState = MutableLiveData<ProcessState?>()
+    private val moveToNextStateJob = MutableLiveData<Job?>()
 
     val webViewShowingRootPage = MutableLiveData(false)
 
@@ -81,7 +81,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
     val retryActionAvailable = Transformations.map(uiState) { it is UIState.RetryableError }
 
-    val termsOfServiceUrl = MutableLiveData<String>()
+    val termsOfServiceUrl = MutableLiveData<String?>()
     
     val javascriptInterface = JSInterface(this)
 

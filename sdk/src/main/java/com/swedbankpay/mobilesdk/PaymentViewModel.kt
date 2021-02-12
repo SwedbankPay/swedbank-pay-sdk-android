@@ -162,7 +162,7 @@ class PaymentViewModel : AndroidViewModel {
         fun onTermsOfServiceClick(paymentFragment: PaymentFragment, url: String): Boolean
     }
 
-    private val internalVm = MutableLiveData<InternalPaymentViewModel>()
+    private val internalVm = MutableLiveData<InternalPaymentViewModel?>()
 
     private val internalState = Transformations.switchMap(internalVm) {
         it?.uiState
@@ -254,7 +254,7 @@ class PaymentViewModel : AndroidViewModel {
      *
      * You can use this property to control the visibility of a customized instrument chooser.
      */
-    val showingPaymentMenu = Transformations.switchMap(internalVm) { it.showingPaymentMenu }
+    val showingPaymentMenu = Transformations.switchMap(internalVm) { it?.showingPaymentMenu }
 
     internal var onTermsOfServiceClickListener: OnTermsOfServiceClickListener? = null
     private var onTermsOfServiceClickListenerOwner: LifecycleOwner? = null

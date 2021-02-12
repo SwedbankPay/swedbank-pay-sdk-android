@@ -15,7 +15,7 @@ import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.R
 import okhttp3.internal.toHexString
 
-private fun <T> MutableLiveData<List<T>>.add(t: T) {
+private fun <T> MutableLiveData<List<T>?>.add(t: T) {
     value = value?.plus(t) ?: listOf(t)
 }
 
@@ -42,10 +42,10 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
 
     private var lastRootHtml: String? = null
 
-    val intentUris = MutableLiveData<List<Uri>>()
-    val externalAppIntents = MutableLiveData<List<Intent>>()
+    val intentUris = MutableLiveData<List<Uri>?>()
+    val externalAppIntents = MutableLiveData<List<Intent>?>()
 
-    private val javascriptDialogs = MutableLiveData<Map<String, JSDialogInfo<*>>>()
+    private val javascriptDialogs = MutableLiveData<Map<String, JSDialogInfo<*>>?>()
     val javascriptDialogTags = Transformations.map(javascriptDialogs) { it?.keys ?: emptySet() }
     private var nextTag = 0L
     private fun addDialog(info: JSDialogInfo<*>) {
