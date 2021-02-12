@@ -9,19 +9,12 @@
 
 The Swedbank Pay Android SDK facilitates embedding of [Swedbank Pay payments](https://developer.swedbankpay.com/) to an Android application.
 
-## About
-
-**UNSUPPORTED**: This SDK is at an early stage of development and is not
-supported as of yet by Swedbank Pay. It is provided as a convenience to speed
-up your development, so please feel free to play around. However, if you need
-support, please wait for a future, stable release.
-
 ## Installation
 
 Gradle:
 ```gradle
 dependencies {
-  implementation 'com.swedbankpay.mobilesdk:mobilesdk:1.0.0-beta.31'
+  implementation 'com.swedbankpay.mobilesdk:mobilesdk:1.0.0'
 }
 ```
 
