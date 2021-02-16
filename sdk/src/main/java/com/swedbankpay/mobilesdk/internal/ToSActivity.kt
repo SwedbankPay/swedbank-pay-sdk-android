@@ -4,17 +4,24 @@ import android.os.Bundle
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.swedbankpay.mobilesdk.R
-import kotlinx.android.synthetic.main.swedbankpaysdk_tos_activity.*
 
 internal class ToSActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_URL = "EXTRA_URL"
     }
 
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var webView: WebView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.swedbankpaysdk_tos_activity)
+        swipeRefreshLayout = findViewById(R.id.swedbankpaysdk_swipe_refresh_layout)
+        webView = findViewById(R.id.swedbankpaysdk_web_view)
+
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         setupWebView()
@@ -22,15 +29,13 @@ internal class ToSActivity : AppCompatActivity() {
     }
 
     private fun setupWebView() {
-        swedbankpaysdk_web_view.apply {
-            webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    swedbankpaysdk_swipe_refresh_layout.isRefreshing = false
-                }
+        webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                swipeRefreshLayout.isRefreshing = false
             }
         }
 
-        swedbankpaysdk_swipe_refresh_layout.setOnRefreshListener {
+        swipeRefreshLayout.setOnRefreshListener {
             loadContent(fromSwipe = true)
         }
     }
@@ -40,12 +45,22 @@ internal class ToSActivity : AppCompatActivity() {
         return true
     }
 
-    private fun loadContent(fromSwipe: Boolean = false) {
-        if (!fromSwipe) swedbankpaysdk_swipe_refresh_layout.isRefreshing = true
+    override fun onResume() {
+        super.onResume()
+        webView.onResume()
+    }
 
-        swedbankpaysdk_web_view.apply {
+    override fun onPause() {
+        super.onPause()
+        webView.onPause()
+    }
+
+    private fun loadContent(fromSwipe: Boolean = false) {
+        if (!fromSwipe) swipeRefreshLayout.isRefreshing = true
+
+        webView.apply {
             clearHistory()
-            swedbankpaysdk_web_view.loadUrl(intent.getStringExtra(EXTRA_URL))
+            loadUrl(intent.getStringExtra(EXTRA_URL))
         }
     }
 }
