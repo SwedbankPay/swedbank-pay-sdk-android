@@ -4,6 +4,7 @@ import android.content.Context
 import com.swedbankpay.mobilesdk.RequestDecorator
 import com.swedbankpay.mobilesdk.UserHeaders
 import com.swedbankpay.mobilesdk.internal.remote.Api
+import java.io.IOException
 
 /**
  * Additional utilities supported by the Merchant Backend
@@ -52,5 +53,28 @@ object MerchantBackend {
             headersBuilder,
             PayerOwnedPaymentTokensResponse::class.java
         ).value
+    }
+
+    /**
+     * Deletes the specified payment token.
+     *
+     * Your backend must enable this functionality separately.
+     * After you make this request, you should refresh your local list of tokens.
+     *
+     * @param context a Context from your application
+     * @param configuration the backend configuration
+     * @param paymentTokenInfo the token to delete
+     * @param comment the reason for the deletion
+     * @param extraHeaderNamesAndValues any header names and values you wish to append to the request
+     */
+    suspend fun deletePayerOwnerPaymentToken(
+        context: Context,
+        configuration: MerchantBackendConfiguration,
+        paymentTokenInfo: PaymentTokenInfo,
+        comment: String,
+        vararg extraHeaderNamesAndValues: String
+    ) {
+        val link = paymentTokenInfo.mobileSDK?.delete ?: throw IOException("Missing delete link")
+        link.patch(context, configuration, extraHeaderNamesAndValues, comment)
     }
 }

@@ -1,7 +1,6 @@
 package com.swedbankpay.mobilesdk.internal.remote.json
 
 import android.content.Context
-import android.os.Parcel
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonSyntaxException
@@ -14,7 +13,6 @@ import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 
 internal sealed class Link(
@@ -131,6 +129,27 @@ internal sealed class Link(
             ))
             return performRequest(context, configuration, "PATCH", body) {
                 decoratePaymentOrderSetInstrument(it, href.toString(), body, instrument)
+            }
+        }
+    }
+
+    class DeletePaymentToken(href: HttpUrl) : Link(href) {
+        suspend fun patch(
+            context: Context,
+            configuration: MerchantBackendConfiguration,
+            extraHeaderNamesAndValues: Array<out String>,
+            comment: String
+        ): EmptyResponse {
+            val body = toJsonBody(mapOf(
+                "state" to "Deleted",
+                "comment" to comment
+            ))
+            return performRequest(context, configuration, "PATCH", body) {
+                for (i in extraHeaderNamesAndValues.indices step 2) {
+                    val name = extraHeaderNamesAndValues[i]
+                    val value = extraHeaderNamesAndValues[i + 1]
+                    it.add(name, value)
+                }
             }
         }
     }
