@@ -11,7 +11,6 @@ import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Message
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.*
@@ -286,7 +285,6 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             return true
         }
 
-        //private var bottomSheetCallback: BottomSheetCallback? = null
         private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
         val onBackPressedCallback = object : OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
@@ -313,7 +311,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             val webView = WebView(view.context)
             val bottomSheetCallback = object : BottomSheetCallback(){
                 override fun onStateChanged(bottomSheet: View, newState: Int) {
-                    if(newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                    if(newState == STATE_COLLAPSED) {
                         onBackPressedCallback.isEnabled = false
                         holder.visibility = View.GONE
                         bounds.removeAllViews()
