@@ -186,6 +186,12 @@ afterEvaluate {
 
                     developers {
                         developer {
+                            name = 'Swedbank Pay'
+                            email = 'opensource@swedbankpay.com'
+                            organization = 'Swedbank Pay'
+                            organizationUrl = 'https://www.swedbankpay.com/'
+                        }
+                        developer {
                             name = 'Pertti Kröger'
                             email = 'pertti@qvik.fi'
                             organization = 'Qvik'
