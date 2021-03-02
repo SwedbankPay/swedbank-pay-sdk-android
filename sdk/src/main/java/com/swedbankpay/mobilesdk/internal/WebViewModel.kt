@@ -23,7 +23,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
-import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED
 import com.swedbankpay.mobilesdk.R
 import okhttp3.internal.toHexString
 
@@ -288,7 +287,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
         val onBackPressedCallback = object : OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
-                bottomSheetBehavior.state = STATE_COLLAPSED
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
             }
         }
         override fun onCreateWindow(
@@ -311,7 +310,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             val webView = WebView(view.context)
             val bottomSheetCallback = object : BottomSheetCallback(){
                 override fun onStateChanged(bottomSheet: View, newState: Int) {
-                    if(newState == STATE_COLLAPSED) {
+                    if(newState == BottomSheetBehavior.STATE_COLLAPSED) {
                         onBackPressedCallback.isEnabled = false
                         holder.visibility = View.GONE
                         bounds.removeAllViews()
