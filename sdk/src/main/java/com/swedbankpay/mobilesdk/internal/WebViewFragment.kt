@@ -17,6 +17,8 @@ import android.view.ViewGroup
 import android.view.ViewManager
 import android.widget.EditText
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
@@ -68,8 +70,6 @@ internal class WebViewFragment : Fragment() {
         vm.javascriptDialogTags.observe(this, {
             ensureJSDialogFragments(it)
         })
-
-
     }
 
     override fun onCreateView(
@@ -80,7 +80,7 @@ internal class WebViewFragment : Fragment() {
         restored = savedInstanceState != null
 
         return webViewModel.apply {
-            setup(inflater.context, internalPaymentViewModelProvider)
+            setup(inflater.context, internalPaymentViewModelProvider, requireActivity().onBackPressedDispatcher)
         }.requireWebView().apply {
             internalPaymentViewModel.updatingPaymentOrder.observe(viewLifecycleOwner) {
                 Log.d(LOG_TAG, "WebView enabled ${it != true}")

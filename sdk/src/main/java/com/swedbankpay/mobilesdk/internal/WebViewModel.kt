@@ -10,8 +10,19 @@ import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.os.Build
+import android.os.Message
+import android.view.View
+import android.view.ViewGroup
 import android.webkit.*
+import android.webkit.WebView.WebViewTransport
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.OnBackPressedDispatcher
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.*
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.swedbankpay.mobilesdk.R
 import okhttp3.internal.toHexString
 
@@ -66,7 +77,11 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    fun setup(context: Context, internalPaymentViewModelProvider: ViewModelProvider) {
+    fun setup(
+        context: Context,
+        internalPaymentViewModelProvider: ViewModelProvider,
+        onBackPressedDispatcher: OnBackPressedDispatcher
+    ) {
         if (webView == null) {
             webView = WebView(context).apply {
                 settings.apply {
@@ -76,6 +91,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                     // not to send compromised links.
                     @SuppressLint("SetJavaScriptEnabled")
                     javaScriptEnabled = true
+                    setSupportMultipleWindows(true)
 
                     // Redirect pages may require this.
                     domStorageEnabled = true
@@ -84,7 +100,9 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                     displayZoomControls = false
                 }
 
-                webChromeClient = MyWebChromeClient()
+                val chromeClient = MyWebChromeClient()
+                onBackPressedDispatcher.addCallback(chromeClient.onBackPressedCallback)
+                webChromeClient = chromeClient
                 val parentViewModel = internalPaymentViewModelProvider.get<InternalPaymentViewModel>()
                 webViewClient = MyWebViewClient(parentViewModel)
 
@@ -263,6 +281,66 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                 defaultValue = defaultValue,
                 result = result
             ))
+            return true
+        }
+
+        private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
+        val onBackPressedCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            }
+        }
+        override fun onCreateWindow(
+            view: WebView?,
+            isDialog: Boolean,
+            isUserGesture: Boolean,
+            resultMsg: Message?
+        ): Boolean {
+            view ?: return false
+            resultMsg ?: return false
+
+            onBackPressedCallback.isEnabled = true
+            val holder = view.rootView.findViewById<CoordinatorLayout>(R.id.swedbankpaysdk_web_view_overlay_holder)
+            holder.visibility = View.VISIBLE
+
+            val bottomSheet = view.rootView.findViewById<LinearLayout>(R.id.swedbankpaysdk_web_view_overlay)
+            val bounds = view.rootView.findViewById<LinearLayout>(R.id.swedbankpaysdk_web_view_overlay_web)
+            bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+
+            val webView = WebView(view.context)
+            val bottomSheetCallback = object : BottomSheetCallback(){
+                override fun onStateChanged(bottomSheet: View, newState: Int) {
+                    if(newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                        onBackPressedCallback.isEnabled = false
+                        holder.visibility = View.GONE
+                        bounds.removeAllViews()
+                        bottomSheetBehavior.removeBottomSheetCallback(this)
+                    }
+                }
+                override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+            }
+            bottomSheetBehavior.addBottomSheetCallback(bottomSheetCallback)
+
+            webView.settings.apply {
+                @SuppressLint("SetJavaScriptEnabled")
+                javaScriptEnabled = true
+                setSupportMultipleWindows(false)
+                domStorageEnabled = false
+                builtInZoomControls = false
+                displayZoomControls = false
+            }
+            webView.webChromeClient = WebChromeClient()
+            webView.webViewClient = WebViewClient()
+            webView.layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            bounds.addView(webView)
+
+            val transport = resultMsg.obj as WebViewTransport
+            transport.webView = webView
+            resultMsg.sendToTarget()
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
             return true
         }
     }
