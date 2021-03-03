@@ -11,6 +11,9 @@ import com.swedbankpay.mobilesdk.internal.asStringOrNull
 import com.swedbankpay.mobilesdk.internal.remote.json.Link
 import java.lang.reflect.Type
 
+/**
+ * A payment token and associated information.
+ */
 @JsonAdapter(PaymentTokenInfo.Deserializer::class)
 data class PaymentTokenInfo internal constructor(
     /**
