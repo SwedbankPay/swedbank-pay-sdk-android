@@ -12,8 +12,6 @@ apply plugin: 'signing'
 
 apply plugin: 'org.ajoberstar.grgit'
 
-apply plugin: 'com.jfrog.bintray'
-
 // Support for Github Actions based CI: create named versions from Github releases
 static def readGithubReleaseEvent() {
     def isRelease = System.getenv('GITHUB_EVENT_NAME') == 'release'
