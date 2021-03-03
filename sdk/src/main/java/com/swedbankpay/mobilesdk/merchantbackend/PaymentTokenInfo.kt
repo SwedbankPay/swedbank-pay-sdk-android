@@ -5,12 +5,17 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.JsonAdapter
+import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
 import com.swedbankpay.mobilesdk.internal.asStringOrNull
+import com.swedbankpay.mobilesdk.internal.remote.json.Link
 import java.lang.reflect.Type
 
+/**
+ * A payment token and associated information.
+ */
 @JsonAdapter(PaymentTokenInfo.Deserializer::class)
-data class PaymentTokenInfo(
+data class PaymentTokenInfo internal constructor(
     /**
      * The actual paymentToken
      */
@@ -31,8 +36,15 @@ data class PaymentTokenInfo(
      * Operations you can perform on this token.
      * Note that you generally cannot call these from your mobile app.
      */
-    val operations: List<Operation>
+    val operations: List<Operation>,
+
+    internal val mobileSDK: MobileSDK?
 ) {
+    internal class MobileSDK {
+        @SerializedName("delete")
+        internal var delete: Link.DeletePaymentToken? = null
+    }
+
     internal class Deserializer : JsonDeserializer<PaymentTokenInfo?> {
         override fun deserialize(
             element: JsonElement,
@@ -52,7 +64,10 @@ data class PaymentTokenInfo(
                     },
                     operations = json["operations"]?.let {
                         context.deserialize(it, (object : TypeToken<List<Operation>>() {}).type)
-                    } ?: emptyList()
+                    } ?: emptyList(),
+                    mobileSDK = json["mobileSDK"]?.let {
+                        context.deserialize(it, MobileSDK::class.java)
+                    }
                 )
             } catch (e: Exception) {
                 throw JsonSyntaxException(e)
