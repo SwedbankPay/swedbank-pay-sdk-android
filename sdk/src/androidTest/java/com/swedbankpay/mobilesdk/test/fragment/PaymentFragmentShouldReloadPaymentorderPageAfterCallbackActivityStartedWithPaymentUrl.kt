@@ -27,6 +27,7 @@ class PaymentFragmentShouldReloadPaymentorderPageAfterCallbackActivityStartedWit
         scenario = launchFragmentInContainer(args)
 
         Web.onWebView()
+            .withNoTimeout()
             .checkIsShowingPaymentOrder()
             .perform(SimpleAtom("window.location = 'about:blank'"))
             .check(WebViewAssertions.webContent(HasNoScriptsMatcher()))
@@ -38,6 +39,7 @@ class PaymentFragmentShouldReloadPaymentorderPageAfterCallbackActivityStartedWit
         ApplicationProvider.getApplicationContext<Context>().startActivity(callbackIntent)
 
         Web.onWebView()
+            .withNoTimeout()
             .checkIsShowingPaymentOrder()
     }
 }

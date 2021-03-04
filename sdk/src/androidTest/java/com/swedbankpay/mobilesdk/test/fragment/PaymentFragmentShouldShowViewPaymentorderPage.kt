@@ -18,6 +18,6 @@ class PaymentFragmentShouldShowViewPaymentorderPage : BasePaymentFragmentTest() 
 
         scenario = launchFragmentInContainer(args)
 
-        Web.onWebView().checkIsShowingPaymentOrder()
+        Web.onWebView().withNoTimeout().checkIsShowingPaymentOrder()
     }
 }

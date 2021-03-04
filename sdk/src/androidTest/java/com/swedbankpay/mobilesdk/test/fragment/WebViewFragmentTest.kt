@@ -14,7 +14,6 @@ import androidx.test.espresso.web.assertion.WebViewAssertions
 import androidx.test.espresso.web.matcher.DomMatchers
 import androidx.test.espresso.web.model.SimpleAtom
 import androidx.test.espresso.web.sugar.Web
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
 import com.swedbankpay.mobilesdk.test.R
 import kotlinx.coroutines.*
@@ -23,12 +22,10 @@ import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
 /**
  * Tests for WebViewFragment
  */
-@RunWith(AndroidJUnit4::class)
 class WebViewFragmentTest {
 
     private lateinit var scenario: FragmentScenario<WebViewParentFragment>
@@ -310,6 +307,7 @@ class WebViewFragmentTest {
      * and that after the "yes" button on the dialog is pressed, confirm() returns true
      * and the dialog is dismissed.
      */
+    @Test
     fun itShouldRetainPromptOverRecreateAndReturnTrueForOk() {
         testJsDialog(
             "confirm('$confirmText')",
@@ -373,7 +371,7 @@ class WebViewFragmentTest {
     ) = runBlocking {
         val webViewInteraction = async(Dispatchers.IO) {
             val script = "document.getElementById('testResult').textContent = $dialogScript"
-            Web.onWebView().perform(SimpleAtom(script))
+            Web.onWebView().withNoTimeout().perform(SimpleAtom(script))
         }
         scenario.waitForDialogFragment()
         dialogInteraction()
