@@ -22,6 +22,7 @@ class PaymentFragmentShouldReloadPaymentorderPageWhenItNavigatesToPaymentUrl : B
         scenario = launchFragmentInContainer(args)
 
         Web.onWebView()
+            .withNoTimeout()
             .checkIsShowingPaymentOrder()
             .perform(SimpleAtom("window.location = 'about:blank'"))
             .check(WebViewAssertions.webContent(HasNoScriptsMatcher()))

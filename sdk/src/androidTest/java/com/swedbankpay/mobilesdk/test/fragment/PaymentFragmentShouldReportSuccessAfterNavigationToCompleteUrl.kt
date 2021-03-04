@@ -35,6 +35,7 @@ class PaymentFragmentShouldReportSuccessAfterNavigationToCompleteUrl : BasePayme
         }
 
         Web.onWebView()
+            .withNoTimeout()
             .perform(SimpleAtom("window.location = '${TestConstants.completeUrl}'"))
             .check(WebViewAssertions.webContent(HasNoScriptsMatcher()))
         // The webContent(HasNoScriptsMatcher()) assertion may seem unnecessary, harmful even,

@@ -5,7 +5,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.espresso.web.assertion.WebViewAssertions
 import androidx.test.espresso.web.matcher.DomMatchers
 import androidx.test.espresso.web.sugar.Web
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.nhaarman.mockitokotlin2.stub
 import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.PaymentFragment
@@ -18,7 +17,6 @@ import org.hamcrest.TypeSafeMatcher
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
-import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
@@ -29,24 +27,24 @@ import org.w3c.dom.NodeList
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
-/*
-These tests can crash the Instrumentation if more that one is run at a time.
-
- */
 /**
  * Base class for instrumented PaymentFragment tests
  *
  * This class takes care of destroying the FragmentScenario used in the test after the test is done.
  *
- * These tests have a tendency to crash the instrumentation if more than one is run at a time.
- * The crashes do not seem to produce meaningful error traces, making it difficult to remedy this.
- * For this reason, they are separated to individual classes and run with the Android Test Orchestrator
+ * UNDER SOME CONDITIONS, these tests have a tendency to crash the instrumentation when they fail.
+ * This appears to happen when running in a 32-bit x86 emulator. This was not figured out for some
+ * time, and as an artifact of that history, these tests were factored out to separate classes
+ * allowing the use of the Android Test Orchestrator
  * (https://developer.android.com/training/testing/junit-runner#using-android-test-orchestrator)
- * which clears the application state between each run.
+ * to run them as separate processes and clear the test app state between each run.
+ * Now that we seem to have figured this out, the tests have been reverted to use the regular
+ * runner (this is much faster, for one thing), but the factoring-out to subclasses has been left,
+ * as it really poses no harm.
  *
- * The crashes may be related to memory usage, or possibly dexmaker-mockito-inline.
+ * To anyone running these tests on your own machine: use an x86_64 emulator. Do note that
+ * the AVD Manager will not list 64-bit images in the "Recommended" list.
  */
-@RunWith(AndroidJUnit4::class)
 abstract class BasePaymentFragmentTest {
     /**
      * STRICT_STUBS mockito rule for cleaner tests
