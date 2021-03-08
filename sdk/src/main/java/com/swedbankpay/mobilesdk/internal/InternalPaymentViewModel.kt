@@ -11,8 +11,6 @@ import androidx.annotation.MainThread
 import androidx.annotation.StringRes
 import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.*
-import com.swedbankpay.mobilesdk.R
-import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendProblem
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -81,8 +79,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
     val retryActionAvailable = Transformations.map(uiState) { it is UIState.RetryableError }
 
-    val termsOfServiceUrl = MutableLiveData<String?>()
-    
     val javascriptInterface = JSInterface(this)
 
     var configuration: Configuration? = null
@@ -220,11 +216,11 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             viewPaymentOrderInfo.completeUrl -> setProcessState(ProcessState.Complete)
             viewPaymentOrderInfo.cancelUrl -> setProcessState(ProcessState.Canceled)
             viewPaymentOrderInfo.paymentUrl -> reloadPaymentPage()
-            viewPaymentOrderInfo.termsOfServiceUrl -> {
-                // See comment at PaymentViewModel.retryPreviousAction()
-                termsOfServiceUrl.value = uriString
-                termsOfServiceUrl.value = null
-            }
+            viewPaymentOrderInfo.termsOfServiceUrl -> return publicVm?.run {
+                onTermsOfServiceClickListener
+                    ?.onTermsOfServiceClick(this, uriString)
+            } == true
+
             else -> return false
         }
         return true
@@ -241,7 +237,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         object Loading : UIState()
         class ViewConsumerIdentification(
             override val baseUrl: String?,
-            val viewConsumerIdentification: String
+            private val viewConsumerIdentification: String
         ) : UIState(), HtmlContent {
             override val asHtmlContent get() = this
             override fun getWebViewPage(context: Context): String {
@@ -281,18 +277,15 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         open suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration) = this
         open fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState? = null
         open fun getStateForUpdatingPaymentOrder(updateInfo: Any?): ProcessState? = null
-        open fun getStateForSettingInstrument(instrument: String): ProcessState? = null
 
         override fun describeContents() = 0
-
-        val MerchantBackendProblem.isRetryable get() = this is MerchantBackendProblem.Server && this !is MerchantBackendProblem.Server.SwedbankPay.ConfigurationError
 
         class InitializingConsumerSession(
             private val consumer: Consumer?,
             private val paymentOrder: PaymentOrder?,
             private val userData: Any?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR =
+            companion object { @Suppress("unused") @JvmField val CREATOR =
                 makeCreator(::InitializingConsumerSession)
             }
 
@@ -334,7 +327,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val retryable: Boolean,
             private val exception: Exception
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR =
+            companion object { @Suppress("unused") @JvmField val CREATOR =
                 makeCreator(::FailedInitializeConsumerSession)
             }
 
@@ -372,7 +365,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val paymentOrder: PaymentOrder?,
             private val userData: Any?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR =
+            companion object { @Suppress("unused") @JvmField val CREATOR =
                 makeCreator(::IdentifyingConsumer)
             }
 
@@ -381,7 +374,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 viewConsumerIdentification
             )
 
-            override fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState? {
+            override fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState {
                 return CreatingPaymentOrder(consumerProfileRef, paymentOrder, userData)
             }
 
@@ -404,7 +397,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val paymentOrder: PaymentOrder?,
             private val userData: Any?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR =
+            companion object { @Suppress("unused") @JvmField val CREATOR =
                 makeCreator(::CreatingPaymentOrder)
             }
 
@@ -441,7 +434,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val retryable: Boolean,
             private val exception: Exception
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR =
+            companion object { @Suppress("unused") @JvmField val CREATOR =
                 makeCreator(::FailedCreatePaymentOrder)
             }
 
@@ -479,12 +472,14 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             val viewPaymentOrderInfo: ViewPaymentOrderInfo,
             val updateException: Exception?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::Paying) }
+            companion object { @Suppress("unused") @JvmField val CREATOR =
+                makeCreator(::Paying)
+            }
 
             override val uiState
                 get() = UIState.ViewPaymentOrder(viewPaymentOrderInfo, updateException)
 
-            override fun getStateForUpdatingPaymentOrder(updateInfo: Any?): ProcessState? {
+            override fun getStateForUpdatingPaymentOrder(updateInfo: Any?): ProcessState {
                 return UpdatingPaymentOrder(paymentOrder, userData, viewPaymentOrderInfo, updateInfo)
             }
 
@@ -508,7 +503,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val viewPaymentOrderInfo: ViewPaymentOrderInfo,
             private val updateInfo: Any?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR = makeCreator(::UpdatingPaymentOrder) }
+            companion object { @Suppress("unused") @JvmField val CREATOR =
+                makeCreator(::UpdatingPaymentOrder)
+            }
 
             override val uiState get() = UIState.UpdatingPaymentOrder
 
@@ -545,20 +542,20 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override val uiState get() = UIState.Complete
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {}
-            @JvmField val CREATOR = makeCreator { Complete }
+            @Suppress("unused") @JvmField val CREATOR = makeCreator { Complete }
         }
 
         object Canceled : ProcessState() {
             override val uiState get() = UIState.Canceled
 
             override fun writeToParcel(parcel: Parcel, flags: Int) {}
-            @JvmField val CREATOR = makeCreator { Canceled }
+            @Suppress("unused") @JvmField val CREATOR = makeCreator { Canceled }
         }
 
         class SwedbankPayError(
             private val terminalFailure: TerminalFailure?
         ) : ProcessState() {
-            companion object { @JvmField val CREATOR =
+            companion object { @Suppress("unused") @JvmField val CREATOR =
                 makeCreator(::SwedbankPayError)
             }
 

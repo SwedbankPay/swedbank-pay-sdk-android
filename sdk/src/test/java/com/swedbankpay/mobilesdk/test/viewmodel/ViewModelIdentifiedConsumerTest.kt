@@ -505,24 +505,29 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     }
 
     /**
-     * Check that viewmodel notifies observers of InternalPaymentViewModel.termsOfServiceUrl after it processes a navigation to termsOfServiceUrl
+     * Check that viewmodel calls its OnTermsOfServiceClickListener as it processes a navigation to termsOfServiceUrl
      */
     @Test
-    fun itShouldNotifyTermsOfServiceUrlObserversAfterOnPaymentToS() {
+    fun itShouldCallOnTermsOfServiceClickListenerOnNavigationToTermsOfServiceUrl() {
         configuration.stub {
             onPostConsumers(TestConstants.viewConsumerIdentificationInfo)
             onPostPaymentorders(TestConstants.viewPaymentorderInfo)
         }
+
+        val tosListener = mock<PaymentViewModel.OnTermsOfServiceClickListener>()
+        publicViewModel.setOnTermsOfServiceClickListener(
+            lifecycleOwner = null,
+            listener = tosListener
+        )
+
         viewModel.apply {
             startIdentifiedTestPayment()
             javascriptInterface.onConsumerProfileRefAvailable(TestConstants.consumerProfileRef)
-            observing(termsOfServiceUrl) {
-                overrideNavigation(Uri.parse(TestConstants.termsOfServiceUrl))
-                verify(it).onChanged(TestConstants.termsOfServiceUrl)
-                verify(it).onChanged(null)
-                verifyNoMoreInteractions(it)
-            }
+            overrideNavigation(Uri.parse(TestConstants.termsOfServiceUrl))
         }
+
+        verify(tosListener).onTermsOfServiceClick(publicViewModel, TestConstants.termsOfServiceUrl)
+        verifyNoMoreInteractions(tosListener)
     }
 
     /**

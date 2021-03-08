@@ -20,6 +20,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -103,6 +104,7 @@ internal class WebViewFragment : Fragment() {
             setupExtraWebView(
                 bottomSheetContainer = findViewById(R.id.swedbankpaysdk_web_view_overlay_holder),
                 bottomSheet = findViewById(R.id.swedbankpaysdk_web_view_overlay),
+                extraWebViewToolbar = findViewById(R.id.swedbankpaysdk_extra_web_view_toolbar),
                 extraWebViewContainer = findViewById(R.id.swedbankpaysdk_extra_web_view_container)
             )
         }
@@ -122,6 +124,7 @@ internal class WebViewFragment : Fragment() {
     private fun setupExtraWebView(
         bottomSheetContainer: View,
         bottomSheet: View,
+        extraWebViewToolbar: Toolbar,
         extraWebViewContainer: FrameLayout
     ) {
         val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
@@ -133,6 +136,11 @@ internal class WebViewFragment : Fragment() {
             }
         }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressed)
+
+        extraWebViewToolbar.setNavigationOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            wrangleBottomSheet(bottomSheetBehavior, bottomSheetContainer, onBackPressed)
+        }
 
         observeExtraWebView(
             bottomSheetBehavior = bottomSheetBehavior,

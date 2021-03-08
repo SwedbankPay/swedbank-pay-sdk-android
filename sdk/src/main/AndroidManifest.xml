@@ -2,7 +2,6 @@
     package="com.swedbankpay.mobilesdk">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application>
-        <activity android:name=".internal.ToSActivity" android:label="@string/swedbankpaysdk_tos"/>
         <activity android:name=".internal.CallbackActivity">
             <intent-filter android:priority="-100">
                 <!--  Priority is negative on purpose. This way you can

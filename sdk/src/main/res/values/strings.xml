@@ -31,5 +31,4 @@
     <string name="swedbankpaysdk_unexpected_response">Received unrecognizable response from service.</string>
 
     <string name="swedbankpaysdk_tos">Terms of Service</string>
-    <string name="swedbankpaysdk_instrument_spinner_title">Instrument</string>
 </resources>
