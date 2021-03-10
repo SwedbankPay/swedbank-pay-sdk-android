@@ -15,7 +15,7 @@ internal inline fun <reified T> makeCreator(crossinline constructor: (Parcel) ->
 internal inline fun <reified T : Parcelable> Parcel.readParcelable() = readParcelable<T>(T::class.java.classLoader)
 
 internal fun Parcel.writeEnum(e: Enum<*>?) = writeInt(e?.ordinal ?: -1)
-internal inline fun <reified E : Enum<E>> Parcel.readEnum() = readInt().takeIf { it > 0 }?.let {
+internal inline fun <reified E : Enum<E>> Parcel.readEnum() = readInt().takeIf { it >= 0 }?.let {
     enumValues<E>()[it]
 }
 
