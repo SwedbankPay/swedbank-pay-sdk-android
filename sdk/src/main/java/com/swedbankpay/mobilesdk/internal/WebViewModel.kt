@@ -11,18 +11,9 @@ import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Message
-import android.view.View
-import android.view.ViewGroup
 import android.webkit.*
 import android.webkit.WebView.WebViewTransport
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.OnBackPressedDispatcher
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.*
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.swedbankpay.mobilesdk.R
 import okhttp3.internal.toHexString
 
@@ -77,10 +68,14 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    // Explicit null initial value so observers are called with the initial null value as well.
+    // Without this, some corner cases of fragment view recreation can result
+    // in inconsistent states.
+    val extraWebView = MutableLiveData<WebView?>(null)
+
     fun setup(
         context: Context,
         internalPaymentViewModelProvider: ViewModelProvider,
-        onBackPressedDispatcher: OnBackPressedDispatcher
     ) {
         if (webView == null) {
             webView = WebView(context).apply {
@@ -100,9 +95,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                     displayZoomControls = false
                 }
 
-                val chromeClient = MyWebChromeClient()
-                onBackPressedDispatcher.addCallback(chromeClient.onBackPressedCallback)
-                webChromeClient = chromeClient
+                webChromeClient = MyWebChromeClient()
                 val parentViewModel = internalPaymentViewModelProvider.get<InternalPaymentViewModel>()
                 webViewClient = MyWebViewClient(parentViewModel)
 
@@ -114,6 +107,16 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun onPause() {
+        requireWebView().onPause()
+        extraWebView.value?.onPause()
+    }
+
+    fun onResume() {
+        requireWebView().onResume()
+        extraWebView.value?.onResume()
+    }
+
     override fun onCleared() {
         javascriptDialogs.value = null
         webView?.apply {
@@ -123,6 +126,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             destroy()
         }
         webView = null
+        removeExtraWebView()
     }
 
     fun requireWebView() = requireNotNull(webView) { "setup not called" }
@@ -136,6 +140,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             clearHistory()
             loadUrl("about:blank")
         }
+        removeExtraWebView()
     }
 
     fun loadContent(baseUrl: String?, htmlString: String) {
@@ -145,6 +150,16 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             clearHistory()
             loadDataWithBaseURL(baseUrl, htmlString, "text/html", "utf-8", "")
         }
+    }
+
+    fun removeExtraWebView() {
+        replaceExtraWebView(null)
+    }
+
+    private fun replaceExtraWebView(newExtraWebView: WebView?) {
+        val removed = extraWebView.value
+        extraWebView.value = newExtraWebView
+        removed?.destroy()
     }
 
     private inner class MyWebViewClient(
@@ -284,12 +299,6 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             return true
         }
 
-        private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
-        val onBackPressedCallback = object : OnBackPressedCallback(false) {
-            override fun handleOnBackPressed() {
-                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            }
-        }
         override fun onCreateWindow(
             view: WebView?,
             isDialog: Boolean,
@@ -299,27 +308,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             view ?: return false
             resultMsg ?: return false
 
-            onBackPressedCallback.isEnabled = true
-            val holder = view.rootView.findViewById<CoordinatorLayout>(R.id.swedbankpaysdk_web_view_overlay_holder)
-            holder.visibility = View.VISIBLE
-
-            val bottomSheet = view.rootView.findViewById<LinearLayout>(R.id.swedbankpaysdk_web_view_overlay)
-            val bounds = view.rootView.findViewById<LinearLayout>(R.id.swedbankpaysdk_web_view_overlay_web)
-            bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
-
             val webView = WebView(view.context)
-            val bottomSheetCallback = object : BottomSheetCallback(){
-                override fun onStateChanged(bottomSheet: View, newState: Int) {
-                    if(newState == BottomSheetBehavior.STATE_COLLAPSED) {
-                        onBackPressedCallback.isEnabled = false
-                        holder.visibility = View.GONE
-                        bounds.removeAllViews()
-                        bottomSheetBehavior.removeBottomSheetCallback(this)
-                    }
-                }
-                override fun onSlide(bottomSheet: View, slideOffset: Float) {}
-            }
-            bottomSheetBehavior.addBottomSheetCallback(bottomSheetCallback)
 
             webView.settings.apply {
                 @SuppressLint("SetJavaScriptEnabled")
@@ -329,18 +318,17 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                 builtInZoomControls = false
                 displayZoomControls = false
             }
+
             webView.webChromeClient = WebChromeClient()
             webView.webViewClient = WebViewClient()
-            webView.layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            bounds.addView(webView)
+
+            // currently, we only support one extra web view at a time
+            replaceExtraWebView(webView)
 
             val transport = resultMsg.obj as WebViewTransport
             transport.webView = webView
             resultMsg.sendToTarget()
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+
             return true
         }
     }

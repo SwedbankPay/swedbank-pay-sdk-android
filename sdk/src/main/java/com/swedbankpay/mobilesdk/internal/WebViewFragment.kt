@@ -14,16 +14,17 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewManager
+import android.webkit.WebView
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.get
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.swedbankpay.mobilesdk.R
 import java.net.URISyntaxException
 
@@ -33,6 +34,22 @@ internal class WebViewFragment : Fragment() {
             Intent.URI_ANDROID_APP_SCHEME or Intent.URI_INTENT_SCHEME
         } else {
             Intent.URI_INTENT_SCHEME
+        }
+
+        private fun wrangleBottomSheet(
+            bottomSheetBehavior: BottomSheetBehavior<*>,
+            bottomSheetContainer: View,
+            onBackPressedCallback: OnBackPressedCallback
+        ) {
+            val isOpen = when (bottomSheetBehavior.state) {
+                BottomSheetBehavior.STATE_COLLAPSED, BottomSheetBehavior.STATE_HIDDEN -> false
+                else -> true
+            }
+            bottomSheetContainer.visibility = when (isOpen) {
+                true -> View.VISIBLE
+                false -> View.INVISIBLE
+            }
+            onBackPressedCallback.isEnabled = isOpen
         }
     }
 
@@ -76,11 +93,24 @@ internal class WebViewFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         restored = savedInstanceState != null
 
+        return inflater.inflate(R.layout.swedbankpaysdk_web_view_fragment, container, false).apply {
+            findViewById<FrameLayout>(R.id.swedbankpaysdk_web_view_container)
+                .addView(getRootWebView(inflater.context))
+
+            setupExtraWebView(
+                bottomSheetContainer = findViewById(R.id.swedbankpaysdk_web_view_overlay_holder),
+                bottomSheet = findViewById(R.id.swedbankpaysdk_web_view_overlay),
+                extraWebViewContainer = findViewById(R.id.swedbankpaysdk_extra_web_view_container)
+            )
+        }
+    }
+
+    private fun getRootWebView(context: Context): WebView {
         return webViewModel.apply {
-            setup(inflater.context, internalPaymentViewModelProvider, requireActivity().onBackPressedDispatcher)
+            setup(context, internalPaymentViewModelProvider)
         }.requireWebView().apply {
             internalPaymentViewModel.updatingPaymentOrder.observe(viewLifecycleOwner) {
                 Log.d(LOG_TAG, "WebView enabled ${it != true}")
@@ -89,21 +119,97 @@ internal class WebViewFragment : Fragment() {
         }
     }
 
+    private fun setupExtraWebView(
+        bottomSheetContainer: View,
+        bottomSheet: View,
+        extraWebViewContainer: FrameLayout
+    ) {
+        val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+
+        val onBackPressed = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                wrangleBottomSheet(bottomSheetBehavior, bottomSheetContainer, this)
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressed)
+
+        observeExtraWebView(
+            bottomSheetBehavior = bottomSheetBehavior,
+            bottomSheetContainer = bottomSheetContainer,
+            extraWebViewContainer = extraWebViewContainer,
+            onBackPressedCallback = onBackPressed
+        )
+
+        observeBottomSheetState(
+            bottomSheetBehavior = bottomSheetBehavior,
+            bottomSheetContainer = bottomSheetContainer,
+            onBackPressedCallback = onBackPressed
+        )
+
+        wrangleBottomSheet(bottomSheetBehavior, bottomSheetContainer, onBackPressed)
+    }
+
+    private fun observeExtraWebView(
+        bottomSheetBehavior: BottomSheetBehavior<*>,
+        bottomSheetContainer: View,
+        extraWebViewContainer: FrameLayout,
+        onBackPressedCallback: OnBackPressedCallback
+    ) {
+        webViewModel.extraWebView.observe(viewLifecycleOwner) {
+            if (it == null) {
+                extraWebViewContainer.removeAllViews()
+            } else {
+                if (it != extraWebViewContainer.getChildAt(0)) {
+                    extraWebViewContainer.removeAllViews()
+                    extraWebViewContainer.addView(it)
+                }
+            }
+            bottomSheetBehavior.state = when (it) {
+                null -> BottomSheetBehavior.STATE_HIDDEN
+                else -> BottomSheetBehavior.STATE_EXPANDED
+            }
+            wrangleBottomSheet(bottomSheetBehavior, bottomSheetContainer, onBackPressedCallback)
+        }
+    }
+
+    private fun observeBottomSheetState(
+        bottomSheetBehavior: BottomSheetBehavior<*>,
+        bottomSheetContainer: View,
+        onBackPressedCallback: OnBackPressedCallback
+    ) {
+        bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                wrangleBottomSheet(bottomSheetBehavior, bottomSheetContainer, onBackPressedCallback)
+                if (newState == BottomSheetBehavior.STATE_COLLAPSED
+                    || newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    webViewModel.removeExtraWebView()
+                }
+            }
+
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                // do nothing
+            }
+        })
+    }
+
     override fun onPause() {
         super.onPause()
-        webViewModel.requireWebView().onPause()
+        webViewModel.onPause()
     }
 
     override fun onResume() {
-        webViewModel.requireWebView().onResume()
+        webViewModel.onResume()
         super.onResume()
     }
 
     override fun onDestroyView() {
-        webViewModel.apply {
-            requireWebView().let {
-                (it.parent as? ViewManager)?.removeView(it)
-            }
+        view?.apply {
+            // The WebViews are part of the view model, and will be reused if the view
+            // or this fragment is recreated. Therefore, we must explicitly remove them
+            // from their parents at this point.
+            findViewById<FrameLayout>(R.id.swedbankpaysdk_web_view_container).removeAllViews()
+            findViewById<FrameLayout>(R.id.swedbankpaysdk_extra_web_view_container).removeAllViews()
         }
         super.onDestroyView()
     }
@@ -142,7 +248,7 @@ internal class WebViewFragment : Fragment() {
         }
     }
 
-    private fun getIntentUriIntent(uri: Uri): Intent? {
+    private fun getIntentUriIntent(uri: Uri): Intent {
         val intent = try {
             Intent.parseUri(uri.toString(), INTENT_URI_FLAGS)
         } catch (e: URISyntaxException) {
