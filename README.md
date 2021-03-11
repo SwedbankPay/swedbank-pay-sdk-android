@@ -14,7 +14,7 @@ The Swedbank Pay Android SDK facilitates embedding of [Swedbank Pay payments](ht
 Gradle:
 ```gradle
 dependencies {
-  implementation 'com.swedbankpay.mobilesdk:mobilesdk:1.0.4'
+  implementation 'com.swedbankpay.mobilesdk:mobilesdk:1.0.5'
 }
 ```
 
