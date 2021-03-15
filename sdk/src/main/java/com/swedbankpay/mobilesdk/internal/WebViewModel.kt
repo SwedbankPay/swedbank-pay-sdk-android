@@ -95,8 +95,8 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                     displayZoomControls = false
                 }
 
-                webChromeClient = MyWebChromeClient()
                 val parentViewModel = internalPaymentViewModelProvider.get<InternalPaymentViewModel>()
+                webChromeClient = MyWebChromeClient(parentViewModel)
                 webViewClient = MyWebViewClient(parentViewModel)
 
                 addJavascriptInterface(
@@ -257,7 +257,9 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    private inner class MyWebChromeClient : WebChromeClient() {
+    private inner class MyWebChromeClient(
+        private val parentViewModel: InternalPaymentViewModel
+    ) : WebChromeClient() {
         override fun onJsAlert(
             view: WebView?,
             url: String?,
@@ -320,16 +322,47 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             }
 
             webView.webChromeClient = WebChromeClient()
-            webView.webViewClient = WebViewClient()
-
-            // currently, we only support one extra web view at a time
-            replaceExtraWebView(webView)
+            webView.webViewClient = ExtraWebViewInitialLoadClient(parentViewModel)
 
             val transport = resultMsg.obj as WebViewTransport
             transport.webView = webView
             resultMsg.sendToTarget()
 
+            // Note: the extra WebView is not shown here, but in
+            // ExtraWebViewInitialLoadClient.shouldOverrideUrlLoading
+
             return true
+        }
+    }
+
+    private inner class ExtraWebViewInitialLoadClient(
+        private val parentViewModel: InternalPaymentViewModel
+    ) : WebViewClient() {
+        override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+            return shouldOverrideUrlLoading(view, url?.let(Uri::parse))
+        }
+
+        @TargetApi(Build.VERSION_CODES.N)
+        override fun shouldOverrideUrlLoading(
+            view: WebView?,
+            request: WebResourceRequest?
+        ): Boolean {
+            return shouldOverrideUrlLoading(view, request?.url)
+        }
+
+        private fun shouldOverrideUrlLoading(view: WebView?, uri: Uri?): Boolean {
+            // Only intercept the initial load of an extra WebView
+            view?.webViewClient = WebViewClient()
+
+            val override = uri == null || parentViewModel.overrideNavigation(uri)
+
+            // If the initial load was not overridden, only then actually show the extra WebView
+            if (!override) {
+                // currently, we only support one extra web view at a time
+                replaceExtraWebView(view)
+            }
+
+            return override
         }
     }
 }
