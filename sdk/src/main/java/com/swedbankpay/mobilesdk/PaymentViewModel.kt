@@ -155,11 +155,11 @@ class PaymentViewModel : AndroidViewModel {
         /**
          * Called when the user clicks on the Terms of Service link in the Payment Menu.
          *
-         * @param paymentFragment the [PaymentFragment] the user is interacting with
+         * @param paymentViewModel the [PaymentViewModel] of the [PaymentFragment] the user is interacting with
          * @param url the Terms of Service url
          * @return `true` if you handled the event yourself and wish to disable the default behaviour, `false` if you want to let the SDK show the ToS web page.
          */
-        fun onTermsOfServiceClick(paymentFragment: PaymentFragment, url: String): Boolean
+        fun onTermsOfServiceClick(paymentViewModel: PaymentViewModel, url: String): Boolean
     }
 
     private val internalVm = MutableLiveData<InternalPaymentViewModel?>()

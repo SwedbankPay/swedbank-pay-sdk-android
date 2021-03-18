@@ -1,7 +1,6 @@
 package com.swedbankpay.mobilesdk
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.LayoutInflater
@@ -17,7 +16,6 @@ import com.swedbankpay.mobilesdk.PaymentFragment.ArgumentsBuilder
 import com.swedbankpay.mobilesdk.PaymentFragment.Companion.ARG_VIEW_MODEL_PROVIDER_KEY
 import com.swedbankpay.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
-import com.swedbankpay.mobilesdk.internal.ToSActivity
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
 import java.io.Serializable
 
@@ -353,7 +351,6 @@ open class PaymentFragment : Fragment() {
         vm.observeLoading()
         vm.observeCurrentPage()
         vm.observeMessage()
-        vm.observeTermsOfServicePressed()
         publicVm.observeRetryPreviousPressed()
     }
 
@@ -421,12 +418,6 @@ open class PaymentFragment : Fragment() {
         swipeLayout.isEnabled = loading || vm.retryActionAvailable.value == true
     }
 
-    private fun InternalPaymentViewModel.observeTermsOfServicePressed() {
-        termsOfServiceUrl.observe(this@PaymentFragment, { url ->
-            url?.let(::onTermsOfServiceClick)
-        })
-    }
-
     private fun PaymentViewModel.observeRetryPreviousPressed() {
         onRetryPreviousAction.observe(this@PaymentFragment, {
             if (it != null) {
@@ -446,20 +437,6 @@ open class PaymentFragment : Fragment() {
                 val userData = get(ARG_USER_DATA)
                 val useExternal = getBoolean(ARG_USE_BROWSER)
                 vm.start(useCheckin, consumer, paymentOrder, userData, useExternal)
-            }
-        }
-    }
-
-    private fun onTermsOfServiceClick(url: String) {
-        val handled = publicVm.onTermsOfServiceClickListener
-            ?.onTermsOfServiceClick(this, url) == true
-
-        if (!handled) {
-            context?.let {
-                it.startActivity(
-                    Intent(it, ToSActivity::class.java)
-                        .putExtra(ToSActivity.EXTRA_URL, url)
-                )
             }
         }
     }
