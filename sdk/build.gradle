@@ -36,19 +36,6 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
-    dokka {
-        configuration {
-            sourceLink {
-                path = 'sdk/src/main/java'
-                url = 'https://github.com/SwedbankPay/swedbank-pay-sdk-android/blob/dev/sdk/src/main/java'
-                lineSuffix = '#L'
-            }
-            externalDocumentationLink {
-                url = new URL("https://developer.android.com/reference/")
-                packageListUrl = new URL("https://developer.android.com/reference/androidx/package-list")
-            }
-        }
-    }
 
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
@@ -114,14 +101,8 @@ dependencies {
     androidTestImplementation 'com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0'
 }
 
-task dokkaGithub(type: org.jetbrains.dokka.gradle.DokkaTask) {
-    outputFormat = 'gfm'
-    outputDirectory ="$projectDir/dokka_github"
-}
-
-task dokkaJavadoc(type: org.jetbrains.dokka.gradle.DokkaTask) {
-    outputFormat = 'javadoc'
-    outputDirectory = "$buildDir/javadoc"
+tasks.dokkaGfm.configure {
+    outputDirectory = new File(projectDir, 'dokka_github')
 }
 
 task sourceJar(type: Jar) {
@@ -130,7 +111,7 @@ task sourceJar(type: Jar) {
 }
 
 task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
-    from "$buildDir/javadoc"
+    from dokkaJavadoc.outputDirectory
     archiveClassifier.set('javadoc')
 }
 
