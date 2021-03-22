@@ -1,54 +1,67 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [Problem](./index.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[Problem](index.md)
 
-# Problem
 
-`open class Problem : `[`Parcelable`](https://developer.android.com/reference/android/os/Parcelable.html)`, `[`Serializable`](https://docs.oracle.com/javase/6/docs/api/java/io/Serializable.html)
+
+# Problem  
+ [androidJvm] open class [Problem](index.md) : [Parcelable](https://developer.android.com/reference/kotlin/android/os/Parcelable.html), [Serializable](https://developer.android.com/reference/kotlin/java/io/Serializable.html)
 
 An RFC 7807 HTTP API Problem Details object.
 
-The SDK defines a subclass of Problem for problems expected to be
-reported from a server implementing the Merchant Backend API.
 
-There is a [subclass](../../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-problem/index.md)
-for problems expected to be reported by a server implementing the
-Merchant Backend API.
 
-IMPORTANT: Problem synchronizes on itself, so you should never synchronize
-on a Problem object yourself.
+The SDK defines a subclass of Problem for problems expected to be reported from a server implementing the Merchant Backend API.
 
-### Constructors
 
-| Name | Summary |
+
+There is a [subclass](../../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-problem/index.md) for problems expected to be reported by a server implementing the Merchant Backend API.
+
+
+
+IMPORTANT: Problem synchronizes on itself, so you should never synchronize on a Problem object yourself.
+
+   
+
+
+## Constructors  
+  
+| | |
 |---|---|
-| [&lt;init&gt;](-init-.md) | Interprets a Gson JsonObject as a Problem.`Problem(jsonObject: JsonObject)`<br>Parses a Problem from a String.`Problem(raw: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`)``Problem(parcel: `[`Parcel`](https://developer.android.com/reference/android/os/Parcel.html)`)` |
+| <a name="com.swedbankpay.mobilesdk/Problem/Problem/#com.google.gson.JsonObject/PointingToDeclaration/"></a>[Problem](-problem.md)| <a name="com.swedbankpay.mobilesdk/Problem/Problem/#com.google.gson.JsonObject/PointingToDeclaration/"></a> [androidJvm] fun [Problem](-problem.md)(jsonObject: )Interprets a Gson JsonObject as a Problem.   <br>|
+| <a name="com.swedbankpay.mobilesdk/Problem/Problem/#kotlin.String/PointingToDeclaration/"></a>[Problem](-problem.md)| <a name="com.swedbankpay.mobilesdk/Problem/Problem/#kotlin.String/PointingToDeclaration/"></a> [androidJvm] fun [Problem](-problem.md)(raw: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html))Parses a Problem from a String.   <br>|
+| <a name="com.swedbankpay.mobilesdk/Problem/Problem/#android.os.Parcel/PointingToDeclaration/"></a>[Problem](-problem.md)| <a name="com.swedbankpay.mobilesdk/Problem/Problem/#android.os.Parcel/PointingToDeclaration/"></a> [androidJvm] fun [Problem](-problem.md)(parcel: [Parcel](https://developer.android.com/reference/kotlin/android/os/Parcel.html))   <br>|
 
-### Properties
 
-| Name | Summary |
+## Types  
+  
+|  Name |  Summary | 
 |---|---|
-| [detail](detail.md) | RFC 7807 default property: a detailed explanation of the problem`val detail: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [instance](instance.md) | RFC 7807 default property: a URI reference that identifies the specific occurrence of the problem`val instance: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [jsonObject](json-object.md) | The raw RFC 7807 object parsed as a Gson JsonObject.`val jsonObject: JsonObject` |
-| [raw](raw.md) | The raw RFC 7807 object.`val raw: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
-| [status](status.md) | RFC 7807 default property: the HTTP status code`val status: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`?` |
-| [title](title.md) | RFC 7807 default property: a short summary of the problem.`val title: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [type](type.md) | RFC 7807 default property: a URI reference that identifies the problem type.`val type: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
+| <a name="com.swedbankpay.mobilesdk/Problem.Companion///PointingToDeclaration/"></a>[Companion](-companion/index.md)| <a name="com.swedbankpay.mobilesdk/Problem.Companion///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>object [Companion](-companion/index.md)  <br><br><br>|
 
-### Functions
 
-| Name | Summary |
+## Functions  
+  
+|  Name |  Summary | 
 |---|---|
-| [describeContents](describe-contents.md) | `open fun describeContents(): `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html) |
-| [writeToParcel](write-to-parcel.md) | `open fun writeToParcel(parcel: `[`Parcel`](https://developer.android.com/reference/android/os/Parcel.html)`, flags: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
+| <a name="com.swedbankpay.mobilesdk/Problem/describeContents/#/PointingToDeclaration/"></a>[describeContents](describe-contents.md)| <a name="com.swedbankpay.mobilesdk/Problem/describeContents/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [describeContents](describe-contents.md)(): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/Problem/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[writeToParcel](write-to-parcel.md)| <a name="com.swedbankpay.mobilesdk/Problem/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [writeToParcel](write-to-parcel.md)(parcel: [Parcel](https://developer.android.com/reference/kotlin/android/os/Parcel.html), flags: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html))  <br><br><br>|
 
-### Companion Object Properties
 
-| Name | Summary |
+## Properties  
+  
+|  Name |  Summary | 
 |---|---|
-| [CREATOR](-c-r-e-a-t-o-r.md) | `val CREATOR: `[`Creator`](https://developer.android.com/reference/android/os/Parcelable/Creator.html)`<`[`Problem`](./index.md)`>` |
+| <a name="com.swedbankpay.mobilesdk/Problem/detail/#/PointingToDeclaration/"></a>[detail](detail.md)| <a name="com.swedbankpay.mobilesdk/Problem/detail/#/PointingToDeclaration/"></a> [androidJvm] val [detail](detail.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?RFC 7807 default property: a detailed explanation of the problem   <br>|
+| <a name="com.swedbankpay.mobilesdk/Problem/instance/#/PointingToDeclaration/"></a>[instance](instance.md)| <a name="com.swedbankpay.mobilesdk/Problem/instance/#/PointingToDeclaration/"></a> [androidJvm] val [instance](instance.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?RFC 7807 default property: a URI reference that identifies the specific occurrence of the problem   <br>|
+| <a name="com.swedbankpay.mobilesdk/Problem/jsonObject/#/PointingToDeclaration/"></a>[jsonObject](json-object.md)| <a name="com.swedbankpay.mobilesdk/Problem/jsonObject/#/PointingToDeclaration/"></a> [androidJvm] val [jsonObject](json-object.md): The raw RFC 7807 object parsed as a Gson JsonObject.   <br>|
+| <a name="com.swedbankpay.mobilesdk/Problem/raw/#/PointingToDeclaration/"></a>[raw](raw.md)| <a name="com.swedbankpay.mobilesdk/Problem/raw/#/PointingToDeclaration/"></a> [androidJvm] val [raw](raw.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)The raw RFC 7807 object.   <br>|
+| <a name="com.swedbankpay.mobilesdk/Problem/status/#/PointingToDeclaration/"></a>[status](status.md)| <a name="com.swedbankpay.mobilesdk/Problem/status/#/PointingToDeclaration/"></a> [androidJvm] val [status](status.md): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)?RFC 7807 default property: the HTTP status codeThis should always be the same as the actual HTTP status code reported by the server.   <br>|
+| <a name="com.swedbankpay.mobilesdk/Problem/title/#/PointingToDeclaration/"></a>[title](title.md)| <a name="com.swedbankpay.mobilesdk/Problem/title/#/PointingToDeclaration/"></a> [androidJvm] val [title](title.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?RFC 7807 default property: a short summary of the problem.   <br>|
+| <a name="com.swedbankpay.mobilesdk/Problem/type/#/PointingToDeclaration/"></a>[type](type.md)| <a name="com.swedbankpay.mobilesdk/Problem/type/#/PointingToDeclaration/"></a> [androidJvm] val [type](type.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)RFC 7807 default property: a URI reference that identifies the problem type.   <br>|
 
-### Inheritors
 
-| Name | Summary |
-|---|---|
-| [MerchantBackendProblem](../../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-problem/index.md) | Base class for any problems encountered in the payment.`sealed class MerchantBackendProblem : `[`Problem`](./index.md) |
+## Inheritors  
+  
+|  Name | 
+|---|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem///PointingToDeclaration/"></a>[MerchantBackendProblem](../../com.swedbankpay.mobilesdk.merchantbackend/-merchant-backend-problem/index.md)|
+

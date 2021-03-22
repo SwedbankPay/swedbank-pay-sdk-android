@@ -1,5 +1,19 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PaymentOrder](index.md) / [payer](./payer.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PaymentOrder](index.md)/[payer](payer.md)
 
-# payer
 
-`val payer: `[`PaymentOrderPayer`](../-payment-order-payer/index.md)`?`
+
+# payer  
+[androidJvm]  
+Content  
+@(value = payer)  
+  
+val [payer](payer.md): [PaymentOrderPayer](../-payment-order-payer/index.md)? = null  
+More info  
+
+
+Information about the payer
+
+  
+
+
+

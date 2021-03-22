@@ -1,22 +1,50 @@
-[sdk](../../../../index.md) / [com.swedbankpay.mobilesdk.merchantbackend](../../../index.md) / [MerchantBackendProblem](../../index.md) / [Server](../index.md) / [SwedbankPay](./index.md)
+//[sdk](../../../../../index.md)/[com.swedbankpay.mobilesdk.merchantbackend](../../../index.md)/[MerchantBackendProblem](../../index.md)/[Server](../index.md)/[SwedbankPay](index.md)
 
-# SwedbankPay
 
-`sealed class SwedbankPay : Server, `[`SwedbankPayProblem`](../../../-swedbank-pay-problem/index.md)
 
-Base class for [Server](../index.md) problems defined by the Swedbank Pay backend.
-[https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems](https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems)
+# SwedbankPay  
+ [androidJvm] sealed class [SwedbankPay](index.md) : [MerchantBackendProblem.Server](../index.md), [SwedbankPayProblem](../../../-swedbank-pay-problem/index.md)
 
-### Types
+Base class for [Server](../index.md) problems defined by the Swedbank Pay backend. https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems
 
-| Name | Summary |
+   
+
+
+## Types  
+  
+|  Name |  Summary | 
 |---|---|
-| [ConfigurationError](-configuration-error/index.md) | There is a problem with your merchant configuration.`class ConfigurationError : SwedbankPay` |
-| [SystemError](-system-error/index.md) | General internal error in Swedbank Pay systems.`class SystemError : SwedbankPay` |
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay.ConfigurationError///PointingToDeclaration/"></a>[ConfigurationError](-configuration-error/index.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay.ConfigurationError///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>class [ConfigurationError](-configuration-error/index.md)(**jsonObject**: ) : [MerchantBackendProblem.Server.SwedbankPay](index.md)  <br>More info  <br>There is a problem with your merchant configuration.  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay.SystemError///PointingToDeclaration/"></a>[SystemError](-system-error/index.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay.SystemError///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>class [SystemError](-system-error/index.md)(**jsonObject**: ) : [MerchantBackendProblem.Server.SwedbankPay](index.md)  <br>More info  <br>General internal error in Swedbank Pay systems.  <br><br><br>|
 
-### Properties
 
-| Name | Summary |
+## Functions  
+  
+|  Name |  Summary | 
 |---|---|
-| [action](action.md) | Suggested action to take to recover from the error.`open val action: `[`SwedbankPayAction`](../../../-swedbank-pay-action.md)`?` |
-| [problems](problems.md) | Array of problem detail objects`open val problems: `[`List`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)`<`[`SwedbankPaySubproblem`](../../../-swedbank-pay-subproblem/index.md)`>` |
+| <a name="com.swedbankpay.mobilesdk/Problem/describeContents/#/PointingToDeclaration/"></a>[describeContents](../../../../com.swedbankpay.mobilesdk/-problem/describe-contents.md)| <a name="com.swedbankpay.mobilesdk/Problem/describeContents/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [describeContents](../../../../com.swedbankpay.mobilesdk/-problem/describe-contents.md)(): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[writeToParcel](../../write-to-parcel.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [writeToParcel](../../write-to-parcel.md)(parcel: [Parcel](https://developer.android.com/reference/kotlin/android/os/Parcel.html), flags: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html))  <br><br><br>|
+
+
+## Properties  
+  
+|  Name |  Summary | 
+|---|---|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/action/#/PointingToDeclaration/"></a>[action](action.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/action/#/PointingToDeclaration/"></a> [androidJvm] open override val [action](action.md): [SwedbankPayAction](../../../index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FSwedbankPayAction%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F2101262426)?Suggested action to take to recover from the error.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/detail/#/PointingToDeclaration/"></a>[detail](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Fdetail%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/detail/#/PointingToDeclaration/"></a> [androidJvm] val [detail](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Fdetail%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?RFC 7807 default property: a detailed explanation of the problem   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/instance/#/PointingToDeclaration/"></a>[instance](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Finstance%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/instance/#/PointingToDeclaration/"></a> [androidJvm] val [instance](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Finstance%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?RFC 7807 default property: a URI reference that identifies the specific occurrence of the problem   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/jsonObject/#/PointingToDeclaration/"></a>[jsonObject](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2FjsonObject%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/jsonObject/#/PointingToDeclaration/"></a> [androidJvm] val [jsonObject](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2FjsonObject%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): The raw RFC 7807 object parsed as a Gson JsonObject.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/problems/#/PointingToDeclaration/"></a>[problems](problems.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/problems/#/PointingToDeclaration/"></a> [androidJvm] open override val [problems](problems.md): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)<[SwedbankPaySubproblem](../../../-swedbank-pay-subproblem/index.md)>Array of problem detail objects   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/raw/#/PointingToDeclaration/"></a>[raw](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Fraw%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/raw/#/PointingToDeclaration/"></a> [androidJvm] val [raw](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Fraw%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)The raw RFC 7807 object.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/status/#/PointingToDeclaration/"></a>[status](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Fstatus%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/status/#/PointingToDeclaration/"></a> [androidJvm] val [status](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Fstatus%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)?RFC 7807 default property: the HTTP status codeThis should always be the same as the actual HTTP status code reported by the server.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/title/#/PointingToDeclaration/"></a>[title](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Ftitle%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/title/#/PointingToDeclaration/"></a> [androidJvm] val [title](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Ftitle%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?RFC 7807 default property: a short summary of the problem.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/type/#/PointingToDeclaration/"></a>[type](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Ftype%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay/type/#/PointingToDeclaration/"></a> [androidJvm] val [type](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Server.SwedbankPay%2Ftype%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)RFC 7807 default property: a URI reference that identifies the problem type.   <br>|
+
+
+## Inheritors  
+  
+|  Name | 
+|---|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay.SystemError///PointingToDeclaration/"></a>[MerchantBackendProblem.Server.SwedbankPay](-system-error/index.md)|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Server.SwedbankPay.ConfigurationError///PointingToDeclaration/"></a>[MerchantBackendProblem.Server.SwedbankPay](-configuration-error/index.md)|
+

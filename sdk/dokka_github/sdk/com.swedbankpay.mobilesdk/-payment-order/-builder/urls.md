@@ -1,5 +1,11 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [PaymentOrder](../index.md) / [Builder](index.md) / [urls](./urls.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[PaymentOrder](../index.md)/[Builder](index.md)/[urls](urls.md)
 
-# urls
 
-`fun urls(urls: `[`PaymentOrderUrls`](../../-payment-order-urls/index.md)`): Builder`
+
+# urls  
+[androidJvm]  
+Content  
+fun [urls](urls.md)(urls: [PaymentOrderUrls](../../-payment-order-urls/index.md)): [PaymentOrder.Builder](index.md)  
+
+
+

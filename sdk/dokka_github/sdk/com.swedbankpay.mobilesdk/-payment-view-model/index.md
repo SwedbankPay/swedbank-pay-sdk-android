@@ -1,40 +1,46 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PaymentViewModel](./index.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PaymentViewModel](index.md)
 
-# PaymentViewModel
 
-`class PaymentViewModel : AndroidViewModel`
 
-ViewModel
-for communicating with a [PaymentFragment](../-payment-fragment/index.md).
+# PaymentViewModel  
+ [androidJvm] class [PaymentViewModel](index.md) : [AndroidViewModel](https://developer.android.com/reference/kotlin/androidx/lifecycle/AndroidViewModel.html)
+
+<a href="https://developer.android.com/reference/androidx/lifecycle/ViewModel" target="_blank">ViewModel</a> for communicating with a [PaymentFragment](../-payment-fragment/index.md).
+
+
 
 Get a PaymentViewModel from the containing Activity (but see notes at [PaymentFragment](../-payment-fragment/index.md))
 
-```
-    ViewModelProviders.of(activity).get(PaymentViewModel::class.java)
-```
+    ViewModelProviders.of(activity).get(PaymentViewModel::class.java)   
 
-### Types
 
-| Name | Summary |
+## Types  
+  
+|  Name |  Summary | 
 |---|---|
-| [OnTermsOfServiceClickListener](-on-terms-of-service-click-listener/index.md) | `interface OnTermsOfServiceClickListener` |
-| [RichState](-rich-state/index.md) | Contains the state of the payment process and possible associated data.`class RichState` |
-| [State](-state/index.md) | State of a payment process`enum class State` |
+| <a name="com.swedbankpay.mobilesdk/PaymentViewModel.OnTermsOfServiceClickListener///PointingToDeclaration/"></a>[OnTermsOfServiceClickListener](-on-terms-of-service-click-listener/index.md)| <a name="com.swedbankpay.mobilesdk/PaymentViewModel.OnTermsOfServiceClickListener///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun fun interface [OnTermsOfServiceClickListener](-on-terms-of-service-click-listener/index.md)  <br>More info  <br>Interface you can implement to be notified when the user clicks on the Terms of Service link in the Payment Menu, and optionally override the behaviour.  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentViewModel.RichState///PointingToDeclaration/"></a>[RichState](-rich-state/index.md)| <a name="com.swedbankpay.mobilesdk/PaymentViewModel.RichState///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>class [RichState](-rich-state/index.md)  <br>More info  <br>Contains the state of the payment process and possible associated data.  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentViewModel.State///PointingToDeclaration/"></a>[State](-state/index.md)| <a name="com.swedbankpay.mobilesdk/PaymentViewModel.State///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>enum [State](-state/index.md) : [Enum](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html)<[PaymentViewModel.State](-state/index.md)>   <br>More info  <br>State of a payment process  <br><br><br>|
 
-### Properties
 
-| Name | Summary |
+## Functions  
+  
+|  Name |  Summary | 
 |---|---|
-| [richState](rich-state.md) | The current state and associated data of the [PaymentFragment](../-payment-fragment/index.md) corresponding to this [PaymentViewModel](./index.md).`val richState: LiveData<RichState!>` |
-| [showingPaymentMenu](showing-payment-menu.md) | `true` if the payment menu is currently shown in the [PaymentFragment](../-payment-fragment/index.md), `false` otherwise.`val showingPaymentMenu: LiveData<`[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)`!>` |
-| [state](state.md) | The current state of the [PaymentFragment](../-payment-fragment/index.md) corresponding to this [PaymentViewModel](./index.md).`val state: LiveData<State!>` |
+| <a name="androidx.lifecycle/ViewModel/clear/#/PointingToDeclaration/"></a>[clear](index.md#%5Bandroidx.lifecycle%2FViewModel%2Fclear%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)| <a name="androidx.lifecycle/ViewModel/clear/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>@[MainThread](https://developer.android.com/reference/kotlin/androidx/annotation/MainThread.html)()  <br>  <br>fun [clear](index.md#%5Bandroidx.lifecycle%2FViewModel%2Fclear%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)()  <br><br><br>|
+| <a name="androidx.lifecycle/AndroidViewModel/getApplication/#/PointingToDeclaration/"></a>[getApplication](index.md#%5Bandroidx.lifecycle%2FAndroidViewModel%2FgetApplication%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)| <a name="androidx.lifecycle/AndroidViewModel/getApplication/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>@[NonNull](https://developer.android.com/reference/kotlin/androidx/annotation/NonNull.html)()  <br>  <br>open fun <[T](index.md#%5Bandroidx.lifecycle%2FAndroidViewModel%2FgetApplication%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426) : [Application](https://developer.android.com/reference/kotlin/android/app/Application.html)> [getApplication](index.md#%5Bandroidx.lifecycle%2FAndroidViewModel%2FgetApplication%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)(): [T](index.md#%5Bandroidx.lifecycle%2FAndroidViewModel%2FgetApplication%2F%23%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)  <br><br><br>|
+| <a name="androidx.lifecycle/ViewModel/getTag/#kotlin.String/PointingToDeclaration/"></a>[getTag](index.md#%5Bandroidx.lifecycle%2FViewModel%2FgetTag%2F%23kotlin.String%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)| <a name="androidx.lifecycle/ViewModel/getTag/#kotlin.String/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open fun <[T](index.md#%5Bandroidx.lifecycle%2FViewModel%2FgetTag%2F%23kotlin.String%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426) : [Any](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)> [getTag](index.md#%5Bandroidx.lifecycle%2FViewModel%2FgetTag%2F%23kotlin.String%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)(p0: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)): [T](index.md#%5Bandroidx.lifecycle%2FViewModel%2FgetTag%2F%23kotlin.String%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/retryPreviousAction/#/PointingToDeclaration/"></a>[retryPreviousAction](retry-previous-action.md)| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/retryPreviousAction/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [retryPreviousAction](retry-previous-action.md)()  <br>More info  <br>If the current state is [RETRYABLE_ERROR](-state/-r-e-t-r-y-a-b-l-e_-e-r-r-o-r/index.md), attempts the previous action again.  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/setOnTermsOfServiceClickListener/#androidx.lifecycle.LifecycleOwner?#com.swedbankpay.mobilesdk.PaymentViewModel.OnTermsOfServiceClickListener?/PointingToDeclaration/"></a>[setOnTermsOfServiceClickListener](set-on-terms-of-service-click-listener.md)| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/setOnTermsOfServiceClickListener/#androidx.lifecycle.LifecycleOwner?#com.swedbankpay.mobilesdk.PaymentViewModel.OnTermsOfServiceClickListener?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [setOnTermsOfServiceClickListener](set-on-terms-of-service-click-listener.md)(lifecycleOwner: [LifecycleOwner](https://developer.android.com/reference/kotlin/androidx/lifecycle/LifecycleOwner.html)?, listener: [PaymentViewModel.OnTermsOfServiceClickListener](-on-terms-of-service-click-listener/index.md)?)  <br>More info  <br>Set an OnTermsOfServiceClickListener to be notified when the user clicks on the Terms of Service link in the Payment Menu.  <br><br><br>|
+| <a name="androidx.lifecycle/ViewModel/setTagIfAbsent/#kotlin.String#TypeParam(bounds=[kotlin.Any])/PointingToDeclaration/"></a>[setTagIfAbsent](index.md#%5Bandroidx.lifecycle%2FViewModel%2FsetTagIfAbsent%2F%23kotlin.String%23TypeParam%28bounds%3D%5Bkotlin.Any%5D%29%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)| <a name="androidx.lifecycle/ViewModel/setTagIfAbsent/#kotlin.String#TypeParam(bounds=[kotlin.Any])/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open fun <[T](index.md#%5Bandroidx.lifecycle%2FViewModel%2FsetTagIfAbsent%2F%23kotlin.String%23TypeParam%28bounds%3D%5Bkotlin.Any%5D%29%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426) : [Any](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)> [setTagIfAbsent](index.md#%5Bandroidx.lifecycle%2FViewModel%2FsetTagIfAbsent%2F%23kotlin.String%23TypeParam%28bounds%3D%5Bkotlin.Any%5D%29%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)(p0: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), p1: [T](index.md#%5Bandroidx.lifecycle%2FViewModel%2FsetTagIfAbsent%2F%23kotlin.String%23TypeParam%28bounds%3D%5Bkotlin.Any%5D%29%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)): [T](index.md#%5Bandroidx.lifecycle%2FViewModel%2FsetTagIfAbsent%2F%23kotlin.String%23TypeParam%28bounds%3D%5Bkotlin.Any%5D%29%2FPointingToDeclaration%2F%5D%2FFunctions%2F2101262426)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/updatePaymentOrder/#kotlin.Any?/PointingToDeclaration/"></a>[updatePaymentOrder](update-payment-order.md)| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/updatePaymentOrder/#kotlin.Any?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [updatePaymentOrder](update-payment-order.md)(updateInfo: [Any](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)?)  <br>More info  <br>Attempts to update the ongoing payment order.  <br><br><br>|
 
-### Functions
 
-| Name | Summary |
+## Properties  
+  
+|  Name |  Summary | 
 |---|---|
-| [&lt;no name provided&gt;](-no name provided-.md) | Interface you can implement to be notified when the user clicks on the Terms of Service link in the Payment Menu, and optionally override the behaviour.`fun <no name provided>(): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
-| [onCleared](on-cleared.md) | `fun onCleared(): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
-| [retryPreviousAction](retry-previous-action.md) | If the current state is [RETRYABLE_ERROR](-state/-r-e-t-r-y-a-b-l-e_-e-r-r-o-r/index.md), attempts the previous action again. This call transitions the state to [IN_PROGRESS](-state/-i-n_-p-r-o-g-r-e-s-s/index.md).`fun retryPreviousAction(): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
-| [setOnTermsOfServiceClickListener](set-on-terms-of-service-click-listener.md) | Set an OnTermsOfServiceClickListener to be notified when the user clicks on the Terms of Service link in the Payment Menu.`fun setOnTermsOfServiceClickListener(lifecycleOwner: LifecycleOwner?, listener: OnTermsOfServiceClickListener?): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
-| [updatePaymentOrder](update-payment-order.md) | Attempts to update the ongoing payment order. The meaning of `updateInfo` is up to your  [Configuration.updatePaymentOrder](../-configuration/update-payment-order.md) implementation.`fun updatePaymentOrder(updateInfo: `[`Any`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)`?): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
+| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/richState/#/PointingToDeclaration/"></a>[richState](rich-state.md)| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/richState/#/PointingToDeclaration/"></a> [androidJvm] val [richState](rich-state.md): [LiveData](https://developer.android.com/reference/kotlin/androidx/lifecycle/LiveData.html)<[PaymentViewModel.RichState](-rich-state/index.md)>The current state and associated data of the [PaymentFragment](../-payment-fragment/index.md) corresponding to this [PaymentViewModel](index.md).   <br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/showingPaymentMenu/#/PointingToDeclaration/"></a>[showingPaymentMenu](showing-payment-menu.md)| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/showingPaymentMenu/#/PointingToDeclaration/"></a> [androidJvm] val [showingPaymentMenu](showing-payment-menu.md): [LiveData](https://developer.android.com/reference/kotlin/androidx/lifecycle/LiveData.html)<[Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)>true if the payment menu is currently shown in the [PaymentFragment](../-payment-fragment/index.md), false otherwise.   <br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/state/#/PointingToDeclaration/"></a>[state](state.md)| <a name="com.swedbankpay.mobilesdk/PaymentViewModel/state/#/PointingToDeclaration/"></a> [androidJvm] val [state](state.md): [LiveData](https://developer.android.com/reference/kotlin/androidx/lifecycle/LiveData.html)<[PaymentViewModel.State](-state/index.md)>The current state of the [PaymentFragment](../-payment-fragment/index.md) corresponding to this [PaymentViewModel](index.md).   <br>|
+

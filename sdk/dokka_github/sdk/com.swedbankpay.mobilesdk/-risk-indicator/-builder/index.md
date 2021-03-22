@@ -1,24 +1,21 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [RiskIndicator](../index.md) / [Builder](./index.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[RiskIndicator](../index.md)/[Builder](index.md)
 
-# Builder
 
-`class Builder`
 
-### Constructors
+# Builder  
+ [androidJvm] class [Builder](index.md)   
 
-| Name | Summary |
+
+## Functions  
+  
+|  Name |  Summary | 
 |---|---|
-| [&lt;init&gt;](-init-.md) | `Builder()` |
+| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/build/#/PointingToDeclaration/"></a>[build](build.md)| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/build/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [build](build.md)(): [RiskIndicator](../index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/deliveryEmailAddress/#kotlin.String/PointingToDeclaration/"></a>[deliveryEmailAddress](delivery-email-address.md)| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/deliveryEmailAddress/#kotlin.String/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [deliveryEmailAddress](delivery-email-address.md)(address: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)): [RiskIndicator.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/deliveryTimeFrameIndicator/#com.swedbankpay.mobilesdk.DeliveryTimeFrameIndicator/PointingToDeclaration/"></a>[deliveryTimeFrameIndicator](delivery-time-frame-indicator.md)| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/deliveryTimeFrameIndicator/#com.swedbankpay.mobilesdk.DeliveryTimeFrameIndicator/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [deliveryTimeFrameIndicator](delivery-time-frame-indicator.md)(indicator: [DeliveryTimeFrameIndicator](../../-delivery-time-frame-indicator/index.md)): [RiskIndicator.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/giftCardPurchase/#kotlin.Boolean/PointingToDeclaration/"></a>[giftCardPurchase](gift-card-purchase.md)| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/giftCardPurchase/#kotlin.Boolean/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [giftCardPurchase](gift-card-purchase.md)(isGiftCardPurchase: [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)): [RiskIndicator.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/preOrderDate/#kotlin.String/PointingToDeclaration/"></a>[preOrderDate](pre-order-date.md)| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/preOrderDate/#kotlin.String/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [preOrderDate](pre-order-date.md)(date: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)): [RiskIndicator.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/preOrderPurchaseIndicator/#com.swedbankpay.mobilesdk.PreOrderPurchaseIndicator/PointingToDeclaration/"></a>[preOrderPurchaseIndicator](pre-order-purchase-indicator.md)| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/preOrderPurchaseIndicator/#com.swedbankpay.mobilesdk.PreOrderPurchaseIndicator/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [preOrderPurchaseIndicator](pre-order-purchase-indicator.md)(indicator: [PreOrderPurchaseIndicator](../../-pre-order-purchase-indicator/index.md)): [RiskIndicator.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/reOrderPurchaseIndicator/#com.swedbankpay.mobilesdk.ReOrderPurchaseIndicator/PointingToDeclaration/"></a>[reOrderPurchaseIndicator](re-order-purchase-indicator.md)| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/reOrderPurchaseIndicator/#com.swedbankpay.mobilesdk.ReOrderPurchaseIndicator/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [reOrderPurchaseIndicator](re-order-purchase-indicator.md)(indicator: [ReOrderPurchaseIndicator](../../-re-order-purchase-indicator/index.md)): [RiskIndicator.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/shipIndicator/#com.swedbankpay.mobilesdk.ShipIndicator/PointingToDeclaration/"></a>[shipIndicator](ship-indicator.md)| <a name="com.swedbankpay.mobilesdk/RiskIndicator.Builder/shipIndicator/#com.swedbankpay.mobilesdk.ShipIndicator/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [shipIndicator](ship-indicator.md)(indicator: [ShipIndicator](../../-ship-indicator/index.md)): [RiskIndicator.Builder](index.md)  <br><br><br>|
 
-### Functions
-
-| Name | Summary |
-|---|---|
-| [build](build.md) | `fun build(): `[`RiskIndicator`](../index.md) |
-| [deliveryEmailAddress](delivery-email-address.md) | `fun deliveryEmailAddress(address: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): Builder` |
-| [deliveryTimeFrameIndicator](delivery-time-frame-indicator.md) | `fun deliveryTimeFrameIndicator(indicator: `[`DeliveryTimeFrameIndicator`](../../-delivery-time-frame-indicator/index.md)`): Builder` |
-| [giftCardPurchase](gift-card-purchase.md) | `fun giftCardPurchase(isGiftCardPurchase: `[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)`): Builder` |
-| [preOrderDate](pre-order-date.md) | `fun preOrderDate(date: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): Builder` |
-| [preOrderPurchaseIndicator](pre-order-purchase-indicator.md) | `fun preOrderPurchaseIndicator(indicator: `[`PreOrderPurchaseIndicator`](../../-pre-order-purchase-indicator/index.md)`): Builder` |
-| [reOrderPurchaseIndicator](re-order-purchase-indicator.md) | `fun reOrderPurchaseIndicator(indicator: `[`ReOrderPurchaseIndicator`](../../-re-order-purchase-indicator/index.md)`): Builder` |
-| [shipIndicator](ship-indicator.md) | `fun shipIndicator(indicator: `[`ShipIndicator`](../../-ship-indicator/index.md)`): Builder` |

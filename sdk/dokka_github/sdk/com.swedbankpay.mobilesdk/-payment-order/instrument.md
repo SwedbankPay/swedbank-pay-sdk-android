@@ -1,5 +1,19 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PaymentOrder](index.md) / [instrument](./instrument.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PaymentOrder](index.md)/[instrument](instrument.md)
 
-# instrument
 
-`val instrument: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
+
+# instrument  
+[androidJvm]  
+Content  
+@(value = instrument)  
+  
+val [instrument](instrument.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null  
+More info  
+
+
+The payment instrument to use in instrument mode.
+
+  
+
+
+

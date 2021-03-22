@@ -1,8 +1,19 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PickUpAddress](index.md) / [countryCode](./country-code.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PickUpAddress](index.md)/[countryCode](country-code.md)
 
-# countryCode
 
-`val countryCode: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
+
+# countryCode  
+[androidJvm]  
+Content  
+@(value = countryCode)  
+  
+val [countryCode](country-code.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null  
+More info  
+
 
 Country code of the payer
+
+  
+
+
 

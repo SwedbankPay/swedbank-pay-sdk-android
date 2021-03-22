@@ -1,5 +1,13 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PaymentFragment](index.md) / [onSaveInstanceState](./on-save-instance-state.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PaymentFragment](index.md)/[onSaveInstanceState](on-save-instance-state.md)
 
-# onSaveInstanceState
 
-`@CallSuper open fun onSaveInstanceState(outState: `[`Bundle`](https://developer.android.com/reference/android/os/Bundle.html)`): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html)
+
+# onSaveInstanceState  
+[androidJvm]  
+Content  
+@[CallSuper](https://developer.android.com/reference/kotlin/androidx/annotation/CallSuper.html)()  
+  
+open override fun [onSaveInstanceState](on-save-instance-state.md)(outState: [Bundle](https://developer.android.com/reference/kotlin/android/os/Bundle.html))  
+
+
+

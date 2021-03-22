@@ -1,5 +1,23 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PaymentOrder](index.md) / [urls](./urls.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PaymentOrder](index.md)/[urls](urls.md)
 
-# urls
 
-`val urls: `[`PaymentOrderUrls`](../-payment-order-urls/index.md)
+
+# urls  
+[androidJvm]  
+Content  
+@(value = urls)  
+  
+val [urls](urls.md): [PaymentOrderUrls](../-payment-order-urls/index.md)  
+More info  
+
+
+A set of URLs related to the payment.
+
+
+
+See [PaymentOrderUrls](../-payment-order-urls/index.md) for details.
+
+  
+
+
+

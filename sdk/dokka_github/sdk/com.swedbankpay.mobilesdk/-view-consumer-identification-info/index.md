@@ -1,25 +1,30 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [ViewConsumerIdentificationInfo](./index.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[ViewConsumerIdentificationInfo](index.md)
 
-# ViewConsumerIdentificationInfo
 
-`data class ViewConsumerIdentificationInfo`
+
+# ViewConsumerIdentificationInfo  
+ [androidJvm] data class [ViewConsumerIdentificationInfo](index.md)(**webViewBaseUrl**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **viewConsumerIdentification**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html))
 
 Data required to show the checkin view.
 
-If you provide a custom [Configuration](../-configuration/index.md),
-you must get the relevant data from your services
-and return a ViewConsumerIdentificationInfo object
-in your [Configuration.postConsumers](../-configuration/post-consumers.md) method.
 
-### Constructors
 
-| Name | Summary |
+If you provide a custom [Configuration](../-configuration/index.md), you must get the relevant data from your services and return a ViewConsumerIdentificationInfo object in your [Configuration.postConsumers](../-configuration/post-consumers.md) method.
+
+   
+
+
+## Constructors  
+  
+| | |
 |---|---|
-| [&lt;init&gt;](-init-.md) | Data required to show the checkin view.`ViewConsumerIdentificationInfo(webViewBaseUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, viewConsumerIdentification: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`)` |
+| <a name="com.swedbankpay.mobilesdk/ViewConsumerIdentificationInfo/ViewConsumerIdentificationInfo/#kotlin.String?#kotlin.String/PointingToDeclaration/"></a>[ViewConsumerIdentificationInfo](-view-consumer-identification-info.md)| <a name="com.swedbankpay.mobilesdk/ViewConsumerIdentificationInfo/ViewConsumerIdentificationInfo/#kotlin.String?#kotlin.String/PointingToDeclaration/"></a> [androidJvm] fun [ViewConsumerIdentificationInfo](-view-consumer-identification-info.md)(webViewBaseUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null, viewConsumerIdentification: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html))   <br>|
 
-### Properties
 
-| Name | Summary |
+## Properties  
+  
+|  Name |  Summary | 
 |---|---|
-| [viewConsumerIdentification](view-consumer-identification.md) | The `view-consumer-identification` link from Swedbank Pay.`val viewConsumerIdentification: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
-| [webViewBaseUrl](web-view-base-url.md) | The url to use as the [android.webkit.WebView](https://developer.android.com/reference/android/webkit/WebView.html) page url when showing the checkin UI. If `null`, defaults to `about:blank`, as [documented](https://developer.android.com/reference/android/webkit/WebView.html#loadDataWithBaseURL(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)).`val webViewBaseUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
+| <a name="com.swedbankpay.mobilesdk/ViewConsumerIdentificationInfo/viewConsumerIdentification/#/PointingToDeclaration/"></a>[viewConsumerIdentification](view-consumer-identification.md)| <a name="com.swedbankpay.mobilesdk/ViewConsumerIdentificationInfo/viewConsumerIdentification/#/PointingToDeclaration/"></a> [androidJvm] val [viewConsumerIdentification](view-consumer-identification.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)The view-consumer-identification link from Swedbank Pay.   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewConsumerIdentificationInfo/webViewBaseUrl/#/PointingToDeclaration/"></a>[webViewBaseUrl](web-view-base-url.md)| <a name="com.swedbankpay.mobilesdk/ViewConsumerIdentificationInfo/webViewBaseUrl/#/PointingToDeclaration/"></a> [androidJvm] val [webViewBaseUrl](web-view-base-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = nullThe url to use as the [android.webkit.WebView](https://developer.android.com/reference/kotlin/android/webkit/WebView.html) page url when showing the checkin UI.   <br>|
+

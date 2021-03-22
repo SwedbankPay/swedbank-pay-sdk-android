@@ -1,5 +1,11 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [OrderItem](../index.md) / [Builder](index.md) / [imageUrl](./image-url.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[OrderItem](../index.md)/[Builder](index.md)/[imageUrl](image-url.md)
 
-# imageUrl
 
-`fun imageUrl(imageUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder`
+
+# imageUrl  
+[androidJvm]  
+Content  
+fun [imageUrl](image-url.md)(imageUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?): [OrderItem.Builder](index.md)  
+
+
+

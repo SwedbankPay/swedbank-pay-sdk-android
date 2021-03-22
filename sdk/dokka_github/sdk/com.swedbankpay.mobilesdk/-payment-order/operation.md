@@ -1,5 +1,19 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PaymentOrder](index.md) / [operation](./operation.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PaymentOrder](index.md)/[operation](operation.md)
 
-# operation
 
-`val operation: `[`PaymentOrderOperation`](../-payment-order-operation/index.md)
+
+# operation  
+[androidJvm]  
+Content  
+@(value = operation)  
+  
+val [operation](operation.md): [PaymentOrderOperation](../-payment-order-operation/index.md)  
+More info  
+
+
+The operation to perform
+
+  
+
+
+

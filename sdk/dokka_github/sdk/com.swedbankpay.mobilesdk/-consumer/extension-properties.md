@@ -1,8 +1,13 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [Consumer](index.md) / [extensionProperties](./extension-properties.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[Consumer](index.md)/[extensionProperties](extension-properties.md)
 
-# extensionProperties
 
-`val extensionProperties: `[`Bundle`](https://developer.android.com/reference/android/os/Bundle.html)`?`
 
-**Hide**
+# extensionProperties  
+[androidJvm]  
+Content  
+@[Transient](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-transient/index.html)()  
+  
+open override val [extensionProperties](extension-properties.md): [Bundle](https://developer.android.com/reference/kotlin/android/os/Bundle.html)? = null  
+
+
 

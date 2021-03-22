@@ -1,24 +1,21 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [PaymentOrderUrls](../index.md) / [Builder](./index.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[PaymentOrderUrls](../index.md)/[Builder](index.md)
 
-# Builder
 
-`class Builder`
 
-### Constructors
+# Builder  
+ [androidJvm] class [Builder](index.md)   
 
-| Name | Summary |
+
+## Functions  
+  
+|  Name |  Summary | 
 |---|---|
-| [&lt;init&gt;](-init-.md) | `Builder()` |
+| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/build/#/PointingToDeclaration/"></a>[build](build.md)| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/build/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [build](build.md)(): [PaymentOrderUrls](../index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/callbackUrl/#kotlin.String?/PointingToDeclaration/"></a>[callbackUrl](callback-url.md)| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/callbackUrl/#kotlin.String?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [callbackUrl](callback-url.md)(callbackUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?): [PaymentOrderUrls.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/cancelUrl/#kotlin.String?/PointingToDeclaration/"></a>[cancelUrl](cancel-url.md)| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/cancelUrl/#kotlin.String?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [cancelUrl](cancel-url.md)(cancelUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?): [PaymentOrderUrls.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/completeUrl/#kotlin.String/PointingToDeclaration/"></a>[completeUrl](complete-url.md)| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/completeUrl/#kotlin.String/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [completeUrl](complete-url.md)(completeUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)): [PaymentOrderUrls.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/fromContext/#android.content.Context#kotlin.String#kotlin.String/PointingToDeclaration/"></a>[fromContext](from-context.md)| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/fromContext/#android.content.Context#kotlin.String#kotlin.String/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>@[JvmOverloads](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html)()  <br>  <br>fun [fromContext](from-context.md)(context: [Context](https://developer.android.com/reference/kotlin/android/content/Context.html), backendUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), identifier: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) = UUID.randomUUID().toString()): [PaymentOrderUrls.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/hostUrls/#kotlin.collections.List[kotlin.String]/PointingToDeclaration/"></a>[hostUrls](host-urls.md)| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/hostUrls/#kotlin.collections.List[kotlin.String]/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [hostUrls](host-urls.md)(hostUrls: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)<[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)>): [PaymentOrderUrls.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/paymentUrl/#kotlin.String?/PointingToDeclaration/"></a>[paymentUrl](payment-url.md)| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/paymentUrl/#kotlin.String?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [paymentUrl](payment-url.md)(paymentUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?): [PaymentOrderUrls.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/termsOfServiceUrl/#kotlin.String?/PointingToDeclaration/"></a>[termsOfServiceUrl](terms-of-service-url.md)| <a name="com.swedbankpay.mobilesdk/PaymentOrderUrls.Builder/termsOfServiceUrl/#kotlin.String?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [termsOfServiceUrl](terms-of-service-url.md)(termsOfServiceUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?): [PaymentOrderUrls.Builder](index.md)  <br><br><br>|
 
-### Functions
-
-| Name | Summary |
-|---|---|
-| [build](build.md) | `fun build(): `[`PaymentOrderUrls`](../index.md) |
-| [callbackUrl](callback-url.md) | `fun callbackUrl(callbackUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
-| [cancelUrl](cancel-url.md) | `fun cancelUrl(cancelUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
-| [completeUrl](complete-url.md) | `fun completeUrl(completeUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): Builder` |
-| [fromContext](from-context.md) | `fun fromContext(context: `[`Context`](https://developer.android.com/reference/android/content/Context.html)`, backendUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, identifier: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)` = UUID.randomUUID().toString()): Builder` |
-| [hostUrls](host-urls.md) | `fun hostUrls(hostUrls: `[`List`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)`<`[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`>): Builder` |
-| [paymentUrl](payment-url.md) | `fun paymentUrl(paymentUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
-| [termsOfServiceUrl](terms-of-service-url.md) | `fun termsOfServiceUrl(termsOfServiceUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |

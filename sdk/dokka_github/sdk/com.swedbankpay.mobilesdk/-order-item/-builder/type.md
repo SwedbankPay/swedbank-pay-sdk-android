@@ -1,5 +1,11 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [OrderItem](../index.md) / [Builder](index.md) / [type](./type.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[OrderItem](../index.md)/[Builder](index.md)/[type](type.md)
 
-# type
 
-`fun type(type: `[`ItemType`](../../-item-type/index.md)`): Builder`
+
+# type  
+[androidJvm]  
+Content  
+fun [type](type.md)(type: [ItemType](../../-item-type/index.md)): [OrderItem.Builder](index.md)  
+
+
+

@@ -1,5 +1,11 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [PaymentOrder](../index.md) / [Builder](index.md) / [vatAmount](./vat-amount.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[PaymentOrder](../index.md)/[Builder](index.md)/[vatAmount](vat-amount.md)
 
-# vatAmount
 
-`fun vatAmount(vatAmount: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`): Builder`
+
+# vatAmount  
+[androidJvm]  
+Content  
+fun [vatAmount](vat-amount.md)(vatAmount: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)): [PaymentOrder.Builder](index.md)  
+
+
+

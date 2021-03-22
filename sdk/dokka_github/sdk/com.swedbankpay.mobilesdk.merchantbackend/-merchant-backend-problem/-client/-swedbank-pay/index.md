@@ -1,23 +1,52 @@
-[sdk](../../../../index.md) / [com.swedbankpay.mobilesdk.merchantbackend](../../../index.md) / [MerchantBackendProblem](../../index.md) / [Client](../index.md) / [SwedbankPay](./index.md)
+//[sdk](../../../../../index.md)/[com.swedbankpay.mobilesdk.merchantbackend](../../../index.md)/[MerchantBackendProblem](../../index.md)/[Client](../index.md)/[SwedbankPay](index.md)
 
-# SwedbankPay
 
-`sealed class SwedbankPay : Client, `[`SwedbankPayProblem`](../../../-swedbank-pay-problem/index.md)
 
-Base class for [Client](../index.md) problems defined by the Swedbank Pay backend.
-[https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems](https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems)
+# SwedbankPay  
+ [androidJvm] sealed class [SwedbankPay](index.md) : [MerchantBackendProblem.Client](../index.md), [SwedbankPayProblem](../../../-swedbank-pay-problem/index.md)
 
-### Types
+Base class for [Client](../index.md) problems defined by the Swedbank Pay backend. https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems
 
-| Name | Summary |
+   
+
+
+## Types  
+  
+|  Name |  Summary | 
 |---|---|
-| [Forbidden](-forbidden/index.md) | The request was understood, but the service is refusing to fulfill it. You may not have access to the requested resource.`class Forbidden : SwedbankPay` |
-| [InputError](-input-error/index.md) | The request could not be handled because the request was malformed somehow (e.g. an invalid field value)`class InputError : SwedbankPay` |
-| [NotFound](-not-found/index.md) | The requested resource was not found.`class NotFound : SwedbankPay` |
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay.Forbidden///PointingToDeclaration/"></a>[Forbidden](-forbidden/index.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay.Forbidden///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>class [Forbidden](-forbidden/index.md)(**jsonObject**: ) : [MerchantBackendProblem.Client.SwedbankPay](index.md)  <br>More info  <br>The request was understood, but the service is refusing to fulfill it.  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay.InputError///PointingToDeclaration/"></a>[InputError](-input-error/index.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay.InputError///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>class [InputError](-input-error/index.md)(**jsonObject**: ) : [MerchantBackendProblem.Client.SwedbankPay](index.md)  <br>More info  <br>The request could not be handled because the request was malformed somehow (e.g.  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay.NotFound///PointingToDeclaration/"></a>[NotFound](-not-found/index.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay.NotFound///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>class [NotFound](-not-found/index.md)(**jsonObject**: ) : [MerchantBackendProblem.Client.SwedbankPay](index.md)  <br>More info  <br>The requested resource was not found.  <br><br><br>|
 
-### Properties
 
-| Name | Summary |
+## Functions  
+  
+|  Name |  Summary | 
 |---|---|
-| [action](action.md) | Suggested action to take to recover from the error.`open val action: `[`SwedbankPayAction`](../../../-swedbank-pay-action.md)`?` |
-| [problems](problems.md) | Array of problem detail objects`open val problems: `[`List`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)`<`[`SwedbankPaySubproblem`](../../../-swedbank-pay-subproblem/index.md)`>` |
+| <a name="com.swedbankpay.mobilesdk/Problem/describeContents/#/PointingToDeclaration/"></a>[describeContents](../../../../com.swedbankpay.mobilesdk/-problem/describe-contents.md)| <a name="com.swedbankpay.mobilesdk/Problem/describeContents/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [describeContents](../../../../com.swedbankpay.mobilesdk/-problem/describe-contents.md)(): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[writeToParcel](../../write-to-parcel.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [writeToParcel](../../write-to-parcel.md)(parcel: [Parcel](https://developer.android.com/reference/kotlin/android/os/Parcel.html), flags: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html))  <br><br><br>|
+
+
+## Properties  
+  
+|  Name |  Summary | 
+|---|---|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/action/#/PointingToDeclaration/"></a>[action](action.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/action/#/PointingToDeclaration/"></a> [androidJvm] open override val [action](action.md): [SwedbankPayAction](../../../index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FSwedbankPayAction%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F2101262426)?Suggested action to take to recover from the error.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/detail/#/PointingToDeclaration/"></a>[detail](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Fdetail%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/detail/#/PointingToDeclaration/"></a> [androidJvm] val [detail](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Fdetail%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?RFC 7807 default property: a detailed explanation of the problem   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/instance/#/PointingToDeclaration/"></a>[instance](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Finstance%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/instance/#/PointingToDeclaration/"></a> [androidJvm] val [instance](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Finstance%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?RFC 7807 default property: a URI reference that identifies the specific occurrence of the problem   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/jsonObject/#/PointingToDeclaration/"></a>[jsonObject](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2FjsonObject%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/jsonObject/#/PointingToDeclaration/"></a> [androidJvm] val [jsonObject](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2FjsonObject%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): The raw RFC 7807 object parsed as a Gson JsonObject.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/problems/#/PointingToDeclaration/"></a>[problems](problems.md)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/problems/#/PointingToDeclaration/"></a> [androidJvm] open override val [problems](problems.md): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)<[SwedbankPaySubproblem](../../../-swedbank-pay-subproblem/index.md)>Array of problem detail objects   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/raw/#/PointingToDeclaration/"></a>[raw](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Fraw%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/raw/#/PointingToDeclaration/"></a> [androidJvm] val [raw](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Fraw%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)The raw RFC 7807 object.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/status/#/PointingToDeclaration/"></a>[status](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Fstatus%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/status/#/PointingToDeclaration/"></a> [androidJvm] val [status](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Fstatus%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)?RFC 7807 default property: the HTTP status codeThis should always be the same as the actual HTTP status code reported by the server.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/title/#/PointingToDeclaration/"></a>[title](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Ftitle%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/title/#/PointingToDeclaration/"></a> [androidJvm] val [title](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Ftitle%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?RFC 7807 default property: a short summary of the problem.   <br>|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/type/#/PointingToDeclaration/"></a>[type](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Ftype%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426)| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay/type/#/PointingToDeclaration/"></a> [androidJvm] val [type](index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FMerchantBackendProblem.Client.SwedbankPay%2Ftype%2F%23%2FPointingToDeclaration%2F%5D%2FProperties%2F2101262426): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)RFC 7807 default property: a URI reference that identifies the problem type.   <br>|
+
+
+## Inheritors  
+  
+|  Name | 
+|---|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay.InputError///PointingToDeclaration/"></a>[MerchantBackendProblem.Client.SwedbankPay](-input-error/index.md)|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay.Forbidden///PointingToDeclaration/"></a>[MerchantBackendProblem.Client.SwedbankPay](-forbidden/index.md)|
+| <a name="com.swedbankpay.mobilesdk.merchantbackend/MerchantBackendProblem.Client.SwedbankPay.NotFound///PointingToDeclaration/"></a>[MerchantBackendProblem.Client.SwedbankPay](-not-found/index.md)|
+

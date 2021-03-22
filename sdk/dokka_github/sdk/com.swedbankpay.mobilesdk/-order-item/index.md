@@ -1,63 +1,63 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [OrderItem](./index.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[OrderItem](index.md)
 
-# OrderItem
 
-`data class OrderItem : `[`Parcelable`](https://developer.android.com/reference/android/os/Parcelable.html)
+
+# OrderItem  
+ [androidJvm] data class [OrderItem](index.md)(**reference**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), **name**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), **type**: [ItemType](../-item-type/index.md), **class**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), **itemUrl**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **imageUrl**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **description**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **discountDescription**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **quantity**: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html), **quantityUnit**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), **unitPrice**: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html), **discountPrice**: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)?, **vatPercent**: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html), **amount**: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html), **vatAmount**: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)) : [Parcelable](https://developer.android.com/reference/kotlin/android/os/Parcelable.html)
 
 An item being paid for, part of a [PaymentOrder](../-payment-order/index.md).
 
-OrderItems are an optional, but recommended, part of PaymentOrders.
-To use them, create an OrderItem for each distinct item the paymentorder
-is for: e.g. if the consumer is paying for one Thingamajig and two
-Watchamacallits, which will be shipped to the consumer's address,
-you would create three OrderItems: one for the lone Thingamajig,
-one for the two Watchamacallits, and one for the shipping fee.
 
-When using OrderItems, make sure that the sum of the OrderItems'
-amount and vatAmount are equal to the PaymentOrder's amount
-and vatAmount properties, respectively.
 
-### Types
+OrderItems are an optional, but recommended, part of PaymentOrders. To use them, create an OrderItem for each distinct item the paymentorder is for: e.g. if the consumer is paying for one Thingamajig and two Watchamacallits, which will be shipped to the consumer's address, you would create three OrderItems: one for the lone Thingamajig, one for the two Watchamacallits, and one for the shipping fee.
 
-| Name | Summary |
+
+
+When using OrderItems, make sure that the sum of the OrderItems' amount and vatAmount are equal to the PaymentOrder's amount and vatAmount properties, respectively.
+
+   
+
+
+## Constructors  
+  
+| | |
 |---|---|
-| [Builder](-builder/index.md) | `class Builder` |
+| <a name="com.swedbankpay.mobilesdk/OrderItem/OrderItem/#kotlin.String#kotlin.String#com.swedbankpay.mobilesdk.ItemType#kotlin.String#kotlin.String?#kotlin.String?#kotlin.String?#kotlin.String?#kotlin.Int#kotlin.String#kotlin.Long#kotlin.Long?#kotlin.Int#kotlin.Long#kotlin.Long/PointingToDeclaration/"></a>[OrderItem](-order-item.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/OrderItem/#kotlin.String#kotlin.String#com.swedbankpay.mobilesdk.ItemType#kotlin.String#kotlin.String?#kotlin.String?#kotlin.String?#kotlin.String?#kotlin.Int#kotlin.String#kotlin.Long#kotlin.Long?#kotlin.Int#kotlin.Long#kotlin.Long/PointingToDeclaration/"></a> [androidJvm] fun [OrderItem](-order-item.md)(reference: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), type: [ItemType](../-item-type/index.md), class: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), itemUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null, imageUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null, description: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null, discountDescription: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null, quantity: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html), quantityUnit: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), unitPrice: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html), discountPrice: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)? = null, vatPercent: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html), amount: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html), vatAmount: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html))   <br>|
 
-### Constructors
 
-| Name | Summary |
+## Types  
+  
+|  Name |  Summary | 
 |---|---|
-| [&lt;init&gt;](-init-.md) | An item being paid for, part of a [PaymentOrder](../-payment-order/index.md).`OrderItem(reference: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, name: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, type: `[`ItemType`](../-item-type/index.md)`, class: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, itemUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, imageUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, description: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, discountDescription: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, quantity: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`, quantityUnit: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, unitPrice: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`, discountPrice: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`? = null, vatPercent: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`, amount: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`, vatAmount: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`)` |
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder///PointingToDeclaration/"></a>[Builder](-builder/index.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>class [Builder](-builder/index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Companion///PointingToDeclaration/"></a>[Companion](-companion/index.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Companion///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>object [Companion](-companion/index.md)  <br><br><br>|
 
-### Properties
 
-| Name | Summary |
+## Functions  
+  
+|  Name |  Summary | 
 |---|---|
-| [amount](amount.md) | The total amount, including VAT, paid for the specified quantity of the item.`val amount: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html) |
-| [class](class.md) | A classification of the item. Must not contain spaces.`val class: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
-| [description](description.md) | Human-friendly description of the item`val description: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [discountDescription](discount-description.md) | Human-friendly description of the discount on the item, if applicable`val discountDescription: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [discountPrice](discount-price.md) | The discounted price of the item, if applicable`val discountPrice: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`?` |
-| [imageUrl](image-url.md) | URL to an image of the item`val imageUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [itemUrl](item-url.md) | URL of a web page that contains information about the item`val itemUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [name](name.md) | Name of the item`val name: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
-| [quantity](quantity.md) | Quantity of the item being purchased`val quantity: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html) |
-| [quantityUnit](quantity-unit.md) | Unit of the quantity`val quantityUnit: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
-| [reference](reference.md) | A reference that identifies the item in your own systems.`val reference: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
-| [type](type.md) | Type of the item`val type: `[`ItemType`](../-item-type/index.md) |
-| [unitPrice](unit-price.md) | Price of a single unit, including VAT.`val unitPrice: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html) |
-| [vatAmount](vat-amount.md) | The total amount of VAT paid for the specified quantity of the item.`val vatAmount: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html) |
-| [vatPercent](vat-percent.md) | The VAT percent value, multiplied by 100.`val vatPercent: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html) |
+| <a name="com.swedbankpay.mobilesdk/OrderItem/describeContents/#/PointingToDeclaration/"></a>[describeContents](describe-contents.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/describeContents/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [describeContents](describe-contents.md)(): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[writeToParcel](write-to-parcel.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [writeToParcel](write-to-parcel.md)(parcel: [Parcel](https://developer.android.com/reference/kotlin/android/os/Parcel.html), flags: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html))  <br><br><br>|
 
-### Functions
 
-| Name | Summary |
+## Properties  
+  
+|  Name |  Summary | 
 |---|---|
-| [describeContents](describe-contents.md) | `fun describeContents(): `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html) |
-| [writeToParcel](write-to-parcel.md) | `fun writeToParcel(parcel: `[`Parcel`](https://developer.android.com/reference/android/os/Parcel.html)`, flags: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
+| <a name="com.swedbankpay.mobilesdk/OrderItem/amount/#/PointingToDeclaration/"></a>[amount](amount.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/amount/#/PointingToDeclaration/"></a> [androidJvm] @(value = amount)  <br>  <br>val [amount](amount.md): [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)The total amount, including VAT, paid for the specified quantity of the item.   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/class/#/PointingToDeclaration/"></a>[class](class.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/class/#/PointingToDeclaration/"></a> [androidJvm] @(value = class)  <br>  <br>val [class](class.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)A classification of the item.   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/description/#/PointingToDeclaration/"></a>[description](description.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/description/#/PointingToDeclaration/"></a> [androidJvm] @(value = description)  <br>  <br>val [description](description.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = nullHuman-friendly description of the item   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/discountDescription/#/PointingToDeclaration/"></a>[discountDescription](discount-description.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/discountDescription/#/PointingToDeclaration/"></a> [androidJvm] @(value = discountDescription)  <br>  <br>val [discountDescription](discount-description.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = nullHuman-friendly description of the discount on the item, if applicable   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/discountPrice/#/PointingToDeclaration/"></a>[discountPrice](discount-price.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/discountPrice/#/PointingToDeclaration/"></a> [androidJvm] @(value = discountPrice)  <br>  <br>val [discountPrice](discount-price.md): [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)? = nullThe discounted price of the item, if applicable   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/imageUrl/#/PointingToDeclaration/"></a>[imageUrl](image-url.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/imageUrl/#/PointingToDeclaration/"></a> [androidJvm] @(value = imageUrl)  <br>  <br>val [imageUrl](image-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = nullURL to an image of the item   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/itemUrl/#/PointingToDeclaration/"></a>[itemUrl](item-url.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/itemUrl/#/PointingToDeclaration/"></a> [androidJvm] @(value = itemUrl)  <br>  <br>val [itemUrl](item-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = nullURL of a web page that contains information about the item   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/name/#/PointingToDeclaration/"></a>[name](name.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/name/#/PointingToDeclaration/"></a> [androidJvm] @(value = name)  <br>  <br>val [name](name.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)Name of the item   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/quantity/#/PointingToDeclaration/"></a>[quantity](quantity.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/quantity/#/PointingToDeclaration/"></a> [androidJvm] @(value = quantity)  <br>  <br>val [quantity](quantity.md): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)Quantity of the item being purchased   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/quantityUnit/#/PointingToDeclaration/"></a>[quantityUnit](quantity-unit.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/quantityUnit/#/PointingToDeclaration/"></a> [androidJvm] @(value = quantityUnit)  <br>  <br>val [quantityUnit](quantity-unit.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)Unit of the quantityE.g.   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/reference/#/PointingToDeclaration/"></a>[reference](reference.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/reference/#/PointingToDeclaration/"></a> [androidJvm] @(value = reference)  <br>  <br>val [reference](reference.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)A reference that identifies the item in your own systems.   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/type/#/PointingToDeclaration/"></a>[type](type.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/type/#/PointingToDeclaration/"></a> [androidJvm] @(value = type)  <br>  <br>val [type](type.md): [ItemType](../-item-type/index.md)Type of the item   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/unitPrice/#/PointingToDeclaration/"></a>[unitPrice](unit-price.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/unitPrice/#/PointingToDeclaration/"></a> [androidJvm] @(value = unitPrice)  <br>  <br>val [unitPrice](unit-price.md): [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)Price of a single unit, including VAT.   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/vatAmount/#/PointingToDeclaration/"></a>[vatAmount](vat-amount.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/vatAmount/#/PointingToDeclaration/"></a> [androidJvm] @(value = vatAmount)  <br>  <br>val [vatAmount](vat-amount.md): [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)The total amount of VAT paid for the specified quantity of the item.   <br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem/vatPercent/#/PointingToDeclaration/"></a>[vatPercent](vat-percent.md)| <a name="com.swedbankpay.mobilesdk/OrderItem/vatPercent/#/PointingToDeclaration/"></a> [androidJvm] @(value = vatPercent)  <br>  <br>val [vatPercent](vat-percent.md): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)The VAT percent value, multiplied by 100.   <br>|
 
-### Companion Object Properties
-
-| Name | Summary |
-|---|---|
-| [CREATOR](-c-r-e-a-t-o-r.md) | `val CREATOR: `[`Creator`](https://developer.android.com/reference/android/os/Parcelable/Creator.html)`<`[`OrderItem`](./index.md)`>` |

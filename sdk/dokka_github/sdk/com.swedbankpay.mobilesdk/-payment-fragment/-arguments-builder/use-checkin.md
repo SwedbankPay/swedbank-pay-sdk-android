@@ -1,12 +1,27 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [PaymentFragment](../index.md) / [ArgumentsBuilder](index.md) / [useCheckin](./use-checkin.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[PaymentFragment](../index.md)/[ArgumentsBuilder](index.md)/[useCheckin](use-checkin.md)
 
-# useCheckin
 
-`fun useCheckin(useCheckin: `[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)`): ArgumentsBuilder`
 
-Enables or disables checkin for this payment.
-Mostly useful for using [userData](user-data.md) and a custom [Configuration](../../-configuration/index.md).
+# useCheckin  
+[androidJvm]  
+Content  
+fun [useCheckin](use-checkin.md)(useCheckin: [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)): [PaymentFragment.ArgumentsBuilder](index.md)  
+More info  
 
-### Parameters
 
-`useCheckin` - `true` to use checkin, `false` to skip it
+Enables or disables checkin for this payment. Mostly useful for using [userData](user-data.md) and a custom [Configuration](../../-configuration/index.md).
+
+
+
+## Parameters  
+  
+androidJvm  
+  
+| | |
+|---|---|
+| <a name="com.swedbankpay.mobilesdk/PaymentFragment.ArgumentsBuilder/useCheckin/#kotlin.Boolean/PointingToDeclaration/"></a>useCheckin| <a name="com.swedbankpay.mobilesdk/PaymentFragment.ArgumentsBuilder/useCheckin/#kotlin.Boolean/PointingToDeclaration/"></a><br><br>true to use checkin, false to skip it<br><br>|
+  
+  
+
+
+

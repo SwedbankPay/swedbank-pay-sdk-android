@@ -1,32 +1,29 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [OrderItem](../index.md) / [Builder](./index.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[OrderItem](../index.md)/[Builder](index.md)
 
-# Builder
 
-`class Builder`
 
-### Constructors
+# Builder  
+ [androidJvm] class [Builder](index.md)   
 
-| Name | Summary |
+
+## Functions  
+  
+|  Name |  Summary | 
 |---|---|
-| [&lt;init&gt;](-init-.md) | `Builder()` |
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/amount/#kotlin.Long/PointingToDeclaration/"></a>[amount](amount.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/amount/#kotlin.Long/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [amount](amount.md)(amount: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/build/#/PointingToDeclaration/"></a>[build](build.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/build/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [build](build.md)(): [OrderItem](../index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/class/#kotlin.String/PointingToDeclaration/"></a>[class](class.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/class/#kotlin.String/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>@[JvmName](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html)(name = itemClass)  <br>  <br>fun [class](class.md)(class: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/description/#kotlin.String?/PointingToDeclaration/"></a>[description](description.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/description/#kotlin.String?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [description](description.md)(description: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/discountDescription/#kotlin.String?/PointingToDeclaration/"></a>[discountDescription](discount-description.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/discountDescription/#kotlin.String?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [discountDescription](discount-description.md)(discountDescription: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/discountPrice/#kotlin.Long?/PointingToDeclaration/"></a>[discountPrice](discount-price.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/discountPrice/#kotlin.Long?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [discountPrice](discount-price.md)(discountPrice: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)?): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/imageUrl/#kotlin.String?/PointingToDeclaration/"></a>[imageUrl](image-url.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/imageUrl/#kotlin.String?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [imageUrl](image-url.md)(imageUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/itemUrl/#kotlin.String?/PointingToDeclaration/"></a>[itemUrl](item-url.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/itemUrl/#kotlin.String?/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [itemUrl](item-url.md)(itemUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/name/#kotlin.String/PointingToDeclaration/"></a>[name](name.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/name/#kotlin.String/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [name](name.md)(name: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/quantity/#kotlin.Int/PointingToDeclaration/"></a>[quantity](quantity.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/quantity/#kotlin.Int/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [quantity](quantity.md)(quantity: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/quantityUnit/#kotlin.String/PointingToDeclaration/"></a>[quantityUnit](quantity-unit.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/quantityUnit/#kotlin.String/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [quantityUnit](quantity-unit.md)(quantityUnit: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/reference/#kotlin.String/PointingToDeclaration/"></a>[reference](reference.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/reference/#kotlin.String/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [reference](reference.md)(reference: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/type/#com.swedbankpay.mobilesdk.ItemType/PointingToDeclaration/"></a>[type](type.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/type/#com.swedbankpay.mobilesdk.ItemType/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [type](type.md)(type: [ItemType](../../-item-type/index.md)): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/unitPrice/#kotlin.Long/PointingToDeclaration/"></a>[unitPrice](unit-price.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/unitPrice/#kotlin.Long/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [unitPrice](unit-price.md)(unitPrice: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/vatAmount/#kotlin.Long/PointingToDeclaration/"></a>[vatAmount](vat-amount.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/vatAmount/#kotlin.Long/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [vatAmount](vat-amount.md)(vatAmount: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)): [OrderItem.Builder](index.md)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/vatPercent/#kotlin.Int/PointingToDeclaration/"></a>[vatPercent](vat-percent.md)| <a name="com.swedbankpay.mobilesdk/OrderItem.Builder/vatPercent/#kotlin.Int/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>fun [vatPercent](vat-percent.md)(vatPercent: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)): [OrderItem.Builder](index.md)  <br><br><br>|
 
-### Functions
-
-| Name | Summary |
-|---|---|
-| [amount](amount.md) | `fun amount(amount: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`): Builder` |
-| [build](build.md) | `fun build(): `[`OrderItem`](../index.md) |
-| [class](class.md) | `fun class(class: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): Builder` |
-| [description](description.md) | `fun description(description: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
-| [discountDescription](discount-description.md) | `fun discountDescription(discountDescription: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
-| [discountPrice](discount-price.md) | `fun discountPrice(discountPrice: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`?): Builder` |
-| [imageUrl](image-url.md) | `fun imageUrl(imageUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
-| [itemUrl](item-url.md) | `fun itemUrl(itemUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?): Builder` |
-| [name](name.md) | `fun name(name: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): Builder` |
-| [quantity](quantity.md) | `fun quantity(quantity: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`): Builder` |
-| [quantityUnit](quantity-unit.md) | `fun quantityUnit(quantityUnit: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): Builder` |
-| [reference](reference.md) | `fun reference(reference: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`): Builder` |
-| [type](type.md) | `fun type(type: `[`ItemType`](../../-item-type/index.md)`): Builder` |
-| [unitPrice](unit-price.md) | `fun unitPrice(unitPrice: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`): Builder` |
-| [vatAmount](vat-amount.md) | `fun vatAmount(vatAmount: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`): Builder` |
-| [vatPercent](vat-percent.md) | `fun vatPercent(vatPercent: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`): Builder` |

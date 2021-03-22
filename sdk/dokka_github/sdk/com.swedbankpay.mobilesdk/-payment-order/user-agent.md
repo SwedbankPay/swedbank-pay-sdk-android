@@ -1,5 +1,23 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PaymentOrder](index.md) / [userAgent](./user-agent.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PaymentOrder](index.md)/[userAgent](user-agent.md)
 
-# userAgent
 
-`val userAgent: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
+
+# userAgent  
+[androidJvm]  
+Content  
+@(value = userAgent)  
+  
+val [userAgent](user-agent.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)  
+More info  
+
+
+User-agent of the payer.
+
+
+
+Defaults to "SwedbankPaySDK-Android/{version}".
+
+  
+
+
+

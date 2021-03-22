@@ -1,27 +1,43 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [PaymentFragment](../index.md) / [ArgumentsBuilder](index.md) / [setEnabledDefaultUI](./set-enabled-default-u-i.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[PaymentFragment](../index.md)/[ArgumentsBuilder](index.md)/[setEnabledDefaultUI](set-enabled-default-u-i.md)
 
-# setEnabledDefaultUI
 
-`fun setEnabledDefaultUI(vararg defaultUI: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`): ArgumentsBuilder`
+
+# setEnabledDefaultUI  
+[androidJvm]  
+Content  
+fun [setEnabledDefaultUI](set-enabled-default-u-i.md)(vararg defaultUI: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)): [PaymentFragment.ArgumentsBuilder](index.md)  
+More info  
+
 
 Set the enabled default user interfaces.
 
+
+
 There are four:
 
-* [RETRY_PROMPT](../-r-e-t-r-y_-p-r-o-m-p-t.md), a prompt to retry a failed request that can reasonably be retried
-* [COMPLETE_MESSAGE](../-c-o-m-p-l-e-t-e_-m-e-s-s-a-g-e.md), a laconic completion message
-* [ERROR_MESSAGE](../-e-r-r-o-r_-m-e-s-s-a-g-e.md) a less laconic, though a bit technical, error message
+<ul><li>[RETRY_PROMPT](../-companion/-r-e-t-r-y_-p-r-o-m-p-t.md), a prompt to retry a failed request that can reasonably be retried</li><li>[COMPLETE_MESSAGE](../-companion/-c-o-m-p-l-e-t-e_-m-e-s-s-a-g-e.md), a laconic completion message</li><li>[ERROR_MESSAGE](../-companion/-e-r-r-o-r_-m-e-s-s-a-g-e.md) a less laconic, though a bit technical, error message</li></ul>
 
 If a default UI is not enabled, the fragment will be blank instead.
 
-The default is to only enable RETRY_PROMPT. This is often useful,
-as a custom retry prompt is likely unnecessary, but the success and error states
-should cause the fragment to be dismissed.
 
-To disable everything, pass an empty argument list here (a value of 0 also works).
-If it is more convenient for you, you may also OR the flags manually and call this
-method with the result value.
 
-### Parameters
+The default is to only enable RETRY_PROMPT. This is often useful, as a custom retry prompt is likely unnecessary, but the success and error states should cause the fragment to be dismissed.
 
-`defaultUI` - the default UI to enable
+
+
+To disable everything, pass an empty argument list here (a value of 0 also works). If it is more convenient for you, you may also OR the flags manually and call this method with the result value.
+
+
+
+## Parameters  
+  
+androidJvm  
+  
+| | |
+|---|---|
+| <a name="com.swedbankpay.mobilesdk/PaymentFragment.ArgumentsBuilder/setEnabledDefaultUI/#kotlin.IntArray/PointingToDeclaration/"></a>defaultUI| <a name="com.swedbankpay.mobilesdk/PaymentFragment.ArgumentsBuilder/setEnabledDefaultUI/#kotlin.IntArray/PointingToDeclaration/"></a><br><br>the default UI to enable<br><br>|
+  
+  
+
+
+

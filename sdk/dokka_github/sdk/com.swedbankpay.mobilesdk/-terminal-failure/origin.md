@@ -1,8 +1,17 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [TerminalFailure](index.md) / [origin](./origin.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[TerminalFailure](index.md)/[origin](origin.md)
 
-# origin
 
-`val origin: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
 
-`"consumer"`, `"paymentmenu"`, `"creditcard"`, identifies the system that originated the error.
+# origin  
+[androidJvm]  
+Content  
+val [origin](origin.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?  
+More info  
+
+
+"consumer", "paymentmenu", "creditcard", identifies the system that originated the error.
+
+  
+
+
 

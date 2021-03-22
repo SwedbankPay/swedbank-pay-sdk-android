@@ -1,13 +1,14 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [PaymentFragment](../index.md) / [DefaultUI](./index.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[PaymentFragment](../index.md)/[DefaultUI](index.md)
 
-# DefaultUI
 
-`annotation class DefaultUI`
 
-**Hide**
+# DefaultUI  
+ [androidJvm] annotation class [DefaultUI](index.md)   
 
-### Constructors
 
-| Name | Summary |
+## Constructors  
+  
+| | |
 |---|---|
-| [&lt;init&gt;](-init-.md) | `DefaultUI()` |
+| <a name="com.swedbankpay.mobilesdk/PaymentFragment.DefaultUI/DefaultUI/#/PointingToDeclaration/"></a>[DefaultUI](-default-u-i.md)| <a name="com.swedbankpay.mobilesdk/PaymentFragment.DefaultUI/DefaultUI/#/PointingToDeclaration/"></a> [androidJvm] fun [DefaultUI](-default-u-i.md)()   <br>|
+

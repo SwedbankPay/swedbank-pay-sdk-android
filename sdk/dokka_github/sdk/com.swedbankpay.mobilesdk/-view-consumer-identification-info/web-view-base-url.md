@@ -1,10 +1,17 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [ViewConsumerIdentificationInfo](index.md) / [webViewBaseUrl](./web-view-base-url.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[ViewConsumerIdentificationInfo](index.md)/[webViewBaseUrl](web-view-base-url.md)
 
-# webViewBaseUrl
 
-`val webViewBaseUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?`
 
-The url to use as the [android.webkit.WebView](https://developer.android.com/reference/android/webkit/WebView.html) page url
-when showing the checkin UI. If `null`, defaults to
-`about:blank`, as [documented](https://developer.android.com/reference/android/webkit/WebView.html#loadDataWithBaseURL(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)).
+# webViewBaseUrl  
+[androidJvm]  
+Content  
+val [webViewBaseUrl](web-view-base-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null  
+More info  
+
+
+The url to use as the [android.webkit.WebView](https://developer.android.com/reference/kotlin/android/webkit/WebView.html) page url when showing the checkin UI. If null, defaults to about:blank, as [documented](https://developer.android.com/reference/kotlin/android/webkit/WebView.html#loaddatawithbaseurl).
+
+  
+
+
 

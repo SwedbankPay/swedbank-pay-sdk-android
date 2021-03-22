@@ -1,13 +1,27 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [OrderItem](index.md) / [class](./class.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[OrderItem](index.md)/[class](class.md)
 
-# class
 
-`val class: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
+
+# class  
+[androidJvm]  
+Content  
+@(value = class)  
+  
+val [class](class.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)  
+More info  
+
 
 A classification of the item. Must not contain spaces.
 
-Can be used for assigning the order item to a specific product category,
-such as "MobilePhone".
+
+
+Can be used for assigning the order item to a specific product category, such as <code>"MobilePhone"</code>.
+
+
 
 Swedbank Pay may use this field for statistics.
+
+  
+
+
 

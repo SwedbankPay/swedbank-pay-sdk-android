@@ -1,5 +1,13 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PaymentOrder](index.md) / [disablePaymentMenu](./disable-payment-menu.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PaymentOrder](index.md)/[disablePaymentMenu](disable-payment-menu.md)
 
-# disablePaymentMenu
 
-`val disablePaymentMenu: `[`Boolean`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)
+
+# disablePaymentMenu  
+[androidJvm]  
+Content  
+@(value = disablePaymentMenu)  
+  
+val [disablePaymentMenu](disable-payment-menu.md): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html) = false  
+
+
+

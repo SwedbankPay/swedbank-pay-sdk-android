@@ -1,5 +1,19 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [PaymentOrder](index.md) / [currency](./currency.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[PaymentOrder](index.md)/[currency](currency.md)
 
-# currency
 
-`val currency: `[`Currency`](https://docs.oracle.com/javase/6/docs/api/java/util/Currency.html)
+
+# currency  
+[androidJvm]  
+Content  
+@(value = currency)  
+  
+val [currency](currency.md): [Currency](https://developer.android.com/reference/kotlin/java/util/Currency.html)  
+More info  
+
+
+Currency to use
+
+  
+
+
+

@@ -1,45 +1,53 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [ViewPaymentOrderInfo](./index.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[ViewPaymentOrderInfo](index.md)
 
-# ViewPaymentOrderInfo
 
-`data class ViewPaymentOrderInfo : `[`Parcelable`](https://developer.android.com/reference/android/os/Parcelable.html)
+
+# ViewPaymentOrderInfo  
+ [androidJvm] data class [ViewPaymentOrderInfo](index.md)(**webViewBaseUrl**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **viewPaymentOrder**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), **completeUrl**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), **cancelUrl**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **paymentUrl**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **termsOfServiceUrl**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **instrument**: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, **availableInstruments**: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)<[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)>?, **userData**: [Any](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)?) : [Parcelable](https://developer.android.com/reference/kotlin/android/os/Parcelable.html)
 
 Data required to show the payment menu.
 
-If you provide a custom [Configuration](../-configuration/index.md),
-you must get the relevant data from your services
-and return a ViewPaymentOrderInfo object
-in your [Configuration.postPaymentorders](../-configuration/post-paymentorders.md) method.
 
-### Constructors
 
-| Name | Summary |
+If you provide a custom [Configuration](../-configuration/index.md), you must get the relevant data from your services and return a ViewPaymentOrderInfo object in your [Configuration.postPaymentorders](../-configuration/post-paymentorders.md) method.
+
+   
+
+
+## Constructors  
+  
+| | |
 |---|---|
-| [&lt;init&gt;](-init-.md) | `ViewPaymentOrderInfo(parcel: `[`Parcel`](https://developer.android.com/reference/android/os/Parcel.html)`)`<br>Data required to show the payment menu.`ViewPaymentOrderInfo(webViewBaseUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, viewPaymentOrder: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, completeUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, cancelUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, paymentUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?, termsOfServiceUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, instrument: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`? = null, availableInstruments: `[`List`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)`<`[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`>? = null, userData: `[`Any`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)`? = null)` |
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/ViewPaymentOrderInfo/#android.os.Parcel/PointingToDeclaration/"></a>[ViewPaymentOrderInfo](-view-payment-order-info.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/ViewPaymentOrderInfo/#android.os.Parcel/PointingToDeclaration/"></a> [androidJvm] fun [ViewPaymentOrderInfo](-view-payment-order-info.md)(parcel: [Parcel](https://developer.android.com/reference/kotlin/android/os/Parcel.html))   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/ViewPaymentOrderInfo/#kotlin.String?#kotlin.String#kotlin.String#kotlin.String?#kotlin.String?#kotlin.String?#kotlin.String?#kotlin.collections.List[kotlin.String]?#kotlin.Any?/PointingToDeclaration/"></a>[ViewPaymentOrderInfo](-view-payment-order-info.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/ViewPaymentOrderInfo/#kotlin.String?#kotlin.String#kotlin.String#kotlin.String?#kotlin.String?#kotlin.String?#kotlin.String?#kotlin.collections.List[kotlin.String]?#kotlin.Any?/PointingToDeclaration/"></a> [androidJvm] fun [ViewPaymentOrderInfo](-view-payment-order-info.md)(webViewBaseUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null, viewPaymentOrder: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), completeUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html), cancelUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null, paymentUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, termsOfServiceUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null, instrument: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null, availableInstruments: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)<[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)>? = null, userData: [Any](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)? = null)   <br>|
 
-### Properties
 
-| Name | Summary |
+## Types  
+  
+|  Name |  Summary | 
 |---|---|
-| [availableInstruments](available-instruments.md) | If the payment order is in instrument mode, all the valid instruments for it.`val availableInstruments: `[`List`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)`<`[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`>?` |
-| [cancelUrl](cancel-url.md) | The `cancelUrl` of the payment order`val cancelUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [completeUrl](complete-url.md) | The `completeUrl` of the payment order`val completeUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
-| [instrument](instrument.md) | If the payment order is in instrument mode, the current instrument.`val instrument: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [paymentUrl](payment-url.md) | The `paymentUrl` of the payment order`val paymentUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [termsOfServiceUrl](terms-of-service-url.md) | The `termsOfServiceUrl` of the payment order`val termsOfServiceUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
-| [userData](user-data.md) | Any [Parcelable](https://developer.android.com/reference/android/os/Parcelable.html) or [Serializable](https://docs.oracle.com/javase/6/docs/api/java/io/Serializable.html) (`String` is fine) object you may need for your [Configuration](../-configuration/index.md).`val userData: `[`Any`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)`?` |
-| [viewPaymentOrder](view-payment-order.md) | The `view-paymentorder` link from Swedbank Pay.`val viewPaymentOrder: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
-| [webViewBaseUrl](web-view-base-url.md) | The url to use as the [android.webkit.WebView](https://developer.android.com/reference/android/webkit/WebView.html) page url when showing the checkin UI. If `null`, defaults to `about:blank`, as [documented](https://developer.android.com/reference/android/webkit/WebView.html#loadDataWithBaseURL(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)).`val webViewBaseUrl: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?` |
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo.Companion///PointingToDeclaration/"></a>[Companion](-companion/index.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo.Companion///PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>object [Companion](-companion/index.md)  <br><br><br>|
 
-### Functions
 
-| Name | Summary |
+## Functions  
+  
+|  Name |  Summary | 
 |---|---|
-| [describeContents](describe-contents.md) | `fun describeContents(): `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html) |
-| [writeToParcel](write-to-parcel.md) | `fun writeToParcel(parcel: `[`Parcel`](https://developer.android.com/reference/android/os/Parcel.html)`, flags: `[`Int`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)`): `[`Unit`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html) |
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/describeContents/#/PointingToDeclaration/"></a>[describeContents](describe-contents.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/describeContents/#/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [describeContents](describe-contents.md)(): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)  <br><br><br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[writeToParcel](write-to-parcel.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/writeToParcel/#android.os.Parcel#kotlin.Int/PointingToDeclaration/"></a>[androidJvm]  <br>Content  <br>open override fun [writeToParcel](write-to-parcel.md)(parcel: [Parcel](https://developer.android.com/reference/kotlin/android/os/Parcel.html), flags: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html))  <br><br><br>|
 
-### Companion Object Properties
 
-| Name | Summary |
+## Properties  
+  
+|  Name |  Summary | 
 |---|---|
-| [CREATOR](-c-r-e-a-t-o-r.md) | `val CREATOR: `[`Creator`](https://developer.android.com/reference/android/os/Parcelable/Creator.html)`<`[`ViewPaymentOrderInfo`](./index.md)`>` |
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/availableInstruments/#/PointingToDeclaration/"></a>[availableInstruments](available-instruments.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/availableInstruments/#/PointingToDeclaration/"></a> [androidJvm] val [availableInstruments](available-instruments.md): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)<[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)>? = nullIf the payment order is in instrument mode, all the valid instruments for it.   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/cancelUrl/#/PointingToDeclaration/"></a>[cancelUrl](cancel-url.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/cancelUrl/#/PointingToDeclaration/"></a> [androidJvm] val [cancelUrl](cancel-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = nullThe cancelUrl of the payment order   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/completeUrl/#/PointingToDeclaration/"></a>[completeUrl](complete-url.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/completeUrl/#/PointingToDeclaration/"></a> [androidJvm] val [completeUrl](complete-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)The completeUrl of the payment order   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/instrument/#/PointingToDeclaration/"></a>[instrument](instrument.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/instrument/#/PointingToDeclaration/"></a> [androidJvm] val [instrument](instrument.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = nullIf the payment order is in instrument mode, the current instrument.   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/paymentUrl/#/PointingToDeclaration/"></a>[paymentUrl](payment-url.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/paymentUrl/#/PointingToDeclaration/"></a> [androidJvm] val [paymentUrl](payment-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?The paymentUrl of the payment order   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/termsOfServiceUrl/#/PointingToDeclaration/"></a>[termsOfServiceUrl](terms-of-service-url.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/termsOfServiceUrl/#/PointingToDeclaration/"></a> [androidJvm] val [termsOfServiceUrl](terms-of-service-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = nullThe termsOfServiceUrl of the payment order   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/userData/#/PointingToDeclaration/"></a>[userData](user-data.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/userData/#/PointingToDeclaration/"></a> [androidJvm] val [userData](user-data.md): [Any](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)? = nullAny [Parcelable](https://developer.android.com/reference/kotlin/android/os/Parcelable.html) or [Serializable](https://developer.android.com/reference/kotlin/java/io/Serializable.html) (String is fine) object you may need for your [Configuration](../-configuration/index.md).   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/viewPaymentOrder/#/PointingToDeclaration/"></a>[viewPaymentOrder](view-payment-order.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/viewPaymentOrder/#/PointingToDeclaration/"></a> [androidJvm] val [viewPaymentOrder](view-payment-order.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)The view-paymentorder link from Swedbank Pay.   <br>|
+| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/webViewBaseUrl/#/PointingToDeclaration/"></a>[webViewBaseUrl](web-view-base-url.md)| <a name="com.swedbankpay.mobilesdk/ViewPaymentOrderInfo/webViewBaseUrl/#/PointingToDeclaration/"></a> [androidJvm] val [webViewBaseUrl](web-view-base-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = nullThe url to use as the [android.webkit.WebView](https://developer.android.com/reference/kotlin/android/webkit/WebView.html) page url when showing the checkin UI.   <br>|
+

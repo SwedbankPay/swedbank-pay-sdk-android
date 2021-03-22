@@ -1,5 +1,11 @@
-[sdk](../../../index.md) / [com.swedbankpay.mobilesdk](../../index.md) / [OrderItem](../index.md) / [Builder](index.md) / [unitPrice](./unit-price.md)
+//[sdk](../../../../index.md)/[com.swedbankpay.mobilesdk](../../index.md)/[OrderItem](../index.md)/[Builder](index.md)/[unitPrice](unit-price.md)
 
-# unitPrice
 
-`fun unitPrice(unitPrice: `[`Long`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)`): Builder`
+
+# unitPrice  
+[androidJvm]  
+Content  
+fun [unitPrice](unit-price.md)(unitPrice: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)): [OrderItem.Builder](index.md)  
+
+
+

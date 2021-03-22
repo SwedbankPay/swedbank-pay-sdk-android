@@ -1,5 +1,0 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk.merchantbackend](../index.md) / [PaymentTokenInfo](index.md) / [&lt;init&gt;](./-init-.md)
-
-# &lt;init&gt;
-
-`PaymentTokenInfo(paymentToken: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, instrument: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?, instrumentDisplayName: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`?, instrumentParameters: `[`Map`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html)`<`[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`, `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)`>?, operations: `[`List`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)`<`[`Operation`](../-operation/index.md)`>)`

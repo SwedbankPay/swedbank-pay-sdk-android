@@ -1,8 +1,17 @@
-[sdk](../../index.md) / [com.swedbankpay.mobilesdk](../index.md) / [ViewConsumerIdentificationInfo](index.md) / [viewConsumerIdentification](./view-consumer-identification.md)
+//[sdk](../../../index.md)/[com.swedbankpay.mobilesdk](../index.md)/[ViewConsumerIdentificationInfo](index.md)/[viewConsumerIdentification](view-consumer-identification.md)
 
-# viewConsumerIdentification
 
-`val viewConsumerIdentification: `[`String`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
 
-The `view-consumer-identification` link from Swedbank Pay.
+# viewConsumerIdentification  
+[androidJvm]  
+Content  
+val [viewConsumerIdentification](view-consumer-identification.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)  
+More info  
+
+
+The view-consumer-identification link from Swedbank Pay.
+
+  
+
+
 
