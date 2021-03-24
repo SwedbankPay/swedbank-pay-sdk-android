@@ -116,4 +116,14 @@ open class Problem : Parcelable, Serializable {
     constructor(parcel: Parcel) : this(
         checkNotNull(parcel.readString())
     )
+
+    override fun equals(other: Any?): Boolean {
+        return other is Problem
+                && other::class == this::class
+                && other.jsonObject == jsonObject
+    }
+
+    override fun hashCode() = jsonObject.hashCode()
+
+    override fun toString() = raw
 }
