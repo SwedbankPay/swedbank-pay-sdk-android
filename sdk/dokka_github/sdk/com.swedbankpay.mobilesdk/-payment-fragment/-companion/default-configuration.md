@@ -9,11 +9,11 @@ var [defaultConfiguration](default-configuration.md): [Configuration](../../-con
 More info  
 
 
-The [Configuration](../../-configuration/index.md) to use if  is not overridden.
+The [Configuration](../../-configuration/index.md) to use if [getConfiguration](../get-configuration.md) is not overridden.
 
 
 
-See note on  if you change the value of this property dynamically.
+See note on [getConfiguration](../get-configuration.md) if you change the value of this property dynamically.
 
   
 

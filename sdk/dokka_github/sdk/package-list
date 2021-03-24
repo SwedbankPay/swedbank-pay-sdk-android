@@ -274,6 +274,7 @@ $dokka.location:com.swedbankpay.mobilesdk/PaymentFragment.DefaultUI///PointingTo
 $dokka.location:com.swedbankpay.mobilesdk/PaymentFragment.DefaultUI/DefaultUI/#/PointingToDeclaration/sdk/com.swedbankpay.mobilesdk/-payment-fragment/-default-u-i/-default-u-i.md
 $dokka.location:com.swedbankpay.mobilesdk/PaymentFragment///PointingToDeclaration/sdk/com.swedbankpay.mobilesdk/-payment-fragment/index.md
 $dokka.location:com.swedbankpay.mobilesdk/PaymentFragment/PaymentFragment/#/PointingToDeclaration/sdk/com.swedbankpay.mobilesdk/-payment-fragment/-payment-fragment.md
+$dokka.location:com.swedbankpay.mobilesdk/PaymentFragment/getConfiguration/#/PointingToDeclaration/sdk/com.swedbankpay.mobilesdk/-payment-fragment/get-configuration.md
 $dokka.location:com.swedbankpay.mobilesdk/PaymentFragment/onCreate/#android.os.Bundle?/PointingToDeclaration/sdk/com.swedbankpay.mobilesdk/-payment-fragment/on-create.md
 $dokka.location:com.swedbankpay.mobilesdk/PaymentFragment/onCreateView/#android.view.LayoutInflater#android.view.ViewGroup?#android.os.Bundle?/PointingToDeclaration/sdk/com.swedbankpay.mobilesdk/-payment-fragment/on-create-view.md
 $dokka.location:com.swedbankpay.mobilesdk/PaymentFragment/onSaveInstanceState/#android.os.Bundle/PointingToDeclaration/sdk/com.swedbankpay.mobilesdk/-payment-fragment/on-save-instance-state.md

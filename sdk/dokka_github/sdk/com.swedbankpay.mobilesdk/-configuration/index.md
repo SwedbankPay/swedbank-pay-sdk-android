@@ -13,7 +13,7 @@ You need a Configuration to use [PaymentFragment](../-payment-fragment/index.md)
 
 
 
-In most cases, it is enough to set a [default Configuration](../-payment-fragment/-companion/default-configuration.md). However, for more advanced situations, you may override  to provide a Configuration dynamically.
+In most cases, it is enough to set a [default Configuration](../-payment-fragment/-companion/default-configuration.md). However, for more advanced situations, you may override [PaymentFragment.getConfiguration](../-payment-fragment/get-configuration.md) to provide a Configuration dynamically.
 
 
 

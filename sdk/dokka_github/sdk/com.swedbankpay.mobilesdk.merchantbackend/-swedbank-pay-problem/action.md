@@ -5,7 +5,7 @@
 # action  
 [androidJvm]  
 Content  
-abstract val [action](action.md): [SwedbankPayAction](../index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FSwedbankPayAction%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F2101262426)?  
+abstract val [action](action.md): [SwedbankPayAction](../index.md#%5Bcom.swedbankpay.mobilesdk.merchantbackend%2FSwedbankPayAction%2F%2F%2FPointingToDeclaration%2F%5D%2FClasslikes%2F-859440000)?  
 More info  
 
 

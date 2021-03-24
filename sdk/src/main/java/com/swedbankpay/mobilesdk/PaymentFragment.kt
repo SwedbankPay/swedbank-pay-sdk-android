@@ -321,7 +321,7 @@ open class PaymentFragment : Fragment() {
      * This means that the Configuration of a given PaymentFragment instance
      * cannot change once set.
      */
-    protected open fun getConfiguration(): Configuration {
+    open fun getConfiguration(): Configuration {
         return checkNotNull(defaultConfiguration) { "Default Configuration not set" }
     }
 
