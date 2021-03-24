@@ -2,10 +2,8 @@ package com.swedbankpay.mobilesdk
 
 import android.os.Parcel
 import android.os.Parcelable
-import com.swedbankpay.mobilesdk.internal.makeCreator
-import com.swedbankpay.mobilesdk.internal.readUserData
-import com.swedbankpay.mobilesdk.internal.writeUserData
-import java.io.Serializable
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 
 /**
  * Data required to show the payment menu.
@@ -15,6 +13,7 @@ import java.io.Serializable
  * and return a ViewPaymentOrderInfo object
  * in your [Configuration.postPaymentorders] method.
  */
+@Parcelize
 data class ViewPaymentOrderInfo(
     /**
      * The url to use as the [android.webkit.WebView] page url
@@ -67,48 +66,13 @@ data class ViewPaymentOrderInfo(
     val availableInstruments: List<String>? = null,
 
     /**
-     * Any [Parcelable] or [Serializable] (`String` is fine) object you may need
-     * for your [Configuration].
+     *
+     * Any value you may need for your [Configuration].
+     *
+     * The value must be one that is valid for [Parcel.writeValue], e.g. [String] or [Parcelable].
      *
      * See [Configuration.updatePaymentOrder]; you will receive this
      * `ViewPaymentOrderInfo` object there.
      */
-    val userData: Any? = null
-): Parcelable {
-    companion object {
-        @JvmField
-        val CREATOR = makeCreator(::ViewPaymentOrderInfo)
-    }
-
-    init {
-        require(userData == null || userData is Parcelable || userData is Serializable) {
-            "userData must be Parcelable or Serializable"
-        }
-    }
-
-    override fun describeContents() = 0
-
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(webViewBaseUrl)
-        parcel.writeString(viewPaymentOrder)
-        parcel.writeString(completeUrl)
-        parcel.writeString(cancelUrl)
-        parcel.writeString(paymentUrl)
-        parcel.writeString(termsOfServiceUrl)
-        parcel.writeString(instrument)
-        parcel.writeStringList(availableInstruments)
-        parcel.writeUserData(userData, flags)
-    }
-
-    constructor(parcel: Parcel) : this(
-        webViewBaseUrl = parcel.readString(),
-        viewPaymentOrder = checkNotNull(parcel.readString()),
-        completeUrl = checkNotNull(parcel.readString()),
-        cancelUrl = parcel.readString(),
-        paymentUrl = parcel.readString(),
-        termsOfServiceUrl = parcel.readString(),
-        instrument = parcel.readString(),
-        availableInstruments = parcel.createStringArrayList(),
-        userData = parcel.readUserData()
-    )
-}
+    val userData: @RawValue Any? = null
+): Parcelable

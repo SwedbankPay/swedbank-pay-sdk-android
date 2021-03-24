@@ -1,13 +1,13 @@
 package com.swedbankpay.mobilesdk
 
-import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.internal.makeCreator
+import kotlinx.parcelize.Parcelize
 
 /**
  * Information about the payer of a payment order
  */
+@Parcelize
 data class PaymentOrderPayer(
     /**
      * A consumer profile reference obtained through the Checkin flow.
@@ -50,12 +50,6 @@ data class PaymentOrderPayer(
      */
     @SerializedName("payerReference") val payerReference: String? = null
 ) : Parcelable {
-    companion object {
-        @Suppress("unused")
-        @JvmField
-        val CREATOR = makeCreator(::PaymentOrderPayer)
-    }
-
     @Suppress("unused")
     class Builder {
         private var consumerProfileRef: String? = null
@@ -75,18 +69,4 @@ data class PaymentOrderPayer(
             payerReference = payerReference
         )
     }
-
-    override fun describeContents() = 0
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(consumerProfileRef)
-        parcel.writeString(email)
-        parcel.writeString(msisdn)
-        parcel.writeString(payerReference)
-    }
-    private constructor(parcel: Parcel) : this(
-        consumerProfileRef = parcel.readString(),
-        email = parcel.readString(),
-        msisdn = parcel.readString(),
-        payerReference = parcel.readString()
-    )
 }

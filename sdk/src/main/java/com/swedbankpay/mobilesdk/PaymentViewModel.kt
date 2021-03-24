@@ -3,6 +3,7 @@
 package com.swedbankpay.mobilesdk
 
 import android.app.Application
+import android.os.Parcel
 import android.os.Parcelable
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
@@ -319,12 +320,9 @@ class PaymentViewModel : AndroidViewModel {
      * by calling this with a `String` argument specifying the new instrument;
      * see [PaymentInstruments].
      *
-     * @param updateInfo any data you need to perform the update. Must be [android.os.Parcelable] or [Serializable]
+     * @param updateInfo any data you need to perform the update. The value must be one that is valid for [Parcel.writeValue], e.g. [String] or [Parcelable].
      */
     fun updatePaymentOrder(updateInfo: Any?) {
-        require(updateInfo is Parcelable? || updateInfo is Serializable?) {
-            "updateInfo must be Parcelable or Serializable"
-        }
         internalVm.value?.updatePaymentOrder(updateInfo)
     }
 }

@@ -1,14 +1,13 @@
 package com.swedbankpay.mobilesdk
 
-import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.internal.makeCreator
+import kotlinx.parcelize.Parcelize
 
 /**
  * Information about the payee (recipient) of a payment order
  */
-@Suppress("unused")
+@Parcelize
 data class PayeeInfo(
     /**
      * The unique identifier of this payee set by Swedbank Pay.
@@ -46,9 +45,6 @@ data class PayeeInfo(
     @SerializedName("subsite") val subsite: String? = null
 ) : Parcelable {
     companion object {
-        @JvmField
-        val CREATOR = makeCreator(::PayeeInfo)
-
         private fun String.checkPayeeReference() = checkMaxLength(30, "payeeReference")
         private fun String.checkOrderReference() = checkMaxLength(50, "orderReference")
         private fun String.checkSubsite() = checkMaxLength(40, "subsite")
@@ -60,6 +56,7 @@ data class PayeeInfo(
         }
     }
 
+    @Suppress("unused")
     class Builder {
         private var payeeId = ""
         private var payeeReference = ""
@@ -76,8 +73,8 @@ data class PayeeInfo(
         fun subsite(subsite: String?) = apply { this.subsite = subsite?.checkSubsite() }
 
         fun build() = PayeeInfo(
-            payeeId = payeeId,// checkBuilderNotNull(payeeId, "payeeId"),
-            payeeReference = payeeReference,// checkBuilderNotNull(payeeReference, "payeeReference"),
+            payeeId = payeeId,
+            payeeReference = payeeReference,
             payeeName = payeeName,
             productCategory = productCategory,
             orderReference = orderReference,
@@ -90,24 +87,4 @@ data class PayeeInfo(
         orderReference?.checkOrderReference()
         subsite?.checkSubsite()
     }
-
-    override fun describeContents() = 0
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.apply {
-            writeString(payeeId)
-            writeString(payeeReference)
-            writeString(payeeName)
-            writeString(productCategory)
-            writeString(orderReference)
-            writeString(subsite)
-        }
-    }
-    private constructor(parcel: Parcel) : this(
-        payeeId = checkNotNull(parcel.readString()),
-        payeeReference = checkNotNull(parcel.readString()),
-        payeeName = parcel.readString(),
-        productCategory = parcel.readString(),
-        orderReference = parcel.readString(),
-        subsite = parcel.readString()
-    )
 }
