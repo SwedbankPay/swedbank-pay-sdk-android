@@ -3,12 +3,12 @@
 package com.swedbankpay.mobilesdk
 
 import android.app.Application
+import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
-import java.io.Serializable
 
 /**
  * Convenience for `ViewModelProvider(activity).get(PaymentViewModel::class.java)`.
@@ -131,6 +131,17 @@ class PaymentViewModel : AndroidViewModel {
          * callback from the Chekout API, this property contains an object describing the error.
          */
         val terminalFailure: TerminalFailure?,
+
+        val failingUri: Uri?,
+
+        val redirectErrorCode: Int?,
+
+        val redirectErrorDescription: String?,
+
+        val redirectHttpErrorStatus: Int?,
+
+        val redirectHttpErrorReason: String?,
+
         /**
          * If the current state is [IN_PROGRESS][State.IN_PROGRESS] or
          * [UPDATING_PAYMENT_ORDER][State.UPDATING_PAYMENT_ORDER], the [ViewPaymentOrderInfo]
@@ -228,17 +239,25 @@ class PaymentViewModel : AndroidViewModel {
             else -> null
         }
 
-        val terminalFailure = (it as? InternalPaymentViewModel.UIState.Failure)?.terminalFailure
+        val failureReason = (it as? InternalPaymentViewModel.UIState.Failure)?.failureReason
+        val swedbankPayError = failureReason as? InternalPaymentViewModel.FailureReason.SwedbankPayError
+        val redirectError = failureReason as? InternalPaymentViewModel.FailureReason.RedirectError
+        val redirectHttpError = failureReason as? InternalPaymentViewModel.FailureReason.RedirectHttpError
 
         val paymentOrderState = it as? InternalPaymentViewModel.UIState.ViewPaymentOrder
 
         RichState(
-            state,
-            retryableErrorMessage,
-            exception,
-            terminalFailure,
-            paymentOrderState?.viewPaymentOrderInfo,
-            paymentOrderState?.updateException,
+            state = state,
+            retryableErrorMessage = retryableErrorMessage,
+            exception = exception,
+            terminalFailure = swedbankPayError?.terminalFailure,
+            failingUri = redirectError?.uri ?: redirectHttpError?.uri,
+            redirectErrorCode = redirectError?.errorCode,
+            redirectErrorDescription = redirectError?.description,
+            redirectHttpErrorStatus = redirectHttpError?.statusCode,
+            redirectHttpErrorReason = redirectHttpError?.reasonPhrase,
+            viewPaymentOrderInfo = paymentOrderState?.viewPaymentOrderInfo,
+            updateException = paymentOrderState?.updateException,
         )
     }
 

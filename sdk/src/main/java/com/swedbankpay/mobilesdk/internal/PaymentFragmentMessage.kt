@@ -54,16 +54,20 @@ private fun Context.getPaymentFragmentMessage(
             )
 
         state is InternalPaymentViewModel.UIState.Failure
-                && isEnabled(PaymentFragment.ERROR_MESSAGE) ->
+                && isEnabled(PaymentFragment.ERROR_MESSAGE) -> {
+            val swedbankPayError = state.failureReason as? InternalPaymentViewModel.FailureReason.SwedbankPayError
             PaymentFragmentMessage(
-                getString(when (state.terminalFailure) {
-                    null -> R.string.swedbankpaysdk_payment_failed
-                    else -> R.string.swedbankpaysdk_terminal_failure_title
-                }),
-                state.terminalFailure?.messageId?.let { messageId ->
+                getString(
+                    when (swedbankPayError?.terminalFailure) {
+                        null -> R.string.swedbankpaysdk_payment_failed
+                        else -> R.string.swedbankpaysdk_terminal_failure_title
+                    }
+                ),
+                swedbankPayError?.terminalFailure?.messageId?.let { messageId ->
                     getString(R.string.swedbankpaysdk_terminal_failure_message, messageId)
                 }
             )
+        }
 
         else -> null
     }

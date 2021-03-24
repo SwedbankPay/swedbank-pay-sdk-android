@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.Message
 import android.webkit.*
 import android.webkit.WebView.WebViewTransport
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.R
 import okhttp3.internal.toHexString
@@ -253,6 +254,36 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                     // only open http(s) links in external apps if the intent filter is a "good" match
                     resolveInfo.match and IntentFilter.MATCH_CATEGORY_MASK >= IntentFilter.MATCH_CATEGORY_HOST
                 else -> true
+            }
+        }
+
+        override fun onReceivedError(
+            view: WebView?,
+            errorCode: Int,
+            description: String?,
+            failingUrl: String
+        ) {
+            parentViewModel.onRedirectError(errorCode, description, failingUrl)
+        }
+
+        @RequiresApi(Build.VERSION_CODES.M)
+        override fun onReceivedError(
+            view: WebView?,
+            request: WebResourceRequest,
+            error: WebResourceError
+        ) {
+            if (request.isForMainFrame) {
+                parentViewModel.onRedirectError(request, error)
+            }
+        }
+
+        override fun onReceivedHttpError(
+            view: WebView?,
+            request: WebResourceRequest,
+            errorResponse: WebResourceResponse
+        ) {
+            if (request.isForMainFrame) {
+                parentViewModel.onRedirectHttpError(request, errorResponse)
             }
         }
     }
