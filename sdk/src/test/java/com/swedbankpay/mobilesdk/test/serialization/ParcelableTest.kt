@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk.test.parcelable
+package com.swedbankpay.mobilesdk.test.serialization
 
 import android.os.Build
 import android.os.Parcel
@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendProblem
+import kotlinx.parcelize.Parcelize
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,7 +18,7 @@ import java.time.LocalDate
 import java.util.*
 
 /**
- * Test that Parcelable implementations are correct
+ * Tests for Parcelable implementations
  */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.P])
@@ -257,12 +258,17 @@ class ParcelableTest {
         testParcelable(makeViewPaymentOrderInfo(UserData("field")))
     }
 
-    /*
+    /**
      * Check that ViewPaymentOrderInfo with Parcelable userData parcelizes correctly
-     *
+     */
     @Test
     fun testParcelableUserData() {
-        class UserData(val field: String) : Parcelable
-        testParcelable(makeViewPaymentOrderInfo(UserData("field")))
-    }*/
+        testParcelable(makeViewPaymentOrderInfo(ParcelableUserData("field")))
+    }
+
+    @Parcelize
+    private data class ParcelableUserData(
+        @Suppress("unused")
+        val field: String
+    ) : Parcelable
 }

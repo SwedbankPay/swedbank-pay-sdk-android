@@ -1,14 +1,9 @@
 package com.swedbankpay.mobilesdk
 
-import android.os.Bundle
-import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.internal.*
 import com.swedbankpay.mobilesdk.internal.checkBuilderNotNull
-import com.swedbankpay.mobilesdk.internal.readEnum
-import com.swedbankpay.mobilesdk.internal.remote.ExtensibleJsonObject
-import com.swedbankpay.mobilesdk.internal.writeEnum
+import kotlinx.parcelize.Parcelize
 import java.util.*
 
 /**
@@ -22,6 +17,7 @@ import java.util.*
  * [Merchant Backend API](https://https://developer.swedbankpay.com/modules-sdks/mobile-sdk/merchant-backend),
  * but you can also use it with your custom [Configuration].
  */
+@Parcelize
 data class PaymentOrder(
     /**
      * The operation to perform
@@ -143,15 +139,8 @@ data class PaymentOrder(
      */
     @SerializedName("paymentToken") val paymentToken: String? = null,
     @SerializedName("initiatingSystemUserAgent") val initiatingSystemUserAgent: String? = null,
-
-    /** @hide */
-    @Transient override val extensionProperties: Bundle? = null
-) : Parcelable, ExtensibleJsonObject {
+) : Parcelable {
     companion object {
-        @Suppress("unused")
-        @JvmField
-        val CREATOR = makeCreator(::PaymentOrder)
-
         /**
          * Default value for the [userAgent] property.
          *
@@ -179,7 +168,6 @@ data class PaymentOrder(
         private var payer: PaymentOrderPayer? = null
         private var orderItems: List<OrderItem>? = null
         private var riskIndicator: RiskIndicator? = null
-        private var extensionProperties: Bundle? = null
         private var disablePaymentMenu = false
         private var paymentToken: String? = null
         private var initiatingSystemUserAgent: String? = null
@@ -205,9 +193,6 @@ data class PaymentOrder(
         fun paymentToken(paymentToken: String?) = apply { this.paymentToken = paymentToken }
         fun initiatingSystemUserAgent(initiatingSystemUserAgent: String?) = apply { this.initiatingSystemUserAgent = initiatingSystemUserAgent }
 
-        /** @hide */
-        fun extensionProperties(extensionProperties: Bundle?) = apply { this.extensionProperties = extensionProperties }
-
         fun build() = PaymentOrder(
             operation = operation,
             currency = checkBuilderNotNull(currency, "currency"),
@@ -229,58 +214,6 @@ data class PaymentOrder(
             disablePaymentMenu = disablePaymentMenu,
             paymentToken = paymentToken,
             initiatingSystemUserAgent = initiatingSystemUserAgent,
-
-            extensionProperties = extensionProperties
         )
     }
-
-    override fun describeContents() = 0
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.apply {
-            writeEnum(operation)
-            writeString(currency.currencyCode)
-            writeLong(amount)
-            writeLong(vatAmount)
-            writeString(description)
-            writeString(userAgent)
-            writeEnum(language)
-            writeBooleanCompat(generateRecurrenceToken)
-            writeBooleanCompat(generatePaymentToken)
-            writeBooleanCompat(disableStoredPaymentDetails)
-            writeStringList(restrictedToInstruments)
-            writeParcelable(urls, flags)
-            writeParcelable(payeeInfo, flags)
-            writeParcelable(payer, flags)
-            writeTypedList(orderItems)
-            writeParcelable(riskIndicator, flags)
-            writeBooleanCompat(disablePaymentMenu)
-            writeString(paymentToken)
-            writeString(initiatingSystemUserAgent)
-
-            writeBundle(extensionProperties)
-        }
-    }
-    private constructor(parcel: Parcel) : this(
-        operation = checkNotNull(parcel.readEnum<PaymentOrderOperation>()),
-        currency = Currency.getInstance(checkNotNull(parcel.readString())),
-        amount = parcel.readLong(),
-        vatAmount = parcel.readLong(),
-        description = checkNotNull(parcel.readString()),
-        userAgent = checkNotNull(parcel.readString()),
-        language = checkNotNull(parcel.readEnum<Language>()),
-        generateRecurrenceToken = parcel.readBooleanCompat(),
-        generatePaymentToken = parcel.readBooleanCompat(),
-        disableStoredPaymentDetails = parcel.readBooleanCompat(),
-        restrictedToInstruments = parcel.createStringArrayList(),
-        urls = checkNotNull(parcel.readParcelable()),
-        payeeInfo = checkNotNull(parcel.readParcelable()),
-        payer = parcel.readParcelable(),
-        orderItems = parcel.createTypedArrayList(OrderItem.CREATOR),
-        riskIndicator = parcel.readParcelable(),
-        disablePaymentMenu = parcel.readBooleanCompat(),
-        paymentToken = parcel.readString(),
-        initiatingSystemUserAgent = parcel.readString(),
-
-        extensionProperties = parcel.readBundle(PaymentOrder::class.java.classLoader)
-    )
 }

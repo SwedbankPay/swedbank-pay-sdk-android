@@ -1,13 +1,9 @@
 package com.swedbankpay.mobilesdk
 
-import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.internal.*
 import com.swedbankpay.mobilesdk.internal.checkBuilderNotNull
-import com.swedbankpay.mobilesdk.internal.makeCreator
-import com.swedbankpay.mobilesdk.internal.readEnum
-import com.swedbankpay.mobilesdk.internal.writeEnum
+import kotlinx.parcelize.Parcelize
 
 /**
  * An item being paid for, part of a [PaymentOrder].
@@ -23,7 +19,7 @@ import com.swedbankpay.mobilesdk.internal.writeEnum
  * amount and vatAmount are equal to the PaymentOrder's amount
  * and vatAmount properties, respectively.
  */
-@Suppress("unused")
+@Parcelize
 data class OrderItem(
     /**
      * A reference that identifies the item in your own systems.
@@ -101,10 +97,7 @@ data class OrderItem(
      */
     @SerializedName("vatAmount") val vatAmount: Long
 ) : Parcelable {
-    companion object {
-        @JvmField val CREATOR = makeCreator(::OrderItem)
-    }
-
+    @Suppress("unused")
     class Builder {
         private var reference: String? = null
         private var name: String? = null
@@ -156,42 +149,4 @@ data class OrderItem(
             vatAmount = checkBuilderNotNull(vatAmount, "vatAmount")
         )
     }
-
-    override fun describeContents() = 0
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.apply {
-            writeString(reference)
-            writeString(name)
-            writeEnum(type)
-            writeString(`class`)
-            writeString(itemUrl)
-            writeString(imageUrl)
-            writeString(description)
-            writeString(discountDescription)
-            writeInt(quantity)
-            writeString(quantityUnit)
-            writeLong(unitPrice)
-            writeOptionalLong(discountPrice)
-            writeInt(vatPercent)
-            writeLong(amount)
-            writeLong(vatAmount)
-        }
-    }
-    private constructor(parcel: Parcel) : this(
-        reference = checkNotNull(parcel.readString()),
-        name = checkNotNull(parcel.readString()),
-        type = checkNotNull(parcel.readEnum<ItemType>()),
-        `class` = checkNotNull(parcel.readString()),
-        itemUrl = parcel.readString(),
-        imageUrl = parcel.readString(),
-        description = parcel.readString(),
-        discountDescription = parcel.readString(),
-        quantity = parcel.readInt(),
-        quantityUnit = checkNotNull(parcel.readString()),
-        unitPrice = parcel.readLong(),
-        discountPrice = parcel.readOptionalLong(),
-        vatPercent = parcel.readInt(),
-        amount = parcel.readLong(),
-        vatAmount = parcel.readLong()
-    )
 }

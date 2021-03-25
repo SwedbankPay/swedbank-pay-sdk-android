@@ -2,10 +2,10 @@ package com.swedbankpay.mobilesdk
 
 import android.annotation.TargetApi
 import android.os.Build
-import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.internal.*
+import com.swedbankpay.mobilesdk.RiskIndicator.Companion.formatPreOrderDate
+import kotlinx.parcelize.Parcelize
 import org.joda.time.ReadablePartial
 import org.joda.time.format.DateTimeFormat
 import java.util.*
@@ -19,7 +19,7 @@ import java.util.*
  * @constructor "Raw" constructor. You must manually ensure you set the values for [shipIndicator]
  * and [pickUpAddress] correctly. It is recommended to use the other constructor.
  */
-@Suppress("unused")
+@Parcelize
 data class RiskIndicator(
     /**
      * For electronic delivery, the e-mail address where the merchandise is delivered
@@ -68,9 +68,6 @@ data class RiskIndicator(
     @SerializedName("reOrderPurchaseIndicator") val reOrderPurchaseIndicator: ReOrderPurchaseIndicator?
 ) : Parcelable {
     companion object {
-        @JvmField
-        val CREATOR = makeCreator(::RiskIndicator)
-
         /**
          * Creates a `preOrderDate` from a [java.time.temporal.TemporalAccessor],
          * e.g. a [java.time.LocalDate].
@@ -126,6 +123,7 @@ data class RiskIndicator(
         reOrderPurchaseIndicator = reOrderPurchaseIndicator
     )
 
+    @Suppress("unused")
     class Builder {
         private var deliveryEmailAddress: String? = null
         private var deliveryTimeFrameIndicator: DeliveryTimeFrameIndicator? = null
@@ -167,29 +165,5 @@ data class RiskIndicator(
             reOrderPurchaseIndicator = reOrderPurchaseIndicator
         )
     }
-
-    override fun describeContents() = 0
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.apply {
-            writeString(deliveryEmailAddress)
-            writeEnum(deliveryTimeFrameIndicator)
-            writeString(preOrderDate)
-            writeEnum(preOrderPurchaseIndicator)
-            writeString(shipIndicator)
-            writeParcelable(pickUpAddress, flags)
-            writeOptionalBoolean(giftCardPurchase)
-            writeEnum(reOrderPurchaseIndicator)
-        }
-    }
-    private constructor(parcel: Parcel) : this(
-        deliveryEmailAddress = parcel.readString(),
-        deliveryTimeFrameIndicator = parcel.readEnum<DeliveryTimeFrameIndicator>(),
-        preOrderDate = parcel.readString(),
-        preOrderPurchaseIndicator = parcel.readEnum<PreOrderPurchaseIndicator>(),
-        shipIndicator = parcel.readString(),
-        pickUpAddress = parcel.readParcelable(),
-        giftCardPurchase = parcel.readOptionalBoolean(),
-        reOrderPurchaseIndicator = parcel.readEnum<ReOrderPurchaseIndicator>()
-    )
 }
 

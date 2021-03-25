@@ -1,11 +1,10 @@
 package com.swedbankpay.mobilesdk
 
 import android.content.Context
-import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
 import com.swedbankpay.mobilesdk.internal.checkBuilderNotNull
-import com.swedbankpay.mobilesdk.internal.makeCreator
+import kotlinx.parcelize.Parcelize
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.*
@@ -16,6 +15,7 @@ import java.util.*
  * The Mobile SDK places some requirements on these URLs,  different to the web-page case.
  * See individual properties for discussion.
  */
+@Parcelize
 data class PaymentOrderUrls(
     /**
      * Array of URLs that are valid for embedding this payment order.
@@ -87,10 +87,6 @@ data class PaymentOrderUrls(
     @SerializedName("termsOfServiceUrl") val termsOfServiceUrl: String? = null
 ) : Parcelable {
     companion object {
-        @Suppress("unused")
-        @JvmField
-        val CREATOR = makeCreator(::PaymentOrderUrls)
-
         private fun buildCompleteUrl(backendUrl: HttpUrl) = checkNotNull(backendUrl.newBuilder("complete")).toString()
         private fun buildCancelUrl(backendUrl: HttpUrl) = backendUrl.newBuilder("cancel")?.toString()
         private fun buildPaymentUrl(context: Context, backendUrl: HttpUrl, id: String) =
@@ -222,24 +218,4 @@ data class PaymentOrderUrls(
             termsOfServiceUrl = termsOfServiceUrl
         )
     }
-
-    override fun describeContents() = 0
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.apply {
-            writeStringList(hostUrls)
-            writeString(completeUrl)
-            writeString(cancelUrl)
-            writeString(paymentUrl)
-            writeString(callbackUrl)
-            writeString(termsOfServiceUrl)
-        }
-    }
-    private constructor(parcel: Parcel) : this(
-        hostUrls = checkNotNull(parcel.createStringArrayList()),
-        completeUrl = checkNotNull(parcel.readString()),
-        cancelUrl = parcel.readString(),
-        paymentUrl = parcel.readString(),
-        callbackUrl = parcel.readString(),
-        termsOfServiceUrl = parcel.readString()
-    )
 }

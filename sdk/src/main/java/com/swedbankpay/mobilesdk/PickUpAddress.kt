@@ -1,9 +1,8 @@
 package com.swedbankpay.mobilesdk
 
-import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.internal.makeCreator
+import kotlinx.parcelize.Parcelize
 
 /**
  * Pick-up address data for [RiskIndicator].
@@ -11,6 +10,7 @@ import com.swedbankpay.mobilesdk.internal.makeCreator
  * When using [ShipIndicator.PICK_UP_AT_STORE], you should populate this data as completely as
  * possible to decrease the risk factor of the purchase.
  */
+@Parcelize
 data class PickUpAddress(
     /**
      * Name of the payer
@@ -36,30 +36,4 @@ data class PickUpAddress(
      * Country code of the payer
      */
     @SerializedName("countryCode") val countryCode: String? = null
-) : Parcelable {
-    companion object {
-        @Suppress("unused")
-        @JvmField
-        val CREATOR = makeCreator(::PickUpAddress)
-    }
-
-    override fun describeContents() = 0
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.apply {
-            writeString(name)
-            writeString(streetAddress)
-            writeString(coAddress)
-            writeString(city)
-            writeString(zipCode)
-            writeString(countryCode)
-        }
-    }
-    constructor(parcel: Parcel) : this(
-        name = parcel.readString(),
-        streetAddress = parcel.readString(),
-        coAddress = parcel.readString(),
-        city = parcel.readString(),
-        zipCode = parcel.readString(),
-        countryCode = parcel.readString()
-    )
-}
+) : Parcelable

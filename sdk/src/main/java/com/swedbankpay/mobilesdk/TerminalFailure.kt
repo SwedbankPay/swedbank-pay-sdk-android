@@ -1,6 +1,5 @@
 package com.swedbankpay.mobilesdk
 
-import android.os.Parcel
 import android.os.Parcelable
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
@@ -8,7 +7,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.JsonAdapter
 import com.swedbankpay.mobilesdk.internal.asStringOrNull
-import com.swedbankpay.mobilesdk.internal.makeCreator
+import kotlinx.parcelize.Parcelize
 import java.lang.reflect.Type
 
 /**
@@ -17,27 +16,21 @@ import java.lang.reflect.Type
  * See [https://developer.swedbankpay.com/checkout/other-features#onerror]
  */
 @JsonAdapter(TerminalFailure.Deserializer::class)
+@Parcelize
 data class TerminalFailure internal constructor(
+    /**
+     * `"consumer"`, `"paymentmenu"`, `"creditcard"`, identifies the system that originated the error.
+     */
     val origin: String?,
+    /**
+     * A unique identifier for the message.
+     */
     val messageId: String?,
+    /**
+     * A human readable and descriptive text of the error.
+     */
     val details: String?
 ) : Parcelable {
-    private constructor(parcel: Parcel) : this(
-        origin = parcel.readString(),
-        messageId = parcel.readString(),
-        details = parcel.readString()
-    )
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(origin)
-        parcel.writeString(messageId)
-        parcel.writeString(details)
-    }
-    override fun describeContents() = 0
-    companion object {
-        @Suppress("unused")
-        @JvmField val CREATOR = makeCreator(::TerminalFailure)
-    }
-
     internal class Deserializer : JsonDeserializer<TerminalFailure?> {
         override fun deserialize(
             element: JsonElement,

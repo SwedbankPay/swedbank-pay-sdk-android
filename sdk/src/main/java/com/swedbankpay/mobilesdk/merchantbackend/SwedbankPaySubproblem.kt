@@ -8,7 +8,7 @@ import java.io.Serializable
  * See [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems].
  */
 @Suppress("unused")
-class SwedbankPaySubproblem(
+data class SwedbankPaySubproblem(
     /**
      * Name of the erroneous part of the request
      */

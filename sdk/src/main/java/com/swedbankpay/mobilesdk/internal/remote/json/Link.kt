@@ -6,9 +6,7 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
 import com.swedbankpay.mobilesdk.*
-import com.swedbankpay.mobilesdk.internal.BundleTypeAdapterFactory
 import com.swedbankpay.mobilesdk.internal.remote.Api
-import com.swedbankpay.mobilesdk.internal.remote.ExtensibleJsonObject
 import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,8 +38,6 @@ internal sealed class Link(
 
         private suspend fun toJsonBody(value: Any) = withContext(Dispatchers.Default) {
             GsonBuilder()
-                .registerTypeAdapterFactory(ExtensibleJsonObject.TypeAdapterFactory)
-                .registerTypeAdapterFactory(BundleTypeAdapterFactory)
                 .create()
                 .toJson(value)
         }

@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
 import androidx.annotation.MainThread
@@ -15,6 +14,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 
 @MainThread
 internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app) {
@@ -278,17 +279,12 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         open fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState? = null
         open fun getStateForUpdatingPaymentOrder(updateInfo: Any?): ProcessState? = null
 
-        override fun describeContents() = 0
-
+        @Parcelize
         class InitializingConsumerSession(
             private val consumer: Consumer?,
             private val paymentOrder: PaymentOrder?,
-            private val userData: Any?
+            private val userData: @RawValue Any?
         ) : ProcessState() {
-            companion object { @Suppress("unused") @JvmField val CREATOR =
-                makeCreator(::InitializingConsumerSession)
-            }
-
             override val uiState get() = UIState.Loading
 
             override val shouldProceedAutomatically get() = true
@@ -307,30 +303,16 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                     FailedInitializeConsumerSession(consumer, paymentOrder, userData, retryable, e)
                 }
             }
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeParcelable(consumer, flags)
-                parcel.writeParcelable(paymentOrder, flags)
-                parcel.writeUserData(userData, flags)
-            }
-            constructor(parcel: Parcel) : this(
-                consumer = parcel.readParcelable(),
-                paymentOrder = parcel.readParcelable(),
-                userData = parcel.readUserData()
-            )
         }
 
+        @Parcelize
         class FailedInitializeConsumerSession(
             private val consumer: Consumer?,
             private val paymentOrder: PaymentOrder?,
-            private val userData: Any?,
+            private val userData: @RawValue Any?,
             private val retryable: Boolean,
             private val exception: Exception
         ) : ProcessState() {
-            companion object { @Suppress("unused") @JvmField val CREATOR =
-                makeCreator(::FailedInitializeConsumerSession)
-            }
-
             override val uiState
                 get() = if (retryable) {
                     UIState.RetryableError(exception, R.string.swedbankpaysdk_failed_init_consumer)
@@ -342,33 +324,15 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
                 return InitializingConsumerSession(consumer, paymentOrder, userData)
             }
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeParcelable(consumer, flags)
-                parcel.writeParcelable(paymentOrder, flags)
-                parcel.writeUserData(userData, flags)
-                parcel.writeBooleanCompat(retryable)
-                parcel.writeSerializable(exception)
-            }
-            constructor(parcel: Parcel) : this(
-                consumer = parcel.readParcelable(),
-                paymentOrder = parcel.readParcelable(),
-                userData = parcel.readUserData(),
-                retryable = parcel.readBooleanCompat(),
-                exception = parcel.readSerializable() as Exception
-            )
         }
 
+        @Parcelize
         class IdentifyingConsumer(
             private val baseUrl: String?,
             private val viewConsumerIdentification: String,
             private val paymentOrder: PaymentOrder?,
-            private val userData: Any?
+            private val userData: @RawValue Any?
         ) : ProcessState() {
-            companion object { @Suppress("unused") @JvmField val CREATOR =
-                makeCreator(::IdentifyingConsumer)
-            }
-
             override val uiState get() = UIState.ViewConsumerIdentification(
                 baseUrl,
                 viewConsumerIdentification
@@ -377,30 +341,14 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState {
                 return CreatingPaymentOrder(consumerProfileRef, paymentOrder, userData)
             }
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeString(baseUrl)
-                parcel.writeString(viewConsumerIdentification)
-                parcel.writeParcelable(paymentOrder, flags)
-                parcel.writeUserData(userData, flags)
-            }
-            constructor(parcel: Parcel) : this(
-                baseUrl = parcel.readString(),
-                viewConsumerIdentification = checkNotNull(parcel.readString()),
-                paymentOrder = parcel.readParcelable(),
-                userData = parcel.readUserData()
-            )
         }
 
+        @Parcelize
         class CreatingPaymentOrder(
             private val consumerProfileRef: String?,
             private val paymentOrder: PaymentOrder?,
-            private val userData: Any?
+            private val userData: @RawValue Any?
         ) : ProcessState() {
-            companion object { @Suppress("unused") @JvmField val CREATOR =
-                makeCreator(::CreatingPaymentOrder)
-            }
-
             override val uiState get() = UIState.Loading
 
             override val shouldProceedAutomatically get() = true
@@ -414,30 +362,16 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                     FailedCreatePaymentOrder(consumerProfileRef, paymentOrder, userData, retryable, e)
                 }
             }
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeString(consumerProfileRef)
-                parcel.writeParcelable(paymentOrder, flags)
-                parcel.writeUserData(userData, flags)
-            }
-            constructor(parcel: Parcel) : this(
-                consumerProfileRef = parcel.readString(),
-                paymentOrder = parcel.readParcelable(),
-                userData = parcel.readUserData()
-            )
         }
 
+        @Parcelize
         class FailedCreatePaymentOrder(
             private val consumerProfileRef: String?,
             private val paymentOrder: PaymentOrder?,
-            private val userData: Any?,
+            private val userData: @RawValue Any?,
             private val retryable: Boolean,
             private val exception: Exception
         ) : ProcessState() {
-            companion object { @Suppress("unused") @JvmField val CREATOR =
-                makeCreator(::FailedCreatePaymentOrder)
-            }
-
             override val uiState
                 get() = if (retryable) {
                     UIState.RetryableError(exception, R.string.swedbankpaysdk_failed_create_payment)
@@ -449,64 +383,30 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
                 return CreatingPaymentOrder(consumerProfileRef, paymentOrder, userData)
             }
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeString(consumerProfileRef)
-                parcel.writeParcelable(paymentOrder, flags)
-                parcel.writeUserData(userData, flags)
-                parcel.writeBooleanCompat(retryable)
-                parcel.writeSerializable(exception)
-            }
-            constructor(parcel: Parcel) : this(
-                consumerProfileRef = parcel.readString(),
-                paymentOrder = parcel.readParcelable(),
-                userData = parcel.readUserData(),
-                retryable = parcel.readBooleanCompat(),
-                exception = parcel.readSerializable() as Exception
-            )
         }
 
+        @Parcelize
         class Paying(
             private val paymentOrder: PaymentOrder?,
-            private val userData: Any?,
+            private val userData: @RawValue Any?,
             val viewPaymentOrderInfo: ViewPaymentOrderInfo,
             val updateException: Exception?
         ) : ProcessState() {
-            companion object { @Suppress("unused") @JvmField val CREATOR =
-                makeCreator(::Paying)
-            }
-
             override val uiState
                 get() = UIState.ViewPaymentOrder(viewPaymentOrderInfo, updateException)
 
             override fun getStateForUpdatingPaymentOrder(updateInfo: Any?): ProcessState {
                 return UpdatingPaymentOrder(paymentOrder, userData, viewPaymentOrderInfo, updateInfo)
             }
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeParcelable(paymentOrder, flags)
-                parcel.writeUserData(userData, flags)
-                parcel.writeParcelable(viewPaymentOrderInfo, flags)
-                parcel.writeSerializable(updateException)
-            }
-            constructor(parcel: Parcel) : this(
-                paymentOrder = parcel.readParcelable(),
-                userData = parcel.readUserData(),
-                viewPaymentOrderInfo = checkNotNull(parcel.readParcelable()),
-                updateException = parcel.readSerializable() as? Exception
-            )
         }
 
+        @Parcelize
         class UpdatingPaymentOrder(
             private val paymentOrder: PaymentOrder?,
-            private val userData: Any?,
+            private val userData: @RawValue Any?,
             private val viewPaymentOrderInfo: ViewPaymentOrderInfo,
-            private val updateInfo: Any?
+            private val updateInfo: @RawValue Any?
         ) : ProcessState() {
-            companion object { @Suppress("unused") @JvmField val CREATOR =
-                makeCreator(::UpdatingPaymentOrder)
-            }
-
             override val uiState get() = UIState.UpdatingPaymentOrder
 
             override val shouldProceedAutomatically get() = true
@@ -523,51 +423,23 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 }
                 return Paying(paymentOrder, userData, viewPaymentOrderInfo, exception)
             }
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeParcelable(paymentOrder, flags)
-                parcel.writeUserData(userData, flags)
-                parcel.writeParcelable(viewPaymentOrderInfo, flags)
-                parcel.writeUserData(updateInfo, flags)
-            }
-            constructor(parcel: Parcel) : this(
-                paymentOrder = parcel.readParcelable(),
-                userData = parcel.readUserData(),
-                viewPaymentOrderInfo = checkNotNull(parcel.readParcelable()),
-                updateInfo = parcel.readUserData()
-            )
         }
 
+        @Parcelize
         object Complete : ProcessState() {
             override val uiState get() = UIState.Complete
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {}
-            @Suppress("unused") @JvmField val CREATOR = makeCreator { Complete }
         }
 
+        @Parcelize
         object Canceled : ProcessState() {
             override val uiState get() = UIState.Canceled
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {}
-            @Suppress("unused") @JvmField val CREATOR = makeCreator { Canceled }
         }
 
+        @Parcelize
         class SwedbankPayError(
             private val terminalFailure: TerminalFailure?
         ) : ProcessState() {
-            companion object { @Suppress("unused") @JvmField val CREATOR =
-                makeCreator(::SwedbankPayError)
-            }
-
             override val uiState get() = UIState.Failure(terminalFailure)
-
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-                parcel.writeParcelable(terminalFailure, flags)
-            }
-            constructor(parcel: Parcel) : this(
-                parcel.readParcelable<TerminalFailure>()
-            )
         }
     }
-
 }
