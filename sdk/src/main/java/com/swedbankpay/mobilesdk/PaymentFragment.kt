@@ -402,7 +402,7 @@ open class PaymentFragment : Fragment() {
         })
 
         messageBody.observe(this@PaymentFragment, {
-            requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
+            requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_body).text = it
         })
 
         retryActionAvailable.observe(this@PaymentFragment, {

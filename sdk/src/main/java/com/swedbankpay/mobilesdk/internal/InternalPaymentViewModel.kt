@@ -3,10 +3,15 @@ package com.swedbankpay.mobilesdk.internal
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import androidx.annotation.MainThread
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.*
@@ -203,7 +208,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     }
 
     fun onError(terminalFailure: TerminalFailure?) {
-        setProcessState(ProcessState.SwedbankPayError(terminalFailure))
+        setFailureState(FailureReason.SwedbankPayError(terminalFailure))
     }
 
     fun getPaymentMenuHtmlContent(): HtmlContent? {
@@ -225,6 +230,29 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             else -> return false
         }
         return true
+    }
+
+    fun onRedirectError(errorCode: Int, description: String?, failingUrl: String) {
+        setFailureState(FailureReason.RedirectError(
+            Uri.parse(failingUrl), errorCode, description
+        ))
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    fun onRedirectError(request: WebResourceRequest, error: WebResourceError) {
+        setFailureState(FailureReason.RedirectError(
+            request.url, error.errorCode, error.description?.toString()
+        ))
+    }
+
+    fun onRedirectHttpError(request: WebResourceRequest, errorResponse: WebResourceResponse) {
+        setFailureState(FailureReason.RedirectHttpError(
+            request.url, errorResponse.statusCode, errorResponse.reasonPhrase
+        ))
+    }
+
+    private fun setFailureState(reason: FailureReason) {
+        setProcessState(ProcessState.Failed(reason))
     }
 
     interface HtmlContent {
@@ -267,7 +295,26 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class RetryableError(val exception: Exception, @StringRes val message: Int) : UIState()
         object Complete : UIState()
         object Canceled : UIState()
-        class Failure(val terminalFailure: TerminalFailure?) : UIState()
+        class Failure(val failureReason: FailureReason) : UIState()
+    }
+
+    sealed class FailureReason : Parcelable {
+        @Parcelize
+        class SwedbankPayError(val terminalFailure: TerminalFailure?) : FailureReason()
+
+        @Parcelize
+        class RedirectError(
+            val uri: Uri,
+            val errorCode: Int,
+            val description: String?
+        ) : FailureReason()
+
+        @Parcelize
+        class RedirectHttpError(
+            val uri: Uri,
+            val statusCode: Int,
+            val reasonPhrase: String
+        ) : FailureReason()
     }
 
     private sealed class ProcessState : Parcelable {
@@ -436,10 +483,10 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         }
 
         @Parcelize
-        class SwedbankPayError(
-            private val terminalFailure: TerminalFailure?
+        class Failed(
+            private val failureReason: FailureReason
         ) : ProcessState() {
-            override val uiState get() = UIState.Failure(terminalFailure)
+            override val uiState get() = UIState.Failure(failureReason)
         }
     }
 }
