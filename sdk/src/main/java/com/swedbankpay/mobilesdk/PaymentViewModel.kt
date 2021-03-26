@@ -6,6 +6,7 @@ import android.app.Application
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import android.webkit.WebViewClient
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
@@ -131,15 +132,31 @@ class PaymentViewModel : AndroidViewModel {
          * callback from the Chekout API, this property contains an object describing the error.
          */
         val terminalFailure: TerminalFailure?,
-
+        /**
+         * If the current state is [FAILURE][State.FAILURE], and it was caused by a failing
+         * redirect, this property contains the redirect [Uri] that failed to load.
+         */
         val failingUri: Uri?,
-
+        /**
+         * If the current state is [FAILURE][State.FAILURE], and it was caused by a failing
+         * redirect, the error code describing the failure. The value is one of the
+         * [WebViewClient] ERROR_* constants.
+         */
         val redirectErrorCode: Int?,
-
+        /**
+         * If the current state is [FAILURE][State.FAILURE], and it was caused by a failing
+         * redirect, a textual description of the failure.
+         */
         val redirectErrorDescription: String?,
-
+        /**
+         * If the current state is [FAILURE][State.FAILURE], and it was caused by an error
+         * http response to a redirect, the status code of that response.
+         */
         val redirectHttpErrorStatus: Int?,
-
+        /**
+         * If the current state is [FAILURE][State.FAILURE], and it was caused by an error
+         * http response to a redirect, the reason phrase of that respone.
+         */
         val redirectHttpErrorReason: String?,
 
         /**
