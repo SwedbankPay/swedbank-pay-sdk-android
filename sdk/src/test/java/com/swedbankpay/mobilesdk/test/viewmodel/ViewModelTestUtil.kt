@@ -56,10 +56,12 @@ internal fun InternalPaymentViewModel.verifyIsInFailureStateWithTerminalFailure(
         val argument = argumentCaptor<InternalPaymentViewModel.UIState.Failure>()
         verify(it).onChanged(argument.capture())
         val failure = argument.firstValue
-        Assert.assertNotNull(failure.terminalFailure)
-        Assert.assertEquals(origin, failure.terminalFailure?.origin)
-        Assert.assertEquals(messageId, failure.terminalFailure?.messageId)
-        Assert.assertEquals(details, failure.terminalFailure?.details)
+        val failureReason = failure.failureReason
+        val swedbankPayError = failureReason as InternalPaymentViewModel.FailureReason.SwedbankPayError
+        Assert.assertNotNull(swedbankPayError.terminalFailure)
+        Assert.assertEquals(origin, swedbankPayError.terminalFailure?.origin)
+        Assert.assertEquals(messageId, swedbankPayError.terminalFailure?.messageId)
+        Assert.assertEquals(details, swedbankPayError.terminalFailure?.details)
 
         verifyNoMoreInteractions(it)
     }
