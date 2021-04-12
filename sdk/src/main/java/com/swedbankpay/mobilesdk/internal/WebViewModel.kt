@@ -230,19 +230,12 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
 
         private fun getExternalAppIntent(uri: Uri): Intent? {
             return Intent(Intent.ACTION_VIEW, uri).apply {
-                getPackageNameForScheme(scheme)?.let(::setPackage)
                 addCategory(Intent.CATEGORY_BROWSABLE)
             }.takeIf {
                 val resolveInfo = getApplication<Application>().packageManager
                     .resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY)
                 resolveInfo != null && shouldStartActivity(uri, resolveInfo)
             }
-        }
-
-        private fun getPackageNameForScheme(scheme: String?) = when (scheme) {
-            "swish" -> "se.bankgirot.swish"
-            "vipps" -> "no.dnb.vipps"
-            else -> null
         }
 
         private fun shouldStartActivity(uri: Uri, resolveInfo: ResolveInfo): Boolean {
