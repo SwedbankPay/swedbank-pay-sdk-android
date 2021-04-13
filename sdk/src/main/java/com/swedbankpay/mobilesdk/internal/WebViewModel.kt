@@ -3,11 +3,11 @@ package com.swedbankpay.mobilesdk.internal
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Application
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Message
@@ -17,12 +17,17 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
 import com.swedbankpay.mobilesdk.R
 import okhttp3.internal.toHexString
-
-private fun <T> MutableLiveData<List<T>?>.add(t: T) {
-    value = value?.plus(t) ?: listOf(t)
-}
+import java.net.URISyntaxException
 
 internal class WebViewModel(application: Application) : AndroidViewModel(application) {
+    private companion object {
+        val INTENT_URI_FLAGS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            Intent.URI_ANDROID_APP_SCHEME or Intent.URI_INTENT_SCHEME
+        } else {
+            Intent.URI_INTENT_SCHEME
+        }
+    }
+
     sealed class JSDialogInfo<T : JsResult>(
         val message: String?,
         val result: T
@@ -44,9 +49,6 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     private var webView: WebView? = null
 
     private var lastRootHtml: String? = null
-
-    val intentUris = MutableLiveData<List<Uri>?>()
-    val externalAppIntents = MutableLiveData<List<Intent>?>()
 
     private val javascriptDialogs = MutableLiveData<Map<String, JSDialogInfo<*>>?>()
     val javascriptDialogTags = Transformations.map(javascriptDialogs) { it?.keys ?: emptySet() }
@@ -122,7 +124,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         javascriptDialogs.value = null
         webView?.apply {
             webChromeClient = null
-            webViewClient = null
+            webViewClient = WebViewClient()
             removeJavascriptInterface(getApplication<Application>().getString(R.string.swedbankpaysdk_javascript_interface_name))
             destroy()
         }
@@ -181,8 +183,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         private fun shouldOverrideUrlLoading(uri: Uri?): Boolean {
             val handled = uri != null && (
                     attemptHandleByViewModel(uri)
-                            || attemptHandleIntentUri(uri)
-                            || attemptHandleByExternalApp(uri)
+                            || attemptHandleByExternalApp(uri.toString())
                     )
             val override = handled || !webViewCanOpen(uri)
             if (!override) {
@@ -204,49 +205,51 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             return parentViewModel.overrideNavigation(uri)
         }
 
-        private fun attemptHandleIntentUri(uri: Uri): Boolean {
-            val scheme = uri.scheme
-            val isIntentUri = scheme == "intent" || scheme == "android-app"
-            if (isIntentUri) {
-                // Further handling is in the WebViewFragment,
-                // as starting an Activity requires an Activity context.
-                intentUris.add(uri)
+        private fun attemptHandleByExternalApp(uri: String): Boolean {
+            return try {
+                val intent = getExternalAppIntent(uri)
+                getApplication<Application>().startActivity(intent)
+                true
+            } catch (_: URISyntaxException) {
+                false
+            } catch (_: ActivityNotFoundException) {
+                false
             }
-            return isIntentUri
         }
 
-        private fun attemptHandleByExternalApp(uri: Uri): Boolean {
-            // Check if a matching activity can be found here,
-            // so that the WebView can know of failed navigations
-            // to app urls. (N.B! Such is a legacy approach to launching
-            // apps from web content, but we might as well do our best
-            // to support it.)
-            val intent = getExternalAppIntent(uri)
-            // Further handling is in the WebViewFragment,
-            // as starting an Activity requires an Activity context.
-            intent?.let(externalAppIntents::add)
-            return intent != null
+        private fun getExternalAppIntent(uri: String): Intent? {
+            val intent = Intent.parseUri(uri, INTENT_URI_FLAGS)
+            intent.addCategory(Intent.CATEGORY_BROWSABLE)
+            intent.addFlags(
+                Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                        or Intent.FLAG_ACTIVITY_NEW_TASK
+            )
+            if (!parentViewModel.useExternalBrowser) {
+                requireNonBrowser(intent)
+            }
+            return intent
         }
 
-        private fun getExternalAppIntent(uri: Uri): Intent? {
-            return Intent(Intent.ACTION_VIEW, uri).apply {
-                addCategory(Intent.CATEGORY_BROWSABLE)
-            }.takeIf {
+        private fun requireNonBrowser(intent: Intent) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER)
+            } else {
+                legacyRequireNonBrowser(intent)
+            }
+        }
+
+        private fun legacyRequireNonBrowser(intent: Intent) {
+            val scheme = intent.scheme
+            if (scheme == "http" || scheme == "https" || scheme == "about") {
                 val resolveInfo = getApplication<Application>().packageManager
-                    .resolveActivity(it, PackageManager.MATCH_DEFAULT_ONLY)
-                resolveInfo != null && shouldStartActivity(uri, resolveInfo)
-            }
-        }
-
-        private fun shouldStartActivity(uri: Uri, resolveInfo: ResolveInfo): Boolean {
-            if (parentViewModel.useExternalBrowser) return true
-            return when (uri.scheme) {
-                // Open about:blank in WebView (useful for testing)
-                "about" -> uri.schemeSpecificPart != "blank"
-                "http", "https" ->
-                    // only open http(s) links in external apps if the intent filter is a "good" match
-                    resolveInfo.match and IntentFilter.MATCH_CATEGORY_MASK >= IntentFilter.MATCH_CATEGORY_HOST
-                else -> true
+                    .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+                    ?: throw ActivityNotFoundException()
+                val matchCategory = resolveInfo.match and IntentFilter.MATCH_CATEGORY_MASK
+                // Using "host" match category as a heuristic here.
+                // An app that handles http(s) uris for any host is more than likely a browser.
+                if (matchCategory < IntentFilter.MATCH_CATEGORY_HOST) {
+                    throw ActivityNotFoundException()
+                }
             }
         }
 
