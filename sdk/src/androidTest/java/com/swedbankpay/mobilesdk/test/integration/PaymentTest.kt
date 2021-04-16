@@ -1,6 +1,7 @@
 package com.swedbankpay.mobilesdk.test.integration
 
 import android.content.Context
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.widget.Button
@@ -11,6 +12,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject
+import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
 import kotlinx.coroutines.CompletableDeferred
@@ -27,6 +29,10 @@ import java.util.*
  */
 class PaymentTest {
     private companion object {
+        // UI Automator does not contain a "wait until can scroll into view"
+        // so, we implement one ourselves. This is essentially duplicating logic
+        // from UiObject; 1000L is taken from there.
+        const val waitAndScrollPollInterval = 1000L
         const val timeout = 30_000L
         // Key input to the web view is laggy, and without a delay
         // between keystrokes, the input may get jumbled.
@@ -59,8 +65,13 @@ class PaymentTest {
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     }
 
-    private val webView
-        get() = device.findObject(UiSelector().className(WebView::class.java))
+    private val webView: UiScrollable get() {
+        // Make sure device is initialized.
+        // UiScrollable is still using the legacy API without an explicit UiDevice dependency.
+        device
+
+        return UiScrollable(UiSelector().className(WebView::class.java))
+    }
     private val cardOption
         get() = webView.getChild(UiSelector().textStartsWith("Card").clickable(true))
     private val cardDetails
@@ -79,16 +90,23 @@ class PaymentTest {
     private val scaContinueButton
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
 
-    private fun UiObject.waitAndAssertExists() {
-        val exists = waitForExists(timeout)
-        Assert.assertTrue("Widget not found: $selector", exists)
+    // see comment at waitAndScrollPollInterval
+    private fun UiObject.waitAndScrollIntoViewAndAssertExists() {
+        val start = SystemClock.uptimeMillis()
+        var elapsedTime = 0L
+        while (elapsedTime <= timeout) {
+            if (webView.scrollIntoView(this)) return
+            elapsedTime = SystemClock.uptimeMillis() - start
+            SystemClock.sleep(waitAndScrollPollInterval)
+        }
+        Assert.fail("Widget not found: $selector")
     }
 
     private fun UiObject.inputText(text: String) {
         click()
         for (c in text) {
             device.pressKeyCode(KeyEvent.keyCodeFromString("KEYCODE_$c"))
-            Thread.sleep(keyInputDelay) // this is horrible but you do what you gotta do
+            SystemClock.sleep(keyInputDelay) // this is horrible but you do what you gotta do
         }
     }
 
@@ -115,7 +133,7 @@ class PaymentTest {
      */
     @Test
     fun itShouldDisplayWebView() {
-        webView.waitAndAssertExists()
+        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
     }
 
     private fun fullPaymentTest(
@@ -123,26 +141,26 @@ class PaymentTest {
         cvv: String,
         paymentFlowHandler: () -> Unit
     ) {
-        webView.waitAndAssertExists()
+        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
 
-        cardOption.waitAndAssertExists()
+        cardOption.waitAndScrollIntoViewAndAssertExists()
         Assert.assertTrue(cardOption.click())
 
-        cardDetails.waitAndAssertExists()
+        cardDetails.waitAndScrollIntoViewAndAssertExists()
 
-        creditCardOption.waitAndAssertExists()
+        creditCardOption.waitAndScrollIntoViewAndAssertExists()
         Assert.assertTrue(creditCardOption.click())
 
-        panInput.waitAndAssertExists()
+        panInput.waitAndScrollIntoViewAndAssertExists()
         panInput.inputText(cardNumber)
 
-        expiryDateInput.waitAndAssertExists()
+        expiryDateInput.waitAndScrollIntoViewAndAssertExists()
         expiryDateInput.inputText(expiryDate)
 
-        cvvInput.waitAndAssertExists()
+        cvvInput.waitAndScrollIntoViewAndAssertExists()
         cvvInput.inputText(cvv)
 
-        payButton.waitAndAssertExists()
+        payButton.waitAndScrollIntoViewAndAssertExists()
         Assert.assertTrue(payButton.click())
 
         paymentFlowHandler()
@@ -192,7 +210,7 @@ class PaymentTest {
             cardNumber = scaCardNumber,
             cvv = scaCvv
         ) {
-            scaContinueButton.waitAndAssertExists()
+            scaContinueButton.waitAndScrollIntoViewAndAssertExists()
             Assert.assertTrue(scaContinueButton.click())
         }
     }
