@@ -18,6 +18,5 @@ jobs:
           api-level: 28
           target: google_apis
           arch: x86_64
-          profile: pixel_xl
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 4096
           script: ./gradlew connectedCheck

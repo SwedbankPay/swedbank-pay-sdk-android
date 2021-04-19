@@ -90,12 +90,32 @@ class PaymentTest {
     private val scaContinueButton
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
 
+
+    private fun UiScrollable.isChildsBottomVisible(child: UiObject) =
+        child.exists() && child.bounds.bottom < bounds.bottom
+
+    private fun UiScrollable.scrollFullyIntoView(obj: UiObject): Boolean {
+        if (isChildsBottomVisible(obj)) return true
+
+        val maxSwipes = maxSearchSwipes
+        scrollToBeginning(maxSwipes)
+        if (isChildsBottomVisible(obj)) return true
+
+        repeat(maxSwipes) {
+            val scrolled = scrollForward()
+            if (isChildsBottomVisible(obj)) return true
+            if (!scrolled) return false
+        }
+
+        return false
+    }
+
     // see comment at waitAndScrollPollInterval
-    private fun UiObject.waitAndScrollIntoViewAndAssertExists() {
+    private fun UiObject.waitAndScrollFullyIntoViewAndAssertExists() {
         val start = SystemClock.uptimeMillis()
         var elapsedTime = 0L
         while (elapsedTime <= timeout) {
-            if (webView.scrollIntoView(this)) return
+            if (webView.scrollFullyIntoView(this)) return
             elapsedTime = SystemClock.uptimeMillis() - start
             SystemClock.sleep(waitAndScrollPollInterval)
         }
@@ -143,24 +163,24 @@ class PaymentTest {
     ) {
         Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
 
-        cardOption.waitAndScrollIntoViewAndAssertExists()
+        cardOption.waitAndScrollFullyIntoViewAndAssertExists()
         Assert.assertTrue(cardOption.click())
 
-        cardDetails.waitAndScrollIntoViewAndAssertExists()
+        cardDetails.waitAndScrollFullyIntoViewAndAssertExists()
 
-        creditCardOption.waitAndScrollIntoViewAndAssertExists()
+        creditCardOption.waitAndScrollFullyIntoViewAndAssertExists()
         Assert.assertTrue(creditCardOption.click())
 
-        panInput.waitAndScrollIntoViewAndAssertExists()
+        panInput.waitAndScrollFullyIntoViewAndAssertExists()
         panInput.inputText(cardNumber)
 
-        expiryDateInput.waitAndScrollIntoViewAndAssertExists()
+        expiryDateInput.waitAndScrollFullyIntoViewAndAssertExists()
         expiryDateInput.inputText(expiryDate)
 
-        cvvInput.waitAndScrollIntoViewAndAssertExists()
+        cvvInput.waitAndScrollFullyIntoViewAndAssertExists()
         cvvInput.inputText(cvv)
 
-        payButton.waitAndScrollIntoViewAndAssertExists()
+        payButton.waitAndScrollFullyIntoViewAndAssertExists()
         Assert.assertTrue(payButton.click())
 
         paymentFlowHandler()
@@ -210,7 +230,7 @@ class PaymentTest {
             cardNumber = scaCardNumber,
             cvv = scaCvv
         ) {
-            scaContinueButton.waitAndScrollIntoViewAndAssertExists()
+            scaContinueButton.waitAndScrollFullyIntoViewAndAssertExists()
             Assert.assertTrue(scaContinueButton.click())
         }
     }
