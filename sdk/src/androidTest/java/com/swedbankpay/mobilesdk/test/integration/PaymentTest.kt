@@ -15,6 +15,7 @@ import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
+import com.swedbankpay.mobilesdk.test.integration.util.scrollFullyIntoView
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -90,25 +91,6 @@ class PaymentTest {
     private val scaContinueButton
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
 
-
-    private fun UiScrollable.isChildsBottomVisible(child: UiObject) =
-        child.exists() && child.bounds.bottom < bounds.bottom
-
-    private fun UiScrollable.scrollFullyIntoView(obj: UiObject): Boolean {
-        if (isChildsBottomVisible(obj)) return true
-
-        val maxSwipes = maxSearchSwipes
-        scrollToBeginning(maxSwipes)
-        if (isChildsBottomVisible(obj)) return true
-
-        repeat(maxSwipes) {
-            val scrolled = scrollForward()
-            if (isChildsBottomVisible(obj)) return true
-            if (!scrolled) return false
-        }
-
-        return false
-    }
 
     // see comment at waitAndScrollPollInterval
     private fun UiObject.waitAndScrollFullyIntoViewAndAssertExists() {
