@@ -15,7 +15,8 @@ import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
-import com.swedbankpay.mobilesdk.test.integration.util.scrollFullyIntoView
+import com.swedbankpay.mobilesdk.test.integration.util.waitAndScrollFullyIntoViewAndAssertExists
+import com.swedbankpay.mobilesdk.test.integration.util.waitAndScrollIntoViewAndAssertExists
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -30,14 +31,11 @@ import java.util.*
  */
 class PaymentTest {
     private companion object {
-        // UI Automator does not contain a "wait until can scroll into view"
-        // so, we implement one ourselves. This is essentially duplicating logic
-        // from UiObject; 1000L is taken from there.
-        const val waitAndScrollPollInterval = 1000L
+
         const val timeout = 30_000L
         // Key input to the web view is laggy, and without a delay
         // between keystrokes, the input may get jumbled.
-        const val keyInputDelay = 50L
+        const val keyInputDelay = 200L
 
         const val noScaCardNumber = "4925000000000004"
         const val scaCardNumber = "4761739001010416"
@@ -91,19 +89,6 @@ class PaymentTest {
     private val scaContinueButton
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
 
-
-    // see comment at waitAndScrollPollInterval
-    private fun UiObject.waitAndScrollFullyIntoViewAndAssertExists() {
-        val start = SystemClock.uptimeMillis()
-        var elapsedTime = 0L
-        while (elapsedTime <= timeout) {
-            if (webView.scrollFullyIntoView(this)) return
-            elapsedTime = SystemClock.uptimeMillis() - start
-            SystemClock.sleep(waitAndScrollPollInterval)
-        }
-        Assert.fail("Widget not found: $selector")
-    }
-
     private fun UiObject.inputText(text: String) {
         click()
         for (c in text) {
@@ -145,24 +130,24 @@ class PaymentTest {
     ) {
         Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
 
-        cardOption.waitAndScrollFullyIntoViewAndAssertExists()
+        webView.waitAndScrollIntoViewAndAssertExists(cardOption, timeout)
         Assert.assertTrue(cardOption.click())
 
-        cardDetails.waitAndScrollFullyIntoViewAndAssertExists()
+        webView.waitAndScrollIntoViewAndAssertExists(cardDetails, timeout)
 
-        creditCardOption.waitAndScrollFullyIntoViewAndAssertExists()
+        webView.waitAndScrollFullyIntoViewAndAssertExists(creditCardOption, timeout)
         Assert.assertTrue(creditCardOption.click())
 
-        panInput.waitAndScrollFullyIntoViewAndAssertExists()
+        webView.waitAndScrollFullyIntoViewAndAssertExists(panInput, timeout)
         panInput.inputText(cardNumber)
 
-        expiryDateInput.waitAndScrollFullyIntoViewAndAssertExists()
+        webView.waitAndScrollFullyIntoViewAndAssertExists(expiryDateInput, timeout)
         expiryDateInput.inputText(expiryDate)
 
-        cvvInput.waitAndScrollFullyIntoViewAndAssertExists()
+        webView.waitAndScrollFullyIntoViewAndAssertExists(cvvInput, timeout)
         cvvInput.inputText(cvv)
 
-        payButton.waitAndScrollFullyIntoViewAndAssertExists()
+        webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, timeout)
         Assert.assertTrue(payButton.click())
 
         paymentFlowHandler()
@@ -212,7 +197,7 @@ class PaymentTest {
             cardNumber = scaCardNumber,
             cvv = scaCvv
         ) {
-            scaContinueButton.waitAndScrollFullyIntoViewAndAssertExists()
+            webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
             Assert.assertTrue(scaContinueButton.click())
         }
     }
