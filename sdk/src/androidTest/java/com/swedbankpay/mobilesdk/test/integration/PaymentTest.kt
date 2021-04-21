@@ -7,6 +7,7 @@ import android.webkit.WebView
 import android.widget.Button
 import androidx.fragment.app.testing.FragmentScenario
 import androidx.fragment.app.testing.launchFragmentInContainer
+import androidx.fragment.app.testing.withFragment
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
@@ -15,15 +16,15 @@ import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
+import com.swedbankpay.mobilesdk.test.integration.util.openTestLogOutputStream
 import com.swedbankpay.mobilesdk.test.integration.util.waitAndScrollFullyIntoViewAndAssertExists
 import com.swedbankpay.mobilesdk.test.integration.util.waitAndScrollIntoViewAndAssertExists
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
+import org.junit.*
+import java.io.PrintStream
+import java.lang.AssertionError
 import java.util.*
 
 /**
@@ -42,6 +43,8 @@ class PaymentTest {
         const val expiryDate = "1230"
         const val noScaCvv = "111"
         const val scaCvv = "268"
+
+        const val logFileName = "log_PaymentTest"
     }
 
     private val paymentOrder = PaymentOrder(
@@ -59,6 +62,8 @@ class PaymentTest {
         .build()
 
     private lateinit var scenario: FragmentScenario<PaymentFragment>
+
+    private lateinit var log: PrintStream
 
     private val device by lazy {
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
@@ -104,6 +109,10 @@ class PaymentTest {
     fun setup() {
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
         scenario = launchFragmentInContainer(arguments)
+
+        log = scenario.withFragment {
+            openTestLogOutputStream(requireContext(), logFileName)
+        }
     }
 
     /**
@@ -111,6 +120,8 @@ class PaymentTest {
      */
     @After
     fun teardown() {
+        log.close()
+
         scenario.moveToState(Lifecycle.State.DESTROYED)
         PaymentFragment.defaultConfiguration = null
     }
@@ -128,33 +139,44 @@ class PaymentTest {
         cvv: String,
         paymentFlowHandler: () -> Unit
     ) {
-        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+        try {
+            Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
 
-        webView.waitAndScrollIntoViewAndAssertExists(cardOption, timeout)
-        Assert.assertTrue(cardOption.click())
+            webView.waitAndScrollIntoViewAndAssertExists(cardOption, timeout)
+            Assert.assertTrue(cardOption.click())
 
-        webView.waitAndScrollIntoViewAndAssertExists(cardDetails, timeout)
+            webView.waitAndScrollIntoViewAndAssertExists(cardDetails, timeout)
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(creditCardOption, timeout)
-        Assert.assertTrue(creditCardOption.click())
+            webView.waitAndScrollFullyIntoViewAndAssertExists(creditCardOption, timeout)
+            Assert.assertTrue(creditCardOption.click())
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(panInput, timeout)
-        panInput.inputText(cardNumber)
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(expiryDateInput, timeout)
-        expiryDateInput.inputText(expiryDate)
+            webView.waitAndScrollFullyIntoViewAndAssertExists(panInput, timeout)
+            panInput.inputText(cardNumber)
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(cvvInput, timeout)
-        cvvInput.inputText(cvv)
+            webView.waitAndScrollFullyIntoViewAndAssertExists(expiryDateInput, timeout)
+            expiryDateInput.inputText(expiryDate)
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, timeout)
-        Assert.assertTrue(payButton.click())
+            webView.waitAndScrollFullyIntoViewAndAssertExists(cvvInput, timeout)
+            cvvInput.inputText(cvv)
 
-        paymentFlowHandler()
+            webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, timeout)
+            Assert.assertTrue(payButton.click())
 
-        val result = waitForResult()
-        Assert.assertNotNull("PaymentFragment progress timeout", result)
-        Assert.assertEquals(PaymentViewModel.State.COMPLETE, result)
+            paymentFlowHandler()
+
+            val result = waitForResult()
+            Assert.assertNotNull("PaymentFragment progress timeout", result)
+            Assert.assertEquals(PaymentViewModel.State.COMPLETE, result)
+        } catch (e: AssertionError) {
+            log.println("Payment test failed at ${Date()}")
+            e.printStackTrace(log)
+            log.println("Window dump:")
+            device.dumpWindowHierarchy(log)
+            log.println()
+            log.println()
+            throw e
+        }
     }
 
     private fun waitForResult(): PaymentViewModel.State? {
