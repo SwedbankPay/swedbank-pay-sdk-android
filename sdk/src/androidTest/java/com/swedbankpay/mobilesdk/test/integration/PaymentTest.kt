@@ -15,8 +15,9 @@ import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
+import com.swedbankpay.mobilesdk.test.integration.util.clickUntilCheckedAndAssert
+import com.swedbankpay.mobilesdk.test.integration.util.clickUntilFocusedAndAssert
 import com.swedbankpay.mobilesdk.test.integration.util.waitAndScrollFullyIntoViewAndAssertExists
-import com.swedbankpay.mobilesdk.test.integration.util.waitAndScrollIntoViewAndAssertExists
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -31,11 +32,10 @@ import java.util.*
  */
 class PaymentTest {
     private companion object {
-
         const val timeout = 30_000L
         // Key input to the web view is laggy, and without a delay
         // between keystrokes, the input may get jumbled.
-        const val keyInputDelay = 200L
+        const val keyInputDelay = 500L
 
         const val noScaCardNumber = "4925000000000004"
         const val scaCardNumber = "4761739001010416"
@@ -72,17 +72,17 @@ class PaymentTest {
         return UiScrollable(UiSelector().className(WebView::class.java))
     }
     private val cardOption
-        get() = webView.getChild(UiSelector().textStartsWith("Card").clickable(true))
+        get() = webView.getChild(UiSelector().textStartsWith("Card").checkable(true))
     private val cardDetails
         get() = webView.getChild(UiSelector().text("Pay by Card"))
     private val creditCardOption
-        get() = cardDetails.getChild(UiSelector().text("Credit").clickable(true))
+        get() = cardDetails.getChild(UiSelector().text("Credit").checkable(true))
     private val panInput
-        get() = cardDetails.getChild(UiSelector().text("Card number"))
+        get() = cardDetails.getChild(UiSelector().resourceId("panInput"))
     private val expiryDateInput
-        get() = cardDetails.getChild(UiSelector().text("MM/YY"))
+        get() = cardDetails.getChild(UiSelector().resourceId("expiryInput"))
     private val cvvInput
-        get() = cardDetails.getChild(UiSelector().text("CVV"))
+        get() = cardDetails.getChild(UiSelector().resourceId("cvcInput"))
     private val payButton
         get() = cardDetails.getChild(UiSelector().className(Button::class.java).textStartsWith("Pay "))
 
@@ -90,7 +90,7 @@ class PaymentTest {
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
 
     private fun UiObject.inputText(text: String) {
-        click()
+        clickUntilFocusedAndAssert(timeout)
         for (c in text) {
             device.pressKeyCode(KeyEvent.keyCodeFromString("KEYCODE_$c"))
             SystemClock.sleep(keyInputDelay) // this is horrible but you do what you gotta do
@@ -130,13 +130,11 @@ class PaymentTest {
     ) {
         Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
 
-        webView.waitAndScrollIntoViewAndAssertExists(cardOption, timeout)
-        Assert.assertTrue(cardOption.click())
-
-        webView.waitAndScrollIntoViewAndAssertExists(cardDetails, timeout)
+        webView.waitAndScrollFullyIntoViewAndAssertExists(cardOption, timeout)
+        cardOption.clickUntilCheckedAndAssert(timeout)
 
         webView.waitAndScrollFullyIntoViewAndAssertExists(creditCardOption, timeout)
-        Assert.assertTrue(creditCardOption.click())
+        creditCardOption.clickUntilCheckedAndAssert(timeout)
 
         webView.waitAndScrollFullyIntoViewAndAssertExists(panInput, timeout)
         panInput.inputText(cardNumber)
