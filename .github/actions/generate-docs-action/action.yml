@@ -17,7 +17,9 @@ runs:
       shell: bash
     - run: |
         if [[ `git status --porcelain` ]]; then
-          git commit -m "Update generated documentation" --author="Swedbank Pay <opensource@swedbankpay.com>"
+          git config user.email opensource@swedbankpay.com
+          git config user.name "Swedbank Pay"
+          git commit -m "Update generated documentation"
           git push
         else
           echo No changes to generated documentation
