@@ -5,7 +5,7 @@ description: >
 runs:
   using: composite
   steps:
-    - run: ./gradlew ./gradlew clean dokkaGfm
+    - run: ./gradlew clean dokkaGfm
       shell: bash
     - run: rm -rf docs/generated/ || true
       shell: bash
