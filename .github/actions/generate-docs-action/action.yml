@@ -7,6 +7,8 @@ runs:
   steps:
     - run: ./gradlew clean dokkaGfm
       shell: bash
+    - run: mkdir docs || true
+      shell: bash
     - run: rm -rf docs/generated/ || true
       shell: bash
     - run: mv sdk/build/dokka/gfm/ docs/generated/
