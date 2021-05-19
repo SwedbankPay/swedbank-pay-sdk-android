@@ -1,0 +1,15 @@
+name: Generate SDK Documentation
+
+on: workflow_dispatch
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+      - uses: ./.github/actions/generate-docs-action
