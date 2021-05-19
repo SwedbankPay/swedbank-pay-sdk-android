@@ -1,0 +1,23 @@
+name: Generate Docs
+description: >
+  Generates SDK documentation using Dokka, and pushes the generated documentation
+  to the current branch.
+runs:
+  using: composite
+  steps:
+    - run: ./gradlew ./gradlew clean dokkaGfm
+      shell: bash
+    - run: rm -rf docs/generated/ || true
+      shell: bash
+    - run: mv sdk/build/dokka/gfm/ docs/generated/
+      shell: bash
+    - run: git add docs/generated
+      shell: bash
+    - run: |
+        if [[ `git status --porcelain` ]]; then
+          git commit -m "Update generated documentation"
+          git push
+        else
+          echo No changes to generated documentation
+        fi
+      shell: bash

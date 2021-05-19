@@ -104,10 +104,6 @@ dependencies {
     androidTestImplementation 'com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0'
 }
 
-tasks.dokkaGfm.configure {
-    outputDirectory = new File(projectDir, 'dokka_github')
-}
-
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
     archiveClassifier.set('sources')
