@@ -5,7 +5,9 @@ description: >
 runs:
   using: composite
   steps:
-    - run: ./gradlew ./gradlew clean dokkaGfm
+    - run: ./gradlew clean dokkaGfm
+      shell: bash
+    - run: mkdir docs || true
       shell: bash
     - run: rm -rf docs/generated/ || true
       shell: bash
@@ -15,6 +17,8 @@ runs:
       shell: bash
     - run: |
         if [[ `git status --porcelain` ]]; then
+          git config user.email opensource@swedbankpay.com
+          git config user.name "Swedbank Pay"
           git commit -m "Update generated documentation"
           git push
         else
