@@ -75,7 +75,7 @@ dependencies {
     testImplementation "com.squareup.okhttp3:mockwebserver:$okhttp_version"
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:$okhttp_version"
 
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.google.code.gson:gson:2.8.7'
 
     compileOnly 'joda-time:joda-time:2.10.10'
     compileOnly 'org.threeten:threetenbp:1.5.1'
