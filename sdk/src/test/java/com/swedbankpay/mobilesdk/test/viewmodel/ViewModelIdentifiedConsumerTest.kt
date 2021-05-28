@@ -66,7 +66,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         consumer = TestConstants.consumer,
         paymentOrder = paymentOrder,
         userData = null,
-        useBrowser = false
+        useBrowser = false,
+        style = null
     )
 
     /**
@@ -225,7 +226,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                     refEq(
                         InternalPaymentViewModel.UIState.ViewConsumerIdentification(
                             TestConstants.hostUrl,
-                            TestConstants.viewConsumerSessionLink
+                            TestConstants.viewConsumerSessionLink,
+                            null
                         )
                     )
                 )
@@ -264,7 +266,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                     refEq(
                         InternalPaymentViewModel.UIState.ViewConsumerIdentification(
                             TestConstants.hostUrl,
-                            TestConstants.viewConsumerSessionLink
+                            TestConstants.viewConsumerSessionLink,
+                            null
                         )
                     )
                 )
@@ -285,7 +288,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         application.stub {
             on {
                 getString(R.string.swedbankpaysdk_view_consumer_identification_template,
-                    TestConstants.viewConsumerSessionLink
+                    TestConstants.viewConsumerSessionLink,
+                    null
                 )
             } doReturn TestConstants.consumerSessionHtmlPage
         }
@@ -342,6 +346,7 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
                     refEq(
                         InternalPaymentViewModel.UIState.ViewPaymentOrder(
                             TestConstants.viewPaymentorderInfo,
+                            null,
                             null
                         )
                     )
@@ -441,7 +446,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
         application.stub {
             on {
                 getString(R.string.swedbankpaysdk_view_paymentorder_template,
-                    TestConstants.viewPaymentorderLink
+                    TestConstants.viewPaymentorderLink,
+                    null
                 )
             } doReturn TestConstants.paymentorderHtmlPage
         }

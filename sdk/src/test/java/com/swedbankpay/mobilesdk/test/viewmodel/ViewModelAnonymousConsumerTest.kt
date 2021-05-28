@@ -84,7 +84,8 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
         consumer = null,
         paymentOrder = TestConstants.paymentOrder,
         userData = null,
-        useBrowser = false
+        useBrowser = false,
+        style = null
     )
 
     /**
@@ -162,6 +163,7 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
                     refEq(
                         InternalPaymentViewModel.UIState.ViewPaymentOrder(
                             TestConstants.viewPaymentorderInfo,
+                            null,
                             null
                         )
                     )
@@ -243,7 +245,8 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
         application.stub {
             on {
                 getString(R.string.swedbankpaysdk_view_paymentorder_template,
-                    TestConstants.viewPaymentorderLink
+                    TestConstants.viewPaymentorderLink,
+                    null
                 )
             } doReturn TestConstants.paymentorderHtmlPage
         }
