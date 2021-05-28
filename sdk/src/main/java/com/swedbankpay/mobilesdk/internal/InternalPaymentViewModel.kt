@@ -168,14 +168,15 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         consumer: Consumer?,
         paymentOrder: PaymentOrder?,
         userData: Any?,
+        style: Bundle?,
         useBrowser: Boolean
     ) {
         useExternalBrowser = useBrowser
         if (processState.value == null) {
             val state = if (useCheckin) {
-                ProcessState.InitializingConsumerSession(consumer, paymentOrder, userData)
+                ProcessState.InitializingConsumerSession(consumer, paymentOrder, userData, style)
             } else {
-                ProcessState.CreatingPaymentOrder(null, paymentOrder, userData)
+                ProcessState.CreatingPaymentOrder(null, paymentOrder, userData, style)
             }
             setProcessState(state)
         }
@@ -266,18 +267,21 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         object Loading : UIState()
         class ViewConsumerIdentification(
             override val baseUrl: String?,
-            private val viewConsumerIdentification: String
+            private val viewConsumerIdentification: String,
+            private val style: Bundle?
         ) : UIState(), HtmlContent {
             override val asHtmlContent get() = this
             override fun getWebViewPage(context: Context): String {
                 return context.getString(
                     R.string.swedbankpaysdk_view_consumer_identification_template,
-                    viewConsumerIdentification
+                    viewConsumerIdentification,
+                    style?.toStyleJs()
                 )
             }
         }
         class ViewPaymentOrder(
             val viewPaymentOrderInfo: ViewPaymentOrderInfo,
+            private val style: Bundle?,
             val updateException: Exception?
         ): UIState(), HtmlContent {
             override val asHtmlContent get() = this
@@ -285,7 +289,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override fun getWebViewPage(context: Context): String {
                 return context.getString(
                     R.string.swedbankpaysdk_view_paymentorder_template,
-                    viewPaymentOrderInfo.viewPaymentOrder
+                    viewPaymentOrderInfo.viewPaymentOrder,
+                    style?.toStyleJs()
                 )
             }
         }
@@ -330,7 +335,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class InitializingConsumerSession(
             private val consumer: Consumer?,
             private val paymentOrder: PaymentOrder?,
-            private val userData: @RawValue Any?
+            private val userData: @RawValue Any?,
+            private val style: Bundle?
         ) : ProcessState() {
             override val uiState get() = UIState.Loading
 
@@ -343,11 +349,14 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                         viewConsumerIdentificationInfo.webViewBaseUrl,
                         viewConsumerIdentificationInfo.viewConsumerIdentification,
                         paymentOrder,
-                        userData
+                        userData,
+                        style
                     )
                 } catch (e: Exception) {
                     val retryable = configuration.shouldRetryAfterPostConsumersException(e)
-                    FailedInitializeConsumerSession(consumer, paymentOrder, userData, retryable, e)
+                    FailedInitializeConsumerSession(
+                        consumer, paymentOrder, userData, style, retryable, e
+                    )
                 }
             }
         }
@@ -357,6 +366,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val consumer: Consumer?,
             private val paymentOrder: PaymentOrder?,
             private val userData: @RawValue Any?,
+            private val style: Bundle?,
             private val retryable: Boolean,
             private val exception: Exception
         ) : ProcessState() {
@@ -369,7 +379,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
             override val isRetryableErrorState get() = true
             override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
-                return InitializingConsumerSession(consumer, paymentOrder, userData)
+                return InitializingConsumerSession(consumer, paymentOrder, userData, style)
             }
         }
 
@@ -378,15 +388,17 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val baseUrl: String?,
             private val viewConsumerIdentification: String,
             private val paymentOrder: PaymentOrder?,
-            private val userData: @RawValue Any?
+            private val userData: @RawValue Any?,
+            private val style: Bundle?
         ) : ProcessState() {
             override val uiState get() = UIState.ViewConsumerIdentification(
                 baseUrl,
-                viewConsumerIdentification
+                viewConsumerIdentification,
+                style
             )
 
             override fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState {
-                return CreatingPaymentOrder(consumerProfileRef, paymentOrder, userData)
+                return CreatingPaymentOrder(consumerProfileRef, paymentOrder, userData, style)
             }
         }
 
@@ -394,7 +406,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class CreatingPaymentOrder(
             private val consumerProfileRef: String?,
             private val paymentOrder: PaymentOrder?,
-            private val userData: @RawValue Any?
+            private val userData: @RawValue Any?,
+            private val style: Bundle?
         ) : ProcessState() {
             override val uiState get() = UIState.Loading
 
@@ -403,10 +416,12 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 return try {
                     val viewPaymentOrderInfo = configuration
                         .postPaymentorders(vm.getApplication(), paymentOrder, userData, consumerProfileRef)
-                    Paying(paymentOrder, userData, viewPaymentOrderInfo, null)
+                    Paying(paymentOrder, userData, style, viewPaymentOrderInfo, null)
                 } catch (e: Exception) {
                     val retryable = configuration.shouldRetryAfterPostPaymentordersException(e)
-                    FailedCreatePaymentOrder(consumerProfileRef, paymentOrder, userData, retryable, e)
+                    FailedCreatePaymentOrder(
+                        consumerProfileRef, paymentOrder, userData, style, retryable, e
+                    )
                 }
             }
         }
@@ -416,6 +431,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val consumerProfileRef: String?,
             private val paymentOrder: PaymentOrder?,
             private val userData: @RawValue Any?,
+            private val style: Bundle?,
             private val retryable: Boolean,
             private val exception: Exception
         ) : ProcessState() {
@@ -428,7 +444,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
             override val isRetryableErrorState get() = true
             override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
-                return CreatingPaymentOrder(consumerProfileRef, paymentOrder, userData)
+                return CreatingPaymentOrder(consumerProfileRef, paymentOrder, userData, style)
             }
         }
 
@@ -436,14 +452,17 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class Paying(
             private val paymentOrder: PaymentOrder?,
             private val userData: @RawValue Any?,
+            private val style: Bundle?,
             val viewPaymentOrderInfo: ViewPaymentOrderInfo,
             val updateException: Exception?
         ) : ProcessState() {
             override val uiState
-                get() = UIState.ViewPaymentOrder(viewPaymentOrderInfo, updateException)
+                get() = UIState.ViewPaymentOrder(viewPaymentOrderInfo, style, updateException)
 
             override fun getStateForUpdatingPaymentOrder(updateInfo: Any?): ProcessState {
-                return UpdatingPaymentOrder(paymentOrder, userData, viewPaymentOrderInfo, updateInfo)
+                return UpdatingPaymentOrder(
+                    paymentOrder, userData, style, viewPaymentOrderInfo, updateInfo
+                )
             }
         }
 
@@ -451,6 +470,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         class UpdatingPaymentOrder(
             private val paymentOrder: PaymentOrder?,
             private val userData: @RawValue Any?,
+            private val style: Bundle?,
             private val viewPaymentOrderInfo: ViewPaymentOrderInfo,
             private val updateInfo: @RawValue Any?
         ) : ProcessState() {
@@ -468,7 +488,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                     exception = e
                     this.viewPaymentOrderInfo
                 }
-                return Paying(paymentOrder, userData, viewPaymentOrderInfo, exception)
+                return Paying(paymentOrder, userData, style, viewPaymentOrderInfo, exception)
             }
         }
 

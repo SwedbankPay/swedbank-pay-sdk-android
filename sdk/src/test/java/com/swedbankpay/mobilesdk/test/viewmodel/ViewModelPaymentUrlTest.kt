@@ -58,7 +58,8 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
         application.stub {
             on {
                 getString(R.string.swedbankpaysdk_view_paymentorder_template,
-                    TestConstants.viewPaymentorderLink
+                    TestConstants.viewPaymentorderLink,
+                    null
                 )
             } doReturn TestConstants.paymentorderHtmlPage
         }
@@ -74,7 +75,8 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
                 consumer = null,
                 paymentOrder = TestConstants.paymentOrder,
                 userData = null,
-                useBrowser =  false
+                useBrowser =  false,
+                style = null
             )
         }
     }

@@ -81,6 +81,7 @@ open class PaymentFragment : Fragment() {
         private var consumer: Consumer? = null
         private var paymentOrder: PaymentOrder? = null
         private var userData: Any? = null
+        private var style: Bundle? = null
         private var viewModelKey: String? = null
         private var useExternalBrowser = false
         @DefaultUI
@@ -134,6 +135,25 @@ open class PaymentFragment : Fragment() {
             }
             this.userData = userData
         }
+
+        /**
+         * Sets styling for the payment menu.
+         *
+         * Styling the payment menu requires a separate agreement with
+         * Swedbank Pay.
+         *
+         * @param style [Bundle] containing the styling parameters
+         */
+        fun style(style: Bundle) = apply { this.style = style }
+        /**
+         * Sets styling for the payment menu.
+         *
+         * Styling the payment menu requires a separate agreement with
+         * Swedbank Pay.
+         *
+         * @param style [Map] containing the styling parameters
+         */
+        fun style(style: Map<*, *>) = style(style.toStyleBundle())
 
         /**
          * Sets the key used on the containing [activity's][androidx.fragment.app.FragmentActivity]
@@ -196,6 +216,7 @@ open class PaymentFragment : Fragment() {
                     is Serializable -> putSerializable(ARG_USER_DATA, it)
                 }
             }
+            putBundle(ARG_STYLE, style)
             putBoolean(ARG_USE_BROWSER, useExternalBrowser)
             viewModelKey?.let { putString(ARG_VIEW_MODEL_PROVIDER_KEY, it) }
             putInt(ARG_ENABLED_DEFAULT_UI, enabledDefaultUI)
@@ -261,6 +282,16 @@ open class PaymentFragment : Fragment() {
          * You will receive this value in your [Configuration.postPaymentorders].
          */
         const val ARG_PAYMENT_ORDER = "com.swedbankpay.mobilesdk.ARG_PAYMENT_ORDER"
+
+        /**
+         * Argument key: a [Bundle] that contains styling parameters.
+         * You can use [toStyleBundle] to create the style bundle from
+         * a [Map].
+         *
+         * Styling the payment menu requires a separate agreement with
+         * Swedbank Pay.
+         */
+        const val ARG_STYLE = "com.swedbankpay.mobilesdk.ARG_STYLE"
 
         /**
          * Argument key: the `key` to use in [ViewModelProvider.get] to retrieve the
@@ -435,8 +466,9 @@ open class PaymentFragment : Fragment() {
                 val consumer = getParcelable<Consumer>(ARG_CONSUMER)
                 val paymentOrder = getParcelable<PaymentOrder>(ARG_PAYMENT_ORDER)
                 val userData = get(ARG_USER_DATA)
+                val style = getBundle(ARG_STYLE)
                 val useExternal = getBoolean(ARG_USE_BROWSER)
-                vm.start(useCheckin, consumer, paymentOrder, userData, useExternal)
+                vm.start(useCheckin, consumer, paymentOrder, userData, style, useExternal)
             }
         }
     }
