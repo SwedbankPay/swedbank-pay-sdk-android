@@ -86,7 +86,7 @@ dependencies {
     // Note that androidx.fragment:fragment-testing has a strict AndroidX Test dependency,
     // so we cannot always update these to the newest stable release immediately.
     def androidx_test_versions = [
-            core: '1.3.0',
+            core: '1.4.0',
             espresso: '3.3.0',
             junit: '1.1.2'
     ]
