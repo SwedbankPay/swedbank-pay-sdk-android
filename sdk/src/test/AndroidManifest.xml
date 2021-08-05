@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.swedbankpay.mobilesdk">
+    <application>
+        <activity android:name=".test.fragment.FragmentTestActivity">
+        </activity>
+    </application>
+</manifest>

@@ -191,10 +191,24 @@ class PaymentViewModel : AndroidViewModel {
         fun onTermsOfServiceClick(paymentViewModel: PaymentViewModel, url: String): Boolean
     }
 
-    private val internalVm = MutableLiveData<InternalPaymentViewModel?>()
+    // Explicit null value to have the dependent MediatorLiveDatas set their initial values
+    private val internalVm = MutableLiveData<InternalPaymentViewModel?>(null)
 
-    private val internalState = Transformations.switchMap(internalVm) {
-        it?.uiState
+    // This is essentially the same as Transformations.switchMap,
+    // but with special treatment for a null source.
+    private val internalState = MediatorLiveData<InternalPaymentViewModel.UIState?>().apply {
+        var currentSource: LiveData<InternalPaymentViewModel.UIState?>? = null
+        addSource(internalVm) { vm ->
+            val newSource = vm?.uiState
+            if (newSource == null) {
+                value = null
+            }
+            if (newSource != currentSource) {
+                currentSource?.let(::removeSource)
+                currentSource = newSource
+                newSource?.let { addSource(it, ::setValue) }
+            }
+        }
     }
 
     internal val onRetryPreviousAction = MutableLiveData<Unit>()
