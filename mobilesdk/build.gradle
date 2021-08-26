@@ -1,0 +1,150 @@
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+    id 'kotlin-parcelize'
+    id 'org.jetbrains.dokka'
+    id 'maven-publish'
+    id 'signing'
+}
+
+android {
+    compileSdk 30
+
+    defaultConfig {
+        minSdk 21 // Required by okhttp (from version 3.13 onwards)
+        targetSdk 30
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'proguard-rules.pro'
+        buildConfigField('String', 'SDK_VERSION', "\"$version\"")
+    }
+
+    testOptions {
+        unitTests.includeAndroidResources = true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+}
+
+dependencies {
+    testImplementation project(':testcommon')
+    androidTestImplementation project(':testcommon')
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.kotlinx_coroutines"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.kotlinx_coroutines"
+
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'androidx.core:core-ktx:1.6.0'
+
+    implementation "androidx.fragment:fragment-ktx:$versions.androidx_fragment"
+    debugImplementation "androidx.fragment:fragment-testing:$versions.androidx_fragment"
+
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$versions.androidx_lifecycle"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.androidx_lifecycle"
+
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
+    implementation 'com.google.android.material:material:1.4.0'
+
+    implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
+
+    implementation "com.google.code.gson:gson:$versions.gson"
+
+    compileOnly 'joda-time:joda-time:2.10.10'
+    compileOnly 'org.threeten:threetenbp:1.5.1'
+
+    testImplementation "androidx.test:core:$versions.androidx_test.core"
+    androidTestImplementation "androidx.test:core:$versions.androidx_test.core"
+    androidTestImplementation "androidx.test:runner:$versions.androidx_test.core"
+
+    testImplementation "androidx.test.espresso:espresso-core:$versions.androidx_test.espresso"
+    testImplementation "androidx.test.espresso:espresso-intents:$versions.androidx_test.espresso"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$versions.androidx_test.espresso"
+    androidTestImplementation "androidx.test.espresso:espresso-web:$versions.androidx_test.espresso"
+
+    testImplementation "androidx.test.ext:junit:$versions.androidx_test.junit"
+
+    testImplementation "junit:junit:$versions.junit"
+    testImplementation "org.robolectric:robolectric:$versions.robolectric"
+    testImplementation "org.mockito:mockito-inline:$versions.mockito"
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$versions.mockito_kotlin"
+
+    androidTestImplementation "junit:junit:$versions.junit"
+    androidTestImplementation 'com.linkedin.dexmaker:dexmaker-mockito-inline:2.28.1'
+    androidTestImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$versions.mockito_kotlin"
+}
+
+task sourceJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    archiveClassifier.set('sources')
+}
+
+task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
+    from dokkaJavadoc.outputDirectory
+    archiveClassifier.set('javadoc')
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                artifact sourceJar
+                artifact javadocJar
+
+                pom {
+                    description = 'A library for integrating Swedbank Pay payments into an Android application'
+                    url = 'https://developer.swedbankpay.com/modules-sdks/mobile-sdk/'
+
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            name = 'Swedbank Pay'
+                            email = 'opensource@swedbankpay.com'
+                            organization = 'Swedbank Pay'
+                            organizationUrl = 'https://www.swedbankpay.com/'
+                        }
+                        developer {
+                            name = 'Pertti Kröger'
+                            email = 'pertti@qvik.fi'
+                            organization = 'Qvik'
+                            organizationUrl = "https://qvik.com/"
+                        }
+                    }
+
+                    scm {
+                        connection = 'scm:git:git://github.com/SwedbankPay/swedbank-pay-sdk-android.git'
+                        developerConnection = 'scm:git:ssh://github.com:SwedbankPay/swedbank-pay-sdk-android.git'
+                        url = 'https://github.com/SwedbankPay/swedbank-pay-sdk-android'
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        def signingKey = System.getenv('SIGNING_KEY')
+        def signingKeyPassword = System.getenv('SIGNING_KEY_PASSWORD')
+        if (signingKey && signingKeyPassword) {
+            def signingKeyId = System.getenv('SIGNING_KEY_ID')
+            if (signingKeyId?.isEmpty()) signingKeyId = null
+            useInMemoryPgpKeys(signingKeyId, signingKey, signingKeyPassword)
+            sign publishing.publications.release
+        }
+    }
+}
