@@ -11,7 +11,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/sdk" />
+            <option value="$PROJECT_DIR$/mobilesdk" />
+            <option value="$PROJECT_DIR$/mobilesdk-merchantbackend" />
+            <option value="$PROJECT_DIR$/testcommon" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

@@ -1,1 +1,3 @@
-include ':sdk'
+include ':mobilesdk'
+include ':mobilesdk-merchantbackend'
+include ':testcommon'
