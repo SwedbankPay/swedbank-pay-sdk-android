@@ -102,6 +102,7 @@ afterEvaluate {
                 artifact javadocJar
 
                 pom {
+                    name = "$groupId:$artifactId"
                     description = 'A library for integrating Swedbank Pay payments into an Android application'
                     url = 'https://developer.swedbankpay.com/modules-sdks/mobile-sdk/'
 

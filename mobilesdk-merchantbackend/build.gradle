@@ -82,6 +82,7 @@ afterEvaluate {
                 artifact javadocJar
 
                 pom {
+                    name = "$groupId:$artifactId"
                     description = 'Utilities for interfacing the Swedbank Pay Android SDK with a Merchant Backend API backend'
                     url = 'https://developer.swedbankpay.com/modules-sdks/mobile-sdk/'
 
