@@ -17,8 +17,12 @@
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
--keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.TerminalFailure {
-    <init>();
+-keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.** implements com.google.gson.JsonSerializer {
+    public com.google.gson.JsonElement serialize(java.lang.Object, java.lang.reflect.Type, com.google.gson.JsonSerializationContext);
+}
+
+-keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.** implements com.google.gson.JsonDeserializer {
+    public java.lang.Object deserialize(com.google.gson.JsonElement, java.lang.reflect.Type, com.google.gson.JsonDeserializationContext);
 }
 
 -keepclassmembers,allowobfuscation class com.swedbankpay.mobilesdk.internal.remote.json.* {
