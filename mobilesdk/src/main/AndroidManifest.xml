@@ -2,7 +2,8 @@
     package="com.swedbankpay.mobilesdk">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application>
-        <activity android:name=".internal.CallbackActivity">
+        <activity android:name=".internal.CallbackActivity"
+            android:exported="true">
             <intent-filter android:priority="-100">
                 <!--  Priority is negative on purpose. This way you can
                  easily override this intent filter in your app. -->
