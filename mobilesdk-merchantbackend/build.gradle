@@ -34,33 +34,30 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.kotlinx_coroutines"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.kotlinx_coroutines"
+    implementation libs.kotlinx.coroutines.core
+    implementation libs.kotlinx.coroutines.android
 
-    debugImplementation "androidx.fragment:fragment-testing:$versions.androidx_fragment"
+    debugImplementation libs.fragment.testing
 
-    implementation 'com.google.android.gms:play-services-base:17.6.0'
-    implementation 'com.google.android.gms:play-services-basement:17.6.0'
+    implementation libs.play.services.base
+    implementation libs.play.services.basement
 
-    implementation "com.google.code.gson:gson:$versions.gson"
+    implementation libs.gson
 
-    implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
-    testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okhttp"
-    androidTestImplementation "com.squareup.okhttp3:mockwebserver:$versions.okhttp"
+    implementation libs.okhttp
 
-    androidTestImplementation "androidx.test:core:$versions.androidx_test.core"
-    androidTestImplementation "androidx.test:runner:$versions.androidx_test.core"
-
-    testImplementation "androidx.test.ext:junit:$versions.androidx_test.junit"
-
-    testImplementation "junit:junit:$versions.junit"
-    testImplementation "org.robolectric:robolectric:$versions.robolectric"
-    testImplementation "org.mockito:mockito-inline:$versions.mockito"
-    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$versions.mockito_kotlin"
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    testImplementation libs.androidx.test.junit
+    testImplementation libs.junit
+    testImplementation libs.robolectric
+    testImplementation libs.mockito.inline
+    testImplementation libs.mockito.kotlin
+    testImplementation libs.mockwebserver
 
-    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
-    androidTestImplementation "junit:junit:$versions.junit"
+    androidTestImplementation libs.androidx.test.core
+    androidTestImplementation libs.androidx.test.runner
+    androidTestImplementation libs.uiautomator
+    androidTestImplementation libs.junit
 }
 
 task sourceJar(type: Jar) {
