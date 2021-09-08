@@ -22,9 +22,7 @@ android {
 dependencies {
     implementation project(':mobilesdk')
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-
-    implementation libs.lifecycle.livedata.ktx
+    implementation libs.'lifecycle-livedata-ktx'
     implementation libs.junit
-    implementation libs.mockito.kotlin
+    implementation libs.'mockito-kotlin'
 }
