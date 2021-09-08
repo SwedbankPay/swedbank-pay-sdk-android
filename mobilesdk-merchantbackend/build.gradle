@@ -32,30 +32,28 @@ dependencies {
     testImplementation project(':testcommon')
     androidTestImplementation project(':testcommon')
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation libs.'kotlinx-coroutines-core'
+    implementation libs.'kotlinx-coroutines-android'
 
-    implementation libs.kotlinx.coroutines.core
-    implementation libs.kotlinx.coroutines.android
+    debugImplementation libs.'fragment-testing'
 
-    debugImplementation libs.fragment.testing
-
-    implementation libs.play.services.base
-    implementation libs.play.services.basement
+    implementation libs.'play-services-base'
+    implementation libs.'play-services-basement'
 
     implementation libs.gson
 
     implementation libs.okhttp
 
-    testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    testImplementation libs.androidx.test.junit
+    testImplementation libs.'kotlin-reflect'
+    testImplementation libs.'androidx-test-junit'
     testImplementation libs.junit
     testImplementation libs.robolectric
-    testImplementation libs.mockito.inline
-    testImplementation libs.mockito.kotlin
+    testImplementation libs.'mockito-inline'
+    testImplementation libs.'mockito-kotlin'
     testImplementation libs.mockwebserver
 
-    androidTestImplementation libs.androidx.test.core
-    androidTestImplementation libs.androidx.test.runner
+    androidTestImplementation libs.'androidx-test-core'
+    androidTestImplementation libs.'androidx-test-runner'
     androidTestImplementation libs.uiautomator
     androidTestImplementation libs.junit
 }
