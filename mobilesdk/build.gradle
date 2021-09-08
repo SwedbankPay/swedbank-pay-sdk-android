@@ -38,49 +38,46 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.kotlinx_coroutines"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.kotlinx_coroutines"
+    implementation libs.kotlinx.coroutines.core
+    implementation libs.kotlinx.coroutines.android
 
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'androidx.core:core-ktx:1.6.0'
+    implementation libs.androidx.appcompat
+    implementation libs.androidx.core.ktx
 
-    implementation "androidx.fragment:fragment-ktx:$versions.androidx_fragment"
-    debugImplementation "androidx.fragment:fragment-testing:$versions.androidx_fragment"
+    implementation libs.fragment.ktx
+    debugImplementation libs.fragment.testing
 
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$versions.androidx_lifecycle"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.androidx_lifecycle"
+    implementation libs.lifecycle.livedata.ktx
+    implementation libs.lifecycle.viewmodel.ktx
 
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
-    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
-    implementation 'com.google.android.material:material:1.4.0'
+    implementation libs.constraintlayout
+    implementation libs.swiperefreshlayout
+    implementation libs.coordinatorlayout
+    implementation libs.material
 
-    implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
+    implementation libs.okhttp
 
-    implementation "com.google.code.gson:gson:$versions.gson"
+    implementation libs.gson
 
-    compileOnly 'joda-time:joda-time:2.10.10'
-    compileOnly 'org.threeten:threetenbp:1.5.1'
+    compileOnly libs.joda.time
+    compileOnly libs.threetenbp
 
-    testImplementation "androidx.test:core:$versions.androidx_test.core"
-    androidTestImplementation "androidx.test:core:$versions.androidx_test.core"
-    androidTestImplementation "androidx.test:runner:$versions.androidx_test.core"
+    testImplementation libs.androidx.test.core
+    testImplementation libs.espresso.core
+    testImplementation libs.espresso.intents
+    testImplementation libs.androidx.test.junit
+    testImplementation libs.junit
+    testImplementation libs.robolectric
+    testImplementation libs.mockito.inline
+    testImplementation libs.mockito.kotlin
 
-    testImplementation "androidx.test.espresso:espresso-core:$versions.androidx_test.espresso"
-    testImplementation "androidx.test.espresso:espresso-intents:$versions.androidx_test.espresso"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$versions.androidx_test.espresso"
-    androidTestImplementation "androidx.test.espresso:espresso-web:$versions.androidx_test.espresso"
-
-    testImplementation "androidx.test.ext:junit:$versions.androidx_test.junit"
-
-    testImplementation "junit:junit:$versions.junit"
-    testImplementation "org.robolectric:robolectric:$versions.robolectric"
-    testImplementation "org.mockito:mockito-inline:$versions.mockito"
-    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$versions.mockito_kotlin"
-
-    androidTestImplementation "junit:junit:$versions.junit"
-    androidTestImplementation 'com.linkedin.dexmaker:dexmaker-mockito-inline:2.28.1'
-    androidTestImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$versions.mockito_kotlin"
+    androidTestImplementation libs.androidx.test.core
+    androidTestImplementation libs.androidx.test.runner
+    androidTestImplementation libs.espresso.core
+    androidTestImplementation libs.espresso.web
+    androidTestImplementation libs.junit
+    androidTestImplementation libs.dexmaker.mockito.inline
+    androidTestImplementation libs.mockito.kotlin
 }
 
 task sourceJar(type: Jar) {

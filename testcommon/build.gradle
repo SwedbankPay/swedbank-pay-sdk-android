@@ -24,7 +24,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.androidx_lifecycle"
-    implementation "junit:junit:$versions.junit"
-    implementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$versions.mockito_kotlin"
+    implementation libs.lifecycle.livedata.ktx
+    implementation libs.junit
+    implementation libs.mockito.kotlin
 }
