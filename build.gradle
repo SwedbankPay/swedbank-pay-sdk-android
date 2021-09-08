@@ -43,7 +43,7 @@ ext.libs = [
 
         'espresso-core': 'androidx.test.espresso:espresso-core:3.3.0',
         'espresso-intents': 'androidx.test.espresso:espresso-intents:3.3.0',
-        'espresso-web': 'androidx.test.espresso:espresso-web:3.3.0',
+        'espresso-web': 'androidx.test.espresso:espresso-web:3.4.0',
 
         'androidx-test-junit': 'androidx.test.ext:junit:1.1.2',
         uiautomator: 'androidx.test.uiautomator:uiautomator:2.2.0',
