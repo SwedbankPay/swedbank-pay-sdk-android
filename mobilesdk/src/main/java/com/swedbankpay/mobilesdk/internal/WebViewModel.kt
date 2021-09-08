@@ -217,7 +217,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             }
         }
 
-        private fun getExternalAppIntent(uri: String): Intent? {
+        private fun getExternalAppIntent(uri: String): Intent {
             val intent = Intent.parseUri(uri, INTENT_URI_FLAGS)
             intent.addCategory(Intent.CATEGORY_BROWSABLE)
             intent.addFlags(
@@ -233,6 +233,16 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         private fun requireNonBrowser(intent: Intent) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER)
+
+                // FLAG_ACTIVITY_REQUIRE_NON_BROWSER is not respected for about:blank, breaking our
+                // tests. So, we check for that ourselves. Such a navigation should never happen in
+                // production, so it should be safe to always fail to start an activity here.
+                if (
+                    intent.action == Intent.ACTION_VIEW
+                    && intent.data.toString() == "about:blank"
+                ) {
+                    throw ActivityNotFoundException()
+                }
             } else {
                 legacyRequireNonBrowser(intent)
             }

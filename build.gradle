@@ -31,21 +31,21 @@ ext.libs = [
         'androidx-appcompat': 'androidx.appcompat:appcompat:1.3.1',
         'androidx-core-ktx': 'androidx.core:core-ktx:1.6.0',
         'fragment-ktx': 'androidx.fragment:fragment-ktx:1.3.6',
-        'fragment-testing': 'androidx.fragment:fragment-testing:1.3.6',
+        'fragment-testing': 'androidx.fragment:fragment-testing:1.4.0-alpha08',
         'lifecycle-livedata-ktx': 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.1',
         'lifecycle-viewmodel-ktx': 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1',
         constraintlayout: 'androidx.constraintlayout:constraintlayout:2.1.0',
         coordinatorlayout: 'androidx.coordinatorlayout:coordinatorlayout:1.1.0',
         swiperefreshlayout: 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0',
 
-        'androidx-test-core': 'androidx.test:core:1.3.0',
-        'androidx-test-runner': 'androidx.test:runner:1.3.0',
+        'androidx-test-core': 'androidx.test:core:1.4.0',
+        'androidx-test-runner': 'androidx.test:runner:1.4.0',
 
-        'espresso-core': 'androidx.test.espresso:espresso-core:3.3.0',
-        'espresso-intents': 'androidx.test.espresso:espresso-intents:3.3.0',
-        'espresso-web': 'androidx.test.espresso:espresso-web:3.3.0',
+        'espresso-core': 'androidx.test.espresso:espresso-core:3.4.0',
+        'espresso-intents': 'androidx.test.espresso:espresso-intents:3.4.0',
+        'espresso-web': 'androidx.test.espresso:espresso-web:3.4.0',
 
-        'androidx-test-junit': 'androidx.test.ext:junit:1.1.2',
+        'androidx-test-junit': 'androidx.test.ext:junit:1.1.3',
         uiautomator: 'androidx.test.uiautomator:uiautomator:2.2.0',
 
         material: 'com.google.android.material:material:1.4.0',
