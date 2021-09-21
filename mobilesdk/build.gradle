@@ -51,6 +51,7 @@ dependencies {
     implementation libs.swiperefreshlayout
     implementation libs.coordinatorlayout
     implementation libs.material
+    implementation libs.'navigation-fragment'
 
     implementation libs.okhttp
 
@@ -68,6 +69,7 @@ dependencies {
     testImplementation libs.'mockito-inline'
     testImplementation libs.'mockito-kotlin'
 
+    androidTestImplementation libs.'kotlin-reflect'
     androidTestImplementation libs.'androidx-test-core'
     androidTestImplementation libs.'androidx-test-runner'
     androidTestImplementation libs.'espresso-core'

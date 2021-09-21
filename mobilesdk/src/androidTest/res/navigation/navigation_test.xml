@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/navigation_test"
+    app:startDestination="@id/start_fragment">
+    <fragment android:id="@+id/start_fragment"
+        android:name="com.swedbankpay.mobilesdk.test.navigation.NavigationTestStartFragment">
+        <action android:id="@+id/start_fragment_to_payment_fragment"
+            app:destination="@id/swedbankpaysdk_paymentfragment" />
+    </fragment>
+
+    <include app:graph="@navigation/swedbankpaysdk_paymentfragment" />
+</navigation>
