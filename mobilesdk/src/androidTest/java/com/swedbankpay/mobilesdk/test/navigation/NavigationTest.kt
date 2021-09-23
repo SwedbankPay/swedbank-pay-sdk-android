@@ -27,11 +27,7 @@ class NavigationTest {
      */
     @get:Rule
     val rule: MockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS)
-
-    /**
-     * The mock Configuration used in the test scenario.
-     * Each test case should stub this according to its own needs.
-     */
+    
     @Mock
     private lateinit var configuration: Configuration
 
