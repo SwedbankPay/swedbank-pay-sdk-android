@@ -206,15 +206,38 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         }
 
         private fun attemptHandleByExternalApp(uri: String): Boolean {
+            val intent = try {
+                getExternalAppIntent(uri)
+            } catch (_: URISyntaxException) {
+                return false
+            }
+
             return try {
-                val intent = getExternalAppIntent(uri)
+                if (!parentViewModel.useExternalBrowser) {
+                    requireNonBrowser(intent)
+                }
                 getApplication<Application>().startActivity(intent)
                 true
-            } catch (_: URISyntaxException) {
-                false
             } catch (_: ActivityNotFoundException) {
-                false
+                attemptOpenIntentFallbackUrl(uri, intent)
             }
+        }
+
+        private fun attemptOpenIntentFallbackUrl(uri: String, intent: Intent): Boolean {
+            if (uri.startsWith("intent:")) {
+                intent.extras?.getString("browser_fallback_url")?.let {
+                    try {
+                        val fallbackIntent = getExternalAppIntent(it)
+                        getApplication<Application>().startActivity(fallbackIntent)
+                        return true
+                    } catch (_: URISyntaxException) {
+                        // do nothing
+                    } catch (_: ActivityNotFoundException) {
+                        // do nothing
+                    }
+                }
+            }
+            return false
         }
 
         private fun getExternalAppIntent(uri: String): Intent {
@@ -224,9 +247,6 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                 Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
                         or Intent.FLAG_ACTIVITY_NEW_TASK
             )
-            if (!parentViewModel.useExternalBrowser) {
-                requireNonBrowser(intent)
-            }
             return intent
         }
 

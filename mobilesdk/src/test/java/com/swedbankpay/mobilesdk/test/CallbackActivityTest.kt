@@ -70,12 +70,17 @@ class CallbackActivityTest {
                 CallbackActivity::class.java
             )
                 .setData(Uri.parse(TestConstants.paymentUrl))
-            Intents.init()
-            ActivityScenario.launch<CallbackActivity>(callbackIntent).use {}
 
-            // CallbackActivity should start another activity in this case
-            val newIntents = Intents.getIntents()
-            Intents.release()
+            Intents.init()
+            val newIntents = try {
+                ActivityScenario.launch<CallbackActivity>(callbackIntent).use {}
+
+                // CallbackActivity should start another activity in this case
+                Intents.getIntents()
+            } finally {
+                Intents.release()
+            }
+
             Assert.assertTrue(newIntents.size == 1)
             val newIntent = newIntents.first()
 
