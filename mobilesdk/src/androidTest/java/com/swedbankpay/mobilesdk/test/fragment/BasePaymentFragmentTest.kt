@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.test.fragment
 
+import android.os.Build
 import androidx.fragment.app.testing.FragmentScenario
 import androidx.lifecycle.Lifecycle
 import androidx.test.espresso.web.assertion.WebViewAssertions
@@ -46,6 +47,31 @@ import javax.xml.xpath.XPathFactory
  * the AVD Manager will not list 64-bit images in the "Recommended" list.
  */
 abstract class BasePaymentFragmentTest {
+    companion object {
+        /**
+         * A default set of arguments for PaymentFragment test scenarios
+         */
+        val args get() =
+            PaymentFragment.ArgumentsBuilder().paymentOrder(TestConstants.paymentOrder).build()
+
+        /**
+         * A set of arguments for testing Intent launches
+         */
+        val intentTestArgs get() =
+            // Since API 30, all external app intents should result in a call
+            // to startActivity. On earlier versions, startActivity is only
+            // called if resolveActivity reports a suitable app, or if
+            // useBrowser is true. Here we want to always get the call,
+            // so we enable useBrowser for API < 30.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                args
+            } else {
+                PaymentFragment.ArgumentsBuilder()
+                    .useBrowser(true)
+                    .build()
+            }
+    }
+
     /**
      * STRICT_STUBS mockito rule for cleaner tests
      */
@@ -63,11 +89,6 @@ abstract class BasePaymentFragmentTest {
      * The FragmentScenario used in the test
      */
     protected lateinit var scenario: FragmentScenario<PaymentFragment>
-
-    /**
-     * A default set of arguments for PaymentFragment test scenarios
-     */
-    protected val args get() = PaymentFragment.ArgumentsBuilder().paymentOrder(TestConstants.paymentOrder).build()
 
     /**
      * Create mock Configuration and set it as PaymentFragment.defaultConfiguration

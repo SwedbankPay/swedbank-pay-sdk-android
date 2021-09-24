@@ -73,6 +73,7 @@ dependencies {
     androidTestImplementation libs.'androidx-test-core'
     androidTestImplementation libs.'androidx-test-runner'
     androidTestImplementation libs.'espresso-core'
+    androidTestImplementation libs.'espresso-intents'
     androidTestImplementation libs.'espresso-web'
     androidTestImplementation libs.junit
     androidTestImplementation libs.'dexmaker-mockito-inline'
