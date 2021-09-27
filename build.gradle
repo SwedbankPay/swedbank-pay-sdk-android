@@ -34,7 +34,7 @@ ext.libs = [
         'fragment-testing': 'androidx.fragment:fragment-testing:1.4.0-alpha09',
         'lifecycle-livedata-ktx': 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.1',
         'lifecycle-viewmodel-ktx': 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1',
-        constraintlayout: 'androidx.constraintlayout:constraintlayout:2.1.0',
+        constraintlayout: 'androidx.constraintlayout:constraintlayout:2.1.1',
         coordinatorlayout: 'androidx.coordinatorlayout:coordinatorlayout:1.1.0',
         'navigation-fragment': 'androidx.navigation:navigation-fragment:2.3.5',
         swiperefreshlayout: 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0',
