@@ -60,7 +60,7 @@ ext.libs = [
         threetenbp: 'org.threeten:threetenbp:1.5.1',
 
         okhttp: 'com.squareup.okhttp3:okhttp:4.9.2',
-        mockwebserver: 'com.squareup.okhttp3:mockwebserver:4.9.1',
+        mockwebserver: 'com.squareup.okhttp3:mockwebserver:4.9.2',
 
         robolectric: 'org.robolectric:robolectric:4.6.1',
         'mockito-inline': 'org.mockito:mockito-inline:3.12.4',
