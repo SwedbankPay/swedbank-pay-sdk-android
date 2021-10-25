@@ -280,7 +280,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                 @SuppressLint("SetJavaScriptEnabled")
                 javaScriptEnabled = true
                 setSupportMultipleWindows(false)
-                domStorageEnabled = false
+                domStorageEnabled = true
                 builtInZoomControls = false
                 displayZoomControls = false
             }
