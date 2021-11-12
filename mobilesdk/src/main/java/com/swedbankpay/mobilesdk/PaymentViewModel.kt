@@ -211,7 +211,7 @@ class PaymentViewModel : AndroidViewModel {
         }
     }
 
-    internal val onRetryPreviousAction = MutableLiveData<Unit>()
+    internal val onRetryPreviousAction = MutableLiveData<Unit?>()
 
     internal fun attachInternalViewModel(internalVm: InternalPaymentViewModel) {
         this.internalVm.value = internalVm
