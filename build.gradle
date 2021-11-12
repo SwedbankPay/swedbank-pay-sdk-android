@@ -52,7 +52,7 @@ ext.libs = [
         material: 'com.google.android.material:material:1.4.0',
         'play-services-base': 'com.google.android.gms:play-services-base:17.6.0',
         'play-services-basement': 'com.google.android.gms:play-services-basement:17.6.0',
-        gson: 'com.google.code.gson:gson:2.8.8',
+        gson: 'com.google.code.gson:gson:2.8.9',
 
         junit: 'junit:junit:4.13.2',
 
