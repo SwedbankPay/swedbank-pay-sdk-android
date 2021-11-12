@@ -57,7 +57,7 @@ ext.libs = [
         junit: 'junit:junit:4.13.2',
 
         'joda-time': 'joda-time:joda-time:2.10.13',
-        threetenbp: 'org.threeten:threetenbp:1.5.1',
+        threetenbp: 'org.threeten:threetenbp:1.5.2',
 
         okhttp: 'com.squareup.okhttp3:okhttp:4.9.2',
         mockwebserver: 'com.squareup.okhttp3:mockwebserver:4.9.2',
