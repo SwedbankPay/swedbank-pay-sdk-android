@@ -324,6 +324,7 @@ open class PaymentFragment : Fragment() {
 
     /** @hide */
     @Retention(AnnotationRetention.SOURCE)
+    @Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.TYPE)
     @IntDef(
         RETRY_PROMPT,
         COMPLETE_MESSAGE,
