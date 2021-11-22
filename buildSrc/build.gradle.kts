@@ -7,7 +7,7 @@ repositories {
     mavenCentral()
 }
 
-apply(from = "../dependencies.gradle.kts")
+apply(from = "../dependencies/dependencies.gradle.kts")
 val libs: Map<String, String> by extra
 dependencies {
     implementation(libs["kotlinx-serialization-json"]!!)
