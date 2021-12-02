@@ -3,7 +3,7 @@
 extra["libs"] = mapOf(
    "android-gradle-plugin" to "com.android.tools.build:gradle:7.0.3",
 
-   "jgit" to "org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r",
+   "jgit" to "org.eclipse.jgit:org.eclipse.jgit:6.0.0.202111291000-r",
 
    "kotlinx-coroutines-core" to "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2",
    "kotlinx-coroutines-android" to "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2",
