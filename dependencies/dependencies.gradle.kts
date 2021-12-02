@@ -9,10 +9,10 @@ extra["libs"] = mapOf(
    "kotlinx-coroutines-android" to "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2",
    "kotlinx-serialization-json" to "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1",
 
-   "androidx-appcompat" to "androidx.appcompat:appcompat:1.3.1",
+   "androidx-appcompat" to "androidx.appcompat:appcompat:1.4.0",
    "androidx-core-ktx" to "androidx.core:core-ktx:1.7.0",
-   "fragment-ktx" to "androidx.fragment:fragment-ktx:1.3.6",
-   "fragment-testing" to "androidx.fragment:fragment-testing:1.4.0-rc01",
+   "fragment-ktx" to "androidx.fragment:fragment-ktx:1.4.0",
+   "fragment-testing" to "androidx.fragment:fragment-testing:1.4.0",
    "lifecycle-livedata-ktx" to "androidx.lifecycle:lifecycle-livedata-ktx:2.4.0",
    "lifecycle-viewmodel-ktx" to "androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0",
    "constraintlayout" to "androidx.constraintlayout:constraintlayout:2.1.2",
@@ -40,11 +40,11 @@ extra["libs"] = mapOf(
    "joda-time" to "joda-time:joda-time:2.10.13",
    "threetenbp" to "org.threeten:threetenbp:1.5.2",
 
-   "okhttp" to "com.squareup.okhttp3:okhttp:4.9.2",
-   "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.9.2",
+   "okhttp" to "com.squareup.okhttp3:okhttp:4.9.3",
+   "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.9.3",
 
-   "robolectric" to "org.robolectric:robolectric:4.7",
-   "mockito-inline" to "org.mockito:mockito-inline:4.0.0",
+   "robolectric" to "org.robolectric:robolectric:4.7.2",
+   "mockito-inline" to "org.mockito:mockito-inline:4.1.0",
    "mockito-kotlin" to "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
    "dexmaker-mockito-inline" to "com.linkedin.dexmaker:dexmaker-mockito-inline:2.28.1"
 )
