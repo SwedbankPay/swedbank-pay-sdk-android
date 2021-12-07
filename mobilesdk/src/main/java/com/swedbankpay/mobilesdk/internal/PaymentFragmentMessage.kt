@@ -41,7 +41,11 @@ private fun Context.getPaymentFragmentMessage(
                 getString(R.string.swedbankpaysdk_retryable_error_title),
                 sequenceOf(
                     getString(state.message),
-                    configuration.getErrorMessage(this, state.exception),
+                    if (isEnabled(PaymentFragment.RETRY_PROMPT_DETAIL)) {
+                        configuration.getErrorMessage(this, state.exception)
+                    } else {
+                        null
+                    },
                     getString(R.string.swedbankpaysdk_pull_to_refresh)
                 ).filterNotNull().joinToString("\n\n")
             )

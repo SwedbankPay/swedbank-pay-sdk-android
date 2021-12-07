@@ -256,6 +256,7 @@ internal class WebViewFragment : Fragment() {
                     builder.setView(view)
                     setNegativeButton(builder)
                 }
+                null -> Unit
             }
         }
 

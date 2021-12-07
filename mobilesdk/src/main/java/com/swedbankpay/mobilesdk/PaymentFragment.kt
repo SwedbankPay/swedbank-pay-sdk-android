@@ -176,12 +176,14 @@ open class PaymentFragment : Fragment() {
          *  - [RETRY_PROMPT], a prompt to retry a failed request that can reasonably be retried
          *  - [COMPLETE_MESSAGE], a laconic completion message
          *  - [ERROR_MESSAGE] a less laconic, though a bit technical, error message
+         *  - [RETRY_PROMPT_DETAIL], additional detail message for `RETRY_PROMPT`
          *
          * If a default UI is not enabled, the fragment will be blank instead.
          *
-         * The default is to only enable RETRY_PROMPT. This is often useful,
+         * The default is to only enable `RETRY_PROMPT`. This is often useful,
          * as a custom retry prompt is likely unnecessary, but the success and error states
-         * should cause the fragment to be dismissed.
+         * should cause the fragment to be dismissed. Also, the extra message from
+         * `RETRY_PROMPT_DETAIL` is unlikely to be useful to the user.
          *
          * To disable everything, pass an empty argument list here (a value of 0 also works).
          * If it is more convenient for you, you may also OR the flags manually and call this
@@ -248,14 +250,18 @@ open class PaymentFragment : Fragment() {
          * Default UI flag: a laconic completion message
          * See [ArgumentsBuilder.setEnabledDefaultUI]
          */
-        @SuppressLint("ShiftFlags") // something wrong with lint + kotlin (!?)
         const val COMPLETE_MESSAGE = 1 shl 1
         /**
          * Default UI flag: a less laconic, though a bit technical, error message
          * See [ArgumentsBuilder.setEnabledDefaultUI]
          */
-        @SuppressLint("ShiftFlags")
         const val ERROR_MESSAGE = 1 shl 2
+        /**
+         * Default UI flag: a detail message about what went wrong.
+         * This flag affects how the [RETRY_PROMPT] UI works; it has
+         * no effect if `RETRY_PROMPT` is not enabled.
+         */
+        const val RETRY_PROMPT_DETAIL = 1 shl 3
 
         /**
          * Argument key: Any data that you may need in your [Configuration] to prepare the checkin
@@ -329,6 +335,7 @@ open class PaymentFragment : Fragment() {
         RETRY_PROMPT,
         COMPLETE_MESSAGE,
         ERROR_MESSAGE,
+        RETRY_PROMPT_DETAIL,
         flag = true
     )
     annotation class DefaultUI
