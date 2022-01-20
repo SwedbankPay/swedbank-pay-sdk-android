@@ -37,8 +37,8 @@ class PaymentTest {
         // between keystrokes, the input may get jumbled.
         const val keyInputDelay = 500L
 
-        const val noScaCardNumber = "4925000000000004"
-        const val scaCardNumber = "4761739001010416"
+        const val noScaCardNumber = "4581097032723517"
+        const val scaCardNumber = "5226612199533406"
         const val expiryDate = "1230"
         const val noScaCvv = "111"
         const val scaCvv = "268"
