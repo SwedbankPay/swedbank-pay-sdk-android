@@ -87,7 +87,6 @@ sealed class MerchantBackendProblem(jsonObject: JsonObject) : Problem(jsonObject
 
         /**
          * Base class for [Client] problems defined by the Swedbank Pay backend.
-         * [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems]
          */
         sealed class SwedbankPay(jsonObject: JsonObject) : Client(jsonObject), SwedbankPayProblem {
             override val action: SwedbankPayAction?
@@ -177,7 +176,6 @@ sealed class MerchantBackendProblem(jsonObject: JsonObject) : Problem(jsonObject
 
         /**
          * Base class for [Server] problems defined by the Swedbank Pay backend.
-         * [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems]
          */
         sealed class SwedbankPay(jsonObject: JsonObject) : Server(jsonObject), SwedbankPayProblem {
             override val action: SwedbankPayAction?

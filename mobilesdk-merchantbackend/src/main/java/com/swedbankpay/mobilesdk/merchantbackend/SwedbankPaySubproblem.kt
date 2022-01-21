@@ -4,8 +4,6 @@ import java.io.Serializable
 
 /**
  * Object detailing the reason for a [SwedbankPayProblem].
- *
- * See [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems].
  */
 @Suppress("unused")
 data class SwedbankPaySubproblem(
