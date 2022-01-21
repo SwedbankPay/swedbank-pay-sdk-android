@@ -2,7 +2,7 @@ package com.swedbankpay.mobilesdk.merchantbackend
 
 /**
  * A Problem defined by the Swedbank Pay backend.
- * [https://developer.payex.com/xwiki/wiki/developer/view/Main/ecommerce/technical-reference/#HProblems]
+ * [https://developer.swedbankpay.com/modules-sdks/mobile-sdk/merchant-backend#problems]
  */
 interface SwedbankPayProblem {
     /**
