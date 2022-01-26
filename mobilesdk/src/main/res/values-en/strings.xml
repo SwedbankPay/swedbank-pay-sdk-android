@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="swedbankpaysdk_error_dialog_title">Error</string>
+    <string name="swedbankpaysdk_dialog_close">Close</string>
+    <string name="OK">OK</string>
+    <string name="Cancel">Cancel</string>
+    <string name="browserAlertTitle">You\&#39;re almost done</string>
+    <string name="browserAlertBody">Your payment is being processed. Return to your browser to continue</string>
+    <string name="maybeStuckAlertTitle">Stuck</string>
+    <string name="maybeStuckAlertBody">It looks like the payment has not progressed for a while. Do you want to wait, or retry the payment in compatibility mode</string>
+    <string name="maybeStuckAlertWait">Wait</string>
+    <string name="maybeStuckAlertRetry">Retry</string>
+    <string name="swedbankpaysdk_retryable_error_title">Communication Error</string>
+    <string name="swedbankpaysdk_failed_init_consumer">Could not initialize identification</string>
+    <string name="swedbankpaysdk_failed_create_payment">Could not initialize payment</string>
+    <string name="swedbankpaysdk_pull_to_refresh">Pull down to retry</string>
+    <string name="swedbankpaysdk_js_prompt_hint">Input</string>
+    <string name="swedbankpaysdk_bad_init_request_title">Unable to start payment at this time</string>
+    <string name="swedbankpaysdk_terminal_failure_title">Configuration Error</string>
+    <string name="swedbankpaysdk_payment_complete">Payment complete</string>
+    <string name="swedbankpaysdk_payment_failed">Payment failed</string>
+    <string name="swedbankpaysdk_problem_invalid_request">Service did not recognize the request</string>
+    <string name="swedbankpaysdk_problem_unauthorized">Service did not recognize the request</string>
+    <string name="swedbankpaysdk_problem_input_error">Invalid input data</string>
+    <string name="swedbankpaysdk_problem_forbidden">Forbidden</string>
+    <string name="swedbankpaysdk_problem_not_found">Not found</string>
+    <string name="swedbankpaysdk_problem_backend_connection_timeout">Service did not respond in a timely fashion. Please try again</string>
+    <string name="swedbankpaysdk_problem_backend_connection_failure">Unable to connect to service. Please try again</string>
+    <string name="swedbankpaysdk_problem_invalid_backend_response">Received invalid service response. Please try again</string>
+    <string name="swedbankpaysdk_problem_system_error">Internal service error. Please try again</string>
+    <string name="swedbankpaysdk_problem_configuration_error">Invalid configuration</string>
+    <string name="swedbankpaysdk_problem_unknown">Unexpected error</string>
+</resources>

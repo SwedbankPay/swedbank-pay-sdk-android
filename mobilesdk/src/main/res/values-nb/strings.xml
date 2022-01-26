@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="swedbankpaysdk_error_dialog_title">Error</string>
+    <string name="OK">OK</string>
+    <string name="Cancel">Avbryt</string>
+    <string name="browserAlertTitle">Du er nesten ferdig</string>
+    <string name="browserAlertBody">Betalingen din behandles. Gå tilbake til nettleseren for å fortsette</string>
+    <string name="swedbankpaysdk_retryable_error_title">Kommunikasjonsfeil</string>
+    <string name="swedbankpaysdk_failed_init_consumer">Vi kunne ikke starte identifiseringen</string>
+    <string name="swedbankpaysdk_failed_create_payment">Vi kunne ikke starte betalingen</string>
+    <string name="swedbankpaysdk_pull_to_refresh">Dra ned for å prøve igjen</string>
+    <string name="swedbankpaysdk_js_prompt_hint">Fyll inn</string>
+    <string name="swedbankpaysdk_bad_init_request_title">Kunne ikke starte betalingen nå</string>
+    <string name="swedbankpaysdk_terminal_failure_title">Noe er feil med oppsettet</string>
+    <string name="swedbankpaysdk_payment_complete">Betalingen er fullført</string>
+    <string name="swedbankpaysdk_payment_failed">Betalingen mislyktes</string>
+    <string name="swedbankpaysdk_problem_invalid_request">Tjenesten kjente ikke igjen forespørselen</string>
+    <string name="swedbankpaysdk_problem_unauthorized">Tjenesten kjente ikke igjen forespørselen</string>
+    <string name="swedbankpaysdk_problem_input_error">Informasjonen som er skrevet inn er ugyldig</string>
+    <string name="swedbankpaysdk_problem_forbidden">Ikke tillatt</string>
+    <string name="swedbankpaysdk_problem_not_found">Ikke funnet</string>
+    <string name="swedbankpaysdk_problem_backend_connection_timeout">Tjenesten brukte for lang tid på å svare. Vennligst prøv igjen</string>
+    <string name="swedbankpaysdk_problem_backend_connection_failure">Fikk ikke kontakt med tjenesten. Vennligst prøv igjen</string>
+    <string name="swedbankpaysdk_problem_invalid_backend_response">Tjenesten ga en ugyldig respons. Vennligst prøv igjen</string>
+    <string name="swedbankpaysdk_problem_system_error">Intern feil på tjenesten. Vennligst prøv igjen</string>
+    <string name="swedbankpaysdk_problem_configuration_error">Oppsettet er ugyldig</string>
+    <string name="swedbankpaysdk_problem_unknown">Det skjedde en uventet feil</string>
+</resources>
