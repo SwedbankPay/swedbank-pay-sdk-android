@@ -376,14 +376,15 @@ class WebViewFragmentTest {
     @Test
     fun itShouldLoadLocalizedStrings() {
 
-        Assert.assertTrue("SV localization missmatch", getLocalizedExampleString(lang = "sv") == "Betalat och klart")
-        Assert.assertTrue("NO localization missmatch", getLocalizedExampleString(lang = "nb") == "Betalingen er fullført")
-        Assert.assertTrue("Localization missmatch", getLocalizedExampleString(lang = "en") == "Payment complete")
+        Assert.assertTrue("SV localization missmatch", compareLocalizedExampleString(lang = "sv", translation = "Du är snart klar"))
+        Assert.assertTrue("NO localization missmatch", compareLocalizedExampleString(lang = "nb", translation = "Du er nesten ferdig"))
+        Assert.assertTrue("Localization missmatch", compareLocalizedExampleString(lang = "en", translation = "You're almost done"))
     }
 
-    private fun getLocalizedExampleString(
-        lang: String
-    ): String
+    private fun compareLocalizedExampleString(
+        lang: String,
+        translation: String
+    ): Boolean
     {
         val desiredLocale = Locale(lang)
         val context = InstrumentationRegistry.getInstrumentation().getContext()
@@ -391,7 +392,7 @@ class WebViewFragmentTest {
         conf = Configuration(conf)
         conf.setLocale(desiredLocale)
         val localizedContext = context.createConfigurationContext(conf)
-        return localizedContext.getResources().getString(R.string.swedbankpaysdk_payment_complete)
+        return localizedContext.getResources().getString(R.string.browserAlertTitle) == translation
     }
 
     private fun testJsDialog(
