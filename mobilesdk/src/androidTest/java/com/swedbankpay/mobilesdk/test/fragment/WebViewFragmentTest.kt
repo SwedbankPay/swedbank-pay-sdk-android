@@ -376,14 +376,21 @@ class WebViewFragmentTest {
     @Test
     fun itShouldLoadLocalizedStrings() {
 
-        Assert.assertTrue("SV localization missmatch", compareLocalizedExampleString(lang = "sv", translation = "Du är snart klar"))
-        Assert.assertTrue("NO localization missmatch", compareLocalizedExampleString(lang = "nb", translation = "Du er nesten ferdig"))
-        Assert.assertTrue("Localization missmatch", compareLocalizedExampleString(lang = "en", translation = "You're almost done"))
+        Assert.assertTrue("SV localization missmatch", compareLocalizedExampleString(lang = "sv", translation = "Du är snart klar", resource = R.string.browserAlertTitle))
+        Assert.assertTrue("NO localization missmatch", compareLocalizedExampleString(lang = "nb", translation = "Du er nesten ferdig", resource = R.string.browserAlertTitle))
+        Assert.assertTrue("Localization missmatch", compareLocalizedExampleString(lang = "en", translation = "You're almost done", resource = R.string.browserAlertTitle))
+
+        //verifying that missing Norwegian translation defaults to English
+        Assert.assertTrue("SV localization missmatch", compareLocalizedExampleString(lang = "sv", translation = "Stäng", resource = R.string.swedbankpaysdk_dialog_close))
+        Assert.assertTrue("NO localization missmatch", compareLocalizedExampleString(lang = "nb", translation = "Close", resource = R.string.swedbankpaysdk_dialog_close))
+        Assert.assertTrue("Localization missmatch", compareLocalizedExampleString(lang = "en", translation = "Close", resource = R.string.swedbankpaysdk_dialog_close))
+
     }
 
     private fun compareLocalizedExampleString(
         lang: String,
-        translation: String
+        translation: String,
+        resource: Int
     ): Boolean
     {
         val desiredLocale = Locale(lang)
@@ -392,7 +399,7 @@ class WebViewFragmentTest {
         conf = Configuration(conf)
         conf.setLocale(desiredLocale)
         val localizedContext = context.createConfigurationContext(conf)
-        return localizedContext.getResources().getString(R.string.browserAlertTitle) == translation
+        return localizedContext.getResources().getString(resource) == translation
     }
 
     private fun testJsDialog(
