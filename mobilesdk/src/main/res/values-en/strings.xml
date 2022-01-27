@@ -30,15 +30,4 @@
     <string name="swedbankpaysdk_problem_system_error">Internal service error. Please try again</string>
     <string name="swedbankpaysdk_problem_configuration_error">Invalid configuration</string>
     <string name="swedbankpaysdk_problem_unknown">Unexpected error</string>
-    
-    
-    
-    
-    
-    
-    <string name="swedbankpaysdk_terminal_failure_message">ID: %s</string>
-    <string name="swedbankpaysdk_intent_failure_body">Unable to launch app: %s</string>
-    <string name="swedbankpaysdk_intent_failure_unknown">&lt;unknown&gt;</string>
-    <string name="swedbankpaysdk_unexpected_response">Received unrecognizable response from service.</string>
-    <string name="swedbankpaysdk_tos">Terms of Service</string>
 </resources>

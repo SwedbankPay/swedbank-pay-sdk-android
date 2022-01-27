@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+	
+	<!-- Ignore missing translations since it's well documented anyway. 
+	And always ignore missing localization of HTML template strings.
+	One can remove severity="ignore" and instead apply: ignore path="res/values/html_templates.xml"
+	-->
+    <issue id="MissingTranslation" severity="ignore">
+        
+    </issue>
+</lint>
