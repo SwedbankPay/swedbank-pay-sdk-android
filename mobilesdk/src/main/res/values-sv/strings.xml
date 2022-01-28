@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="swedbankpaysdk_error_dialog_title">Error</string>
+    <string name="swedbankpaysdk_dialog_close">Stäng</string>
+    <string name="OK">OK</string>
+    <string name="Cancel">Avbryt</string>
+    <string name="browserAlertTitle">Du är snart klar</string>
+    <string name="browserAlertBody">Din betalning bearbetas. Gå tillbaka till webbläsaren för att fortsätta</string>
+    <string name="swedbankpaysdk_retryable_error_title">Kommunikationsfel</string>
+    <string name="swedbankpaysdk_failed_init_consumer">Kunde inte påbörja identifieringen</string>
+    <string name="swedbankpaysdk_failed_create_payment">Kunde inte påbörja betalningen</string>
+    <string name="swedbankpaysdk_js_prompt_hint">Fyll i</string>
+    <string name="swedbankpaysdk_bad_init_request_title">Det gick inte att starta betalningen</string>
+    <string name="swedbankpaysdk_terminal_failure_title">Konfigurationsfel</string>
+    <string name="swedbankpaysdk_payment_complete">Betalat och klart</string>
+    <string name="swedbankpaysdk_payment_failed">Vi kunde inte behandla din betalning</string>
+    <string name="swedbankpaysdk_problem_invalid_request">Tjänsten kände inte igen förfrågan</string>
+    <string name="swedbankpaysdk_problem_unauthorized">Tjänsten kände inte igen förfrågan</string>
+    <string name="swedbankpaysdk_problem_input_error">Den angivna informationen är ogiltig</string>
+    <string name="swedbankpaysdk_problem_forbidden">Inte tillåtet</string>
+    <string name="swedbankpaysdk_problem_not_found">Hittades inte</string>
+    <string name="swedbankpaysdk_problem_backend_connection_timeout">Det tog för lång tid för tjänsten att svara</string>
+    <string name="swedbankpaysdk_problem_backend_connection_failure">Kunde inte ansluta till tjänsten. Försök igen</string>
+    <string name="swedbankpaysdk_problem_invalid_backend_response">Felaktig respons från tjänsten. Försök igen</string>
+    <string name="swedbankpaysdk_problem_system_error">Internt fel på tjänsten. Försök igen</string>
+    <string name="swedbankpaysdk_problem_configuration_error">Felaktig konfiguration</string>
+    <string name="swedbankpaysdk_problem_unknown">Oväntat fel</string>
+</resources>

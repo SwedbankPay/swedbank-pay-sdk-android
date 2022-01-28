@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.test.fragment
 
+import android.content.res.Configuration
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.testing.FragmentScenario
@@ -14,6 +15,7 @@ import androidx.test.espresso.web.assertion.WebViewAssertions
 import androidx.test.espresso.web.matcher.DomMatchers
 import androidx.test.espresso.web.model.SimpleAtom
 import androidx.test.espresso.web.sugar.Web
+import androidx.test.platform.app.InstrumentationRegistry
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
 import com.swedbankpay.mobilesdk.test.R
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +27,7 @@ import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import java.util.*
 
 /**
  * Tests for WebViewFragment
@@ -365,6 +368,38 @@ class WebViewFragmentTest {
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
+    }
+
+    /**
+     * Check that it loads localized strings, if this fails the localization-files have probably changed.
+     */
+    @Test
+    fun itShouldLoadLocalizedStrings() {
+
+        Assert.assertTrue("SV localization missmatch", compareLocalizedExampleString(lang = "sv", translation = "Du är snart klar", resource = R.string.browserAlertTitle))
+        Assert.assertTrue("NO localization missmatch", compareLocalizedExampleString(lang = "nb", translation = "Du er nesten ferdig", resource = R.string.browserAlertTitle))
+        Assert.assertTrue("Localization missmatch", compareLocalizedExampleString(lang = "en", translation = "You're almost done", resource = R.string.browserAlertTitle))
+
+        //verifying that missing Norwegian translation defaults to English
+        Assert.assertTrue("SV localization missmatch", compareLocalizedExampleString(lang = "sv", translation = "Stäng", resource = R.string.swedbankpaysdk_dialog_close))
+        Assert.assertTrue("NO localization missmatch", compareLocalizedExampleString(lang = "nb", translation = "Close", resource = R.string.swedbankpaysdk_dialog_close))
+        Assert.assertTrue("Localization missmatch", compareLocalizedExampleString(lang = "en", translation = "Close", resource = R.string.swedbankpaysdk_dialog_close))
+
+    }
+
+    private fun compareLocalizedExampleString(
+        lang: String,
+        translation: String,
+        resource: Int
+    ): Boolean
+    {
+        val desiredLocale = Locale(lang)
+        val context = InstrumentationRegistry.getInstrumentation().getContext()
+        var conf: Configuration = context.getResources().getConfiguration()
+        conf = Configuration(conf)
+        conf.setLocale(desiredLocale)
+        val localizedContext = context.createConfigurationContext(conf)
+        return localizedContext.getResources().getString(resource) == translation
     }
 
     private fun testJsDialog(
