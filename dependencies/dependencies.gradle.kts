@@ -33,7 +33,7 @@ extra["libs"] = mapOf(
    "material" to "com.google.android.material:material:1.5.0",
    "play-services-base" to "com.google.android.gms:play-services-base:18.0.1",
    "play-services-basement" to "com.google.android.gms:play-services-basement:18.0.0",
-   "gson" to "com.google.code.gson:gson:2.8.9",
+   "gson" to "com.google.code.gson:gson:2.9.0",
 
    "junit" to "junit:junit:4.13.2",
 
