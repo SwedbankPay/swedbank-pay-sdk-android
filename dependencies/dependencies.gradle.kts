@@ -1,7 +1,7 @@
 // Declare all dependency versions here so that they are consistent between subprojects.
 
 extra["libs"] = mapOf(
-   "android-gradle-plugin" to "com.android.tools.build:gradle:7.1.1",
+   "android-gradle-plugin" to "com.android.tools.build:gradle:7.1.2",
 
    "jgit" to "org.eclipse.jgit:org.eclipse.jgit:6.0.0.202111291000-r",
 
