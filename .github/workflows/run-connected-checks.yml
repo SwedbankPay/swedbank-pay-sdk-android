@@ -1,9 +1,6 @@
 name: Run Connected Checks
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
+on: push
 
 jobs:
   connected_check:
