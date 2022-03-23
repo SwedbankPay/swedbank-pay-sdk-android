@@ -458,11 +458,11 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun PaymentViewModel.observeRetryPreviousPressed() {
-        onRetryPreviousAction.observe(this@PaymentFragment, {
+        onRetryPreviousAction.observe(this@PaymentFragment) {
             if (it != null) {
                 vm.retryFromRetryableError()
             }
-        })
+        }
     }
 
     private fun startOrResumePayment(savedInstanceState: Bundle?) {

@@ -78,11 +78,13 @@ class PaymentTest {
     private val creditCardOption
         get() = cardDetails.getChild(UiSelector().text("Credit").checkable(true))
     private val panInput
-        get() = cardDetails.getChild(UiSelector().resourceId("panInput"))
+        get() = cardDetails.getChild(UiSelector().resourceIdMatches("panInput.*"))
     private val expiryDateInput
-        get() = cardDetails.getChild(UiSelector().resourceId("expiryInput"))
+        get() = cardDetails.getChild(UiSelector().resourceIdMatches("expiryInput.*"))
+
     private val cvvInput
-        get() = cardDetails.getChild(UiSelector().resourceId("cvcInput"))
+        get() = cardDetails.getChild(UiSelector().resourceIdMatches("cvcInput.*"))
+
     private val payButton
         get() = cardDetails.getChild(UiSelector().className(Button::class.java).textStartsWith("Pay "))
 
