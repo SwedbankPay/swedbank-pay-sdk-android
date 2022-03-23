@@ -92,7 +92,12 @@ class PaymentTest {
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
 
     private fun UiObject.inputText(text: String) {
+        this.text = text
         clickUntilFocusedAndAssert(timeout)
+        if (this.text != null && this.text != "") {
+            // We have succeeded to input something, but can't verify its correct since JS reformatting.
+            return
+        }
         for (c in text) {
             device.pressKeyCode(KeyEvent.keyCodeFromString("KEYCODE_$c"))
             SystemClock.sleep(keyInputDelay) // this is horrible but you do what you gotta do
