@@ -78,11 +78,13 @@ class PaymentTest {
     private val creditCardOption
         get() = cardDetails.getChild(UiSelector().text("Credit").checkable(true))
     private val panInput
-        get() = cardDetails.getChild(UiSelector().resourceId("panInput"))
+        get() = cardDetails.getChild(UiSelector().resourceIdMatches("panInput.*"))
     private val expiryDateInput
-        get() = cardDetails.getChild(UiSelector().resourceId("expiryInput"))
+        get() = cardDetails.getChild(UiSelector().resourceIdMatches("expiryInput.*"))
+
     private val cvvInput
-        get() = cardDetails.getChild(UiSelector().resourceId("cvcInput"))
+        get() = cardDetails.getChild(UiSelector().resourceIdMatches("cvcInput.*"))
+
     private val payButton
         get() = cardDetails.getChild(UiSelector().className(Button::class.java).textStartsWith("Pay "))
 
@@ -90,7 +92,12 @@ class PaymentTest {
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
 
     private fun UiObject.inputText(text: String) {
+        this.text = text
         clickUntilFocusedAndAssert(timeout)
+        if (this.text != null && this.text != "") {
+            // We have succeeded to input something, but can't verify its correct since JS reformatting.
+            return
+        }
         for (c in text) {
             device.pressKeyCode(KeyEvent.keyCodeFromString("KEYCODE_$c"))
             SystemClock.sleep(keyInputDelay) // this is horrible but you do what you gotta do
