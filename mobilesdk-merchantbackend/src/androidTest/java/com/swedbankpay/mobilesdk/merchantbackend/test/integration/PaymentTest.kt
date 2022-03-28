@@ -15,6 +15,7 @@ import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
+import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.*
 import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.clickUntilCheckedAndAssert
 import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.clickUntilFocusedAndAssert
 import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.waitAndScrollFullyIntoViewAndAssertExists
@@ -33,15 +34,38 @@ import java.util.*
 class PaymentTest {
     private companion object {
         const val timeout = 30_000L
+        const val longTimeout = 120_000L
         // Key input to the web view is laggy, and without a delay
         // between keystrokes, the input may get jumbled.
         const val keyInputDelay = 500L
 
-        const val noScaCardNumber = "4581097032723517"
-        const val scaCardNumber = "5226612199533406"
+        const val noScaCardNumber1 = "4581097032723517"
+        const val noScaCardNumber2 = "4925000000000004"
+        const val noScaCardNumber3 = "5226600159865967"
+        const val scaCardNumber1 = "4761739001010416"
+        const val scaCardNumber2 = "5226612199533406"
+        const val scaCardNumber3 = "4547781087013329"
         const val expiryDate = "1230"
         const val noScaCvv = "111"
         const val scaCvv = "268"
+    }
+    
+    /**
+     * Set up test configuration and start scenario for PaymentFragment
+     */
+    @Before
+    fun setup() {
+        PaymentFragment.defaultConfiguration = paymentTestConfiguration
+    }
+
+    /**
+     * Destroy scenario
+     */
+    @After
+    fun teardown() {
+        scenario.moveToState(Lifecycle.State.DESTROYED)
+        _scenario = null
+        PaymentFragment.defaultConfiguration = null
     }
 
     private val paymentOrder = PaymentOrder(
@@ -54,11 +78,25 @@ class PaymentTest {
             paymentTestConfiguration.backendUrl
         )
     )
-    private val arguments = PaymentFragment.ArgumentsBuilder()
+    
+    private var isV3 = false
+    private val arguments get() = PaymentFragment.ArgumentsBuilder()
+        .checkoutV3(isV3)
         .paymentOrder(paymentOrder)
         .build()
 
-    private lateinit var scenario: FragmentScenario<PaymentFragment>
+    private var _scenario: FragmentScenario<PaymentFragment>? = null
+    private var scenario: FragmentScenario<PaymentFragment> 
+        get() {
+            if (_scenario == null) {
+                _scenario = launchFragmentInContainer(this.arguments)
+            }
+        
+            return _scenario ?: throw AssertionError("Null when it cannot be")
+        }
+        set(value) { 
+            _scenario = value 
+        }
 
     private val device by lazy {
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
@@ -104,62 +142,88 @@ class PaymentTest {
         }
     }
 
-    /**
-     * Set up test configuration and start scenario for PaymentFragment
-     */
-    @Before
-    fun setup() {
-        PaymentFragment.defaultConfiguration = paymentTestConfiguration
-        scenario = launchFragmentInContainer(arguments)
-    }
 
-    /**
-     * Destroy scenario
-     */
-    @After
-    fun teardown() {
-        scenario.moveToState(Lifecycle.State.DESTROYED)
-        PaymentFragment.defaultConfiguration = null
-    }
-
-    /**
-     * Sanity check: Check that a WebView is displayed by the PaymentFragment
-     */
-    @Test
-    fun itShouldDisplayWebView() {
-        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
-    }
-
-    private fun fullPaymentTest(
+    private fun fullPaymentTestAttempt(
         cardNumber: String,
         cvv: String,
         paymentFlowHandler: () -> Unit
-    ) {
-        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+    ): Boolean {
+        if (!webView.waitForExists(timeout)) {
+            return false
+        }
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(cardOption, timeout)
+        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) { return false }
         cardOption.clickUntilCheckedAndAssert(timeout)
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(creditCardOption, timeout)
+        if (!webView.waitAndScrollUntilExists(creditCardOption, timeout)) { return false }
         creditCardOption.clickUntilCheckedAndAssert(timeout)
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(panInput, timeout)
+        if (!webView.waitAndScrollUntilExists(panInput, timeout)) { return false }
         panInput.inputText(cardNumber)
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(expiryDateInput, timeout)
+        if (!webView.waitAndScrollUntilExists(expiryDateInput, timeout)) { return false }
         expiryDateInput.inputText(expiryDate)
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(cvvInput, timeout)
+        if (!webView.waitAndScrollUntilExists(cvvInput, timeout)) { return false }
         cvvInput.inputText(cvv)
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, timeout)
-        Assert.assertTrue(payButton.click())
+        if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { return false }
+
+        if (!payButton.click()) { return false }
 
         paymentFlowHandler()
+        lastResult = waitForResult()
+        if (lastResult == null) { return false }
+        return true
+    }
+    private var lastResult: PaymentViewModel.State? = null
 
-        val result = waitForResult()
-        Assert.assertNotNull("PaymentFragment progress timeout", result)
-        Assert.assertEquals(PaymentViewModel.State.COMPLETE, result)
+    private fun fullPaymentTest(
+        cardNumbers: Array<String>,
+        cvv: String,
+        paymentFlowHandler: () -> Unit
+    ) {
+        scenario
+        
+        var success = false
+        for (cardNumber in cardNumbers) {
+            success = fullPaymentTestAttempt(cardNumber, cvv, paymentFlowHandler)
+            if (success) {
+                break
+            }
+            // it failed try again with another number
+            teardown()
+            setup()
+        }
+
+        if (!success) {
+
+            val cardNumber = cardNumbers[0]
+            Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+
+            webView.waitAndScrollFullyIntoViewAndAssertExists(cardOption, timeout)
+            cardOption.clickUntilCheckedAndAssert(timeout)
+
+            webView.waitAndScrollFullyIntoViewAndAssertExists(creditCardOption, timeout)
+            creditCardOption.clickUntilCheckedAndAssert(timeout)
+
+            webView.waitAndScrollFullyIntoViewAndAssertExists(panInput, timeout)
+            panInput.inputText(cardNumber)
+
+            webView.waitAndScrollFullyIntoViewAndAssertExists(expiryDateInput, timeout)
+            expiryDateInput.inputText(expiryDate)
+
+            webView.waitAndScrollFullyIntoViewAndAssertExists(cvvInput, timeout)
+            cvvInput.inputText(cvv)
+
+            webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, longTimeout)
+            Assert.assertTrue(payButton.click())
+
+            paymentFlowHandler()
+            lastResult = waitForResult()
+        }
+        Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
+        Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
     }
 
     private fun waitForResult(): PaymentViewModel.State? {
@@ -182,28 +246,71 @@ class PaymentTest {
         }
     }
 
-    /**
-     * Check that a card payment that does not invoke 3D-Secure succeeds
-     */
+    /*During building we just comment V2 TODO: UnComment!
+    
+    
+    // Sanity check: Check that a WebView is displayed by the PaymentFragment
+    @Test
+    fun itShouldDisplayWebViewV3() {
+        isV3 = true
+        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+
+        Assert.assertTrue("Card options not found", cardOption.waitForExists(timeout))
+    }
+    
+    // Sanity check: Check that a WebView is displayed by the PaymentFragment
+    @Test
+    fun itShouldDisplayWebView() {
+        isV3 = false
+        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+        Assert.assertTrue("Card options not found", cardOption.waitForExists(timeout))
+    }
+
+    // Check that a card payment that does not invoke 3D-Secure succeeds
     @Test
     fun itShouldSucceedAtPaymentWithoutSca() {
+        isV3 = false
         fullPaymentTest(
-            cardNumber = noScaCardNumber,
+            cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
             cvv = noScaCvv
         ) {}
     }
 
-    /**
-     * Check that a card payment that does invoke 3D-Secure succeeds
-     */
+    //Check that a card payment that does invoke 3D-Secure succeeds
     @Test
     fun itShouldSucceedAtPaymentWithSca() {
+        isV3 = false
         fullPaymentTest(
-            cardNumber = scaCardNumber,
+            cardNumbers = arrayOf(scaCardNumber1, scaCardNumber2, scaCardNumber3, scaCardNumber1),
             cvv = scaCvv
         ) {
             webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
             Assert.assertTrue(scaContinueButton.click())
         }
     }
+    
+    //Check that a card payment that does invoke 3D-Secure succeeds
+    @Test
+    fun itShouldSucceedAtPaymentWithScaV3() {
+        isV3 = true
+        fullPaymentTest(
+            cardNumbers = arrayOf(scaCardNumber1, scaCardNumber2, scaCardNumber3, scaCardNumber1),
+            cvv = scaCvv
+        ) {
+            webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
+            Assert.assertTrue(scaContinueButton.click())
+        }
+    }
+    */
+    
+    //Check that a card payment that does invoke 3D-Secure succeeds
+    @Test
+    fun itShouldSucceedAtPaymentWithoutScaV3() {
+        isV3 = true
+        fullPaymentTest(
+            cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
+            cvv = noScaCvv
+        ) {}
+    }
 }
+

@@ -17,6 +17,12 @@ internal fun UiScrollable.waitAndScrollFullyIntoViewAndAssertExists(child: UiObj
     )
 }
 
+internal fun UiScrollable.waitAndScrollUntilExists(child: UiObject, timeout: Long): Boolean {
+    return retryUntilTrue(timeout) {
+        scrollFullyIntoView(child)
+    }
+}
+
 private fun UiScrollable.scrollFullyIntoView(obj: UiObject): Boolean {
     if (isChildsBottomVisible(obj)) return true
 
