@@ -169,13 +169,19 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         paymentOrder: PaymentOrder?,
         userData: Any?,
         style: Bundle?,
-        useBrowser: Boolean
+        useBrowser: Boolean,
+        checkoutV3: Boolean = false
     ) {
         useExternalBrowser = useBrowser
         if (processState.value == null) {
             val state = if (useCheckin) {
                 ProcessState.InitializingConsumerSession(consumer, paymentOrder, userData, style)
             } else {
+                if (checkoutV3) {
+                    if (paymentOrder != null) {
+                        paymentOrder.isV3 = true
+                    }
+                }
                 ProcessState.CreatingPaymentOrder(null, paymentOrder, userData, style)
             }
             setProcessState(state)
@@ -210,6 +216,16 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
     fun onError(terminalFailure: TerminalFailure?) {
         setFailureState(FailureReason.SwedbankPayError(terminalFailure))
+    }
+    
+    fun onPaid(message: String) {
+        //setFailureState(FailureReason.SwedbankPayError(terminalFailure))
+        Log.d(LOG_TAG, "onPaid: $message")
+        setProcessState(ProcessState.Complete)
+    }
+    
+    fun onGeneralEvent(message: String) {
+        Log.d(LOG_TAG, "onGeneralEvent: $message")
     }
 
     fun getPaymentMenuHtmlContent(): HtmlContent? {
@@ -286,12 +302,22 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         ): UIState(), HtmlContent {
             override val asHtmlContent get() = this
             override val baseUrl get() = viewPaymentOrderInfo.webViewBaseUrl
+            
             override fun getWebViewPage(context: Context): String {
+                
+                if (viewPaymentOrderInfo.isV3) {
+                    return context.getString(
+                        R.string.swedbankpaysdk_view_checkout_template,
+                        viewPaymentOrderInfo.viewPaymentLink,
+                        style?.toStyleJs()
+                    )
+                }
                 return context.getString(
                     R.string.swedbankpaysdk_view_paymentorder_template,
-                    viewPaymentOrderInfo.viewPaymentOrder,
+                    viewPaymentOrderInfo.viewPaymentLink,
                     style?.toStyleJs()
                 )
+
             }
         }
 
@@ -414,8 +440,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override val shouldProceedAutomatically get() = true
             override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
                 return try {
-                    val viewPaymentOrderInfo = configuration
-                        .postPaymentorders(vm.getApplication(), paymentOrder, userData, consumerProfileRef)
+                    val viewPaymentOrderInfo = configuration.postPaymentorders(vm.getApplication(), paymentOrder, userData, consumerProfileRef)
                     Paying(paymentOrder, userData, style, viewPaymentOrderInfo, null)
                 } catch (e: Exception) {
                     val retryable = configuration.shouldRetryAfterPostPaymentordersException(e)

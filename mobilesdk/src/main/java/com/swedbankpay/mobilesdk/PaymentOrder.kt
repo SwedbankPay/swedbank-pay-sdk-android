@@ -23,6 +23,9 @@ data class PaymentOrder(
      * The operation to perform
      */
     @SerializedName("operation") val operation: PaymentOrderOperation = PaymentOrderOperation.PURCHASE,
+    
+    // To use v3 instead of v2, it must contain "Checkout3"
+    @SerializedName("productName") var productName: String? = null,
 
     /**
      * Currency to use
@@ -147,11 +150,21 @@ data class PaymentOrder(
          * Value is of the format "SwedbankPaySDK-Android/SDK_VERSION"
          */
         const val DEFAULT_USER_AGENT = "SwedbankPaySDK-Android/${BuildConfig.SDK_VERSION}"
+        
+        // Constant for the productName when using version 3
+        const val CHECKOUT_3 = "Checkout3"
     }
+    
+    var isV3 
+        get() = productName == CHECKOUT_3
+        set(value) {
+            productName = if (value) CHECKOUT_3 else null
+        } 
 
     @Suppress("unused")
     class Builder {
         private var operation = PaymentOrderOperation.PURCHASE
+        private var productName: String? = null
         private var currency: Currency? = null
         private var amount: Long? = null
         private var vatAmount: Long? = null
@@ -173,6 +186,7 @@ data class PaymentOrder(
         private var initiatingSystemUserAgent: String? = null
 
         fun operation(operation: PaymentOrderOperation) = apply { this.operation = operation }
+        fun productName(productName: String?) = apply { this.productName = productName }
         fun currency(currency: Currency) = apply { this.currency = currency }
         fun amount(amount: Long) = apply { this.amount = amount }
         fun vatAmount(vatAmount: Long) = apply { this.vatAmount = vatAmount }
@@ -195,6 +209,7 @@ data class PaymentOrder(
 
         fun build() = PaymentOrder(
             operation = operation,
+            productName = productName,
             currency = checkBuilderNotNull(currency, "currency"),
             amount = checkBuilderNotNull(amount, "amount"),
             vatAmount = checkBuilderNotNull(vatAmount, "vatAmount"),

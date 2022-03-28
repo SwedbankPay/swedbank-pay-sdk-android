@@ -98,9 +98,13 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             .post(context, this, paymentOrderOut)
 
         val viewPaymentOrder =
-            paymentOrderIn.operations.find("view-paymentorder")?.href
+            paymentOrderIn.operations.find("view-checkout")?.href
+                ?: paymentOrderIn.operations.find("view-paymentorder")?.href
                 ?: throw IOException("Missing required operation")
         val urls = paymentOrder.urls
+        if (paymentOrderIn.operations.find("view-checkout")?.href != null) {
+            print("we are using V3!")
+        }
 
         val setInstrument = paymentOrderIn.mobileSDK?.setInstrument
         val availableInstruments = setInstrument?.let { _ ->
@@ -112,7 +116,8 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
 
         return ViewPaymentOrderInfo(
             webViewBaseUrl = backendUrl,
-            viewPaymentOrder = viewPaymentOrder,
+            viewPaymentLink = viewPaymentOrder,
+            isV3 = paymentOrder.isV3,
             completeUrl = urls.completeUrl,
             cancelUrl = urls.cancelUrl,
             paymentUrl = urls.paymentUrl,
@@ -156,14 +161,14 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             }
         }
 
-        val viewPaymentOrder =
-            paymentOrderIn.operations.find("view-paymentorder")?.href
+        val viewPaymentLink =
+            paymentOrderIn.operations.find("view-checkout")?.href ?: paymentOrderIn.operations.find("view-paymentorder")?.href 
         val setInstrument = paymentOrderIn.mobileSDK?.setInstrument
         val availableInstruments = paymentOrderIn.paymentOrder?.availableInstruments
         val instrumentIn = paymentOrderIn.paymentOrder?.instrument
 
         return viewPaymentOrderInfo.copy(
-            viewPaymentOrder = viewPaymentOrder ?: viewPaymentOrderInfo.viewPaymentOrder,
+            viewPaymentLink = viewPaymentLink ?: viewPaymentOrderInfo.viewPaymentLink,
             availableInstruments = availableInstruments ?: viewPaymentOrderInfo.availableInstruments,
             instrument = instrumentIn ?: instrument,
             userData = setInstrument?.href?.toString() ?: linkHref
