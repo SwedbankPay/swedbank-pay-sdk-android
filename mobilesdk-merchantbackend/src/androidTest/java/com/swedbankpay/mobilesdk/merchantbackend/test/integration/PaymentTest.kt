@@ -360,7 +360,7 @@ class PaymentTest {
         buildArguments(isV3 = true, paymentOrder = order)
         
         fullPaymentTest(
-            cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
+            cardNumbers = arrayOf(noScaCardNumber2, noScaCardNumber3, noScaCardNumber1),
             cvv = noScaCvv,
             storeCard = true
         ) {}
@@ -373,8 +373,18 @@ class PaymentTest {
         
         //now redo this with only "Pay SEK" button
         Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+
+        webView.waitAndScrollFullyIntoViewAndAssertExists(cardOption, timeout)
+        cardOption.clickUntilCheckedAndAssert(timeout)
+        
         webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, timeout)
-        payButton.clickUntilCheckedAndAssert(timeout)
+        Assert.assertTrue(payButton.click())
+        
+        lastResult = waitForResult()
+        Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
+        Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
+        
+        // One can expand "authorizations" of the payment to see the paymentToken value - but since we send it in we know what it is
         
     }
 }
