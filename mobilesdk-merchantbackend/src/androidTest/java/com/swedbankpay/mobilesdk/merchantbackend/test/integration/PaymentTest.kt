@@ -1,6 +1,7 @@
 package com.swedbankpay.mobilesdk.merchantbackend.test.integration
 
 import android.content.Context
+import android.os.Bundle
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.webkit.WebView
@@ -28,9 +29,7 @@ import org.junit.Before
 import org.junit.Test
 import java.util.*
 
-/**
- * End-to-end tests for PaymentFragment
- */
+/// End-to-end tests for PaymentFragment
 class PaymentTest {
     private companion object {
         const val timeout = 30_000L
@@ -50,17 +49,29 @@ class PaymentTest {
         const val scaCvv = "268"
     }
     
-    /**
-     * Set up test configuration and start scenario for PaymentFragment
-     */
+    // Set up test configuration and start scenario for PaymentFragment
     @Before
     fun setup() {
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
+        paymentOrder = PaymentOrder(
+            currency = Currency.getInstance("SEK"),
+            amount = 100L,
+            vatAmount = 20L,
+            description = "Test Purchase",
+            urls = PaymentOrderUrls(
+                ApplicationProvider.getApplicationContext<Context>(),
+                paymentTestConfiguration.backendUrl
+            )
+        )
+    }
+    
+    // to repeat tests within the same run
+    private fun setupAgain() {
+        PaymentFragment.defaultConfiguration = paymentTestConfiguration
+        scenario
     }
 
-    /**
-     * Destroy scenario
-     */
+    // Destroy scenario
     @After
     fun teardown() {
         scenario.moveToState(Lifecycle.State.DESTROYED)
@@ -68,7 +79,7 @@ class PaymentTest {
         PaymentFragment.defaultConfiguration = null
     }
 
-    private val paymentOrder = PaymentOrder(
+    private var paymentOrder: PaymentOrder = PaymentOrder(
         currency = Currency.getInstance("SEK"),
         amount = 100L,
         vatAmount = 20L,
@@ -79,29 +90,32 @@ class PaymentTest {
         )
     )
     
-    private var isV3 = false
-    private val arguments get() = PaymentFragment.ArgumentsBuilder()
-        .checkoutV3(isV3)
-        .paymentOrder(paymentOrder)
-        .build()
+    private var arguments:Bundle? = null
+    private fun buildArguments(isV3: Boolean = true, paymentOrder: PaymentOrder = this.paymentOrder): Bundle {
+        arguments = PaymentFragment.ArgumentsBuilder()
+            .checkoutV3(isV3)
+            .paymentOrder(paymentOrder)
+            .build()
+        return arguments as Bundle
+    }
 
     private var _scenario: FragmentScenario<PaymentFragment>? = null
     private var scenario: FragmentScenario<PaymentFragment> 
         get() {
             if (_scenario == null) {
-                _scenario = launchFragmentInContainer(this.arguments)
+                _scenario = launchFragmentInContainer(arguments ?: buildArguments())
             }
-        
+            
             return _scenario ?: throw AssertionError("Null when it cannot be")
         }
         set(value) { 
             _scenario = value 
         }
-
+    
     private val device by lazy {
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     }
-
+    
     private val webView: UiScrollable get() {
         // Make sure device is initialized.
         // UiScrollable is still using the legacy API without an explicit UiDevice dependency.
@@ -109,6 +123,7 @@ class PaymentTest {
 
         return UiScrollable(UiSelector().className(WebView::class.java))
     }
+    
     private val cardOption
         get() = webView.getChild(UiSelector().textStartsWith("Card").checkable(true))
     private val cardDetails
@@ -128,6 +143,8 @@ class PaymentTest {
 
     private val scaContinueButton
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
+    private val storeCardOption
+        get() = webView.getChild(UiSelector().textStartsWith("Store this card").checkable(true))
 
     private fun UiObject.inputText(text: String) {
         this.text = text
@@ -142,10 +159,10 @@ class PaymentTest {
         }
     }
 
-
     private fun fullPaymentTestAttempt(
         cardNumber: String,
         cvv: String,
+        storeCard: Boolean = false,
         paymentFlowHandler: () -> Unit
     ): Boolean {
         if (!webView.waitForExists(timeout)) {
@@ -154,6 +171,11 @@ class PaymentTest {
 
         if (!webView.waitAndScrollUntilExists(cardOption, timeout)) { return false }
         cardOption.clickUntilCheckedAndAssert(timeout)
+        
+        if (storeCard) {
+            if (!storeCardOption.waitForExists(timeout)) { return false }
+            storeCardOption.clickUntilCheckedAndAssert(timeout)
+        }
 
         if (!webView.waitAndScrollUntilExists(creditCardOption, timeout)) { return false }
         creditCardOption.clickUntilCheckedAndAssert(timeout)
@@ -181,19 +203,20 @@ class PaymentTest {
     private fun fullPaymentTest(
         cardNumbers: Array<String>,
         cvv: String,
+        storeCard: Boolean = false,
         paymentFlowHandler: () -> Unit
     ) {
         scenario
         
         var success = false
         for (cardNumber in cardNumbers) {
-            success = fullPaymentTestAttempt(cardNumber, cvv, paymentFlowHandler)
+            success = fullPaymentTestAttempt(cardNumber, cvv, storeCard, paymentFlowHandler)
             if (success) {
                 break
             }
             // it failed try again with another number
             teardown()
-            setup()
+            setupAgain()
         }
 
         if (!success) {
@@ -206,6 +229,11 @@ class PaymentTest {
 
             webView.waitAndScrollFullyIntoViewAndAssertExists(creditCardOption, timeout)
             creditCardOption.clickUntilCheckedAndAssert(timeout)
+
+            if (storeCard) {
+                webView.waitAndScrollFullyIntoViewAndAssertExists(storeCardOption, timeout)
+                storeCardOption.clickUntilCheckedAndAssert(timeout)
+            }
 
             webView.waitAndScrollFullyIntoViewAndAssertExists(panInput, timeout)
             panInput.inputText(cardNumber)
@@ -301,7 +329,6 @@ class PaymentTest {
             Assert.assertTrue(scaContinueButton.click())
         }
     }
-    */
     
     //Check that a card payment that does invoke 3D-Secure succeeds
     @Test
@@ -312,5 +339,42 @@ class PaymentTest {
             cvv = noScaCvv
         ) {}
     }
-}
+    
+    */
 
+    private val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+    private var payerReference: String = ""
+    
+    // Check that paymentTokens work with V3
+    // https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
+    @Test
+    fun testPaymentTokensV3() {
+        // create a random string as reference
+        payerReference = (1..15)
+            .map { i -> kotlin.random.Random.nextInt(0, charPool.size) }
+            .map(charPool::get)
+            .joinToString("");
+        
+        val payer = PaymentOrderPayer(payerReference = payerReference)
+        var order = paymentOrder.copy(generatePaymentToken = true, payer = payer)
+        buildArguments(isV3 = true, paymentOrder = order)
+        
+        fullPaymentTest(
+            cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
+            cvv = noScaCvv,
+            storeCard = true
+        ) {}
+
+        teardown()
+        setupAgain()
+        
+        order = paymentOrder.copy(generatePaymentToken = false, payer = payer)
+        buildArguments(isV3 = true, paymentOrder = order)
+        
+        //now redo this with only "Pay SEK" button
+        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+        webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, timeout)
+        payButton.clickUntilCheckedAndAssert(timeout)
+        
+    }
+}
