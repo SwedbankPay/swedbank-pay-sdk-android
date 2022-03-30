@@ -486,7 +486,7 @@ open class PaymentFragment : Fragment() {
         } else {
             requireArguments().apply {
                 
-                var checkoutV3 = getBoolean(ARG_CHECKOUT_V3)
+                val checkoutV3 = getBoolean(ARG_CHECKOUT_V3)
                 val useCheckin = getBoolean(ARG_USE_CHECKIN)
                 val consumer = getParcelable<Consumer>(ARG_CONSUMER)
                 val paymentOrder = getParcelable<PaymentOrder>(ARG_PAYMENT_ORDER)

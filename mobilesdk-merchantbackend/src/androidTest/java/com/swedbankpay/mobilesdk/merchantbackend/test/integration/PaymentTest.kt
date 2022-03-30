@@ -34,8 +34,7 @@ class PaymentTest {
     private companion object {
         const val timeout = 30_000L
         const val longTimeout = 120_000L
-        // Key input to the web view is laggy, and without a delay
-        // between keystrokes, the input may get jumbled.
+        // Key input to the web view is laggy, and without a delay between keystrokes, the input may get jumbled.
         const val keyInputDelay = 500L
 
         const val noScaCardNumber1 = "4581097032723517"
@@ -78,7 +77,8 @@ class PaymentTest {
         _scenario = null
         PaymentFragment.defaultConfiguration = null
     }
-
+    
+    // paymentOrder gets regenerated every run
     private var paymentOrder: PaymentOrder = PaymentOrder(
         currency = Currency.getInstance("SEK"),
         amount = 100L,
@@ -273,23 +273,12 @@ class PaymentTest {
             }
         }
     }
-
-    /*During building we just comment V2 TODO: UnComment!
-    
-    
-    // Sanity check: Check that a WebView is displayed by the PaymentFragment
-    @Test
-    fun itShouldDisplayWebViewV3() {
-        isV3 = true
-        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
-
-        Assert.assertTrue("Card options not found", cardOption.waitForExists(timeout))
-    }
     
     // Sanity check: Check that a WebView is displayed by the PaymentFragment
     @Test
     fun itShouldDisplayWebView() {
-        isV3 = false
+        buildArguments(isV3 = false)
+        scenario
         Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
         Assert.assertTrue("Card options not found", cardOption.waitForExists(timeout))
     }
@@ -297,7 +286,7 @@ class PaymentTest {
     // Check that a card payment that does not invoke 3D-Secure succeeds
     @Test
     fun itShouldSucceedAtPaymentWithoutSca() {
-        isV3 = false
+        buildArguments(isV3 = false)
         fullPaymentTest(
             cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
             cvv = noScaCvv
@@ -307,7 +296,7 @@ class PaymentTest {
     //Check that a card payment that does invoke 3D-Secure succeeds
     @Test
     fun itShouldSucceedAtPaymentWithSca() {
-        isV3 = false
+        buildArguments(isV3 = false)
         fullPaymentTest(
             cardNumbers = arrayOf(scaCardNumber1, scaCardNumber2, scaCardNumber3, scaCardNumber1),
             cvv = scaCvv
@@ -320,7 +309,6 @@ class PaymentTest {
     //Check that a card payment that does invoke 3D-Secure succeeds
     @Test
     fun itShouldSucceedAtPaymentWithScaV3() {
-        isV3 = true
         fullPaymentTest(
             cardNumbers = arrayOf(scaCardNumber1, scaCardNumber2, scaCardNumber3, scaCardNumber1),
             cvv = scaCvv
@@ -333,15 +321,13 @@ class PaymentTest {
     //Check that a card payment that does invoke 3D-Secure succeeds
     @Test
     fun itShouldSucceedAtPaymentWithoutScaV3() {
-        isV3 = true
         fullPaymentTest(
             cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
             cvv = noScaCvv
         ) {}
     }
     
-    */
-
+    // generate a payerReference with a random string
     private val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
     private var payerReference: String = ""
     
@@ -351,9 +337,9 @@ class PaymentTest {
     fun testPaymentTokensV3() {
         // create a random string as reference
         payerReference = (1..15)
-            .map { i -> kotlin.random.Random.nextInt(0, charPool.size) }
+            .map { kotlin.random.Random.nextInt(0, charPool.size) }
             .map(charPool::get)
-            .joinToString("");
+            .joinToString("")
         
         val payer = PaymentOrderPayer(payerReference = payerReference)
         var order = paymentOrder.copy(generatePaymentToken = true, payer = payer)
@@ -384,7 +370,7 @@ class PaymentTest {
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
         
-        // One can expand "authorizations" of the payment to see the paymentToken value - but since we send it in we know what it is
+        // One can expand "authorizations" of the payment to see the paymentToken value - but since we send it in we know what it is and it wouldn't complete the purchase if it didn't work. So this is enough.
         
     }
 }
