@@ -6,6 +6,7 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.security.ProviderInstaller
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
+import com.swedbankpay.mobilesdk.BuildConfig
 import com.swedbankpay.mobilesdk.merchantbackend.*
 import com.swedbankpay.mobilesdk.merchantbackend.internal.parseProblem
 import com.swedbankpay.mobilesdk.merchantbackend.internal.remote.annotations.Required
@@ -82,7 +83,9 @@ internal object Api {
             throw IOException("Non-whitelisted domain: $domain")
         }
 
-        val headers = UserHeaders().also {
+        val headers = UserHeaders().apply { 
+            add("User-Agent", "SwedbankPaySDK-Android/${BuildConfig.SDK_VERSION}")
+        }.also {
             configuration.requestDecorator?.apply {
                 decorateAnyRequest(it, method, url.toString(), body)
                 userHeadersBuilder(it)
@@ -90,7 +93,7 @@ internal object Api {
         }.toHeaders()
 
         val requestBody = body?.toRequestBody(JSON_MEDIA_TYPE)
-
+        
         return Request.Builder()
             .url(url)
             .headers(headers)
