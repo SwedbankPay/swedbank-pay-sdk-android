@@ -1,12 +1,16 @@
-package com.swedbankpay.mobilesdk.merchantbackend
+package com.swedbankpay.mobilesdk
 
+import android.os.Parcelable
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.JsonAdapter
-import com.swedbankpay.mobilesdk.merchantbackend.internal.asStringOrNull
+import com.swedbankpay.mobilesdk.internal.asStringOrNull
+import kotlinx.parcelize.Parcelize
 import java.lang.reflect.Type
+
+fun List<Operation>.find(rel: String) = firstOrNull { it.rel == rel }
 
 /**
  * Swedbank Pay Operation. Operations are invoked by making an HTTP request.
@@ -15,6 +19,7 @@ import java.lang.reflect.Type
  * [Swedbank Pay documentation](https://developer.swedbankpay.com/checkout/other-features#operations).
  */
 @JsonAdapter(Operation.Deserializer::class)
+@Parcelize
 data class Operation(
     /**
      * The purpose of the operation. The exact meaning is dependent on the Operation context.
@@ -32,7 +37,7 @@ data class Operation(
      * The Content-Type of the response
      */
     val contentType: String?
-) {
+) : Parcelable {
     internal class Deserializer : JsonDeserializer<Operation?> {
         override fun deserialize(
             element: JsonElement,

@@ -23,11 +23,15 @@ data class ViewPaymentOrderInfo(
      * This should match your payment order's `hostUrls`.
      */
     val webViewBaseUrl: String? = null,
-    
-    // The `view-paymentorder` link from Swedbank Pay (v2), or the `view-checkout` link (v3).
+
+    /**
+     * The `view-paymentorder` link from Swedbank Pay (v2), or the `view-checkout` link (v3).
+     */
     val viewPaymentLink: String,
-    
-    // If CheckoutV3 is used
+
+    /**
+     * If CheckoutV3 is used
+     */
     var isV3: Boolean,
 
     /**
@@ -75,7 +79,12 @@ data class ViewPaymentOrderInfo(
      * See [Configuration.updatePaymentOrder]; you will receive this
      * `ViewPaymentOrderInfo` object there.
      */
-    val userData: @RawValue Any? = null
+    val userData: @RawValue Any? = null,
+
+    /**
+     * Any available operations that can be applied to this payment.  
+     */
+    val operations: List<Operation>? = null
 ): Parcelable {
     @Deprecated("Renamed: viewPaymentLink", ReplaceWith("viewPaymentLink"))
     val viewPaymentOrder: String get() = viewPaymentLink

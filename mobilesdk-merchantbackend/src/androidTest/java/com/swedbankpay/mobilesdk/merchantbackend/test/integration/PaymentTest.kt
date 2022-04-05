@@ -17,9 +17,6 @@ import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.*
-import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.clickUntilCheckedAndAssert
-import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.clickUntilFocusedAndAssert
-import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.waitAndScrollFullyIntoViewAndAssertExists
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -28,6 +25,7 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.util.*
+
 
 /// End-to-end tests for PaymentFragment
 class PaymentTest {
@@ -146,6 +144,9 @@ class PaymentTest {
     private val storeCardOption
         get() = webView.getChild(UiSelector().textStartsWith("Store this card").checkable(true))
 
+    private val yourEmailInput
+        get() = webView.getChild(UiSelector().textStartsWith("Your e-mail"))
+    
     private fun UiObject.inputText(text: String) {
         this.text = text
         clickUntilFocusedAndAssert(timeout)
@@ -254,7 +255,7 @@ class PaymentTest {
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
     }
 
-    private fun waitForResult(): PaymentViewModel.State? {
+    private fun waitForResult(waitTime: Long = timeout): PaymentViewModel.State? {
         val result = CompletableDeferred<PaymentViewModel.State>()
         scenario.onFragment {
             it.requireActivity().paymentViewModel.state.observe(it) { state ->
@@ -268,7 +269,31 @@ class PaymentTest {
             }
         }
         return runBlocking {
-            withTimeoutOrNull(timeout) {
+            withTimeoutOrNull(waitTime) {
+                result.await()
+            }
+        }
+    }
+
+    private fun waitForNewOrderInfo(waitTime: Long = timeout): ViewPaymentOrderInfo? {
+        val result = CompletableDeferred<ViewPaymentOrderInfo>()
+        scenario.onFragment {
+            it.requireActivity().paymentViewModel.state.observe(it) { state ->
+                if (
+                    state != null
+                    && state != PaymentViewModel.State.IDLE
+                ) {
+                    val vm = it.requireActivity().paymentViewModel
+                    val info = vm.richState.value?.viewPaymentOrderInfo
+
+                    if (info != null) {
+                        result.complete(info)
+                    }
+                }
+            }
+        }
+        return runBlocking {
+            withTimeoutOrNull(waitTime) {
                 result.await()
             }
         }
@@ -371,6 +396,67 @@ class PaymentTest {
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
         
         // One can expand "authorizations" of the payment to see the paymentToken value - but since we send it in we know what it is and it wouldn't complete the purchase if it didn't work. So this is enough.
+    }
+
+    @Test
+    fun testPaymentInstrumentsV3() {
+        val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
+        buildArguments(isV3 = true, paymentOrder = order)
+        scenario
+        webView.assertExist(timeout)
+        yourEmailInput.assertExist(timeout)
         
+        for (i in 0..4) {
+            val orderInfo = waitForNewOrderInfo()
+            if (orderInfo?.instrument == null) {
+                continue
+            }
+            scenario.onFragment {
+                val vm = it.requireActivity().paymentViewModel
+                vm.updatePaymentOrder(PaymentInstruments.CREDIT_CARD)
+            }
+            break
+        }
+        creditCardOption.assertExist(timeout)
+        //we managed to change the instrument!
+
+        scenario.onFragment {
+            val vm = it.requireActivity().paymentViewModel
+            vm.updatePaymentOrder(PaymentInstruments.INVOICE_SE)
+        }
+        webView.assertExist(timeout)
+        SystemClock.sleep(1000)
+        yourEmailInput.assertExist(timeout)
+    }
+
+    @Test
+    fun testPaymentInstrumentsV2() {
+        val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
+        buildArguments(isV3 = false, paymentOrder = order)
+        scenario
+        webView.assertExist(timeout)
+        yourEmailInput.assertExist(timeout)
+
+        for (i in 0..4) {
+            val orderInfo = waitForNewOrderInfo()
+            if (orderInfo?.instrument == null) {
+                continue
+            }
+            scenario.onFragment {
+                val vm = it.requireActivity().paymentViewModel
+                vm.updatePaymentOrder(PaymentInstruments.CREDIT_CARD)
+            }
+            break
+        }
+        creditCardOption.assertExist(timeout)
+        //we managed to change the instrument!
+
+        scenario.onFragment {
+            val vm = it.requireActivity().paymentViewModel
+            vm.updatePaymentOrder(PaymentInstruments.INVOICE_SE)
+        }
+        webView.assertExist(timeout)
+        SystemClock.sleep(1000)
+        yourEmailInput.assertExist(timeout)
     }
 }
