@@ -5,7 +5,7 @@ extra["libs"] = mapOf(
 
    "jgit" to "org.eclipse.jgit:org.eclipse.jgit:6.1.0.202203080745-r",
 
-   "kotlinx-coroutines-core" to "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0",
+   "kotlinx-coroutines-core" to "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1",
    "kotlinx-coroutines-android" to "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0",
    "kotlinx-serialization-json" to "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2",
 
