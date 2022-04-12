@@ -17,7 +17,7 @@ extra["libs"] = mapOf(
    "lifecycle-viewmodel-ktx" to "androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1",
    "constraintlayout" to "androidx.constraintlayout:constraintlayout:2.1.3",
    "coordinatorlayout" to "androidx.coordinatorlayout:coordinatorlayout:1.2.0",
-   "navigation-fragment" to "androidx.navigation:navigation-fragment:2.4.1",
+   "navigation-fragment" to "androidx.navigation:navigation-fragment:2.4.2",
    "swiperefreshlayout" to "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
 
    "androidx-test-core" to "androidx.test:core:1.4.0",
