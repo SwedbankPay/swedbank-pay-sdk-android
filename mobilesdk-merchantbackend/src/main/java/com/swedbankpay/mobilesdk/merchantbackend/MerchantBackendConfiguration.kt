@@ -105,8 +105,9 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         var instrument: String? = null
         val availableInstruments: List<String>?
         var setInstrument: Link.PaymentOrderSetInstrument? = null
+        var paymentId = paymentOrderIn.paymentOrder?.id ?: null
         if (paymentOrder.isV3) {
-            // expand instruments to find V3
+            // expand instruments to find operation for V3
             availableInstruments = paymentOrderIn.paymentOrder?.availableInstruments
             val currentInstrument = paymentOrder.instrument
             if (currentInstrument != null && availableInstruments != null && availableInstruments.contains(currentInstrument)) {
@@ -124,6 +125,7 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         }
         
         return ViewPaymentOrderInfo(
+            paymentId = paymentId,
             webViewBaseUrl = backendUrl,
             viewPaymentLink = viewPaymentOrder,
             isV3 = paymentOrder.isV3,
@@ -223,6 +225,18 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             instrument = instrumentIn ?: instrument,
             userData = setInstrument?.href?.toString() ?: linkHref
         )
+    }
+
+    override suspend fun <T : Any> expandOperation(
+        context: Context,
+        paymentId: String,
+        expand: Array<String>,
+        endpoint: String,
+        entityType: Class<T>
+    ): T? {
+
+        return BackendOperation.ExpandOperation(this)
+            .post(context = context, paymentId = paymentId, expand = expand, endpoint = endpoint, entityType = entityType)
     }
 
     private suspend fun getTopLevelResources(context: Context): TopLevelResources {

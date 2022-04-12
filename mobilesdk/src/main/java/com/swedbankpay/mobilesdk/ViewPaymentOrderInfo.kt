@@ -15,6 +15,12 @@ import kotlinx.parcelize.RawValue
  */
 @Parcelize
 data class ViewPaymentOrderInfo(
+
+    /**
+     * To refer to the payment and expand its properties we need to store its id.
+     */
+    val paymentId: String? = null,
+    
     /**
      * The url to use as the [android.webkit.WebView] page url
      * when showing the checkin UI. If `null`, defaults to

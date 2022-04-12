@@ -77,7 +77,15 @@ data class PaymentOrder(
      * Your server can then use the token for recurring server-to-server payments.
      */
     @SerializedName("generateRecurrenceToken") val generateRecurrenceToken: Boolean = false,
-
+    /**
+     * If `true`, the a unscheduled token will be created from this payment order. Unscheduled tokens 
+     * differ from recurrence tokens as they are not meant to be recurring, but occur as singular transactions. 
+     *
+     * The unscheduled token should be retrieved by your server from Swedbank Pay.
+     * Your server can then use the token for recurring server-to-server payments.
+     */
+    @SerializedName("generateUnscheduledToken") val generateUnscheduledToken: Boolean = false,
+    
     /**
      * If `true`, a payment token will be created from this payment order
      *

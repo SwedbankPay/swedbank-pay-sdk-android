@@ -145,4 +145,9 @@ abstract class RequestDecorator {
         instrument: String
     ) {}
 
+    open suspend fun decorateExpandRequest(
+        userHeaders: UserHeaders,
+        url: String,
+        body: String
+    ) {}
 }

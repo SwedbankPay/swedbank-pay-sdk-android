@@ -17,13 +17,13 @@ import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.*
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.*
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import java.lang.Exception
+import java.lang.Thread.sleep
 import java.util.*
 
 
@@ -38,7 +38,7 @@ class PaymentTest {
         const val noScaCardNumber1 = "4581097032723517"
         const val noScaCardNumber2 = "4925000000000004"
         const val noScaCardNumber3 = "5226600159865967"
-        const val scaCardNumber1 = "4761739001010416"
+        const val scaCardNumber1 = "5226612199533406" //This might have issues: 4761739001010416
         const val scaCardNumber2 = "5226612199533406"
         const val scaCardNumber3 = "4547781087013329"
         const val expiryDate = "1230"
@@ -139,6 +139,9 @@ class PaymentTest {
     private val payButton
         get() = cardDetails.getChild(UiSelector().className(Button::class.java).textStartsWith("Pay "))
 
+    private val confirmButton
+        get() = cardDetails.getChild(UiSelector().className(Button::class.java).textStartsWith("Confirm"))
+
     private val scaContinueButton
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
     private val storeCardOption
@@ -164,6 +167,7 @@ class PaymentTest {
         cardNumber: String,
         cvv: String,
         storeCard: Boolean = false,
+        useConfirmButton: Boolean = false,
         paymentFlowHandler: () -> Unit
     ): Boolean {
         if (!webView.waitForExists(timeout)) {
@@ -189,10 +193,14 @@ class PaymentTest {
 
         if (!webView.waitAndScrollUntilExists(cvvInput, timeout)) { return false }
         cvvInput.inputText(cvv)
-
-        if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { return false }
-
-        if (!payButton.click()) { return false }
+        
+        if (useConfirmButton) {
+            if (!webView.waitAndScrollUntilExists(confirmButton, longTimeout)) { return false }
+            if (!confirmButton.click()) { return false }
+        } else {
+            if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { return false }
+            if (!payButton.click()) { return false }
+        }
 
         paymentFlowHandler()
         lastResult = waitForResult()
@@ -205,13 +213,14 @@ class PaymentTest {
         cardNumbers: Array<String>,
         cvv: String,
         storeCard: Boolean = false,
+        useConfirmButton: Boolean = false,
         paymentFlowHandler: () -> Unit
     ) {
         scenario
         
         var success = false
         for (cardNumber in cardNumbers) {
-            success = fullPaymentTestAttempt(cardNumber, cvv, storeCard, paymentFlowHandler)
+            success = fullPaymentTestAttempt(cardNumber, cvv, storeCard, useConfirmButton, paymentFlowHandler)
             if (success) {
                 break
             }
@@ -244,9 +253,14 @@ class PaymentTest {
 
             webView.waitAndScrollFullyIntoViewAndAssertExists(cvvInput, timeout)
             cvvInput.inputText(cvv)
-
-            webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, longTimeout)
-            Assert.assertTrue(payButton.click())
+            
+            if (useConfirmButton) {
+                //webView.waitAndScrollFullyIntoViewAndAssertExists(confirmButton, longTimeout)
+                Assert.assertTrue(confirmButton.click())
+            } else {
+                webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, longTimeout)
+                Assert.assertTrue(payButton.click())
+            }
 
             paymentFlowHandler()
             lastResult = waitForResult()
@@ -275,6 +289,25 @@ class PaymentTest {
         }
     }
 
+
+    private fun waitForAnyOrderInfo(waitTime: Long = timeout): ViewPaymentOrderInfo? {
+        val result = CompletableDeferred<ViewPaymentOrderInfo>()
+        scenario.onFragment {
+            it.requireActivity().paymentViewModel.state.observe(it) { _ ->
+                val vm = it.requireActivity().paymentViewModel
+                val info = vm.richState.value?.viewPaymentOrderInfo
+                if (info != null) {
+                    result.complete(info)
+                }
+            }
+        }
+        return runBlocking {
+            withTimeoutOrNull(waitTime) {
+                result.await()
+            }
+        }
+    }
+    
     private fun waitForNewOrderInfo(waitTime: Long = timeout): ViewPaymentOrderInfo? {
         val result = CompletableDeferred<ViewPaymentOrderInfo>()
         scenario.onFragment {
@@ -458,5 +491,56 @@ class PaymentTest {
         webView.assertExist(timeout)
         SystemClock.sleep(1000)
         yourEmailInput.assertExist(timeout)
+    }
+
+    // Test that we can perform a verifu request and set the recur and unscheduled tokens.
+    @Test
+    fun testVerifyRecurTokenV3() {
+        val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, generateRecurrenceToken = true, generateUnscheduledToken = true)
+        buildArguments(isV3 = true, paymentOrder = order)
+        scenario
+        
+        //val oldId = "/psp/paymentorders/d14e582f-dbd5-42b4-f582-08da17b00645"
+        
+        // Remember the paymentId for later lookup
+        Assert.assertTrue(webView.waitForExists(longTimeout))
+        val orderInfo = waitForAnyOrderInfo()
+        Assert.assertNotNull(orderInfo?.paymentId)
+        val paymentId = orderInfo?.paymentId!!
+        
+        //perform a regular SCA purchase - it must be secure to retrieve tokens
+        fullPaymentTest(
+            cardNumbers = arrayOf(scaCardNumber2, scaCardNumber3),
+            cvv = scaCvv,
+            useConfirmButton = true
+        ) {
+            webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
+            Assert.assertTrue(scaContinueButton.click())
+        }
+        
+        scenario.onFragment {
+            
+            var result: PaymentTokenResponse? = null
+            val vm = it.requireActivity().paymentViewModel
+            //Then implement expand operation to see that everything worked
+            GlobalScope.launch (Dispatchers.Default) {
+                try {
+                    result = vm.expandPaid(paymentId)
+                } catch (error: Exception) {
+                    val message = error.localizedMessage
+                    Assert.assertNull("Error when fetching tokens", message)
+                }
+                Assert.assertNotNull(result)
+            }
+            //Wait for the process to finish
+            for (noop in 1..10000) {
+                sleep(500)
+                if (result != null) {
+                    break
+                }
+            }
+            Assert.assertTrue(result?.recurrence ?: false)
+            Assert.assertTrue(result?.unscheduled ?: false)
+        }
     }
 }

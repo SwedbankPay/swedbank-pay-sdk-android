@@ -14,6 +14,8 @@ internal class PaymentOrderIn {
     var mobileSDK: MobileSDK? = null
 
     class PaymentOrder {
+        @SerializedName("id")
+        var id: String? = null
         @SerializedName("instrument")
         var instrument: String? = null
         @SerializedName("availableInstruments")

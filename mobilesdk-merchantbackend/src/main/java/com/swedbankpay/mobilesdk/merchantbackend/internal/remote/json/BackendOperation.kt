@@ -12,13 +12,14 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 /**
- * The SDK contains operations one can path the payment with in order to perform tasks. These operations need to be routed via the backend.
+ * The SDK contains operations one can perform. These operations need to be routed via the backend.
  * BackendOperation encapsulates these actions and relays them via the backend (at the default endPoint /patch) to Swedbank Pay.
- * In version 2 the backend needed specific handling of all supported operations, while now it has a more general approach. 
+ * This is a general approach to perform these tasks, and the list of available tasks is retrieved 
+ * from responses. E.g. see [https://developer.swedbankpay.com/checkout-v3/payments-only/seamless-view] 
+ * for more details.
  */
 internal sealed class BackendOperation(
-    val configuration: MerchantBackendConfiguration,
-    val href: String
+    val configuration: MerchantBackendConfiguration
 ) {
     companion object {
         private suspend fun toJsonBody(value: Any) = withContext(Dispatchers.Default) {
@@ -54,11 +55,19 @@ internal sealed class BackendOperation(
         context, method = method, body = body, url = url, userHeadersBuilder = userHeadersBuilder
     ).value
 
-    class PaymentOrderSetInstrument(configuration: MerchantBackendConfiguration, href: String) : BackendOperation(configuration, href) {
+    /**
+     * Patch the current purchase with a new instrument.This is called by the PaymentFragment during
+     * updatePurchase to perform the setInstrument action.
+     */
+    class PaymentOrderSetInstrument(
+        configuration: MerchantBackendConfiguration, 
+        private val href: String
+        ) : BackendOperation(configuration) {
+
         suspend fun patch(
             context: Context,
             instrument: String,
-            endPoint: String = "patch"
+            endpoint: String = "patch"
         ): PaymentOrderIn {
             val body = toJsonBody(mapOf(
                 "paymentorder" to mapOf(
@@ -68,11 +77,53 @@ internal sealed class BackendOperation(
                 "href" to href 
             ))
             val url = configuration.backendUrl.toHttpUrl().newBuilder()
-                .addPathSegment(endPoint)
+                .addPathSegment(endpoint)
                 .build()
             return performRequest(context,"PATCH", body, url) {
                 decoratePaymentOrderSetInstrument(it, url.toString(), body, instrument)
             }
+        }
+    }
+
+    /**
+     * A general method for expanding resources like payer, paid, etc. The resulting data class is 
+     * is defined by entityType.
+     */
+    class ExpandOperation(configuration: MerchantBackendConfiguration) : BackendOperation(configuration) {
+        /**
+         * Perform a POST request to the backend, to expand a resource.
+         * @param paymentId the payment in question
+         * @param expand what to expand
+         * @param endpoint the destination on the backend which can handle/relay the operation. Defaults to "expand"
+         * @param entityType the generic return type
+         * @return a data class populated from the returning JSON, defined by entityType
+         */
+        suspend fun <T: Any> post(
+            context: Context,
+            paymentId: String,
+            expand: Array<String>,
+            endpoint: String = "expand",
+            entityType: Class<T>
+        ): T {
+            val body = toJsonBody(mapOf(
+                "resource" to paymentId,
+                "expand" to expand.asList()
+            ))
+            val url = configuration.backendUrl.toHttpUrl().newBuilder()
+                .addPathSegment(endpoint)
+                .build()
+            val method = "POST"
+
+            return Api.request(
+                context = context,
+                configuration = configuration,
+                method = method,
+                url = url,
+                body = body,
+                userHeadersBuilder = {
+                    decorateExpandRequest(it, url.toString(), body)
+                },
+                entityType = entityType).value
         }
     }
 }

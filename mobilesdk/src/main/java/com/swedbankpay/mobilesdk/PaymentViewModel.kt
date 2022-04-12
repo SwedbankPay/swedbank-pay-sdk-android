@@ -375,4 +375,8 @@ class PaymentViewModel : AndroidViewModel {
     fun updatePaymentOrder(updateInfo: Any?) {
         internalVm.value?.updatePaymentOrder(updateInfo)
     }
+
+    suspend fun expandPaid(paymentId: String): PaymentTokenResponse? {
+        return internalVm.value?.expandPaid(paymentId)
+    }
 }

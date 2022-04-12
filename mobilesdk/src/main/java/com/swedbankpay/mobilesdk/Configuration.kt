@@ -117,5 +117,24 @@ abstract class Configuration {
         viewPaymentOrderInfo: ViewPaymentOrderInfo,
         updateInfo: Any?
     ): ViewPaymentOrderInfo = viewPaymentOrderInfo
+
+    /**
+     * Expanding operations is a way to get more detailed information about certain aspects of a payment.
+     *
+     * If you do not need to expand anything, you do not need to override this method.
+     *
+     * @param context an application context
+     * @param paymentId the id of the [ViewPaymentOrderInfo] object, of which you want to expand.
+     * @param expand the specific aspects of the payment you are interested in
+     * @param endpoint the merchant API endpoint to call, defaults to "expand"
+     * @return the generic result depending on what information is expanded
+     */
+    open suspend fun <T: Any> expandOperation(
+        context: Context,
+        paymentId: String,
+        expand: Array<String>,
+        endpoint: String,
+        entityType: Class<T>
+    ): T? = null
 }
 
