@@ -144,7 +144,16 @@ abstract class RequestDecorator {
         body: String,
         instrument: String
     ) {}
-
+    
+    /**
+     * Override this method to add custom headers to the POST {ExpandOperation} request of a payment order.
+     *
+     * The default implementation does nothing.
+     *
+     * @param userHeaders headers added to this will be sent with the request
+     * @param url the url of the request
+     * @param body the body of the request
+     */
     open suspend fun decorateExpandRequest(
         userHeaders: UserHeaders,
         url: String,

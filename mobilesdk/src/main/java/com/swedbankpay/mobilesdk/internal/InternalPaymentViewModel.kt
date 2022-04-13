@@ -187,14 +187,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             setProcessState(state)
         }
     }
-    
-    suspend fun expandPaid(paymentId: String): PaymentTokenResponse? {
-        
-        val tokens = configuration?.expandOperation(
-            getApplication(), paymentId, arrayOf<String>("paid"), "tokens", PaymentTokenResponse::class.java 
-        )
-        return  tokens
-    }
 
     fun saveState(bundle: Bundle) {
         processState.value?.let { bundle.putParcelable(KEY_STATE, it) }

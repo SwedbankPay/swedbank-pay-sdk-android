@@ -46,8 +46,8 @@ class PaymentTest {
         const val scaCvv = "268"
     }
     
-    // Set up test configuration and start scenario for PaymentFragment
     @Before
+    /// Set up test configuration and start scenario for PaymentFragment
     fun setup() {
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
         paymentOrder = PaymentOrder(
@@ -62,14 +62,14 @@ class PaymentTest {
         )
     }
     
-    // to repeat tests within the same run
+    /// to repeat tests within the same run
     private fun setupAgain() {
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
         scenario
     }
-
-    // Destroy scenario
+    
     @After
+    /// Destroy scenario
     fun teardown() {
         scenario.moveToState(Lifecycle.State.DESTROYED)
         _scenario = null
@@ -174,25 +174,48 @@ class PaymentTest {
             return false
         }
 
-        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) { return false }
+        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
+            return false
+        }
         cardOption.clickUntilCheckedAndAssert(timeout)
-        
+
         if (storeCard) {
-            if (!storeCardOption.waitForExists(timeout)) { return false }
+            if (!storeCardOption.waitForExists(timeout)) {
+                return false
+            }
             storeCardOption.clickUntilCheckedAndAssert(timeout)
         }
 
-        if (!webView.waitAndScrollUntilExists(creditCardOption, timeout)) { return false }
+        if (!webView.waitAndScrollUntilExists(creditCardOption, timeout)) {
+            return false
+        }
         creditCardOption.clickUntilCheckedAndAssert(timeout)
 
-        if (!webView.waitAndScrollUntilExists(panInput, timeout)) { return false }
+        if (!webView.waitAndScrollUntilExists(panInput, timeout)) {
+            return false
+        }
         panInput.inputText(cardNumber)
 
-        if (!webView.waitAndScrollUntilExists(expiryDateInput, timeout)) { return false }
+        if (!webView.waitAndScrollUntilExists(expiryDateInput, timeout)) {
+            return false
+        }
         expiryDateInput.inputText(expiryDate)
 
-        if (!webView.waitAndScrollUntilExists(cvvInput, timeout)) { return false }
+        if (!webView.waitAndScrollUntilExists(cvvInput, timeout)) {
+            return false
+        }
         cvvInput.inputText(cvv)
+        return fullPaymentTestAttemptCont(cardNumber, cvv, storeCard, useConfirmButton, paymentFlowHandler) 
+    }
+    
+    /// Due to codacy complexity rules we must break up this function. All it does is to continue the process.
+    private fun fullPaymentTestAttemptCont(
+        cardNumber: String,
+        cvv: String,
+        storeCard: Boolean = false,
+        useConfirmButton: Boolean = false,
+        paymentFlowHandler: () -> Unit
+    ): Boolean {
         
         if (useConfirmButton) {
             if (!webView.waitAndScrollUntilExists(confirmButton, longTimeout)) { return false }
@@ -340,9 +363,9 @@ class PaymentTest {
         Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
         Assert.assertTrue("Card options not found", cardOption.waitForExists(timeout))
     }
-
-    // Check that a card payment that does not invoke 3D-Secure succeeds
+    
     @Test
+    // Check that a card payment that does not invoke 3D-Secure succeeds
     fun itShouldSucceedAtPaymentWithoutSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -350,9 +373,9 @@ class PaymentTest {
             cvv = noScaCvv
         ) {}
     }
-
-    //Check that a card payment that does invoke 3D-Secure succeeds
+    
     @Test
+    //Check that a card payment that does invoke 3D-Secure succeeds
     fun itShouldSucceedAtPaymentWithSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -364,8 +387,8 @@ class PaymentTest {
         }
     }
     
-    //Check that a card payment that does invoke 3D-Secure succeeds
     @Test
+    /// Check that a card payment that does invoke 3D-Secure succeeds
     fun itShouldSucceedAtPaymentWithScaV3() {
         fullPaymentTest(
             cardNumbers = arrayOf(scaCardNumber1, scaCardNumber2, scaCardNumber3, scaCardNumber1),
@@ -376,8 +399,8 @@ class PaymentTest {
         }
     }
     
-    //Check that a card payment that does invoke 3D-Secure succeeds
     @Test
+    /// Check that a card payment that does invoke 3D-Secure succeeds
     fun itShouldSucceedAtPaymentWithoutScaV3() {
         fullPaymentTest(
             cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
@@ -389,8 +412,8 @@ class PaymentTest {
     private val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
     private var payerReference: String = ""
     
-    // Check that paymentTokens work with V3
-    // https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
+    /// Check that paymentTokens work with V3
+    /// https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
     @Test
     fun testPaymentTokensV3() {
         // create a random string as reference
@@ -432,6 +455,7 @@ class PaymentTest {
     }
 
     @Test
+    /// Test specifying and switching instruments.
     fun testPaymentInstrumentsV3() {
         val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
         buildArguments(isV3 = true, paymentOrder = order)
@@ -463,6 +487,7 @@ class PaymentTest {
     }
 
     @Test
+    /// Test that instruments still work in v2
     fun testPaymentInstrumentsV2() {
         val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
         buildArguments(isV3 = false, paymentOrder = order)
@@ -492,9 +517,9 @@ class PaymentTest {
         SystemClock.sleep(1000)
         yourEmailInput.assertExist(timeout)
     }
-
-    // Test that we can perform a verifu request and set the recur and unscheduled tokens.
+    
     @Test
+    /// Test that we can perform a verifu request and set the recur and unscheduled tokens.
     fun testVerifyRecurTokenV3() {
         val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, generateRecurrenceToken = true, generateUnscheduledToken = true)
         buildArguments(isV3 = true, paymentOrder = order)
@@ -517,7 +542,8 @@ class PaymentTest {
             webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
             Assert.assertTrue(scaContinueButton.click())
         }
-        
+
+        val conf = PaymentFragment.defaultConfiguration
         scenario.onFragment {
             
             var result: PaymentTokenResponse? = null
@@ -525,13 +551,14 @@ class PaymentTest {
             //Then implement expand operation to see that everything worked
             GlobalScope.launch (Dispatchers.Default) {
                 try {
-                    result = vm.expandPaid(paymentId)
+                    result = conf?.expandOperation(it.requireActivity().application, paymentId, arrayOf<String>("paid"), "tokens", PaymentTokenResponse::class.java)
                 } catch (error: Exception) {
                     val message = error.localizedMessage
                     Assert.assertNull("Error when fetching tokens", message)
                 }
                 Assert.assertNotNull(result)
             }
+            
             //Wait for the process to finish
             for (noop in 1..10000) {
                 sleep(500)

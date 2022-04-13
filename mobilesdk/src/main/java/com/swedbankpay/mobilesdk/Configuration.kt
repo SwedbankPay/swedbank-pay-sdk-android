@@ -120,7 +120,10 @@ abstract class Configuration {
 
     /**
      * Expanding operations is a way to get more detailed information about certain aspects of a payment.
-     *
+     * Usually expand operations does not interfere in the normal payment flow, and can 
+     * because of this be performed outside of UIState-handling by accessing your
+     * configuration directly. 
+     * 
      * If you do not need to expand anything, you do not need to override this method.
      *
      * @param context an application context

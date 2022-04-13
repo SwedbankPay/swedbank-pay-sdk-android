@@ -10,6 +10,7 @@ import com.swedbankpay.mobilesdk.internal.asStringOrNull
 import kotlinx.parcelize.Parcelize
 import java.lang.reflect.Type
 
+/// Find the first operation by rel-tag.
 fun List<Operation>.find(rel: String) = firstOrNull { it.rel == rel }
 
 /**
