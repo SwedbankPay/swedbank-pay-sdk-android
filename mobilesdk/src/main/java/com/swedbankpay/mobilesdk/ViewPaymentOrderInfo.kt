@@ -98,12 +98,18 @@ data class ViewPaymentOrderInfo(
     val viewPaymentOrder: String get() = viewPaymentLink
 }
 
+/**
+ * Data specific to the paid entity of a payment. Contains the payment tokens if applicable. 
+ */
 @Parcelize
 data class PaymentOrderPaid(
     val payeeReference: String? = null,
     val tokens: List<PaymentOrderToken>? = null
 ) : Parcelable
 
+/**
+ * Data specific to the paid.tokens entity of a payment. Contains the token and related information.
+ */
 @Parcelize
 data class PaymentOrderToken(
     val type: String? = null,

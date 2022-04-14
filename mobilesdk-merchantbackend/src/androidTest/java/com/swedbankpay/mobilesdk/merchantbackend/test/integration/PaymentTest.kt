@@ -16,6 +16,7 @@ import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
+import com.swedbankpay.mobilesdk.merchantbackend.UnexpectedResponseException
 import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.*
 import kotlinx.coroutines.*
 import org.junit.After
@@ -71,7 +72,9 @@ class PaymentTest {
     }
     
     @After
-    /// Destroy scenario
+    /**
+     * Destroy scenario
+     */
     fun teardown() {
         scenario.moveToState(Lifecycle.State.DESTROYED)
         _scenario = null
@@ -357,7 +360,9 @@ class PaymentTest {
         }
     }
     
-    // Sanity check: Check that a WebView is displayed by the PaymentFragment
+    /**
+     * Sanity check: Check that a WebView is displayed by the PaymentFragment
+     */
     @Test
     fun itShouldDisplayWebView() {
         buildArguments(isV3 = false)
@@ -365,9 +370,11 @@ class PaymentTest {
         assertWebView()
         Assert.assertTrue("Card options not found", cardOption.waitForExists(timeout))
     }
-    
+
+    /**
+     * Check that a card payment that does not invoke 3D-Secure succeeds
+     */
     @Test
-    // Check that a card payment that does not invoke 3D-Secure succeeds
     fun itShouldSucceedAtPaymentWithoutSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -375,9 +382,11 @@ class PaymentTest {
             cvv = noScaCvv
         ) {}
     }
-    
+
+    /**
+     * Check that a card payment that does invoke 3D-Secure succeeds
+     */
     @Test
-    //Check that a card payment that does invoke 3D-Secure succeeds
     fun itShouldSucceedAtPaymentWithSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -388,9 +397,11 @@ class PaymentTest {
             Assert.assertTrue(scaContinueButton.click())
         }
     }
-    
+
+    /**
+     * Check that a card payment that does invoke 3D-Secure succeeds
+     */
     @Test
-    /// Check that a card payment that does invoke 3D-Secure succeeds
     fun itShouldSucceedAtPaymentWithScaV3() {
         fullPaymentTest(
             cardNumbers = arrayOf(scaCardNumber1, scaCardNumber2, scaCardNumber3, scaCardNumber1),
@@ -400,9 +411,11 @@ class PaymentTest {
             Assert.assertTrue(scaContinueButton.click())
         }
     }
-    
+
+    /**
+     * Check that a card payment that does invoke 3D-Secure succeeds
+     */
     @Test
-    /// Check that a card payment that does invoke 3D-Secure succeeds
     fun itShouldSucceedAtPaymentWithoutScaV3() {
         fullPaymentTest(
             cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
@@ -413,11 +426,12 @@ class PaymentTest {
     // generate a payerReference with a random string
     private val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
     private var payerReference: String = ""
-    
-    /// Check that paymentTokens work with V3
-    /// https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
-    // @Test
-    fun testPaymentTokensV3() {
+
+    /**
+     * Check that paymentTokens work with V3
+     * https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
+     */
+    fun waitForFixTestPaymentTokensV3() {
         // create a random string as reference
         payerReference = (1..15)
             .map { kotlin.random.Random.nextInt(0, charPool.size) }
@@ -468,8 +482,10 @@ class PaymentTest {
         // One can expand "authorizations" of the payment to see the paymentToken value - but since we send it in we know what it is and it wouldn't complete the purchase if it didn't work. So this is enough.
     }
 
+    /**
+     * Test specifying and switching instruments.
+     */
     @Test
-    /// Test specifying and switching instruments.
     fun testPaymentInstrumentsV3() {
         val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
         buildArguments(isV3 = true, paymentOrder = order)
@@ -500,8 +516,10 @@ class PaymentTest {
         yourEmailInput.assertExist(timeout)
     }
 
+    /**
+     * Test that instruments still work in v2
+     */
     @Test
-    /// Test that instruments still work in v2
     fun testPaymentInstrumentsV2() {
         val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
         buildArguments(isV3 = false, paymentOrder = order)
@@ -531,9 +549,11 @@ class PaymentTest {
         SystemClock.sleep(1000)
         yourEmailInput.assertExist(timeout)
     }
-    
+
+    /**
+     * Test that we can perform a verifu request and set the recur and unscheduled tokens.
+     */
     @Test
-    /// Test that we can perform a verifu request and set the recur and unscheduled tokens.
     fun testVerifyRecurTokenV3() {
         val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, generateRecurrenceToken = true, generateUnscheduledToken = true)
         buildArguments(isV3 = true, paymentOrder = order)
@@ -561,11 +581,19 @@ class PaymentTest {
         scenario.onFragment {
             
             var result: PaymentTokenResponse? = null
-            val vm = it.requireActivity().paymentViewModel
             //Then implement expand operation to see that everything worked
             GlobalScope.launch (Dispatchers.Default) {
                 try {
-                    result = conf?.expandOperation(it.requireActivity().application, paymentId, arrayOf<String>("paid"), "tokens", PaymentTokenResponse::class.java)
+                    result = conf?.expandOperation(
+                        it.requireActivity().application,
+                        paymentId,
+                        arrayOf<String>("paid"),
+                        "tokens",
+                        PaymentTokenResponse::class.java
+                    )
+                } catch (error: UnexpectedResponseException) {
+                    val message = error.localizedMessage
+                    Assert.assertNull("Error when fetching tokens", message)
                 } catch (error: Exception) {
                     val message = error.localizedMessage
                     Assert.assertNull("Error when fetching tokens", message)
@@ -584,14 +612,16 @@ class PaymentTest {
             Assert.assertTrue(result?.unscheduled ?: false)
         }
     }
-    
+
+    /**
+     * Expand payment order to get the payment token, and wait for it's result.
+     */
     fun getPaymentToken(paymentId: String): ExpandedPaymentOrder?  {
 
         var result: ExpandedPaymentOrder? = null
         val conf = PaymentFragment.defaultConfiguration
         scenario.onFragment {
             
-            val vm = it.requireActivity().paymentViewModel
             //Then implement expand operation to see that everything worked
             GlobalScope.launch (Dispatchers.Default) {
                 try {

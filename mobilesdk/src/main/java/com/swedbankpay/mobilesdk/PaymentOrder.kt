@@ -23,8 +23,10 @@ data class PaymentOrder(
      * The operation to perform
      */
     @SerializedName("operation") val operation: PaymentOrderOperation = PaymentOrderOperation.PURCHASE,
-    
-    // To use v3 instead of v2, it must contain "Checkout3"
+
+    /**
+     * To use v3 instead of v2, it must contain "Checkout3"
+     */
     @SerializedName("productName") var productName: String? = null,
 
     /**
