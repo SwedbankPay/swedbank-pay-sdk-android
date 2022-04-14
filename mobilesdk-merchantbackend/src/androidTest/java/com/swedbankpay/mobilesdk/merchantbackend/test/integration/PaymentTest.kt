@@ -47,7 +47,9 @@ class PaymentTest {
     }
     
     @Before
-    /// Set up test configuration and start scenario for PaymentFragment
+    /**
+     * Set up test configuration and start scenario for PaymentFragment 
+     */
     fun setup() {
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
         paymentOrder = PaymentOrder(
@@ -120,6 +122,9 @@ class PaymentTest {
         device
 
         return UiScrollable(UiSelector().className(WebView::class.java))
+    }
+    private fun assertWebView() {
+        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
     }
     
     private val cardOption
@@ -205,14 +210,11 @@ class PaymentTest {
             return false
         }
         cvvInput.inputText(cvv)
-        return fullPaymentTestAttemptCont(cardNumber, cvv, storeCard, useConfirmButton, paymentFlowHandler) 
+        return fullPaymentTestAttemptCont(useConfirmButton, paymentFlowHandler) 
     }
     
     /// Due to codacy complexity rules we must break up this function. All it does is to continue the process.
     private fun fullPaymentTestAttemptCont(
-        cardNumber: String,
-        cvv: String,
-        storeCard: Boolean = false,
         useConfirmButton: Boolean = false,
         paymentFlowHandler: () -> Unit
     ): Boolean {
@@ -255,7 +257,7 @@ class PaymentTest {
         if (!success) {
 
             val cardNumber = cardNumbers[0]
-            Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+            assertWebView()
 
             webView.waitAndScrollFullyIntoViewAndAssertExists(cardOption, timeout)
             cardOption.clickUntilCheckedAndAssert(timeout)
@@ -360,7 +362,7 @@ class PaymentTest {
     fun itShouldDisplayWebView() {
         buildArguments(isV3 = false)
         scenario
-        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+        assertWebView()
         Assert.assertTrue("Card options not found", cardOption.waitForExists(timeout))
     }
     
@@ -414,7 +416,7 @@ class PaymentTest {
     
     /// Check that paymentTokens work with V3
     /// https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
-    @Test
+    // @Test
     fun testPaymentTokensV3() {
         // create a random string as reference
         payerReference = (1..15)
@@ -425,21 +427,33 @@ class PaymentTest {
         val payer = PaymentOrderPayer(payerReference = payerReference)
         var order = paymentOrder.copy(generatePaymentToken = true, payer = payer)
         buildArguments(isV3 = true, paymentOrder = order)
+
+        val orderInfo = waitForAnyOrderInfo()
+        Assert.assertNotNull(orderInfo?.id)
+        val paymentId = orderInfo?.id!!
+        var expandedOrder = getPaymentToken(paymentId)?.paymentOrder
+        Assert.assertNotNull(expandedOrder?.id)
         
         fullPaymentTest(
-            cardNumbers = arrayOf(noScaCardNumber2, noScaCardNumber3, noScaCardNumber1),
-            cvv = noScaCvv,
+            cardNumbers = arrayOf(scaCardNumber1, scaCardNumber3, scaCardNumber2),
+            cvv = scaCvv,
             storeCard = true
-        ) {}
-
+        ) {
+            webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
+            Assert.assertTrue(scaContinueButton.click())
+        }
+        
+        expandedOrder = getPaymentToken(paymentId)?.paymentOrder
+        Assert.assertNotNull(expandedOrder?.paid?.tokens?.first()?.token)
+        val token = expandedOrder?.paid?.tokens?.first()?.token!!
+        order = paymentOrder.copy(generatePaymentToken = false, payer = payer, paymentToken = token)
+        
+        buildArguments(isV3 = true, paymentOrder = order)
         teardown()
         setupAgain()
         
-        order = paymentOrder.copy(generatePaymentToken = false, payer = payer)
-        buildArguments(isV3 = true, paymentOrder = order)
-        
         //now redo this with only "Pay SEK" button
-        Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
+        assertWebView()
 
         webView.waitAndScrollFullyIntoViewAndAssertExists(cardOption, timeout)
         cardOption.clickUntilCheckedAndAssert(timeout)
@@ -530,8 +544,8 @@ class PaymentTest {
         // Remember the paymentId for later lookup
         Assert.assertTrue(webView.waitForExists(longTimeout))
         val orderInfo = waitForAnyOrderInfo()
-        Assert.assertNotNull(orderInfo?.paymentId)
-        val paymentId = orderInfo?.paymentId!!
+        Assert.assertNotNull(orderInfo?.id)
+        val paymentId = orderInfo?.id!!
         
         //perform a regular SCA purchase - it must be secure to retrieve tokens
         fullPaymentTest(
@@ -570,4 +584,42 @@ class PaymentTest {
             Assert.assertTrue(result?.unscheduled ?: false)
         }
     }
+    
+    fun getPaymentToken(paymentId: String): ExpandedPaymentOrder?  {
+
+        var result: ExpandedPaymentOrder? = null
+        val conf = PaymentFragment.defaultConfiguration
+        scenario.onFragment {
+            
+            val vm = it.requireActivity().paymentViewModel
+            //Then implement expand operation to see that everything worked
+            GlobalScope.launch (Dispatchers.Default) {
+                try {
+                    result = conf?.expandOperation(
+                        it.requireActivity().application, 
+                        paymentId, 
+                        arrayOf<String>("paid"), 
+                        "expand",
+                        ExpandedPaymentOrder::class.java
+                    )
+                } catch (error: Exception) {
+                    val message = error.localizedMessage
+                    Assert.assertNull("Error when fetching tokens", message)
+                }
+            }
+
+            //Wait for the process to finish
+            for (noop in 1..10000) {
+                sleep(500)
+                if (result != null) {
+                    break
+                }
+            }
+        }
+        return result
+    }
 }
+
+data class ExpandedPaymentOrder(
+    val paymentOrder: ViewPaymentOrderInfo
+)

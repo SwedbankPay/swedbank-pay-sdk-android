@@ -19,8 +19,8 @@ data class ViewPaymentOrderInfo(
     /**
      * To refer to the payment and expand its properties we need to store its id.
      */
-    val paymentId: String? = null,
-    
+    val id: String? = null,
+
     /**
      * The url to use as the [android.webkit.WebView] page url
      * when showing the checkin UI. If `null`, defaults to
@@ -76,6 +76,8 @@ data class ViewPaymentOrderInfo(
      */
     val availableInstruments: List<String>? = null,
 
+    val paid: PaymentOrderPaid? = null,
+
     /**
      *
      * Any value you may need for your [Configuration].
@@ -95,3 +97,17 @@ data class ViewPaymentOrderInfo(
     @Deprecated("Renamed: viewPaymentLink", ReplaceWith("viewPaymentLink"))
     val viewPaymentOrder: String get() = viewPaymentLink
 }
+
+@Parcelize
+data class PaymentOrderPaid(
+    val payeeReference: String? = null,
+    val tokens: List<PaymentOrderToken>? = null
+) : Parcelable
+
+@Parcelize
+data class PaymentOrderToken(
+    val type: String? = null,
+    val token: String? = null,
+    val name: String? = null,
+    val expiryDate: String? = null
+): Parcelable 

@@ -125,7 +125,7 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         }
         
         return ViewPaymentOrderInfo(
-            paymentId = paymentId,
+            id = paymentId,
             webViewBaseUrl = backendUrl,
             viewPaymentLink = viewPaymentOrder,
             isV3 = paymentOrder.isV3,
