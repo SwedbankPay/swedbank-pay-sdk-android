@@ -28,20 +28,15 @@ import java.lang.Thread.sleep
 import java.util.*
 
 
-/// End-to-end tests for PaymentFragment
+/**
+ * End-to-end tests for PaymentFragment
+ */
 class PaymentTest {
     private companion object {
         const val timeout = 30_000L
         const val longTimeout = 120_000L
         // Key input to the web view is laggy, and without a delay between keystrokes, the input may get jumbled.
         const val keyInputDelay = 500L
-
-        const val noScaCardNumber1 = "4581097032723517"
-        const val noScaCardNumber2 = "4925000000000004"
-        const val noScaCardNumber3 = "5226600159865967"
-        const val scaCardNumber1 = "5226612199533406" //This might have issues: 4761739001010416
-        const val scaCardNumber2 = "5226612199533406"
-        const val scaCardNumber3 = "4547781087013329"
         const val expiryDate = "1230"
         const val noScaCvv = "111"
         const val scaCvv = "268"
@@ -378,7 +373,7 @@ class PaymentTest {
     fun itShouldSucceedAtPaymentWithoutSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
-            cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
+            cardNumbers = nonScaCardNumbers,
             cvv = noScaCvv
         ) {}
     }
@@ -390,7 +385,7 @@ class PaymentTest {
     fun itShouldSucceedAtPaymentWithSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
-            cardNumbers = arrayOf(scaCardNumber1, scaCardNumber2, scaCardNumber3, scaCardNumber1),
+            cardNumbers = scaCardNumbers,
             cvv = scaCvv
         ) {
             webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
@@ -404,7 +399,7 @@ class PaymentTest {
     @Test
     fun itShouldSucceedAtPaymentWithScaV3() {
         fullPaymentTest(
-            cardNumbers = arrayOf(scaCardNumber1, scaCardNumber2, scaCardNumber3, scaCardNumber1),
+            cardNumbers = scaCardNumbers,
             cvv = scaCvv
         ) {
             webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
@@ -418,7 +413,7 @@ class PaymentTest {
     @Test
     fun itShouldSucceedAtPaymentWithoutScaV3() {
         fullPaymentTest(
-            cardNumbers = arrayOf(noScaCardNumber1, noScaCardNumber2, noScaCardNumber3),
+            cardNumbers = nonScaCardNumbers,
             cvv = noScaCvv
         ) {}
     }
@@ -449,7 +444,7 @@ class PaymentTest {
         Assert.assertNotNull(expandedOrder?.id)
         
         fullPaymentTest(
-            cardNumbers = arrayOf(scaCardNumber1, scaCardNumber3, scaCardNumber2),
+            cardNumbers = scaCardNumbers,
             cvv = scaCvv,
             storeCard = true
         ) {
@@ -569,7 +564,7 @@ class PaymentTest {
         
         //perform a regular SCA purchase - it must be secure to retrieve tokens
         fullPaymentTest(
-            cardNumbers = arrayOf(scaCardNumber2, scaCardNumber3),
+            cardNumbers = scaCardNumbers,
             cvv = scaCvv,
             useConfirmButton = true
         ) {
@@ -592,9 +587,6 @@ class PaymentTest {
                         PaymentTokenResponse::class.java
                     )
                 } catch (error: UnexpectedResponseException) {
-                    val message = error.localizedMessage
-                    Assert.assertNull("Error when fetching tokens", message)
-                } catch (error: Exception) {
                     val message = error.localizedMessage
                     Assert.assertNull("Error when fetching tokens", message)
                 }
@@ -632,9 +624,9 @@ class PaymentTest {
                         "expand",
                         ExpandedPaymentOrder::class.java
                     )
-                } catch (error: Exception) {
+                } catch (error: UnexpectedResponseException) {
                     val message = error.localizedMessage
-                    Assert.assertNull("Error when fetching tokens", message)
+                    Assert.assertNull("Error when fetching payment tokens", message)
                 }
             }
 
@@ -650,6 +642,9 @@ class PaymentTest {
     }
 }
 
+/**
+ * A data class to help testing expansions. 
+ */
 data class ExpandedPaymentOrder(
     val paymentOrder: ViewPaymentOrderInfo
 )

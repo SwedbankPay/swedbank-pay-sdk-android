@@ -196,6 +196,9 @@ data class PaymentOrder(
         private var initiatingSystemUserAgent: String? = null
 
         fun operation(operation: PaymentOrderOperation) = apply { this.operation = operation }
+        /**
+         * Set productName when building a PaymentOrder 
+         */
         fun productName(productName: String?) = apply { this.productName = productName }
         fun currency(currency: Currency) = apply { this.currency = currency }
         fun amount(amount: Long) = apply { this.amount = amount }

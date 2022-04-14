@@ -175,12 +175,12 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         useExternalBrowser = useBrowser
         if (processState.value == null) {
             val state = if (useCheckin) {
+                // Check-in requires V2
                 ProcessState.InitializingConsumerSession(consumer, paymentOrder, userData, style)
             } else {
-                if (checkoutV3) {
-                    if (paymentOrder != null) {
-                        paymentOrder.isV3 = true
-                    }
+                // otherwise we use v3 if desired
+                if (checkoutV3 && paymentOrder != null) {
+                    paymentOrder.isV3 = true
                 }
                 ProcessState.CreatingPaymentOrder(null, paymentOrder, userData, style)
             }
