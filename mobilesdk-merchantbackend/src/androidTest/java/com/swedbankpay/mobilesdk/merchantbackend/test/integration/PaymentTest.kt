@@ -426,10 +426,11 @@ class PaymentTest {
      * Check that paymentTokens work with V3
      * https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
      */
-    fun waitForFixTestPaymentTokensV3() {
+    @Test
+    fun testPaymentTokensV3() {
         // create a random string as reference
         payerReference = (1..15)
-            .map { kotlin.random.Random.nextInt(0, charPool.size) }
+            .map { Random().nextInt(charPool.size) }
             .map(charPool::get)
             .joinToString("")
         
@@ -463,18 +464,16 @@ class PaymentTest {
         
         //now redo this with only "Pay SEK" button
         assertWebView()
-
-        webView.waitAndScrollFullyIntoViewAndAssertExists(cardOption, timeout)
-        cardOption.clickUntilCheckedAndAssert(timeout)
         
         webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, timeout)
         Assert.assertTrue(payButton.click())
+
+        webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
+        Assert.assertTrue(scaContinueButton.click())
         
         lastResult = waitForResult()
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
-        
-        // One can expand "authorizations" of the payment to see the paymentToken value - but since we send it in we know what it is and it wouldn't complete the purchase if it didn't work. So this is enough.
     }
 
     /**
