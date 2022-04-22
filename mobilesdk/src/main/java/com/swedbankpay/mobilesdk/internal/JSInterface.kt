@@ -49,4 +49,14 @@ internal class JSInterface(var vm: InternalPaymentViewModel?) {
     fun onPaymentError(error: String) {
         withViewModelAndEvent(error, InternalPaymentViewModel::onError)
     }
+    
+    @JavascriptInterface
+    fun onPaid(message: String) = withViewModel {
+        onPaid(message)
+    }
+
+    @JavascriptInterface
+    fun onGeneralEvent(message: String) = withViewModel {
+        onGeneralEvent(message)
+    }
 }

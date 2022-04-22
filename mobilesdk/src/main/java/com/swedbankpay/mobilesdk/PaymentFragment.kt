@@ -77,6 +77,7 @@ open class PaymentFragment : Fragment() {
      */
     @Suppress("unused")
     class ArgumentsBuilder {
+        private var checkoutV3 = false
         private var useCheckin = false
         private var consumer: Consumer? = null
         private var paymentOrder: PaymentOrder? = null
@@ -87,7 +88,14 @@ open class PaymentFragment : Fragment() {
         @DefaultUI
         private var enabledDefaultUI = RETRY_PROMPT
         private var debugIntentUris = false
-
+        
+        /**
+         * Enables or disables checkoutV3 for this payment.
+         * This controls the payment from and what values of the paymentOrder object are returned
+         * @param checkoutV3 `true` to use checkoutV3, `false` to skip it
+         */
+        fun checkoutV3(checkoutV3: Boolean) = apply { this.checkoutV3 = checkoutV3 }
+        
         /**
          * Enables or disables checkin for this payment.
          * Mostly useful for using [userData] and a custom [Configuration].
@@ -208,6 +216,7 @@ open class PaymentFragment : Fragment() {
          * @return the bundle
          */
         fun build(bundle: Bundle) = bundle.apply {
+            putBoolean(ARG_CHECKOUT_V3, checkoutV3)
             putBoolean(ARG_USE_CHECKIN, useCheckin)
             putParcelable(ARG_CONSUMER, consumer)
             putParcelable(ARG_PAYMENT_ORDER, paymentOrder)
@@ -288,6 +297,11 @@ open class PaymentFragment : Fragment() {
          * You will receive this value in your [Configuration.postPaymentorders].
          */
         const val ARG_PAYMENT_ORDER = "com.swedbankpay.mobilesdk.ARG_PAYMENT_ORDER"
+        
+        /**
+         * Argument key: a bool to decide on using checkout V3. 
+         */
+        const val ARG_CHECKOUT_V3 = "com.swedbankpay.mobilesdk.ARG_CHECKOUT_V3"
 
         /**
          * Argument key: a [Bundle] that contains styling parameters.
@@ -394,13 +408,13 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun InternalPaymentViewModel.observeLoading() {
-        loading.observe(this@PaymentFragment, {
+        loading.observe(this@PaymentFragment) {
             updateRefreshLayoutState()
-        })
+        }
     }
 
     private fun InternalPaymentViewModel.observeCurrentPage() {
-        currentHtmlContent.observe(this@PaymentFragment, {
+        currentHtmlContent.observe(this@PaymentFragment) {
             val webFragment =
                 childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
             webFragment.apply {
@@ -420,7 +434,7 @@ open class PaymentFragment : Fragment() {
                     reloadRequested && !loaded
                 }
             }
-        })
+        }
     }
 
     private fun reloadPaymentMenu() {
@@ -435,18 +449,19 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun InternalPaymentViewModel.observeMessage() {
-        messageTitle.observe(this@PaymentFragment, {
-            requireView().findViewById<View>(R.id.swedbankpaysdk_message).visibility = if (it != null) View.VISIBLE else View.INVISIBLE
+        messageTitle.observe(this@PaymentFragment) {
+            requireView().findViewById<View>(R.id.swedbankpaysdk_message).visibility =
+                if (it != null) View.VISIBLE else View.INVISIBLE
             requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
-        })
+        }
 
-        messageBody.observe(this@PaymentFragment, {
+        messageBody.observe(this@PaymentFragment) {
             requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_body).text = it
-        })
+        }
 
-        retryActionAvailable.observe(this@PaymentFragment, {
+        retryActionAvailable.observe(this@PaymentFragment) {
             updateRefreshLayoutState()
-        })
+        }
     }
 
     private fun updateRefreshLayoutState() {
@@ -470,13 +485,15 @@ open class PaymentFragment : Fragment() {
             vm.resumeFromSavedState(checkNotNull(savedInstanceState.getBundle(STATE_VM)))
         } else {
             requireArguments().apply {
+                
+                val checkoutV3 = getBoolean(ARG_CHECKOUT_V3)
                 val useCheckin = getBoolean(ARG_USE_CHECKIN)
                 val consumer = getParcelable<Consumer>(ARG_CONSUMER)
                 val paymentOrder = getParcelable<PaymentOrder>(ARG_PAYMENT_ORDER)
                 val userData = get(ARG_USER_DATA)
                 val style = getBundle(ARG_STYLE)
                 val useExternal = getBoolean(ARG_USE_BROWSER)
-                vm.start(useCheckin, consumer, paymentOrder, userData, style, useExternal)
+                vm.start(useCheckin, consumer, paymentOrder, userData, style, useExternal, checkoutV3)
             }
         }
     }

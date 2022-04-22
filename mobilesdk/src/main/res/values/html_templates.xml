@@ -56,5 +56,51 @@
     &lt;/body>
 &lt;/html>
     </string>
+    
+    <string name="swedbankpaysdk_view_checkout_template">
+&lt;!DOCTYPE html>
+&lt;html>
+    &lt;head>
+        &lt;title>&lt;/title>
+        &lt;script type="text/javascript">
+                
+                window.onerror = function(message, source, lineno, colno, error) {
+                    swedbankpaysdk.onPaymentError(JSON.stringify(error));
+                };
+                window.onload = function () {
+    
+                    var parameters = {
+                        container: {
+                            checkout: \"checkout\"
+                        },
+                        onPayerIdentified: function onPayerIdentified(payerIdentified) {
+
+                        },
+                        onEventNotification: function onEventNotification(eventNotification) {
+                            swedbankpaysdk.onGeneralEvent(JSON.stringify(eventNotification));
+                        },
+                        onError: function(error) {
+                            swedbankpaysdk.onPaymentError(JSON.stringify(error));
+                        },
+                        onPaid: function onPaid(eventNotification) {
+                            swedbankpaysdk.onPaid(JSON.stringify(eventNotification));
+                        }
+                    };
+                    var style = %2$s;
+                    if (style) {
+                        parameters.style = style;
+                    }
+                    window.payex.hostedView.checkout(parameters).open("checkout");
+                }
+
+            &lt;/script>
+    &lt;/head>
+    &lt;body>
+        &lt;div id=\"checkout\" />
+        &lt;/script>
+        &lt;script src=\"%1$s\">&lt;/script>
+    &lt;/body>
+&lt;/html>
+    </string>
 
 </resources>

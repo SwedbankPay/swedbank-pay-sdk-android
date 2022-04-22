@@ -7,6 +7,7 @@ import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
+import com.swedbankpay.mobilesdk.Operation
 import com.swedbankpay.mobilesdk.merchantbackend.internal.asStringOrNull
 import com.swedbankpay.mobilesdk.merchantbackend.internal.remote.json.Link
 import java.lang.reflect.Type

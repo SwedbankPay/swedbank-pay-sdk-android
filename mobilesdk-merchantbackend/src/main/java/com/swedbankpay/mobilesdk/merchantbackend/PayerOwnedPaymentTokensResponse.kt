@@ -6,6 +6,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.JsonAdapter
 import com.google.gson.reflect.TypeToken
+import com.swedbankpay.mobilesdk.Operation
 import java.lang.reflect.Type
 
 /**

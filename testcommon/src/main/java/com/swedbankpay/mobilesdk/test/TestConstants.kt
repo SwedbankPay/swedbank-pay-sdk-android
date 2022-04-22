@@ -46,7 +46,8 @@ object TestConstants {
 
     val viewPaymentorderInfo = ViewPaymentOrderInfo(
         webViewBaseUrl = hostUrl,
-        viewPaymentOrder = viewPaymentorderLink,
+        viewPaymentLink = viewPaymentorderLink,
+        isV3 = paymentOrder.isV3,
         completeUrl = completeUrl,
         cancelUrl = null,
         paymentUrl = paymentUrl,

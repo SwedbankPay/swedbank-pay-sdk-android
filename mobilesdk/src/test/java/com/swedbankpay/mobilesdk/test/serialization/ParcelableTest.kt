@@ -195,7 +195,8 @@ class ParcelableTest {
 
     private fun makeViewPaymentOrderInfo(userData: Any?) = ViewPaymentOrderInfo(
         webViewBaseUrl = "webViewBaseUrl",
-        viewPaymentOrder = "viewPaymentOrder",
+        viewPaymentLink = "viewPaymentOrder",
+        isV3 = false,
         completeUrl = "completeUrl",
         cancelUrl = "cancelUrl",
         paymentUrl = "paymentUrl",

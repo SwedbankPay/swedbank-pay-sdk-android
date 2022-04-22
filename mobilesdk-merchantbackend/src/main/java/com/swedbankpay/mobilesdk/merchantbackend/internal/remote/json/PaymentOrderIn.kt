@@ -1,7 +1,7 @@
 package com.swedbankpay.mobilesdk.merchantbackend.internal.remote.json
 
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.merchantbackend.Operation
+import com.swedbankpay.mobilesdk.Operation
 
 internal class PaymentOrderIn {
     @SerializedName("paymentOrder")
@@ -14,6 +14,8 @@ internal class PaymentOrderIn {
     var mobileSDK: MobileSDK? = null
 
     class PaymentOrder {
+        @SerializedName("id")
+        var id: String? = null
         @SerializedName("instrument")
         var instrument: String? = null
         @SerializedName("availableInstruments")

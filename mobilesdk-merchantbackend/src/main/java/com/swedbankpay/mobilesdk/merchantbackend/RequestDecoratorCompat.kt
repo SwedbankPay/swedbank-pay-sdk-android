@@ -86,6 +86,21 @@ open class RequestDecoratorCompat : RequestDecorator() {
         instrument: String
     ) {}
 
+    /**
+     * Override this method to add custom headers to the POST {ExpandOperation} request of a payment order.
+     *
+     * The default implementation does nothing.
+     *
+     * @param userHeaders headers added to this will be sent with the request
+     * @param url the url of the request
+     * @param body the body of the request
+     */
+    open fun decorateExpandRequestCompat(
+        userHeaders: UserHeaders,
+        url: String,
+        body: String
+    ) {}
+
     private suspend fun decorateCompat(f: suspend CoroutineScope.() -> Unit) {
         withContext(Dispatchers.IO, f)
     }
@@ -128,5 +143,14 @@ open class RequestDecoratorCompat : RequestDecorator() {
         instrument: String
     ) = decorateCompat {
         decoratePaymentOrderSetInstrumentCompat(userHeaders, url, body, instrument)
+    }
+    
+    final override suspend fun decorateExpandRequest(
+        userHeaders: UserHeaders,
+        url: String,
+        body: String
+    ) = decorateCompat {
+        
+        decorateExpandRequestCompat(userHeaders, url, body) 
     }
 }

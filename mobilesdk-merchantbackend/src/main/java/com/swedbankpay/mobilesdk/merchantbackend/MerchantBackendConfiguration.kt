@@ -5,6 +5,7 @@ import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration.Builder
 import com.swedbankpay.mobilesdk.merchantbackend.internal.remote.CacheableResult
 import com.swedbankpay.mobilesdk.merchantbackend.internal.remote.WhitelistedDomain
+import com.swedbankpay.mobilesdk.merchantbackend.internal.remote.json.BackendOperation
 import com.swedbankpay.mobilesdk.merchantbackend.internal.remote.json.Link
 import com.swedbankpay.mobilesdk.merchantbackend.internal.remote.json.TopLevelResources
 import kotlinx.coroutines.Dispatchers
@@ -12,8 +13,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.CertificatePinner
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.IOException
-
-private fun List<Operation>.find(rel: String) = firstOrNull { it.rel == rel }
 
 /**
  * A [Configuration] class for the Merchant Backend API.
@@ -98,28 +97,46 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             .post(context, this, paymentOrderOut)
 
         val viewPaymentOrder =
-            paymentOrderIn.operations.find("view-paymentorder")?.href
+            paymentOrderIn.operations.find("view-checkout")?.href
+                ?: paymentOrderIn.operations.find("view-paymentorder")?.href
                 ?: throw IOException("Missing required operation")
         val urls = paymentOrder.urls
 
-        val setInstrument = paymentOrderIn.mobileSDK?.setInstrument
-        val availableInstruments = setInstrument?.let { _ ->
-            paymentOrderIn.paymentOrder?.availableInstruments
+        var instrument: String? = null
+        val availableInstruments: List<String>?
+        var setInstrument: Link.PaymentOrderSetInstrument? = null
+        var paymentId = paymentOrderIn.paymentOrder?.id ?: null
+        if (paymentOrder.isV3) {
+            // expand instruments to find operation for V3
+            availableInstruments = paymentOrderIn.paymentOrder?.availableInstruments
+            val currentInstrument = paymentOrder.instrument
+            if (currentInstrument != null && availableInstruments != null && availableInstruments.contains(currentInstrument)) {
+                instrument = currentInstrument
+            } 
+            
+        } else {
+            setInstrument = paymentOrderIn.mobileSDK?.setInstrument
+            availableInstruments = setInstrument?.let { _ ->
+                paymentOrderIn.paymentOrder?.availableInstruments
+            }
+            instrument = availableInstruments?.let { _ ->
+                paymentOrderIn.paymentOrder?.instrument
+            }
         }
-        val instrument = availableInstruments?.let { _ ->
-            paymentOrderIn.paymentOrder?.instrument
-        }
-
+        
         return ViewPaymentOrderInfo(
+            id = paymentId,
             webViewBaseUrl = backendUrl,
-            viewPaymentOrder = viewPaymentOrder,
+            viewPaymentLink = viewPaymentOrder,
+            isV3 = paymentOrder.isV3,
             completeUrl = urls.completeUrl,
             cancelUrl = urls.cancelUrl,
             paymentUrl = urls.paymentUrl,
             termsOfServiceUrl = urls.termsOfServiceUrl,
             instrument = instrument,
             availableInstruments = availableInstruments,
-            userData = setInstrument?.href?.toString()
+            userData = setInstrument?.href?.toString(),
+            operations = paymentOrderIn.operations
         )
     }
 
@@ -143,10 +160,51 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         val instrument = requireNotNull(updateInfo as? String) {
             "Unexpected updateInfo $updateInfo (expected String)"
         }
+        
+        if (!viewPaymentOrderInfo.isV3) {
+            return updateInstrumentV2(context, viewPaymentOrderInfo, instrument)
+        }
+        val operation = checkNotNull(viewPaymentOrderInfo.operations?.find("set-instrument")) {
+            "Payment order is not in instrument mode"
+        }
+        val urlString = checkNotNull(operation.href) {
+            "Operation is missing link"
+        }
+        val backendOperation = BackendOperation.PaymentOrderSetInstrument(this, urlString)
+
+        val paymentOrderIn = try {
+            backendOperation.patch(context, instrument)
+        } catch (e: RequestProblemException) {
+            throw when (e.problem) {
+                is MerchantBackendProblem.Client -> InvalidInstrumentException(instrument, e)
+                else -> e
+            }
+        }
+
+        val viewPaymentLink =
+            paymentOrderIn.operations.find("view-checkout")?.href
+        val availableInstruments = paymentOrderIn.paymentOrder?.availableInstruments
+        val instrumentIn = paymentOrderIn.paymentOrder?.instrument
+
+        return viewPaymentOrderInfo.copy(
+            viewPaymentLink = viewPaymentLink ?: viewPaymentOrderInfo.viewPaymentLink,
+            availableInstruments = availableInstruments ?: viewPaymentOrderInfo.availableInstruments,
+            instrument = instrumentIn ?: instrument
+        )
+    }
+    
+    private suspend fun updateInstrumentV2(
+        context: Context,
+        viewPaymentOrderInfo: ViewPaymentOrderInfo,
+        instrument: String
+    ): ViewPaymentOrderInfo {
+
+        // in version 2 instrument handling was a special feature, but is now provided directly from the paymentOrder. For V3 we want to patch the paymentOrder with the set-instruments operation.
         val linkHref = checkNotNull(viewPaymentOrderInfo.userData as? String) {
             "Payment order is not in instrument mode"
         }
         val link = Link.PaymentOrderSetInstrument(linkHref.toHttpUrl())
+        
         val paymentOrderIn = try {
             link.patch(context, this, instrument)
         } catch (e: RequestProblemException) {
@@ -156,18 +214,29 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             }
         }
 
-        val viewPaymentOrder =
-            paymentOrderIn.operations.find("view-paymentorder")?.href
+        val viewPaymentLink = paymentOrderIn.operations.find("view-paymentorder")?.href 
         val setInstrument = paymentOrderIn.mobileSDK?.setInstrument
         val availableInstruments = paymentOrderIn.paymentOrder?.availableInstruments
         val instrumentIn = paymentOrderIn.paymentOrder?.instrument
 
         return viewPaymentOrderInfo.copy(
-            viewPaymentOrder = viewPaymentOrder ?: viewPaymentOrderInfo.viewPaymentOrder,
+            viewPaymentLink = viewPaymentLink ?: viewPaymentOrderInfo.viewPaymentLink,
             availableInstruments = availableInstruments ?: viewPaymentOrderInfo.availableInstruments,
             instrument = instrumentIn ?: instrument,
             userData = setInstrument?.href?.toString() ?: linkHref
         )
+    }
+
+    override suspend fun <T : Any> expandOperation(
+        context: Context,
+        paymentId: String,
+        expand: Array<String>,
+        endpoint: String,
+        entityType: Class<T>
+    ): T? {
+
+        return BackendOperation.ExpandOperation(this)
+            .post(context = context, paymentId = paymentId, expand = expand, endpoint = endpoint, entityType = entityType)
     }
 
     private suspend fun getTopLevelResources(context: Context): TopLevelResources {
