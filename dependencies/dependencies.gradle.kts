@@ -43,7 +43,7 @@ extra["libs"] = mapOf(
    "okhttp" to "com.squareup.okhttp3:okhttp:4.9.3",
    "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.9.3",
 
-   "robolectric" to "org.robolectric:robolectric:4.7.3",
+   "robolectric" to "org.robolectric:robolectric:4.8",
    "mockito-inline" to "org.mockito:mockito-inline:4.5.1",
    "mockito-kotlin" to "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
    "dexmaker-mockito-inline" to "com.linkedin.dexmaker:dexmaker-mockito-inline:2.28.1"
