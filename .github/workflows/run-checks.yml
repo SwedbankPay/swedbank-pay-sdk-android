@@ -16,3 +16,5 @@ jobs:
           java-version: '11'
       - name: Run Checks with Gradle
         run: ./gradlew check
+      - name: Check generating docs   
+        run: ./gradlew dokkaGfm  
