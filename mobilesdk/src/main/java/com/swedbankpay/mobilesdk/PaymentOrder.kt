@@ -166,7 +166,7 @@ data class PaymentOrder(
     }
     
     var isV3 
-        get() = productName == CHECKOUT_3
+        get() = productName?.equals(CHECKOUT_3, true) ?: false
         set(value) {
             productName = if (value) CHECKOUT_3 else null
         } 
