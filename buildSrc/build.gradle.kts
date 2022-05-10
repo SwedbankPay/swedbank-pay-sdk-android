@@ -13,4 +13,6 @@ dependencies {
     implementation(libs["kotlinx-serialization-json"]!!)
     implementation(libs["android-gradle-plugin"]!!)
     implementation(libs["jgit"]!!)
+
+    implementation("org.jetbrains.dokka:dokka-core:1.6.21")
 }
