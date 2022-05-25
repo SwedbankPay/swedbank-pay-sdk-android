@@ -25,6 +25,8 @@ To explore a working app using the SDK, see the [Example Project](https://github
 
 ## Onboarding / Quick intro
 
+After reading this, checkout [SwedbankPays Android SDK documentation][android-sdk-docs] for how to setup the app and more in-depth details.
+
 To start making payments you need four things:
 
 1. A Configuration object that describes how to communicate with your backend. To get started quickly a default implementation is provided, called MerchantBackendConfiguration.
