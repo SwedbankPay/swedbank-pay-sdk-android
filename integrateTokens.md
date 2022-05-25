@@ -6,7 +6,6 @@
 
 Before diving into advanced features you should have a working app and backend, that can handle purchases in debug-mode. This is described in detail in the [readme file][readme], and you can also look at the [Android Example app][example-app] as a reference.
 
-
 ## Payment tokens for later use
 
 A common practice is to store a credit-card for later use, e.g. for subscriptions, and charge every month. To make this safe & secure you let SwedbankPay store the payment information and only keep a reference, a payment token. This token can later be used to make purchases, and there are two types of tokens that can be created. One for subscriptions, and one for later unscheduled purchases. They are created the same way, by setting generateUnscheduledToken = true or generateRecurrenceToken = true, in the paymentOrder and then either making a purchase or verifying a purchase (set the operation property to PaymentOrderOperation.verify). 
@@ -23,7 +22,6 @@ val paymentOrder = PaymentOrder(
 ```
 
 When expanding the paid property of this verified or purchased payment, there is an array with tokens one can save for later use. Here is an abbreviated example of what is received:
-
 
 ``` JSON
 {
@@ -122,7 +120,6 @@ val paymentOrder = PaymentOrder(
 Now the payment menu will just show a purchase button and the payment method.
 ![Prefilled payment option image][one-click-image]
 
-
 [readme]: ./README.md
 [opengraph-image]:      https://repository-images.githubusercontent.com/209730241/aa264700-6d3d-11eb-99e1-0b40a9bb19be
 [example-app]: https://github.com/SwedbankPay/swedbank-pay-sdk-android
@@ -132,4 +129,3 @@ Now the payment menu will just show a purchase button and the payment method.
 [unscheduled]: https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/unscheduled
 [recur]: https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/recur
 [enterprise-payer-ref]: https://developer.swedbankpay.com/checkout-v3/enterprise/features/optional/enterprise-payer-reference
-

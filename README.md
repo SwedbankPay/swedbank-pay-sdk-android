@@ -29,10 +29,10 @@ After reading this, checkout [SwedbankPays Android SDK documentation][android-sd
 
 To start making payments you need four things:
 
-1. A Configuration object that describes how to communicate with your backend. To get started quickly a default implementation is provided, called MerchantBackendConfiguration.
-2. A paymentOrder that describes what to purchase, the cost, currency and similar information.
-3. Give that paymentOrder to an instance of a PaymentFragment and show it to the user.
-4. Observe the state of the PaymentViewModel to keep track of the payment process callbacks and wait for payment to succeed or fail.
+ 1. A Configuration object that describes how to communicate with your backend. To get started quickly a default implementation is provided, called MerchantBackendConfiguration.
+ 2. A paymentOrder that describes what to purchase, the cost, currency and similar information.
+ 3. Give that paymentOrder to an instance of a PaymentFragment and show it to the user.
+ 4. Observe the state of the PaymentViewModel to keep track of the payment process callbacks and wait for payment to succeed or fail.
 
 Instead of just talking about it we have provided you with an example app, showing you in detail how integration can be done. Use that as a reference when building your own solution:
 
@@ -40,7 +40,7 @@ Instead of just talking about it we have provided you with an example app, showi
 
 ### 1. Configuration details
 
-Using the MerchantBackendConfiguration you only need to provide the URL for your backend and header values for api key and an access token. Have a look at the configuration variable in [Environment.kt][EnvironmentConfig] in the example app for a reference.
+Using the MerchantBackendConfiguration you only need to provide the URL for your backend and header values for api key and an access token. Have a look at the configuration variable in [Environment.kt][environment-config] in the example app for a reference.
 
 The SDK will then communicate with your backend, expecting the same API as our example backends. You don't have to provide all of the API, making payments only require /paymentorders, but you will want to support /tokens and /patch soon as well. To get started you can look at our [backend example implementations][merchant_backend] which provides a complete set of functionality and describes in a very clear and easy manner how requests can be handled.
 
@@ -130,7 +130,7 @@ This is all you need to get started and accepting payments, the next step is to 
 
 For more in-depth information about how to integrate your Android app, please refer to [SwedbankPays Android SDK documentation][android-sdk-docs].
 
-Continue reading the [integrate tokens walkthrough][integrateTokens] for a continued discussion on payment tokens. These features are also well documented in Swedbank pay's developer portal, under "optional features".
+Continue reading the [integrate tokens walkthrough][integrate-tokens] for a continued discussion on payment tokens. These features are also well documented in Swedbank pay's developer portal, under "optional features".
 
 ## License
 
@@ -144,8 +144,8 @@ Swedbank Pay Android SDK is released under the [Apache 2.0 license](LICENSE).
 [dependabot-link]: https://dependabot.com
 [dependabot-badge]: https://api.dependabot.com/badges/status?host=github&repo=SwedbankPay/swedbank-pay-sdk-android
 [example-app]: https://github.com/SwedbankPay/swedbank-pay-sdk-android-example-app
-[EnvironmentConfig]: https://github.com/SwedbankPay/swedbank-pay-sdk-android-example-app/blob/main/app/src/main/java/com/swedbankpay/exampleapp/payment/Environment.kt#:~:text=MerchantBackendConfiguration.Builder
+[environment-config]: https://github.com/SwedbankPay/swedbank-pay-sdk-android-example-app/blob/main/app/src/main/java/com/swedbankpay/exampleapp/payment/Environment.kt#:~:text=MerchantBackendConfiguration.Builder
 [payment-fragment-builder]: https://github.com/SwedbankPay/swedbank-pay-sdk-android-example-app/blob/main/app/src/main/java/com/swedbankpay/exampleapp/products/ProductsViewModel.kt#:~:text=PaymentFragment.ArgumentsBuilder
 [android-sdk-docs]: https://developer.swedbankpay.com/modules-sdks/mobile-sdk/android
-[integrateTokens]: ./integrateTokens.md
+[integrate-tokens]: ./integrateTokens.md
 [merchant_backend]: https://github.com/SwedbankPay/swedbank-pay-sdk-mobile-example-merchant
