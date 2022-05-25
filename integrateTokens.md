@@ -78,7 +78,6 @@ val paymentOrder = PaymentOrder(
 
 Now the customer has the option to store card numbers or select one of the previously stored cards. More info in [the documentation][enterprise-payer-ref].
 
-
 ### PaymentsOnly
 
 All you have to do is to supply a unique identifier in the payerReference property of the payer, and set generatePaymentToken to true. Supply these in the paymentOrder when starting a new payment. 

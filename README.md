@@ -29,10 +29,10 @@ After reading this, checkout [SwedbankPays Android SDK documentation][android-sd
 
 To start making payments you need four things:
 
- 1. A Configuration object that describes how to communicate with your backend. To get started quickly a default implementation is provided, called MerchantBackendConfiguration.
- 2. A paymentOrder that describes what to purchase, the cost, currency and similar information.
- 3. Give that paymentOrder to an instance of a PaymentFragment and show it to the user.
- 4. Observe the state of the PaymentViewModel to keep track of the payment process callbacks and wait for payment to succeed or fail.
+1.  A Configuration object that describes how to communicate with your backend. To get started quickly a default implementation is provided, called MerchantBackendConfiguration.
+2.  A paymentOrder that describes what to purchase, the cost, currency and similar information.
+3.  Give that paymentOrder to an instance of a PaymentFragment and show it to the user.
+4.  Observe the state of the PaymentViewModel to keep track of the payment process callbacks and wait for payment to succeed or fail.
 
 Instead of just talking about it we have provided you with an example app, showing you in detail how integration can be done. Use that as a reference when building your own solution:
 

@@ -607,10 +607,7 @@ class PaymentTest {
             Assert.assertTrue(result?.unscheduled ?: false)
         }
     }
-
-    /**
-     * Expand payment order to get the payment token, and wait for it's result.
-     */
+    
     private fun getPaymentToken(paymentId: String): ExpandedPaymentOrder?  {
 
         var result: ExpandedPaymentOrder? = null
