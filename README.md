@@ -38,7 +38,7 @@ Instead of just talking about it we have provided you with an example app, showi
 
 ### 1. Configuration details
 
-Using the MerchantBackendConfiguration you only need to provide the URL for your backend and header values for api key and an access token. Have a look at the configuration variable in [Environment.kt][EnvironmentConfigConfig] in the example app for a reference.
+Using the MerchantBackendConfiguration you only need to provide the URL for your backend and header values for api key and an access token. Have a look at the configuration variable in [Environment.kt][EnvironmentConfig] in the example app for a reference.
 
 The SDK will then communicate with your backend, expecting the same API as our example backends. You don't have to provide all of the API, making payments only require /paymentorders, but you will want to support /tokens and /patch soon as well. To get started you can look at our [backend example implementations][merchant_backend] which provides a complete set of functionality and describes in a very clear and easy manner how requests can be handled.
 
@@ -46,11 +46,67 @@ Using the [Merchant example backend][merchant_backend] you can setup (for exampl
 
 ### 2. PaymentOrder details
 
-PaymentOrder is a data class with sensible defaults for most values, create one and use it when building a PaymentFragment to start the payment process.
+PaymentOrder is a data class with sensible defaults for most values, create one and use it when building a PaymentFragment to start the payment process. It can be created like this:
+
+``` Kotlin
+
+val paymentOrder = PaymentOrder(
+    currency = Currency.getInstance("SEK"),
+    amount = 1500L,
+    vatAmount = 375L,
+    description = "Test Purchase",
+    language = Language.SWEDISH,
+    urls = PaymentOrderUrls(context, backendUrl),
+    payeeInfo = PayeeInfo(
+        // ①
+        payeeName = "Merchant1",
+        productCategory = "A123",
+        orderReference = "or-123456"
+    ),
+    orderItems = listOf(
+        OrderItem(
+            reference = "P1",
+            name = "Product1",
+            type = ItemType.PRODUCT,
+            `class` = "ProductGroup1",
+            itemUrl = "https://example.com/products/123",
+            imageUrl = "https://example.com/product123.jpg",
+            description = "Product 1 description",
+            discountDescription = "Volume discount",
+            quantity = 4,
+            quantityUnit = "pcs",
+            unitPrice = 300L,
+            discountPrice = 200L,
+            vatPercent = 2500,
+            amount = 1000L,
+            vatAmount = 250L
+        )
+    )
+)
+
+```
 
 ### 3. Presenting the payment menu
 
-Give the PaymentOrder to the PaymentFragment as an argument and present it to the user. As a reference you can see how it was [implemented in the example app][payment-fragment-builder].
+Give the PaymentOrder to the PaymentFragment as an argument and present it to the user. As a reference you can see how it was [implemented in the example app][payment-fragment-builder], or build it like this:
+
+``` Kotlin
+
+val arguments = PaymentFragment.ArgumentsBuilder()
+    .checkoutV3(true)
+    .paymentOrder(paymentOrder)
+    .build()
+
+val paymentFragment = PaymentFragment()
+paymentFragment.arguments = arguments
+
+// Now use FragmentManager to show paymentFragment.
+// You can also make a navigation graph with PaymentFragment
+// and do something like
+// findNavController().navigate(R.id.showPaymentFragment, arguments)
+
+
+```
 
 ### 4. Observe PaymentViewModel's state
 
@@ -90,3 +146,4 @@ Swedbank Pay Android SDK is released under the [Apache 2.0 license](LICENSE).
 [payment-fragment-builder]: https://github.com/SwedbankPay/swedbank-pay-sdk-android-example-app/blob/main/app/src/main/java/com/swedbankpay/exampleapp/products/ProductsViewModel.kt#:~:text=PaymentFragment.ArgumentsBuilder
 [android-sdk-docs]: https://developer.swedbankpay.com/modules-sdks/mobile-sdk/android
 [integrateTokens]: ./integrateTokens.md
+[merchant_backend]: https://github.com/SwedbankPay/swedbank-pay-sdk-mobile-example-merchant
