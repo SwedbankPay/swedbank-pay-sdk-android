@@ -23,7 +23,6 @@ import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.lang.Exception
 import java.lang.Thread.sleep
 import java.util.*
 
@@ -64,6 +63,7 @@ class PaymentTest {
     private fun setupAgain() {
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
         scenario
+        sleep(1000)
     }
     
     @After
@@ -186,7 +186,9 @@ class PaymentTest {
             if (!storeCardOption.waitForExists(timeout)) {
                 return false
             }
-            storeCardOption.clickUntilCheckedAndAssert(timeout)
+            if (!storeCardOption.isChecked) {
+                storeCardOption.clickUntilCheckedAndAssert(timeout)
+            }
         }
 
         if (!webView.waitAndScrollUntilExists(creditCardOption, timeout)) {
@@ -437,7 +439,7 @@ class PaymentTest {
         val payer = PaymentOrderPayer(payerReference = payerReference)
         var order = paymentOrder.copy(generatePaymentToken = true, payer = payer)
         buildArguments(isV3 = true, paymentOrder = order)
-
+        
         val orderInfo = waitForAnyOrderInfo()
         Assert.assertNotNull(orderInfo?.id)
         val paymentId = orderInfo?.id!!
@@ -457,9 +459,10 @@ class PaymentTest {
         Assert.assertNotNull(expandedOrder?.paid?.tokens?.first()?.token)
         val token = expandedOrder?.paid?.tokens?.first()?.token!!
         order = paymentOrder.copy(generatePaymentToken = false, payer = payer, paymentToken = token)
-        
-        buildArguments(isV3 = true, paymentOrder = order)
+        //Now we must wait for BottomSheetBehavior.java to stop messaging the webview, otherwise test will crash. The error is in Google's code so not much we can do.
+        sleep(1000)
         teardown()
+        buildArguments(isV3 = true, paymentOrder = order)
         setupAgain()
         
         //now redo this with only "Pay SEK" button
@@ -545,15 +548,16 @@ class PaymentTest {
     }
 
     /**
-     * Test that we can perform a verifu request and set the recur and unscheduled tokens.
+     * Test that we can perform a verify request and set the recur and unscheduled tokens.
      */
     @Test
     fun testVerifyRecurTokenV3() {
         val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, generateRecurrenceToken = true, generateUnscheduledToken = true)
+        //val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, 
+        //    payer = PaymentOrderPayer(email = "leia.ahlstrom@payex.com", msisdn = "+46739000001", payerReference = "unique-identifier")
+        //)
         buildArguments(isV3 = true, paymentOrder = order)
         scenario
-        
-        //val oldId = "/psp/paymentorders/d14e582f-dbd5-42b4-f582-08da17b00645"
         
         // Remember the paymentId for later lookup
         Assert.assertTrue(webView.waitForExists(longTimeout))
@@ -603,11 +607,8 @@ class PaymentTest {
             Assert.assertTrue(result?.unscheduled ?: false)
         }
     }
-
-    /**
-     * Expand payment order to get the payment token, and wait for it's result.
-     */
-    fun getPaymentToken(paymentId: String): ExpandedPaymentOrder?  {
+    
+    private fun getPaymentToken(paymentId: String): ExpandedPaymentOrder?  {
 
         var result: ExpandedPaymentOrder? = null
         val conf = PaymentFragment.defaultConfiguration

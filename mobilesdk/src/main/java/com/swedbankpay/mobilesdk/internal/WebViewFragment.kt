@@ -54,9 +54,9 @@ internal class WebViewFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        webViewModel.javascriptDialogTags.observe(this, {
+        webViewModel.javascriptDialogTags.observe(this) {
             ensureJSDialogFragments(it)
-        })
+        }
     }
 
     override fun onCreateView(
@@ -149,7 +149,8 @@ internal class WebViewFragment : Fragment() {
             wrangleBottomSheet(bottomSheetBehavior, bottomSheetContainer, onBackPressedCallback)
         }
     }
-
+    
+    var previousBottomSheetBehaviorState = 0
     private fun observeBottomSheetState(
         bottomSheetBehavior: BottomSheetBehavior<*>,
         bottomSheetContainer: View,
@@ -160,6 +161,12 @@ internal class WebViewFragment : Fragment() {
                 wrangleBottomSheet(bottomSheetBehavior, bottomSheetContainer, onBackPressedCallback)
                 if (newState == BottomSheetBehavior.STATE_COLLAPSED
                     || newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    if (newState == previousBottomSheetBehaviorState) {
+                        //We hundred of these messages, and this prevents unnecessary removes, which can cause fatal errors if the messages are sent after the Fragment is removed.
+                        //The error is in Google's code, so not much we can do
+                        return
+                    }
+                    previousBottomSheetBehaviorState = newState
                     webViewModel.removeExtraWebView()
                 }
             }
