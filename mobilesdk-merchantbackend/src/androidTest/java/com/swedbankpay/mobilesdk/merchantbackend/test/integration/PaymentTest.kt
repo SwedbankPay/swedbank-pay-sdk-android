@@ -585,7 +585,7 @@ class PaymentTest {
                     result = conf?.expandOperation(
                         it.requireActivity().application,
                         paymentId,
-                        arrayOf<String>("paid"),
+                        arrayOf("paid"),
                         "tokens",
                         PaymentTokenResponse::class.java
                     )
@@ -620,7 +620,7 @@ class PaymentTest {
                     result = conf?.expandOperation(
                         it.requireActivity().application, 
                         paymentId, 
-                        arrayOf<String>("paid"), 
+                        arrayOf("paid"), 
                         "expand",
                         ExpandedPaymentOrder::class.java
                     )

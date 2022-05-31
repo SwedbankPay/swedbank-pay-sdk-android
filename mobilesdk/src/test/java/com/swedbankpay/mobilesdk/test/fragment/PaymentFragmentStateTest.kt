@@ -1,12 +1,15 @@
 package com.swedbankpay.mobilesdk.test.fragment
 
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.test.TestConstants
 import org.junit.After
@@ -14,6 +17,7 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric.buildActivity
 import org.robolectric.annotation.Config
 
 /**
@@ -52,6 +56,17 @@ class PaymentFragmentStateTest {
     @Before
     fun setup() {
         PaymentFragment.defaultConfiguration = configuration
+        /*
+        TODO: Try to figure out how to make tests run with gradle:7.2.0
+        
+        https://stackoverflow.com/questions/53629258/instrumental-testing-with-fragmentscenario
+        
+         
+        val context = InstrumentationRegistry.getInstrumentation().getTargetContext()
+        val intent = Intent(ApplicationProvider.getApplicationContext(), FragmentTestActivity::class.java)
+
+        activityScenario = ActivityScenario.launch<FragmentTestActivity>(intent)
+        */
         activityScenario = ActivityScenario.launch(FragmentTestActivity::class.java)
     }
 

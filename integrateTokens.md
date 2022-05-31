@@ -107,7 +107,7 @@ Create the next payment order with the token like this:
 ``` Kotlin
 
 val paymentOrder = PaymentOrder(
-    paymentToken = true,
+    paymentToken = retrieved-token,
     payer = PaymentOrderPayer(
         payerReference = unique-identifier
     )
