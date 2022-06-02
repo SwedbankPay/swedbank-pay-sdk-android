@@ -171,6 +171,7 @@ class PaymentTest {
         cvv: String,
         storeCard: Boolean = false,
         useConfirmButton: Boolean = false,
+        scaPaymentButton: Boolean = false,
         paymentFlowHandler: () -> Unit
     ): Boolean {
         if (!webView.waitForExists(timeout)) {
@@ -210,14 +211,6 @@ class PaymentTest {
             return false
         }
         cvvInput.inputText(cvv)
-        return fullPaymentTestAttemptCont(useConfirmButton, paymentFlowHandler) 
-    }
-    
-    /// Due to codacy complexity rules we must break up this function. All it does is to continue the process.
-    private fun fullPaymentTestAttemptCont(
-        useConfirmButton: Boolean = false,
-        paymentFlowHandler: () -> Unit
-    ): Boolean {
         
         if (useConfirmButton) {
             if (!webView.waitAndScrollUntilExists(confirmButton, longTimeout)) { return false }
@@ -227,6 +220,19 @@ class PaymentTest {
             if (!payButton.click()) { return false }
         }
 
+        if (scaPaymentButton) {
+            if (!webView.waitAndScrollUntilExists(scaContinueButton, timeout)) { return false }
+            if (!scaContinueButton.click()) { return false }
+        }
+        
+        return fullPaymentTestAttemptCont(paymentFlowHandler) 
+    }
+    
+    /// Due to codacy complexity rules we must break up this function. All it does is to continue the process.
+    private fun fullPaymentTestAttemptCont(
+        paymentFlowHandler: () -> Unit
+    ): Boolean {
+        
         paymentFlowHandler()
         lastResult = waitForResult()
         if (lastResult == null) { return false }
@@ -239,13 +245,14 @@ class PaymentTest {
         cvv: String,
         storeCard: Boolean = false,
         useConfirmButton: Boolean = false,
+        scaPaymentButton: Boolean = false,
         paymentFlowHandler: () -> Unit
     ) {
         scenario
         
         var success = false
         for (cardNumber in cardNumbers) {
-            success = fullPaymentTestAttempt(cardNumber, cvv, storeCard, useConfirmButton, paymentFlowHandler)
+            success = fullPaymentTestAttempt(cardNumber, cvv, storeCard, useConfirmButton, scaPaymentButton, paymentFlowHandler)
             if (success) {
                 break
             }
@@ -449,11 +456,9 @@ class PaymentTest {
         fullPaymentTest(
             cardNumbers = scaCardNumbers,
             cvv = scaCvv,
-            storeCard = true
-        ) {
-            webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
-            Assert.assertTrue(scaContinueButton.click())
-        }
+            storeCard = true,
+            scaPaymentButton = true
+        ) {}
         
         expandedOrder = getPaymentToken(paymentId)?.paymentOrder
         Assert.assertNotNull(expandedOrder?.paid?.tokens?.first()?.token)
