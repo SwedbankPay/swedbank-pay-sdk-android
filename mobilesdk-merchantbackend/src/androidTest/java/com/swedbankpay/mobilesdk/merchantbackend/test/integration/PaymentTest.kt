@@ -3,6 +3,7 @@ package com.swedbankpay.mobilesdk.merchantbackend.test.integration
 import android.content.Context
 import android.os.Bundle
 import android.os.SystemClock
+import android.util.Log
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.widget.Button
@@ -32,7 +33,7 @@ import java.util.*
  */
 class PaymentTest {
     private companion object {
-        const val timeout = 30_000L
+        const val timeout = 40_000L
         const val longTimeout = 120_000L
         // Key input to the web view is laggy, and without a delay between keystrokes, the input may get jumbled.
         const val keyInputDelay = 500L
@@ -527,18 +528,27 @@ class PaymentTest {
         buildArguments(isV3 = false, paymentOrder = order)
         scenario
         webView.assertExist(timeout)
+        //somehow the tests break here (only github actions), a delay seems to work but what could be the cause? 
+        sleep(100)
         yourEmailInput.assertExist(timeout)
-
+        
+        var didPass = false
         for (i in 0..4) {
+            
             val orderInfo = waitForNewOrderInfo()
             if (orderInfo?.instrument == null) {
                 continue
             }
+            didPass = true
             scenario.onFragment {
                 val vm = it.requireActivity().paymentViewModel
                 vm.updatePaymentOrder(PaymentInstruments.CREDIT_CARD)
             }
+            sleep(100)
             break
+        }
+        assert(didPass) {
+            "Did not get order info from paymentViewModel"
         }
         creditCardOption.assertExist(timeout)
         //we managed to change the instrument!

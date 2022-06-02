@@ -14,5 +14,6 @@ internal fun retryUntilTrue(timeout: Long, condition: () -> Boolean): Boolean {
         elapsedTime = SystemClock.uptimeMillis() - start
         SystemClock.sleep(pollInterval)
     }
+    if (condition()) return true
     return false
 }
