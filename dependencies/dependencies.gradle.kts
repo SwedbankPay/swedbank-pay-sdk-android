@@ -10,7 +10,7 @@ extra["libs"] = mapOf(
    "kotlinx-serialization-json" to "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3",
 
    "androidx-appcompat" to "androidx.appcompat:appcompat:1.4.2",
-   "androidx-core-ktx" to "androidx.core:core-ktx:1.7.0",
+   "androidx-core-ktx" to "androidx.core:core-ktx:1.8.0",
    "fragment-ktx" to "androidx.fragment:fragment-ktx:1.4.1",
    "fragment-testing" to "androidx.fragment:fragment-testing:1.4.1",
    "lifecycle-livedata-ktx" to "androidx.lifecycle:lifecycle-livedata-ktx:2.4.1",
