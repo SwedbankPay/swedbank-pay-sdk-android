@@ -105,7 +105,7 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         var instrument: String? = null
         val availableInstruments: List<String>?
         var setInstrument: Link.PaymentOrderSetInstrument? = null
-        var paymentId = paymentOrderIn.paymentOrder?.id ?: null
+        var paymentId = paymentOrderIn.paymentOrder?.id
         if (paymentOrder.isV3) {
             // expand instruments to find operation for V3
             availableInstruments = paymentOrderIn.paymentOrder?.availableInstruments

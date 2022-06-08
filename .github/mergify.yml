@@ -11,6 +11,7 @@ pull_request_rules:
       - author~=^dependabot(|-preview)\[bot\]$
       - '#commits-behind=0' # Only merge up to date pull requests
       - check-success=connected_check
+      - check-success=check
       - check-success=Codacy Static Code Analysis
       - check-success=license/cla
     actions:
