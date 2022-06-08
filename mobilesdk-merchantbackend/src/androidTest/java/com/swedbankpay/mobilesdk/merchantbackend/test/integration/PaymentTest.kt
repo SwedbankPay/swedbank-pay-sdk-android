@@ -50,8 +50,8 @@ class PaymentTest {
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
         paymentOrder = PaymentOrder(
             currency = Currency.getInstance("SEK"),
-            amount = 100L,
-            vatAmount = 20L,
+            amount = 200L,
+            vatAmount = 50L,
             description = "Test Purchase",
             urls = PaymentOrderUrls(
                 ApplicationProvider.getApplicationContext<Context>(),
@@ -80,8 +80,8 @@ class PaymentTest {
     // paymentOrder gets regenerated every run
     private var paymentOrder: PaymentOrder = PaymentOrder(
         currency = Currency.getInstance("SEK"),
-        amount = 100L,
-        vatAmount = 20L,
+        amount = 200L,
+        vatAmount = 50L,
         description = "Test Purchase",
         urls = PaymentOrderUrls(
             ApplicationProvider.getApplicationContext<Context>(),
