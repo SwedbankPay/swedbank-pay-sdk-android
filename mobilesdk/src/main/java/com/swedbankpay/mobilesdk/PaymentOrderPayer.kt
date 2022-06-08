@@ -43,12 +43,17 @@ data class PaymentOrderPayer(
      * Using `payerReference` is required when generating or using payment tokens (N.B! not
      * recurrence tokens).
      *
-     * If you use `payerReference`, you should not set the other fields.
      * The `payerReference` must be unique to a payer, and your backend must have access control
      * such that is ensures that the `payerReference` is owned by the authenticated user.
      * It is usually best to only populate this field in the backend.
      */
-    @SerializedName("payerReference") val payerReference: String? = null
+    @SerializedName("payerReference") val payerReference: String? = null,
+
+    /**
+     * Using the enterprise implementation a merchant can supply SSN to identify a payer which will allow for one-click payments, a more frictionless payment process.
+     */
+    @SerializedName("nationalIdentifier") val nationalIdentifier: PayerNationalIdentifier? = null,
+    
 ) : Parcelable {
     @Suppress("unused")
     class Builder {
@@ -56,17 +61,20 @@ data class PaymentOrderPayer(
         private var email: String? = null
         private var msisdn: String? = null
         private var payerReference: String? = null
+        private var nationalIdentifier: PayerNationalIdentifier? = null
 
         fun consumerProfileRef(consumerProfileRef: String?) = apply { this.consumerProfileRef = consumerProfileRef }
         fun email(email: String?) = apply { this.email = email }
         fun msisdn(msisdn: String?) = apply { this.msisdn = msisdn }
         fun payerReference(payerReference: String?) = apply { this.payerReference = payerReference}
-
+        fun nationalIdentifier(nationalIdentifier: PayerNationalIdentifier?) = apply { this.nationalIdentifier = nationalIdentifier }
+        
         fun build() = PaymentOrderPayer(
             consumerProfileRef = consumerProfileRef,
             email = email,
             msisdn = msisdn,
-            payerReference = payerReference
+            payerReference = payerReference,
+            nationalIdentifier = nationalIdentifier
         )
     }
 }

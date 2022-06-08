@@ -3,7 +3,6 @@ package com.swedbankpay.mobilesdk.merchantbackend.test.integration
 import android.content.Context
 import android.os.Bundle
 import android.os.SystemClock
-import android.util.Log
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.widget.Button
@@ -48,6 +47,10 @@ class PaymentTest {
      */
     fun setup() {
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
+        refreshPaymentOrder()
+    }
+    
+    private fun refreshPaymentOrder() {
         paymentOrder = PaymentOrder(
             currency = Currency.getInstance("SEK"),
             amount = 200L,
@@ -63,6 +66,7 @@ class PaymentTest {
     /// to repeat tests within the same run
     private fun setupAgain() {
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
+        refreshPaymentOrder()
         scenario
         sleep(1000)
     }
@@ -75,6 +79,7 @@ class PaymentTest {
         scenario.moveToState(Lifecycle.State.DESTROYED)
         _scenario = null
         PaymentFragment.defaultConfiguration = null
+        paymentTestConfiguration = paymentOnlyTestConfiguration
     }
     
     // paymentOrder gets regenerated every run
@@ -142,7 +147,9 @@ class PaymentTest {
 
     private val payButton
         get() = cardDetails.getChild(UiSelector().className(Button::class.java).textStartsWith("Pay "))
-
+    private val prefilledCardButton
+        get() = cardDetails.getChild(UiSelector().textContains("••••"))
+    
     private val confirmButton
         get() = cardDetails.getChild(UiSelector().className(Button::class.java).textStartsWith("Confirm"))
 
@@ -178,7 +185,7 @@ class PaymentTest {
         if (!webView.waitForExists(timeout)) {
             return false
         }
-
+        
         if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
             return false
         }
@@ -227,6 +234,31 @@ class PaymentTest {
         }
         
         return fullPaymentTestAttemptCont(paymentFlowHandler) 
+    }
+
+    private fun prefilledPaymentAttempt(): Boolean {
+        if (!webView.waitForExists(timeout)) {
+            return false
+        }
+
+        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
+            return false
+        }
+        cardOption.clickUntilCheckedAndAssert(timeout)
+        if (!prefilledCardButton.waitForExists(timeout)) {
+            return false
+        }
+        prefilledCardButton.click()
+        
+        if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { return false }
+        if (!payButton.click()) { return false }
+        /*
+        if (scaPaymentButton) {
+            if (!webView.waitAndScrollUntilExists(scaContinueButton, timeout)) { return false }
+            if (!scaContinueButton.click()) { return false }
+        }
+         */
+        return true
     }
     
     /// Due to codacy complexity rules we must break up this function. All it does is to continue the process.
@@ -422,22 +454,27 @@ class PaymentTest {
      */
     @Test
     fun itShouldSucceedAtPaymentWithoutScaV3() {
-        fullPaymentTest(
-            cardNumbers = nonScaCardNumbers,
-            cvv = noScaCvv
-        ) {}
+        for (config in testConfigurations) {
+            teardown()
+            paymentTestConfiguration = config
+            setupAgain()
+            fullPaymentTest(
+                cardNumbers = nonScaCardNumbers,
+                cvv = noScaCvv
+            ) {}
+        }
     }
     
     // generate a payerReference with a random string
     private val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
     private var payerReference: String = ""
-
+    
     /**
      * Check that paymentTokens work with V3
      * https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
      */
     @Test
-    fun testPaymentTokensV3() {
+    fun testOneClickV3PaymentsOnly() {
         // create a random string as reference
         payerReference = (1..15)
             .map { Random().nextInt(charPool.size) }
@@ -479,6 +516,49 @@ class PaymentTest {
 
         webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
         Assert.assertTrue(scaContinueButton.click())
+        
+        lastResult = waitForResult()
+        Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
+        Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
+    }
+    
+    /**
+     * Check that oneClick works for enterprise merchants in V3
+     * https://developer.swedbankpay.com/checkout-v3/enterprise/features/optional/enterprise-payer-reference
+     */
+    @Test
+    fun testOneClickV3EnterpriseNationalIdentifier() {
+        
+        paymentTestConfiguration = enterpriseTestConfiguration
+        PaymentFragment.defaultConfiguration = paymentTestConfiguration
+        
+        // create a random string as reference
+        payerReference = (1..15)
+            .map { Random().nextInt(charPool.size) }
+            .map(charPool::get)
+            .joinToString("")
+
+        //val payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
+        var payer = PaymentOrderPayer(
+            payerReference = payerReference, nationalIdentifier = PayerNationalIdentifier(
+                socialSecurityNumber = "199710202392", countryCode = "SE"
+            )
+        )
+        //payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
+        var order = paymentOrder.copy(payer = payer)
+        buildArguments(isV3 = true, paymentOrder = order)
+        scenario
+        sleep(1000)
+        
+        if (!prefilledPaymentAttempt()) {
+            Assert.fail("Did not find prefilled values")
+        }
+        
+        // Since we don't know if the stored card is an sca-card or not, we can't assert on the continue button
+        // perhaps speed thing up by getting the result first...
+        if (scaContinueButton.waitForExists(timeout)) {
+            Assert.assertTrue(scaContinueButton.click())
+        }
         
         lastResult = waitForResult()
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
@@ -600,7 +680,7 @@ class PaymentTest {
                     result = conf?.expandOperation(
                         it.requireActivity().application,
                         paymentId,
-                        arrayOf<String>("paid"),
+                        arrayOf("paid"),
                         "tokens",
                         PaymentTokenResponse::class.java
                     )
@@ -635,7 +715,7 @@ class PaymentTest {
                     result = conf?.expandOperation(
                         it.requireActivity().application, 
                         paymentId, 
-                        arrayOf<String>("paid"), 
+                        arrayOf("paid"), 
                         "expand",
                         ExpandedPaymentOrder::class.java
                     )
