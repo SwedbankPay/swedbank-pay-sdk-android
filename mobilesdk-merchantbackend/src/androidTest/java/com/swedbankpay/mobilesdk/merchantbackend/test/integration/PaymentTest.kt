@@ -32,6 +32,7 @@ import java.util.*
  */
 class PaymentTest {
     private companion object {
+        const val shortTimeout = 8_000L
         const val timeout = 40_000L
         const val longTimeout = 120_000L
         // Key input to the web view is laggy, and without a delay between keystrokes, the input may get jumbled.
@@ -200,6 +201,12 @@ class PaymentTest {
             }
         }
 
+        if (!fillInCardDetails(cardNumber, cvv, useConfirmButton, scaPaymentButton)) { return false }
+        
+        return fullPaymentTestAttemptCont(paymentFlowHandler) 
+    }
+    
+    private fun fillInCardDetails(cardNumber: String, cvv: String, useConfirmButton: Boolean, scaPaymentButton: Boolean): Boolean {
         if (!webView.waitAndScrollUntilExists(creditCardOption, timeout)) {
             return false
         }
@@ -219,7 +226,7 @@ class PaymentTest {
             return false
         }
         cvvInput.inputText(cvv)
-        
+
         if (useConfirmButton) {
             if (!webView.waitAndScrollUntilExists(confirmButton, longTimeout)) { return false }
             if (!confirmButton.click()) { return false }
@@ -232,19 +239,11 @@ class PaymentTest {
             if (!webView.waitAndScrollUntilExists(scaContinueButton, timeout)) { return false }
             if (!scaContinueButton.click()) { return false }
         }
-        
-        return fullPaymentTestAttemptCont(paymentFlowHandler) 
+        return true
     }
 
     private fun prefilledPaymentAttempt(): Boolean {
-        if (!webView.waitForExists(timeout)) {
-            return false
-        }
-
-        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
-            return false
-        }
-        cardOption.clickUntilCheckedAndAssert(timeout)
+        
         if (!prefilledCardButton.waitForExists(timeout)) {
             return false
         }
@@ -523,46 +522,97 @@ class PaymentTest {
     }
     
     /**
+     * Check that oneClick works for enterprise merchants in V3 using social security numbers.
+     */
+    @Test
+    fun testOneClickV3EnterpriseNationalIdentifier() {
+
+        paymentTestConfiguration = enterpriseTestConfiguration
+        PaymentFragment.defaultConfiguration = paymentTestConfiguration
+
+        // create a random string as reference
+        payerReference = (1..15)
+            .map { Random().nextInt(charPool.size) }
+            .map(charPool::get)
+            .joinToString("")
+        
+        val payer = PaymentOrderPayer(
+            payerReference = payerReference, nationalIdentifier = PayerNationalIdentifier(
+                socialSecurityNumber = "199710202392", countryCode = "SE"
+            )
+        )
+        prefilledCardPurchase(payer)
+    }
+
+    /**
      * Check that oneClick works for enterprise merchants in V3
      * https://developer.swedbankpay.com/checkout-v3/enterprise/features/optional/enterprise-payer-reference
      */
     @Test
-    fun testOneClickV3EnterpriseNationalIdentifier() {
-        
+    fun testOneClickV3EnterprisePayerReference() {
         paymentTestConfiguration = enterpriseTestConfiguration
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
-        
+
         // create a random string as reference
         payerReference = (1..15)
             .map { Random().nextInt(charPool.size) }
             .map(charPool::get)
             .joinToString("")
 
-        //val payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
-        var payer = PaymentOrderPayer(
-            payerReference = payerReference, nationalIdentifier = PayerNationalIdentifier(
-                socialSecurityNumber = "199710202392", countryCode = "SE"
-            )
-        )
-        //payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
-        var order = paymentOrder.copy(payer = payer)
+        val payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
+        prefilledCardPurchase(payer)
+    }
+    
+    private fun prefilledCardPurchase(payer: PaymentOrderPayer, knownReturningPayer: Boolean = false) {
+        
+        val order = paymentOrder.copy(payer = payer)
         buildArguments(isV3 = true, paymentOrder = order)
         scenario
         sleep(1000)
-        
+
+        Assert.assertTrue(waitForCard())
+        // Check if the user has card details, otherwise fill them in and retry. If the payer is known, prefilled options must exist.
+        if (!knownReturningPayer && creditCardOption.waitForExists(5)) {
+            if (!fillInCardDetails(nonScaCardNumbers.first(), noScaCvv,
+                    useConfirmButton = false,
+                    scaPaymentButton = false
+                )) {
+                Assert.fail("Could not find prefilled options, and could not fill in new card")
+            }
+            teardown()
+
+            paymentTestConfiguration = enterpriseTestConfiguration
+            PaymentFragment.defaultConfiguration = paymentTestConfiguration
+            prefilledCardPurchase(payer, knownReturningPayer = true)
+            return
+        }
+            
         if (!prefilledPaymentAttempt()) {
             Assert.fail("Did not find prefilled values")
         }
         
         // Since we don't know if the stored card is an sca-card or not, we can't assert on the continue button
         // perhaps speed thing up by getting the result first...
-        if (scaContinueButton.waitForExists(timeout)) {
+        if (scaContinueButton.waitForExists(shortTimeout)) {
             Assert.assertTrue(scaContinueButton.click())
         }
         
         lastResult = waitForResult()
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
+    }
+    
+    private fun waitForCard(): Boolean {
+        if (!webView.waitForExists(timeout)) {
+            return false
+        }
+        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
+            return false
+        }
+        
+        return retryUntilTrue(timeout) {
+            cardOption.click()
+        }
     }
 
     /**
@@ -637,6 +687,7 @@ class PaymentTest {
             val vm = it.requireActivity().paymentViewModel
             vm.updatePaymentOrder(PaymentInstruments.INVOICE_SE)
         }
+        SystemClock.sleep(2000)
         webView.assertExist(timeout)
         SystemClock.sleep(1000)
         yourEmailInput.assertExist(timeout)
