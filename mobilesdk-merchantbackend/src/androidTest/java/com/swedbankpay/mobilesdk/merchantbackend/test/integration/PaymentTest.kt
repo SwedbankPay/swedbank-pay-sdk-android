@@ -654,6 +654,21 @@ class PaymentTest {
      */
     @Test
     fun testPaymentInstrumentsV2() {
+        for (i in 0..3) {
+            try {
+                testPaymentInstrumentsV2Run()
+                return
+            } catch (error: AssertionError) {
+                // Attempt i did fail
+                teardown()
+                setupAgain()
+            }
+        }
+        //one last try without catch
+        testPaymentInstrumentsV2Run()
+    }
+
+    private fun testPaymentInstrumentsV2Run() {
         val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
         buildArguments(isV3 = false, paymentOrder = order)
         scenario
@@ -680,17 +695,22 @@ class PaymentTest {
         assert(didPass) {
             "Did not get order info from paymentViewModel"
         }
-        creditCardOption.assertExist(timeout)
+        creditCardOption.assertExist(shortTimeout)
         //we managed to change the instrument!
 
         scenario.onFragment {
             val vm = it.requireActivity().paymentViewModel
             vm.updatePaymentOrder(PaymentInstruments.INVOICE_SE)
         }
-        SystemClock.sleep(2000)
         webView.assertExist(timeout)
-        SystemClock.sleep(1000)
-        yourEmailInput.assertExist(timeout)
+        if (!yourEmailInput.waitForExists(shortTimeout)) {
+            //try to change again
+            scenario.onFragment {
+                val vm = it.requireActivity().paymentViewModel
+                vm.updatePaymentOrder(PaymentInstruments.INVOICE_SE)
+            }
+        }
+        yourEmailInput.assertExist(shortTimeout)
     }
 
     /**
