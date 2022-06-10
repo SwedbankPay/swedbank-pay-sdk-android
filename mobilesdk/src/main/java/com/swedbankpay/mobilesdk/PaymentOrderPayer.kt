@@ -67,6 +67,9 @@ data class PaymentOrderPayer(
         fun email(email: String?) = apply { this.email = email }
         fun msisdn(msisdn: String?) = apply { this.msisdn = msisdn }
         fun payerReference(payerReference: String?) = apply { this.payerReference = payerReference}
+        /**
+         * Using the enterprise implementation a merchant can supply SSN to identify a payer which will allow for one-click payments, a more frictionless payment process.
+         */
         fun nationalIdentifier(nationalIdentifier: PayerNationalIdentifier?) = apply { this.nationalIdentifier = nationalIdentifier }
         
         fun build() = PaymentOrderPayer(
