@@ -41,7 +41,7 @@ extra["libs"] = mapOf(
    "threetenbp" to "org.threeten:threetenbp:1.6.0",
 
    "okhttp" to "com.squareup.okhttp3:okhttp:4.10.0",
-   "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.9.3",
+   "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.10.0",
 
    "robolectric" to "org.robolectric:robolectric:4.8.1",
    "mockito-inline" to "org.mockito:mockito-inline:4.6.0",
