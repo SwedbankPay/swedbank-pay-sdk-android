@@ -40,7 +40,7 @@ extra["libs"] = mapOf(
    "joda-time" to "joda-time:joda-time:2.10.14",
    "threetenbp" to "org.threeten:threetenbp:1.6.0",
 
-   "okhttp" to "com.squareup.okhttp3:okhttp:4.9.3",
+   "okhttp" to "com.squareup.okhttp3:okhttp:4.10.0",
    "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.9.3",
 
    "robolectric" to "org.robolectric:robolectric:4.8.1",
