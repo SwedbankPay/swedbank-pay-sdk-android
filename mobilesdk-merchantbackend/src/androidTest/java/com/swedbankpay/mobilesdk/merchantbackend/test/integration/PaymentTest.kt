@@ -6,6 +6,8 @@ import android.os.SystemClock
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
 import androidx.fragment.app.testing.FragmentScenario
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.lifecycle.Lifecycle
@@ -149,9 +151,15 @@ class PaymentTest {
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
     private val storeCardOption
         get() = webView.getChild(UiSelector().textStartsWith("Store this card").checkable(true))
+    private val whitelistMerchantBox
+        get() = webView.getChild(UiSelector().resourceIdMatches("whitelistMerchant").checkable(true))
+    private val sendOtpButton
+        get() = webView.getChild(UiSelector().resourceIdMatches("sendOtp"))
 
     private val yourEmailInput
         get() = webView.getChild(UiSelector().textStartsWith("Your e-mail"))
+    private val ndmChallangeInput
+        get() = webView.getChild(UiSelector().className(EditText::class.java).instance(0))
     
     private fun UiObject.inputText(text: String) {
         this.text = text
@@ -219,13 +227,33 @@ class PaymentTest {
             if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { return false }
             if (!payButton.click()) { return false }
         }
-
+        
         if (scaPaymentButton) {
-            if (!webView.waitAndScrollUntilExists(scaContinueButton, timeout)) { return false }
-            if (!scaContinueButton.click()) { return false }
+            if (!continueSCAPayment()) return false
         }
         
         return fullPaymentTestAttemptCont(paymentFlowHandler) 
+    }
+    
+    /// sometimes the ndm-challange form appears here instead of regular 3d-secure. We need to wait to see which appears
+    private fun continueSCAPayment(): Boolean {
+        val existingObject = waitForOne(timeout, arrayOf(scaContinueButton, whitelistMerchantBox))
+        if (scaContinueButton == existingObject) {
+            if (!scaContinueButton.click()) { return false }
+        }
+        else if (ndmChallangeInput.waitForExists(timeout)) {
+            ndmChallangeInput.inputText("1234")
+            if (!whitelistMerchantBox.isChecked) {
+                whitelistMerchantBox.clickUntilCheckedAndAssert(timeout)
+            }
+            retryUntilTrue(timeout) {
+                sendOtpButton.click()
+            }
+        }
+        else {
+            return false
+        }
+        return true
     }
     
     /// Due to codacy complexity rules we must break up this function. All it does is to continue the process.
@@ -476,8 +504,7 @@ class PaymentTest {
         webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, timeout)
         Assert.assertTrue(payButton.click())
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
-        Assert.assertTrue(scaContinueButton.click())
+        continueSCAPayment()
         
         lastResult = waitForResult()
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
