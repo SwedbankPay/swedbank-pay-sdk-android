@@ -27,6 +27,7 @@ import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import java.lang.Thread.sleep
 import java.util.*
 
 /**
@@ -319,11 +320,15 @@ class WebViewFragmentTest {
             "confirm('$confirmText')",
             "true"
         ) {
+            sleep(1000)
+            
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(confirmText)))
+            
             scenario.apply {
                 recreate()
+                
                 runBlocking { waitForDialogFragment() }
             }
             onView(withId(android.R.id.message))
