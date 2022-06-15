@@ -1,9 +1,9 @@
 // Declare all dependency versions here so that they are consistent between subprojects.
 
 extra["libs"] = mapOf(
-   "android-gradle-plugin" to "com.android.tools.build:gradle:7.2.1",
+   "android-gradle-plugin" to "com.android.tools.build:gradle:7.1.3",
 
-   "jgit" to "org.eclipse.jgit:org.eclipse.jgit:6.1.0.202203080745-r",
+   "jgit" to "org.eclipse.jgit:org.eclipse.jgit:6.2.0.202206071550-r",
 
    "kotlinx-coroutines-core" to "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2",
    "kotlinx-coroutines-android" to "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2",
@@ -40,8 +40,8 @@ extra["libs"] = mapOf(
    "joda-time" to "joda-time:joda-time:2.10.14",
    "threetenbp" to "org.threeten:threetenbp:1.6.0",
 
-   "okhttp" to "com.squareup.okhttp3:okhttp:4.9.3",
-   "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.9.3",
+   "okhttp" to "com.squareup.okhttp3:okhttp:4.10.0",
+   "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.10.0",
 
    "robolectric" to "org.robolectric:robolectric:4.8.1",
    "mockito-inline" to "org.mockito:mockito-inline:4.6.1",
