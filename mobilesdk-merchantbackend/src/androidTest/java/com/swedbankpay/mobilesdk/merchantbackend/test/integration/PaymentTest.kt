@@ -6,6 +6,7 @@ import android.os.SystemClock
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.widget.Button
+import android.widget.EditText
 import androidx.fragment.app.testing.FragmentScenario
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.lifecycle.Lifecycle
@@ -158,9 +159,15 @@ class PaymentTest {
         get() = webView.getChild(UiSelector().className(Button::class.java).text("Continue"))
     private val storeCardOption
         get() = webView.getChild(UiSelector().textStartsWith("Store this card").checkable(true))
+    private val whitelistMerchantBox
+        get() = webView.getChild(UiSelector().resourceIdMatches("whitelistMerchant").checkable(true))
+    private val sendOtpButton
+        get() = webView.getChild(UiSelector().resourceIdMatches("sendOtp"))
 
     private val yourEmailInput
         get() = webView.getChild(UiSelector().textStartsWith("Your e-mail"))
+    private val ndmChallangeInput
+        get() = webView.getChild(UiSelector().className(EditText::class.java).instance(0))
     
     private fun UiObject.inputText(text: String) {
         this.text = text
@@ -180,8 +187,7 @@ class PaymentTest {
         cvv: String,
         storeCard: Boolean = false,
         useConfirmButton: Boolean = false,
-        scaPaymentButton: Boolean = false,
-        paymentFlowHandler: () -> Unit
+        scaPaymentButton: Boolean = false
     ): Boolean {
         if (!webView.waitForExists(timeout)) {
             return false
@@ -203,7 +209,7 @@ class PaymentTest {
 
         if (!fillInCardDetails(cardNumber, cvv, useConfirmButton, scaPaymentButton)) { return false }
         
-        return fullPaymentTestAttemptCont(paymentFlowHandler) 
+        return fullPaymentTestAttemptCont() 
     }
     
     private fun fillInCardDetails(cardNumber: String, cvv: String, useConfirmButton: Boolean, scaPaymentButton: Boolean): Boolean {
@@ -234,10 +240,9 @@ class PaymentTest {
             if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { return false }
             if (!payButton.click()) { return false }
         }
-
+        
         if (scaPaymentButton) {
-            if (!webView.waitAndScrollUntilExists(scaContinueButton, timeout)) { return false }
-            if (!scaContinueButton.click()) { return false }
+            if (!continueSCAPayment()) return false
         }
         return true
     }
@@ -260,12 +265,30 @@ class PaymentTest {
         return true
     }
     
+    /// sometimes the ndm-challange form appears here instead of regular 3d-secure. We need to wait to see which appears
+    private fun continueSCAPayment(): Boolean {
+        val existingObject = waitForOne(timeout, arrayOf(scaContinueButton, whitelistMerchantBox))
+        if (scaContinueButton == existingObject) {
+            if (!scaContinueButton.click()) { return false }
+        }
+        else if (ndmChallangeInput.waitForExists(timeout)) {
+            ndmChallangeInput.inputText("1234")
+            if (!whitelistMerchantBox.isChecked) {
+                whitelistMerchantBox.clickUntilCheckedAndAssert(timeout)
+            }
+            retryUntilTrue(timeout) {
+                sendOtpButton.click()
+            }
+        }
+        else {
+            return false
+        }
+        return true
+    }
+    
     /// Due to codacy complexity rules we must break up this function. All it does is to continue the process.
-    private fun fullPaymentTestAttemptCont(
-        paymentFlowHandler: () -> Unit
-    ): Boolean {
+    private fun fullPaymentTestAttemptCont(): Boolean {
         
-        paymentFlowHandler()
         lastResult = waitForResult()
         if (lastResult == null) { return false }
         return true
@@ -277,14 +300,13 @@ class PaymentTest {
         cvv: String,
         storeCard: Boolean = false,
         useConfirmButton: Boolean = false,
-        scaPaymentButton: Boolean = false,
-        paymentFlowHandler: () -> Unit
+        scaPaymentButton: Boolean = false
     ) {
         scenario
         
         var success = false
         for (cardNumber in cardNumbers) {
-            success = fullPaymentTestAttempt(cardNumber, cvv, storeCard, useConfirmButton, scaPaymentButton, paymentFlowHandler)
+            success = fullPaymentTestAttempt(cardNumber, cvv, storeCard, useConfirmButton, scaPaymentButton)
             if (success) {
                 break
             }
@@ -325,8 +347,6 @@ class PaymentTest {
                 webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, longTimeout)
                 Assert.assertTrue(payButton.click())
             }
-
-            paymentFlowHandler()
             lastResult = waitForResult()
         }
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
@@ -416,7 +436,7 @@ class PaymentTest {
         fullPaymentTest(
             cardNumbers = nonScaCardNumbers,
             cvv = noScaCvv
-        ) {}
+        )
     }
 
     /**
@@ -427,11 +447,9 @@ class PaymentTest {
         buildArguments(isV3 = false)
         fullPaymentTest(
             cardNumbers = scaCardNumbers,
-            cvv = scaCvv
-        ) {
-            webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
-            Assert.assertTrue(scaContinueButton.click())
-        }
+            cvv = scaCvv,
+            scaPaymentButton = true
+        )
     }
 
     /**
@@ -441,11 +459,9 @@ class PaymentTest {
     fun itShouldSucceedAtPaymentWithScaV3() {
         fullPaymentTest(
             cardNumbers = scaCardNumbers,
-            cvv = scaCvv
-        ) {
-            webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
-            Assert.assertTrue(scaContinueButton.click())
-        }
+            cvv = scaCvv,
+            scaPaymentButton = true
+        )
     }
 
     /**
@@ -460,7 +476,7 @@ class PaymentTest {
             fullPaymentTest(
                 cardNumbers = nonScaCardNumbers,
                 cvv = noScaCvv
-            ) {}
+            )
         }
     }
     
@@ -495,7 +511,7 @@ class PaymentTest {
             cvv = scaCvv,
             storeCard = true,
             scaPaymentButton = true
-        ) {}
+        )
         
         expandedOrder = getPaymentToken(paymentId)?.paymentOrder
         Assert.assertNotNull(expandedOrder?.paid?.tokens?.first()?.token)
@@ -513,8 +529,7 @@ class PaymentTest {
         webView.waitAndScrollFullyIntoViewAndAssertExists(payButton, timeout)
         Assert.assertTrue(payButton.click())
 
-        webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
-        Assert.assertTrue(scaContinueButton.click())
+        continueSCAPayment()
         
         lastResult = waitForResult()
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
@@ -735,11 +750,9 @@ class PaymentTest {
         fullPaymentTest(
             cardNumbers = scaCardNumbers,
             cvv = scaCvv,
-            useConfirmButton = true
-        ) {
-            webView.waitAndScrollFullyIntoViewAndAssertExists(scaContinueButton, timeout)
-            Assert.assertTrue(scaContinueButton.click())
-        }
+            useConfirmButton = true,
+            scaPaymentButton = true
+        )
 
         val conf = PaymentFragment.defaultConfiguration
         scenario.onFragment {
