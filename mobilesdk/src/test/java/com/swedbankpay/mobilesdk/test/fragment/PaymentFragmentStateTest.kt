@@ -54,6 +54,7 @@ class PaymentFragmentStateTest {
     @Before
     fun setup() {
         PaymentFragment.defaultConfiguration = configuration
+        
         try {
             activityScenario = ActivityScenario.launch(FragmentTestActivity::class.java)
         } catch (err: RuntimeException) {

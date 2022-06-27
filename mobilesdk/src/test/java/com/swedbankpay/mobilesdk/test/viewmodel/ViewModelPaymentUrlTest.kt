@@ -118,6 +118,7 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
      */
     @Test
     fun itShouldReloadPaymentMenuHtmlAfterCallbackActivityStartedWithPaymentUrl() {
+
         observing(viewModel.currentHtmlContent) {
             val callbackIntent =
                 Intent(ApplicationProvider.getApplicationContext(), CallbackActivity::class.java)
@@ -126,7 +127,7 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
             ActivityScenario.launch<CallbackActivity>(callbackIntent).use {}
             verify(
                 it,
-                times(2)
+                atLeast(1)
             ).onChanged(argThat {
                 getWebViewPage(application) == TestConstants.paymentorderHtmlPage
             })
