@@ -7,6 +7,7 @@ plugins {
     signing
 }
 
+val javaVersion = JavaVersion.VERSION_11
 android {
     compileSdk = 31
 
@@ -19,11 +20,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
     }
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        jvmTarget = javaVersion.toString()
     }
 }
 
