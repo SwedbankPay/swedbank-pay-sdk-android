@@ -14,7 +14,9 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
+import java.lang.RuntimeException
 
 /**
  * Test that PaymentFragment state is reported correctly
@@ -43,8 +45,8 @@ class PaymentFragmentStateTest {
     }
 
     private val arguments = PaymentFragment.ArgumentsBuilder().build()
-
-    private lateinit var activityScenario: ActivityScenario<FragmentTestActivity>
+    private var activityScenario: ActivityScenario<FragmentTestActivity>? = null
+    private var activity: FragmentTestActivity? = null
 
     /**
      * Set up test configuration and start scenario
@@ -52,7 +54,12 @@ class PaymentFragmentStateTest {
     @Before
     fun setup() {
         PaymentFragment.defaultConfiguration = configuration
-        activityScenario = ActivityScenario.launch(FragmentTestActivity::class.java)
+        try {
+            activityScenario = ActivityScenario.launch(FragmentTestActivity::class.java)
+        } catch (err: RuntimeException) {
+            //The newer method isn't finding the test-activity, fallback to the deprecated but working method
+            activity = Robolectric.setupActivity(FragmentTestActivity::class.java)
+        }
     }
 
     /**
@@ -60,7 +67,8 @@ class PaymentFragmentStateTest {
      */
     @After
     fun teardown() {
-        activityScenario.close()
+        activityScenario?.close()
+        activity = null
         PaymentFragment.defaultConfiguration = null
     }
 
@@ -69,8 +77,14 @@ class PaymentFragmentStateTest {
         val observer = Observer<PaymentViewModel.State> {
             value = it
         }
-
-        activityScenario.onActivity {
+        
+        activityScenario?.onActivity {
+            it.paymentViewModel.state.run {
+                observeForever(observer)
+                removeObserver(observer)
+            }
+        }
+        activity?.let {
             it.paymentViewModel.state.run {
                 observeForever(observer)
                 removeObserver(observer)
@@ -81,7 +95,16 @@ class PaymentFragmentStateTest {
     }
 
     private fun addFragment() {
-        activityScenario.onActivity {
+        activityScenario?.onActivity {
+            val fragment = PaymentFragment()
+            fragment.arguments = arguments
+            it.supportFragmentManager.commitNow {
+                add(android.R.id.content, fragment, FRAGMENT_TAG)
+                setMaxLifecycle(fragment, Lifecycle.State.INITIALIZED)
+            }
+        }
+
+        activity?.let {
             val fragment = PaymentFragment()
             fragment.arguments = arguments
             it.supportFragmentManager.commitNow {
@@ -92,7 +115,15 @@ class PaymentFragmentStateTest {
     }
 
     private fun resumeFragment() {
-        activityScenario.onActivity {
+        activityScenario?.onActivity {
+            it.supportFragmentManager.apply {
+                val fragment = checkNotNull(findFragmentByTag(FRAGMENT_TAG))
+                commitNow {
+                    setMaxLifecycle(fragment, Lifecycle.State.RESUMED)
+                }
+            }
+        }
+        activity?.let {
             it.supportFragmentManager.apply {
                 val fragment = checkNotNull(findFragmentByTag(FRAGMENT_TAG))
                 commitNow {
@@ -103,7 +134,15 @@ class PaymentFragmentStateTest {
     }
 
     private fun removeFragment() {
-        activityScenario.onActivity {
+        activityScenario?.onActivity {
+            it.supportFragmentManager.apply {
+                val fragment = checkNotNull(findFragmentByTag(FRAGMENT_TAG))
+                commitNow {
+                    remove(fragment)
+                }
+            }
+        }
+        activity?.let {
             it.supportFragmentManager.apply {
                 val fragment = checkNotNull(findFragmentByTag(FRAGMENT_TAG))
                 commitNow {
@@ -153,6 +192,8 @@ class PaymentFragmentStateTest {
      */
     @Test
     fun itShouldRemainIdleWhenAddedAgain() {
+        
+
         addFragment()
         resumeFragment()
         removeFragment()
