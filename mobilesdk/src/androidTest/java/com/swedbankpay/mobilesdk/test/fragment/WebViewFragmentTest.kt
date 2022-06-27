@@ -75,6 +75,8 @@ class WebViewFragmentTest {
             "alert('$alertText')",
             ""
         ) {
+            sleep(1000)
+            
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(alertText)))
@@ -189,6 +191,8 @@ class WebViewFragmentTest {
             "prompt('$promptText', '$promptHint')",
             promptValue
         ) {
+            sleep(1000)
+            
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
@@ -217,6 +221,8 @@ class WebViewFragmentTest {
             "prompt('$promptText', '$promptHint') === null ? 'null' : 'non-null'",
             "null"
         ) {
+            sleep(1000)
+            
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
@@ -244,6 +250,8 @@ class WebViewFragmentTest {
             "prompt('$promptText', '$promptHint') === null ? 'null' : 'non-null'",
             "non-null"
         ) {
+            sleep(1000)
+            
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
@@ -271,6 +279,8 @@ class WebViewFragmentTest {
             "prompt('$promptText', '$promptHint') === null ? 'null' : 'non-null'",
             "null"
         ) {
+            sleep(1000)
+            
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
@@ -291,6 +301,8 @@ class WebViewFragmentTest {
             "alert('$alertText')",
             ""
         ) {
+            sleep(1000)
+            
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(alertText)))
@@ -353,6 +365,8 @@ class WebViewFragmentTest {
             "prompt('$promptText', '$promptHint')",
             promptValue
         ) {
+            sleep(1000)
+            
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
