@@ -541,7 +541,22 @@ class PaymentTest {
      */
     @Test
     fun testOneClickV3EnterpriseNationalIdentifier() {
-
+        for (i in 0..3) {
+            try {
+                runOneClickV3EnterpriseNationalIdentifier()
+                return
+            } catch (error: AssertionError) {
+                // Attempt i did fail
+                teardown()
+                setupAgain()
+            }
+        }
+        //one last try without catch
+        runOneClickV3EnterpriseNationalIdentifier()
+    }
+    
+    fun runOneClickV3EnterpriseNationalIdentifier() {
+        
         paymentTestConfiguration = enterpriseTestConfiguration
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
 
@@ -733,6 +748,21 @@ class PaymentTest {
      */
     @Test
     fun testVerifyRecurTokenV3() {
+        for (i in 0..3) {
+            try {
+                runVerifyRecurTokenV3()
+                return
+            } catch (error: AssertionError) {
+                // Attempt i did fail
+                teardown()
+                setupAgain()
+            }
+        }
+        //one last try without catch
+        runVerifyRecurTokenV3()
+    }
+    
+    private fun runVerifyRecurTokenV3() {
         val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, generateRecurrenceToken = true, generateUnscheduledToken = true)
         //val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, 
         //    payer = PaymentOrderPayer(email = "leia.ahlstrom@payex.com", msisdn = "+46739000001", payerReference = "unique-identifier")
