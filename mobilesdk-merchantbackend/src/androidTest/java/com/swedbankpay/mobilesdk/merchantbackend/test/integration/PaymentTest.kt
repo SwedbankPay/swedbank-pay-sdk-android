@@ -555,7 +555,7 @@ class PaymentTest {
         runOneClickV3EnterpriseNationalIdentifier()
     }
     
-    fun runOneClickV3EnterpriseNationalIdentifier() {
+    private fun runOneClickV3EnterpriseNationalIdentifier() {
         
         paymentTestConfiguration = enterpriseTestConfiguration
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
