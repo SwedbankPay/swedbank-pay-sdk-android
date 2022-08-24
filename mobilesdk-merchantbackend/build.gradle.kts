@@ -9,11 +9,11 @@ plugins {
 
 val javaVersion = JavaVersion.VERSION_11
 android {
-    compileSdk = 31
+    compileSdk = 32
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 31
+        targetSdk = 32
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("proguard-rules.pro")

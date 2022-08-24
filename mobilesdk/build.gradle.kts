@@ -9,11 +9,11 @@ plugins {
 
 val javaVersion = JavaVersion.VERSION_11
 android {
-    compileSdk = 31
+    compileSdk = 33
 
     defaultConfig {
         minSdk = 21 // Required by okhttp (from version 3.13 onwards)
-        targetSdk = 31
+        targetSdk = 33
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("proguard-rules.pro")
