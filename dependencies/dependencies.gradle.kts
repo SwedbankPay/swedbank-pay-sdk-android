@@ -11,7 +11,7 @@ extra["libs"] = mapOf(
 
    "androidx-appcompat" to "androidx.appcompat:appcompat:1.5.0",
    "androidx-core-ktx" to "androidx.core:core-ktx:1.8.0",
-   "fragment-ktx" to "androidx.fragment:fragment-ktx:1.5.2",
+   "fragment-ktx" to "androidx.fragment:fragment-ktx:1.5.3",
    "fragment-testing" to "androidx.fragment:fragment-testing:1.5.2",
    "lifecycle-livedata-ktx" to "androidx.lifecycle:lifecycle-livedata-ktx:2.5.1",
    "lifecycle-viewmodel-ktx" to "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1",
