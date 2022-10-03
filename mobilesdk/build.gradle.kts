@@ -1,3 +1,5 @@
+//val kotlin_version: String by extra
+val kotlin_version:String = "1.7.20"
 plugins {
     id("com.android.library")
     kotlin("android")
@@ -5,6 +7,9 @@ plugins {
     id("org.jetbrains.dokka")
     `maven-publish`
     signing
+}
+apply {
+    plugin("kotlin-android")
 }
 
 val javaVersion = JavaVersion.VERSION_11
@@ -79,8 +84,13 @@ dependencies {
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.`dexmaker-mockito-inline`)
     androidTestImplementation(libs.`mockito-kotlin`)
+    implementation("androidx.core:core-ktx:+")
+    implementation(kotlin("stdlib-jdk7", kotlin_version))
 }
 
 publishToMaven(
     description = "A library for integrating Swedbank Pay payments into an Android application"
 )
+repositories {
+    mavenCentral()
+}

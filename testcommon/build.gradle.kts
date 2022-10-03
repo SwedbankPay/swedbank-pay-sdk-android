@@ -1,6 +1,11 @@
+//val kotlin_version: String by extra
+val kotlin_version:String = "1.7.20"
 plugins {
     id("com.android.library")
     kotlin("android")
+}
+apply {
+    plugin("kotlin-android")
 }
 
 val javaVersion = JavaVersion.VERSION_11
@@ -26,4 +31,9 @@ dependencies {
     implementation(libs.`lifecycle-livedata-ktx`)
     implementation(libs.junit)
     implementation(libs.`mockito-kotlin`)
+    implementation("androidx.core:core-ktx:+")
+    implementation(kotlin("stdlib-jdk7", kotlin_version))
+}
+repositories {
+    mavenCentral()
 }

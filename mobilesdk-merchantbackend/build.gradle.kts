@@ -1,3 +1,5 @@
+//val kotlin_version: String by extra
+val kotlin_version:String = "1.7.20"   //project.extra["kotlin_version"] as String 
 plugins {
     id("com.android.library")
     kotlin("android")
@@ -6,14 +8,17 @@ plugins {
     `maven-publish`
     signing
 }
+apply {
+    plugin("kotlin-android")
+}
 
 val javaVersion = JavaVersion.VERSION_11
 android {
-    compileSdk = 32
+    compileSdk = 33
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 32
+        targetSdk = 33
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("proguard-rules.pro")
@@ -57,8 +62,13 @@ dependencies {
     androidTestImplementation(libs.`androidx-test-runner`)
     androidTestImplementation(libs.uiautomator)
     androidTestImplementation(libs.junit)
+    implementation("androidx.core:core-ktx:+")
+    implementation(kotlin("stdlib-jdk7", kotlin_version))   //project.extra["kotlin_version"] as String))
 }
 
 publishToMaven(
     description = "Utilities for interfacing the Swedbank Pay Android SDK with a Merchant Backend API backend"
 )
+repositories {
+    mavenCentral()
+}
