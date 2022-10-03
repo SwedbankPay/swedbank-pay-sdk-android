@@ -685,7 +685,7 @@ class PaymentTest {
 
     /**
      * Test that instruments still work in v2
-     */
+     * we don't need to test this anymore, focus on V3
     @Test
     fun testPaymentInstrumentsV2() {
         for (i in 0..3) {
@@ -701,7 +701,8 @@ class PaymentTest {
         //one last try without catch
         testPaymentInstrumentsV2Run()
     }
-
+     */
+    
     private fun testPaymentInstrumentsV2Run() {
         val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
         buildArguments(isV3 = false, paymentOrder = order)
