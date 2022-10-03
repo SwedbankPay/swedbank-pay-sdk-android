@@ -110,7 +110,7 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             // expand instruments to find operation for V3
             availableInstruments = paymentOrderIn.paymentOrder?.availableInstruments
             val currentInstrument = paymentOrder.instrument
-            if (currentInstrument != null && availableInstruments != null && availableInstruments.contains(currentInstrument)) {
+            if (currentInstrument != null && availableInstruments != null) {    //why was this part of the clause? && availableInstruments.contains(currentInstrument)
                 instrument = currentInstrument
             } 
             
