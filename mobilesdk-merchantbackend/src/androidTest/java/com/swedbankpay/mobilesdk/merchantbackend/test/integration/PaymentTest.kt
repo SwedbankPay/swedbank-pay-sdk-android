@@ -34,8 +34,8 @@ import java.util.*
 class PaymentTest {
     private companion object {
         const val shortTimeout = 8_000L
-        const val timeout = 40_000L
-        const val longTimeout = 120_000L
+        const val timeout = 20_000L
+        const val longTimeout = 60_000L
         // Key input to the web view is laggy, and without a delay between keystrokes, the input may get jumbled.
         const val keyInputDelay = 500L
         const val expiryDate = "1230"
@@ -164,8 +164,8 @@ class PaymentTest {
     private val sendOtpButton
         get() = webView.getChild(UiSelector().resourceIdMatches("sendOtp"))
 
-    //private val yourEmailInput
-    //    get() = webView.getChild(UiSelector().textStartsWith("Your e-mail"))
+    private val yourEmailInput
+        get() = webView.getChild(UiSelector().textStartsWith("Your e-mail"))
     
     private val yourEmailInputOther
         get() = webView.getChild(UiSelector().textStartsWith("Your email"))
@@ -654,24 +654,27 @@ class PaymentTest {
      */
     @Test
     fun testPaymentInstrumentsV3() {
-        for (i in 0..5) {
+        for (i in 0..6) {
             try {
-                testPaymentInstrumentsV3Run()
+                testPaymentInstrumentsV3Run((i % 2) == 0)
                 return
             } catch (err: Throwable) {
-                print("Still error!")
+                //Still error, try again.
+                teardown()
+                PaymentFragment.defaultConfiguration = paymentTestConfiguration
             }
         }
-        testPaymentInstrumentsV3Run()
+        testPaymentInstrumentsV3Run(true)
     }
 
-    fun testPaymentInstrumentsV3Run() {
-        val instrument = PaymentInstruments.CREDIT_ACCOUNT
+    private fun testPaymentInstrumentsV3Run(useCreditAccount: Boolean) {
+        val instrument = if (useCreditAccount) PaymentInstruments.CREDIT_ACCOUNT else PaymentInstruments.INVOICE_SE
+        val emailInput = if (useCreditAccount) yourEmailInputOther else yourEmailInput
         val order = paymentOrder.copy(instrument = instrument)
         buildArguments(isV3 = true, paymentOrder = order)
         scenario
         webView.assertExist(timeout)
-        yourEmailInputOther.assertExist(timeout)
+        emailInput.assertExist(timeout)
         
         for (i in 0..4) {
             val orderInfo = waitForNewOrderInfo()
@@ -693,7 +696,7 @@ class PaymentTest {
         }
         webView.assertExist(timeout)
         SystemClock.sleep(1000)
-        yourEmailInputOther.assertExist(timeout)
+        emailInput.assertExist(timeout)
     }
 
     /**
