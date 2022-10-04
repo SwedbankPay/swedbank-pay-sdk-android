@@ -545,7 +545,7 @@ class PaymentTest {
      */
     @Test
     fun testOneClickV3EnterpriseNationalIdentifier() {
-        for (i in 0..3) {
+        for (i in 0..6) {
             try {
                 runOneClickV3EnterpriseNationalIdentifier()
                 return
