@@ -166,6 +166,9 @@ class PaymentTest {
 
     private val yourEmailInput
         get() = webView.getChild(UiSelector().textStartsWith("Your e-mail"))
+    private val yourEmailInputOther
+        get() = webView.getChild(UiSelector().textStartsWith("Your email"))
+    
     private val ndmChallangeInput
         get() = webView.getChild(UiSelector().className(EditText::class.java).instance(0))
     
@@ -650,11 +653,12 @@ class PaymentTest {
      */
     @Test
     fun testPaymentInstrumentsV3() {
-        val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
+        val instrument = PaymentInstruments.CREDIT_ACCOUNT
+        val order = paymentOrder.copy(instrument = instrument)
         buildArguments(isV3 = true, paymentOrder = order)
         scenario
         webView.assertExist(timeout)
-        yourEmailInput.assertExist(timeout)
+        yourEmailInputOther.assertExist(timeout)
         
         for (i in 0..4) {
             val orderInfo = waitForNewOrderInfo()
@@ -667,21 +671,21 @@ class PaymentTest {
             }
             break
         }
-        creditCardOption.assertExist(timeout)
+        creditCardOption.assertExist(shortTimeout)
         //we managed to change the instrument!
 
         scenario.onFragment {
             val vm = it.requireActivity().paymentViewModel
-            vm.updatePaymentOrder(PaymentInstruments.INVOICE_SE)
+            vm.updatePaymentOrder(instrument)
         }
         webView.assertExist(timeout)
         SystemClock.sleep(1000)
-        yourEmailInput.assertExist(timeout)
+        yourEmailInputOther.assertExist(timeout)
     }
 
     /**
      * Test that instruments still work in v2
-     */
+     * we don't need to test this anymore, focus on V3
     @Test
     fun testPaymentInstrumentsV2() {
         for (i in 0..3) {
@@ -697,7 +701,8 @@ class PaymentTest {
         //one last try without catch
         testPaymentInstrumentsV2Run()
     }
-
+     */
+    
     private fun testPaymentInstrumentsV2Run() {
         val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
         buildArguments(isV3 = false, paymentOrder = order)
