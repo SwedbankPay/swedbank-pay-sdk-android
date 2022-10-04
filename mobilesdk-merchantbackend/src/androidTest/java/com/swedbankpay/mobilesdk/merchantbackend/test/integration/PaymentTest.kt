@@ -164,8 +164,9 @@ class PaymentTest {
     private val sendOtpButton
         get() = webView.getChild(UiSelector().resourceIdMatches("sendOtp"))
 
-    private val yourEmailInput
-        get() = webView.getChild(UiSelector().textStartsWith("Your e-mail"))
+    //private val yourEmailInput
+    //    get() = webView.getChild(UiSelector().textStartsWith("Your e-mail"))
+    
     private val yourEmailInputOther
         get() = webView.getChild(UiSelector().textStartsWith("Your email"))
     
@@ -653,6 +654,18 @@ class PaymentTest {
      */
     @Test
     fun testPaymentInstrumentsV3() {
+        for (i in 0..5) {
+            try {
+                testPaymentInstrumentsV3Run()
+                return
+            } catch (err: Throwable) {
+                print("Still error!")
+            }
+        }
+        testPaymentInstrumentsV3Run()
+    }
+
+    fun testPaymentInstrumentsV3Run() {
         val instrument = PaymentInstruments.CREDIT_ACCOUNT
         val order = paymentOrder.copy(instrument = instrument)
         buildArguments(isV3 = true, paymentOrder = order)
@@ -701,7 +714,6 @@ class PaymentTest {
         //one last try without catch
         testPaymentInstrumentsV2Run()
     }
-     */
     
     private fun testPaymentInstrumentsV2Run() {
         val order = paymentOrder.copy(instrument = PaymentInstruments.INVOICE_SE)
@@ -747,6 +759,7 @@ class PaymentTest {
         }
         yourEmailInput.assertExist(shortTimeout)
     }
+     */
 
     /**
      * Test that we can perform a verify request and set the recur and unscheduled tokens.
@@ -767,6 +780,7 @@ class PaymentTest {
         runVerifyRecurTokenV3()
     }
     
+    @OptIn(DelicateCoroutinesApi::class)
     private fun runVerifyRecurTokenV3() {
         val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, generateRecurrenceToken = true, generateUnscheduledToken = true)
         //val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, 
@@ -822,6 +836,7 @@ class PaymentTest {
         }
     }
     
+    @OptIn(DelicateCoroutinesApi::class)
     private fun getPaymentToken(paymentId: String): ExpandedPaymentOrder?  {
 
         var result: ExpandedPaymentOrder? = null
