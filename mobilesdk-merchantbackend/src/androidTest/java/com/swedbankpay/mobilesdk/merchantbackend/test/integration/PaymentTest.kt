@@ -627,7 +627,7 @@ class PaymentTest {
         
         // Since we don't know if the stored card is an sca-card or not, we can't assert on the continue button
         // perhaps speed thing up by getting the result first...
-        if (scaContinueButton.waitForExists(shortTimeout)) {
+        if (scaContinueButton.waitForExists(timeout)) {
             Assert.assertTrue(scaContinueButton.click())
         }
         
