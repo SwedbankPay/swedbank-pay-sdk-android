@@ -17,8 +17,14 @@ jobs:
       - name: Run Connected Checks
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 28
+          api-level: 33
           target: google_apis
           arch: x86_64
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 4096
           script: ./gradlew connectedCheck
+      - name: Unit tests results
+        uses: actions/upload-artifact@v1
+        with:
+          name: unit-tests-results
+          path: /Users/runner/work/swedbank-pay-sdk-android/swedbank-pay-sdk-android/mobilesdk-merchantbackend/build/reports/androidTests/connected/index.html
+          
