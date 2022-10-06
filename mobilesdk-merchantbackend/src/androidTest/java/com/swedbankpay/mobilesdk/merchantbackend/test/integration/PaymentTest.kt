@@ -687,7 +687,8 @@ class PaymentTest {
             }
             break
         }
-        creditCardOption.assertExist(shortTimeout)
+        
+        creditCardOption.assertExist(longTimeout)
         //we managed to change the instrument!
 
         scenario.onFragment {
