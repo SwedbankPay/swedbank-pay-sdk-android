@@ -250,22 +250,19 @@ class PaymentTest {
         return true
     }
 
-    private fun prefilledPaymentAttempt(): Boolean {
-        
-        if (!prefilledCardButton.waitForExists(timeout)) {
-            return false
-        }
+    private fun prefilledPaymentAttempt() {
+
+        prefilledCardButton.assertExist(timeout, "Could not find prefilledCardButton")
         prefilledCardButton.click()
         
-        if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { return false }
-        if (!payButton.click()) { return false }
+        if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { Assert.fail("Could not scroll payButton in prefilledPayment") }
+        if (!payButton.click()) { Assert.fail("Could not click payButton in prefilledPayment") }
         /*
         if (scaPaymentButton) {
             if (!webView.waitAndScrollUntilExists(scaContinueButton, timeout)) { return false }
             if (!scaContinueButton.click()) { return false }
         }
          */
-        return true
     }
     
     /// sometimes the ndm-challange form appears here instead of regular 3d-secure. We need to wait to see which appears
@@ -620,10 +617,8 @@ class PaymentTest {
             prefilledCardPurchase(payer, knownReturningPayer = true)
             return
         }
-            
-        if (!prefilledPaymentAttempt()) {
-            Assert.fail("Did not find prefilled values")
-        }
+
+        prefilledPaymentAttempt()
         
         // Since we don't know if the stored card is an sca-card or not, we can't assert on the continue button
         // perhaps speed thing up by getting the result first...
@@ -631,7 +626,7 @@ class PaymentTest {
             Assert.assertTrue("scaContinueButton could not be clicked", scaContinueButton.click())
         }
         
-        lastResult = waitForResult(longTimeout)
+        lastResult = waitForResult(timeout)
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
     }
