@@ -33,8 +33,7 @@ import java.util.*
  */
 class PaymentTest {
     private companion object {
-        const val shortTimeout = 8_000L
-        const val timeout = 20_000L
+        const val timeout = 30_000L
         const val longTimeout = 60_000L
         // Key input to the web view is laggy, and without a delay between keystrokes, the input may get jumbled.
         const val keyInputDelay = 500L
@@ -251,22 +250,19 @@ class PaymentTest {
         return true
     }
 
-    private fun prefilledPaymentAttempt(): Boolean {
-        
-        if (!prefilledCardButton.waitForExists(timeout)) {
-            return false
-        }
+    private fun prefilledPaymentAttempt() {
+
+        prefilledCardButton.assertExist(timeout, "Could not find prefilledCardButton")
         prefilledCardButton.click()
         
-        if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { return false }
-        if (!payButton.click()) { return false }
+        if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { Assert.fail("Could not scroll payButton in prefilledPayment") }
+        if (!payButton.click()) { Assert.fail("Could not click payButton in prefilledPayment") }
         /*
         if (scaPaymentButton) {
             if (!webView.waitAndScrollUntilExists(scaContinueButton, timeout)) { return false }
             if (!scaContinueButton.click()) { return false }
         }
          */
-        return true
     }
     
     /// sometimes the ndm-challange form appears here instead of regular 3d-secure. We need to wait to see which appears
@@ -522,7 +518,7 @@ class PaymentTest {
         val token = expandedOrder?.paid?.tokens?.first()?.token!!
         order = paymentOrder.copy(generatePaymentToken = false, payer = payer, paymentToken = token)
         //Now we must wait for BottomSheetBehavior.java to stop messaging the webview, otherwise test will crash. The error is in Google's code so not much we can do.
-        sleep(1000)
+        sleep(2000)
         teardown()
         buildArguments(isV3 = true, paymentOrder = order)
         setupAgain()
@@ -535,9 +531,9 @@ class PaymentTest {
 
         continueSCAPayment()
         
-        lastResult = waitForResult()
+        lastResult = waitForResult(longTimeout)
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
-        Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
+        Assert.assertEquals("PaymentState is not complete", PaymentViewModel.State.COMPLETE, lastResult)
     }
     
     /**
@@ -584,6 +580,7 @@ class PaymentTest {
      */
     @Test
     fun testOneClickV3EnterprisePayerReference() {
+        
         paymentTestConfiguration = enterpriseTestConfiguration
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
 
@@ -594,7 +591,13 @@ class PaymentTest {
             .joinToString("")
 
         val payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
-        prefilledCardPurchase(payer)
+        try {
+            
+            prefilledCardPurchase(payer)
+        } catch (error: Throwable) {
+            error.printStackTrace()
+            throw error
+        }
     }
     
     private fun prefilledCardPurchase(payer: PaymentOrderPayer, knownReturningPayer: Boolean = false) {
@@ -602,11 +605,12 @@ class PaymentTest {
         val order = paymentOrder.copy(payer = payer)
         buildArguments(isV3 = true, paymentOrder = order)
         scenario
-        sleep(1000)
+        sleep(2000)
 
-        Assert.assertTrue(waitForCard())
+        waitForCard()
+        
         // Check if the user has card details, otherwise fill them in and retry. If the payer is known, prefilled options must exist.
-        if (!knownReturningPayer && creditCardOption.waitForExists(5)) {
+        if (!knownReturningPayer && creditCardOption.waitForExists(timeout)) {
             if (!fillInCardDetails(nonScaCardNumbers.first(), noScaCvv,
                     useConfirmButton = false,
                     scaPaymentButton = false
@@ -620,33 +624,33 @@ class PaymentTest {
             prefilledCardPurchase(payer, knownReturningPayer = true)
             return
         }
-            
-        if (!prefilledPaymentAttempt()) {
-            Assert.fail("Did not find prefilled values")
-        }
+
+        prefilledPaymentAttempt()
         
         // Since we don't know if the stored card is an sca-card or not, we can't assert on the continue button
         // perhaps speed thing up by getting the result first...
-        if (scaContinueButton.waitForExists(shortTimeout)) {
-            Assert.assertTrue(scaContinueButton.click())
+        if (scaContinueButton.waitForExists(timeout)) {
+            Assert.assertTrue("scaContinueButton could not be clicked", scaContinueButton.click())
         }
         
-        lastResult = waitForResult()
+        lastResult = waitForResult(timeout)
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
     }
     
-    private fun waitForCard(): Boolean {
+    private fun waitForCard() {
         if (!webView.waitForExists(timeout)) {
-            return false
-        }
-        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
-            return false
+            Assert.fail("No webview while waiting for card")
         }
         
-        return retryUntilTrue(timeout) {
+        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
+            Assert.fail("Could not scroll to see cardOption while waiting for card")
+        }
+        
+        val didClick = retryUntilTrue(longTimeout) {
             cardOption.click()
         }
+        Assert.assertTrue("Could not click cardOption while waiting for card", didClick)
     }
 
     /**

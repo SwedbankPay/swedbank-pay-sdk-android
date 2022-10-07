@@ -3,9 +3,10 @@ package com.swedbankpay.mobilesdk.merchantbackend.test.integration.util
 import androidx.test.uiautomator.UiObject
 import org.junit.Assert
 
-internal fun UiObject.assertExist(timeout: Long) {
+internal fun UiObject.assertExist(timeout: Long, errorMessage: String? = null) {
+    val message = errorMessage ?: "Could not check $selector"
     Assert.assertTrue(
-        "Could not check $selector",
+        message,
         waitForExists(timeout)
     )
 }
