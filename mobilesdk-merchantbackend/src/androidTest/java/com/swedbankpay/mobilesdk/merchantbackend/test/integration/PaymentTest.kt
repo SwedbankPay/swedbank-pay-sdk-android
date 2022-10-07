@@ -603,7 +603,8 @@ class PaymentTest {
         scenario
         sleep(2000)
 
-        Assert.assertTrue("Wait for card failed", waitForCard())
+        waitForCard()
+        
         // Check if the user has card details, otherwise fill them in and retry. If the payer is known, prefilled options must exist.
         if (!knownReturningPayer && creditCardOption.waitForExists(timeout)) {
             if (!fillInCardDetails(nonScaCardNumbers.first(), noScaCvv,
@@ -630,22 +631,24 @@ class PaymentTest {
             Assert.assertTrue("scaContinueButton could not be clicked", scaContinueButton.click())
         }
         
-        lastResult = waitForResult()
+        lastResult = waitForResult(longTimeout)
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
     }
     
-    private fun waitForCard(): Boolean {
+    private fun waitForCard() {
         if (!webView.waitForExists(timeout)) {
-            return false
-        }
-        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
-            return false
+            Assert.fail("No webview while waiting for card")
         }
         
-        return retryUntilTrue(timeout) {
+        if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
+            Assert.fail("Could not scroll to see cardOption while waiting for card")
+        }
+        
+        val didClick = retryUntilTrue(longTimeout) {
             cardOption.click()
         }
+        Assert.assertTrue("Could not click cardOption while waiting for card", didClick)
     }
 
     /**
