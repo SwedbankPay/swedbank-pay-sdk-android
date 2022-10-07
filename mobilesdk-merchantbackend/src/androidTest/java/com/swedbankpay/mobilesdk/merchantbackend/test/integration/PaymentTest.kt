@@ -521,7 +521,7 @@ class PaymentTest {
         val token = expandedOrder?.paid?.tokens?.first()?.token!!
         order = paymentOrder.copy(generatePaymentToken = false, payer = payer, paymentToken = token)
         //Now we must wait for BottomSheetBehavior.java to stop messaging the webview, otherwise test will crash. The error is in Google's code so not much we can do.
-        sleep(1000)
+        sleep(2000)
         teardown()
         buildArguments(isV3 = true, paymentOrder = order)
         setupAgain()
@@ -534,9 +534,9 @@ class PaymentTest {
 
         continueSCAPayment()
         
-        lastResult = waitForResult()
+        lastResult = waitForResult(longTimeout)
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
-        Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
+        Assert.assertEquals("PaymentState is not complete", PaymentViewModel.State.COMPLETE, lastResult)
     }
     
     /**
