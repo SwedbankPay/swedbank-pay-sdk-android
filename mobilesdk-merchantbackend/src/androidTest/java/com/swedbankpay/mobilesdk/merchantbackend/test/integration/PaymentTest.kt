@@ -580,6 +580,7 @@ class PaymentTest {
      */
     @Test
     fun testOneClickV3EnterprisePayerReference() {
+        
         paymentTestConfiguration = enterpriseTestConfiguration
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
 
@@ -590,7 +591,13 @@ class PaymentTest {
             .joinToString("")
 
         val payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
-        prefilledCardPurchase(payer)
+        try {
+            
+            prefilledCardPurchase(payer)
+        } catch (error: Throwable) {
+            error.printStackTrace()
+            throw error
+        }
     }
     
     private fun prefilledCardPurchase(payer: PaymentOrderPayer, knownReturningPayer: Boolean = false) {
