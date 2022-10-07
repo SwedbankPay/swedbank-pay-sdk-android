@@ -33,8 +33,7 @@ import java.util.*
  */
 class PaymentTest {
     private companion object {
-        const val shortTimeout = 8_000L
-        const val timeout = 20_000L
+        const val timeout = 30_000L
         const val longTimeout = 60_000L
         // Key input to the web view is laggy, and without a delay between keystrokes, the input may get jumbled.
         const val keyInputDelay = 500L
@@ -602,11 +601,11 @@ class PaymentTest {
         val order = paymentOrder.copy(payer = payer)
         buildArguments(isV3 = true, paymentOrder = order)
         scenario
-        sleep(1000)
+        sleep(2000)
 
-        Assert.assertTrue(waitForCard())
+        Assert.assertTrue("Wait for card failed", waitForCard())
         // Check if the user has card details, otherwise fill them in and retry. If the payer is known, prefilled options must exist.
-        if (!knownReturningPayer && creditCardOption.waitForExists(5)) {
+        if (!knownReturningPayer && creditCardOption.waitForExists(timeout)) {
             if (!fillInCardDetails(nonScaCardNumbers.first(), noScaCvv,
                     useConfirmButton = false,
                     scaPaymentButton = false
@@ -628,7 +627,7 @@ class PaymentTest {
         // Since we don't know if the stored card is an sca-card or not, we can't assert on the continue button
         // perhaps speed thing up by getting the result first...
         if (scaContinueButton.waitForExists(timeout)) {
-            Assert.assertTrue(scaContinueButton.click())
+            Assert.assertTrue("scaContinueButton could not be clicked", scaContinueButton.click())
         }
         
         lastResult = waitForResult()
