@@ -23,9 +23,9 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 5120
           script: |
             adb logcat -c                             # clear logs
-            touch app/emulator.log                    # create log file
-            chmod 777 app/emulator.log                # allow writing to log file
-            adb logcat >> app/emulator.log &          # pipe all logcat messages into log file as a background process
+            touch /Users/runner/work/swedbank-pay-sdk-android/swedbank-pay-sdk-android/mobilesdk-merchantbackend/build/reports/androidTests/connected/emulator.log                    # create log file
+            chmod 777 /Users/runner/work/swedbank-pay-sdk-android/swedbank-pay-sdk-android/mobilesdk-merchantbackend/build/reports/androidTests/connected/emulator.log                # allow writing to log file
+            adb logcat >> /Users/runner/work/swedbank-pay-sdk-android/swedbank-pay-sdk-android/mobilesdk-merchantbackend/build/reports/androidTests/connected/emulator.log &          # pipe all logcat messages into log file as a background process
             ./gradlew connectedCheck                  # here run your tests  
       
       - name: Upload Failing Test Report Log
@@ -33,7 +33,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: logs
-          path: app/emulator.log # path to where the log is
+          path: /Users/runner/work/swedbank-pay-sdk-android/swedbank-pay-sdk-android/mobilesdk-merchantbackend/build/reports/androidTests/connected/emulator.log # path to where the log is
 
       - name: Raise error on test fail # set a red tick on the workflow run if the tests failed
         if: steps.testing.outcome != 'success'
