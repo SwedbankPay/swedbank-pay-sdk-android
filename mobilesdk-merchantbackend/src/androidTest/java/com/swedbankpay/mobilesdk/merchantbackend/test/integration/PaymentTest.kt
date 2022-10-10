@@ -3,6 +3,7 @@ package com.swedbankpay.mobilesdk.merchantbackend.test.integration
 import android.content.Context
 import android.os.Bundle
 import android.os.SystemClock
+import android.util.Log
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.widget.Button
@@ -541,6 +542,8 @@ class PaymentTest {
      */
     @Test
     fun testOneClickV3EnterpriseNationalIdentifier() {
+
+        Log.i("SDK", "starting testOneClickV3EnterpriseNationalIdentifier")
         for (i in 0..6) {
             try {
                 runOneClickV3EnterpriseNationalIdentifier()
@@ -581,6 +584,7 @@ class PaymentTest {
     @Test
     fun testOneClickV3EnterprisePayerReference() {
         
+        Log.i("SDK", "starting testOneClickV3EnterprisePayerReference")
         paymentTestConfiguration = enterpriseTestConfiguration
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
 
@@ -596,6 +600,7 @@ class PaymentTest {
             prefilledCardPurchase(payer)
         } catch (error: Throwable) {
             error.printStackTrace()
+            Assert.fail(error.message)
             throw error
         }
     }
