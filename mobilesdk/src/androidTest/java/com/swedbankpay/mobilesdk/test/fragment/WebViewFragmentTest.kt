@@ -152,6 +152,8 @@ class WebViewFragmentTest {
             "confirm('$confirmText')",
             "false"
         ) {
+            sleep(1000)
+            
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(confirmText)))
@@ -175,6 +177,7 @@ class WebViewFragmentTest {
             "confirm('$confirmText')",
             "false"
         ) {
+            sleep(1000)
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(confirmText)))
@@ -314,6 +317,8 @@ class WebViewFragmentTest {
                 recreate()
                 runBlocking { waitForDialogFragment() }
             }
+
+            sleep(1000)
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(alertText)))
@@ -347,6 +352,8 @@ class WebViewFragmentTest {
                 
                 runBlocking { waitForDialogFragment() }
             }
+
+            sleep(1000)
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(confirmText)))
