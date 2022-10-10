@@ -544,7 +544,7 @@ class PaymentTest {
     fun testOneClickV3EnterpriseNationalIdentifier() {
 
         Log.i("SDK", "starting testOneClickV3EnterpriseNationalIdentifier")
-        for (i in 0..6) {
+        for (i in 0..3) {
             try {
                 runOneClickV3EnterpriseNationalIdentifier()
                 return
