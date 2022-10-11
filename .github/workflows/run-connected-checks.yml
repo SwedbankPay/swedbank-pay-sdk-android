@@ -31,13 +31,24 @@ jobs:
             adb logcat >> app/emulator.log &          # pipe all logcat messages into log file as a background process
             ./gradlew connectedCheck                  # here run your tests  
       
-      - name: Upload Failing Test Report Log
-        #if: ${{ always() }}
+      - name: Copy any screenshots
         if: steps.testing.outcome != 'success'        # upload the generated log on failure of the tests job
-        uses: actions/upload-artifact@v2
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: google_apis
+          arch: x86_64
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 5120
+          script: adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app
+          
+      - name: Upload Failing Test Report Log
+        if: steps.testing.outcome != 'success'        # upload the generated log on failure of the tests job
+        uses: actions/upload-artifact@v3
         with:
           name: logs
-          path: app/emulator.log # path to where the log is
+          path: app/  # path to where all debug files are
+        
+        #also upload all screenshots /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures
 
       - name: Raise error on test fail # set a red tick on the workflow run if the tests failed
         if: steps.testing.outcome != 'success'

@@ -1,7 +1,9 @@
 package com.swedbankpay.mobilesdk.merchantbackend.test.integration
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.Environment.DIRECTORY_PICTURES
 import android.os.SystemClock
 import android.util.Log
 import android.view.KeyEvent
@@ -12,7 +14,7 @@ import androidx.fragment.app.testing.FragmentScenario
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
@@ -21,13 +23,16 @@ import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.merchantbackend.UnexpectedResponseException
 import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.*
 import kotlinx.coroutines.*
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
 import java.lang.Thread.sleep
 import java.util.*
-
+import androidx.test.runner.screenshot.BasicScreenCaptureProcessor
+import androidx.test.runner.screenshot.ScreenCaptureProcessor
+import androidx.test.runner.screenshot.Screenshot
+import org.junit.*
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
+import java.io.File
+import java.io.IOException
 
 /**
  * End-to-end tests for PaymentFragment
@@ -119,7 +124,7 @@ class PaymentTest {
         }
     
     private val device by lazy {
-        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        UiDevice.getInstance(getInstrumentation())
     }
     
     private val webView: UiScrollable get() {
@@ -880,6 +885,9 @@ class PaymentTest {
         }
         return result
     }
+
+    @get:Rule
+    val screenshotTestRule = ScreenshotTestRule()
 }
 
 /**
@@ -888,3 +896,40 @@ class PaymentTest {
 data class ExpandedPaymentOrder(
     val paymentOrder: ViewPaymentOrderInfo
 )
+
+class ScreenshotTestRule : TestWatcher() {
+    override fun finished(description: Description?) {
+        super.finished(description)
+
+        val className = description?.testClass?.simpleName ?: "NullClassname"
+        val methodName = description?.methodName ?: "NullMethodName"
+        val filename = "$className - $methodName"
+
+        val capture = Screenshot.capture()
+        capture.name = filename
+        capture.format = Bitmap.CompressFormat.PNG
+
+        val processors = HashSet<ScreenCaptureProcessor>()
+        processors.add(IDTScreenCaptureProcessor())
+
+        try {
+            capture.process(processors)
+        } catch (ioException: IOException) {
+            ioException.printStackTrace()
+        }
+    }
+}
+
+class IDTScreenCaptureProcessor : BasicScreenCaptureProcessor() {
+    init {
+        mTag = "IDTScreenCaptureProcessor"
+        mFileNameDelimiter = "-"
+        mDefaultFilenamePrefix = "Swedbank"
+        mDefaultScreenshotPath = getNewFilename()
+    }
+
+    private fun getNewFilename(): File? {
+        val context = getInstrumentation().targetContext.applicationContext
+        return context.getExternalFilesDir(DIRECTORY_PICTURES)
+    }
+}
