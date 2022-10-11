@@ -32,7 +32,7 @@ jobs:
             ./gradlew connectedCheck
       
       - name: Copy any screenshots
-        if: steps.testing.outcome != 'success'
+        if: ${{ always() }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 28
@@ -42,7 +42,7 @@ jobs:
           script: adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app
           
       - name: Upload Failing Test Report Log
-        if: steps.testing.outcome != 'success'
+        if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
           name: logs

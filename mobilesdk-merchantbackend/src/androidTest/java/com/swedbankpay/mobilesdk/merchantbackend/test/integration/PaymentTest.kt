@@ -886,6 +886,10 @@ class PaymentTest {
         return result
     }
 
+    /**
+     * Set it to create screenshots on test failures 
+     */
+    
     @get:Rule
     val screenshotTestRule = ScreenshotTestRule()
 }
@@ -920,6 +924,9 @@ class ScreenshotTestRule : TestWatcher() {
     }
 }
 
+/**
+ * Helper class for when generating screenshots
+ */
 class IDTScreenCaptureProcessor : BasicScreenCaptureProcessor() {
     init {
         mTag = "IDTScreenCaptureProcessor"
