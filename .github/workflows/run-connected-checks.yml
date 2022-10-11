@@ -34,7 +34,7 @@ jobs:
       - name: Upload Failing Test Report Log
         if: ${{ always() }}
         #if: steps.testing.outcome != 'success'        # upload the generated log on failure of the tests job
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: logs
           path: app/emulator.log # path to where the log is
