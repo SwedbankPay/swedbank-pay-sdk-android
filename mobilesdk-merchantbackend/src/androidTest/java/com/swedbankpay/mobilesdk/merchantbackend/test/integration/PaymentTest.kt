@@ -420,7 +420,7 @@ class PaymentTest {
     /**
      * Sanity check: Check that a WebView is displayed by the PaymentFragment
      */
-    //@Test
+    @Test
     fun itShouldDisplayWebView() {
         buildArguments(isV3 = false)
         scenario
@@ -431,7 +431,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does not invoke 3D-Secure succeeds
      */
-    //@Test
+    @Test
     fun itShouldSucceedAtPaymentWithoutSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -443,7 +443,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    //@Test
+    @Test
     fun itShouldSucceedAtPaymentWithSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -456,7 +456,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    //@Test
+    @Test
     fun itShouldSucceedAtPaymentWithScaV3() {
         fullPaymentTest(
             cardNumbers = scaCardNumbers,
@@ -468,7 +468,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    //@Test
+    @Test
     fun itShouldSucceedAtPaymentWithoutScaV3() {
         for (config in testConfigurations) {
             teardown()
@@ -489,7 +489,7 @@ class PaymentTest {
      * Check that paymentTokens work with V3
      * https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
      */
-    //@Test
+    @Test
     fun testOneClickV3PaymentsOnly() {
         // create a random string as reference
         payerReference = (1..15)
