@@ -3,6 +3,7 @@ package com.swedbankpay.mobilesdk.merchantbackend.test.integration
 import android.content.Context
 import android.os.Bundle
 import android.os.SystemClock
+import android.util.Log
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.widget.Button
@@ -419,7 +420,7 @@ class PaymentTest {
     /**
      * Sanity check: Check that a WebView is displayed by the PaymentFragment
      */
-    @Test
+    //@Test
     fun itShouldDisplayWebView() {
         buildArguments(isV3 = false)
         scenario
@@ -430,7 +431,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does not invoke 3D-Secure succeeds
      */
-    @Test
+    //@Test
     fun itShouldSucceedAtPaymentWithoutSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -442,7 +443,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    @Test
+    //@Test
     fun itShouldSucceedAtPaymentWithSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -455,7 +456,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    @Test
+    //@Test
     fun itShouldSucceedAtPaymentWithScaV3() {
         fullPaymentTest(
             cardNumbers = scaCardNumbers,
@@ -467,7 +468,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    @Test
+    //@Test
     fun itShouldSucceedAtPaymentWithoutScaV3() {
         for (config in testConfigurations) {
             teardown()
@@ -488,7 +489,7 @@ class PaymentTest {
      * Check that paymentTokens work with V3
      * https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
      */
-    @Test
+    //@Test
     fun testOneClickV3PaymentsOnly() {
         // create a random string as reference
         payerReference = (1..15)
@@ -541,14 +542,15 @@ class PaymentTest {
      */
     @Test
     fun testOneClickV3EnterpriseNationalIdentifier() {
-        for (i in 0..6) {
+
+        Log.i("SDK", "starting testOneClickV3EnterpriseNationalIdentifier")
+        for (i in 0..3) {
             try {
                 runOneClickV3EnterpriseNationalIdentifier()
                 return
             } catch (error: AssertionError) {
                 // Attempt i did fail
                 teardown()
-                setupAgain()
             }
         }
         //one last try without catch
@@ -578,9 +580,10 @@ class PaymentTest {
      * Check that oneClick works for enterprise merchants in V3
      * https://developer.swedbankpay.com/checkout-v3/enterprise/features/optional/enterprise-payer-reference
      */
-    @Test
+    //@Test
     fun testOneClickV3EnterprisePayerReference() {
         
+        Log.i("SDK", "starting testOneClickV3EnterprisePayerReference")
         paymentTestConfiguration = enterpriseTestConfiguration
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
 
@@ -596,6 +599,7 @@ class PaymentTest {
             prefilledCardPurchase(payer)
         } catch (error: Throwable) {
             error.printStackTrace()
+            Assert.fail(error.message)
             throw error
         }
     }
@@ -656,7 +660,7 @@ class PaymentTest {
     /**
      * Test specifying and switching instruments.
      */
-    @Test
+    //@Test
     fun testPaymentInstrumentsV3() {
         for (i in 0..6) {
             try {
@@ -772,7 +776,7 @@ class PaymentTest {
     /**
      * Test that we can perform a verify request and set the recur and unscheduled tokens.
      */
-    @Test
+    //@Test
     fun testVerifyRecurTokenV3() {
         for (i in 0..3) {
             try {
