@@ -258,6 +258,8 @@ class PaymentTest {
 
     private fun prefilledPaymentAttempt() {
 
+        val rule = ScreenshotTestRule()
+        rule.captureScreen("prefilledPaymentAttempt")
         prefilledCardButton.assertExist(timeout, "Could not find prefilledCardButton")
         prefilledCardButton.click()
         
@@ -908,7 +910,11 @@ class ScreenshotTestRule : TestWatcher() {
         val className = description?.testClass?.simpleName ?: "NullClassname"
         val methodName = description?.methodName ?: "NullMethodName"
         val filename = "$className - $methodName"
-
+        captureScreen(filename)
+    }
+    
+    fun captureScreen(filename: String) {
+        
         val capture = Screenshot.capture()
         capture.name = filename
         capture.format = Bitmap.CompressFormat.PNG
