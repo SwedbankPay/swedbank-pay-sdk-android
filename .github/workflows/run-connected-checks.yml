@@ -14,9 +14,11 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '11'
+          
       - name: Run Connected Checks
         id: testing
         uses: reactivecircus/android-emulator-runner@v2
+        continue-on-error: true # IMPORTANT: allow pipeline to continue to Android Test Report step
         with:
           api-level: 28
           target: google_apis
@@ -48,4 +50,8 @@ jobs:
         with:
           name: logs
           path: app/  # path to where all logs and screenshots are
+
+      - name: Raise error on test fail # set a red tick on the workflow run if the tests failed
+        if: steps.testing.outcome != 'success'
+        run: exit 1
           
