@@ -167,7 +167,11 @@ internal class WebViewFragment : Fragment() {
                         return
                     }
                     previousBottomSheetBehaviorState = newState
-                    webViewModel.removeExtraWebView()
+                    try {
+                        webViewModel.removeExtraWebView()
+                    } catch (_: IllegalStateException) {
+                        //if fragment is detached then this is illegal 
+                    }
                 }
             }
 
