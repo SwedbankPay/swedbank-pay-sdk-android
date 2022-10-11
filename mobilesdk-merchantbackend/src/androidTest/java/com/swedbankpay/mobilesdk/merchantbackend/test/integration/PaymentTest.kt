@@ -591,6 +591,19 @@ class PaymentTest {
     fun testOneClickV3EnterprisePayerReference() {
         
         Log.i("SDK", "starting testOneClickV3EnterprisePayerReference")
+        for (i in 0..2) {
+            try {
+                oneClickV3EnterprisePayerReferenceRun()
+                return
+            } catch (err: Throwable) {
+                //Still error, try again.
+                teardown()
+            }
+        }
+        oneClickV3EnterprisePayerReferenceRun()
+    }
+    
+    private fun oneClickV3EnterprisePayerReferenceRun() { 
         paymentTestConfiguration = enterpriseTestConfiguration
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
 
@@ -601,14 +614,7 @@ class PaymentTest {
             .joinToString("")
 
         val payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
-        try {
-            
-            prefilledCardPurchase(payer)
-        } catch (error: Throwable) {
-            error.printStackTrace()
-            Assert.fail(error.message)
-            throw error
-        }
+        prefilledCardPurchase(payer)
     }
     
     private fun prefilledCardPurchase(payer: PaymentOrderPayer, knownReturningPayer: Boolean = false) {
@@ -621,7 +627,14 @@ class PaymentTest {
         waitForCard()
         
         // Check if the user has card details, otherwise fill them in and retry. If the payer is known, prefilled options must exist.
-        if (!knownReturningPayer && creditCardOption.waitForExists(timeout)) {
+        val first = if (knownReturningPayer) {
+            //we know this exist already
+            prefilledCardButton
+        } else {
+            //could be either one of these
+            waitForOne(timeout, arrayOf(creditCardOption, prefilledCardButton), "Could not find any card options")
+        }
+        if (creditCardOption == first) {
             if (!fillInCardDetails(nonScaCardNumbers.first(), noScaCvv,
                     useConfirmButton = false,
                     scaPaymentButton = false
@@ -645,6 +658,8 @@ class PaymentTest {
         }
         
         lastResult = waitForResult(timeout)
+        // if "PaymentFragment progress timeout" happens it's usually the dreaded "Something went wrong!" error, which gives no feedback of any kind. 
+        //there is nothing we can do about that but try again in a few hours.
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
     }
