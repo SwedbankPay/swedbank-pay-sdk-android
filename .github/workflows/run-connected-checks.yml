@@ -15,6 +15,7 @@ jobs:
           distribution: 'zulu'
           java-version: '11'
       - name: Run Connected Checks
+        id: testing
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
@@ -31,7 +32,8 @@ jobs:
             ./gradlew connectedCheck                  # here run your tests  
       
       - name: Upload Failing Test Report Log
-        if: steps.testing.outcome != 'success'        # upload the generated log on failure of the tests job
+        if: ${{ always() }}
+        #if: steps.testing.outcome != 'success'        # upload the generated log on failure of the tests job
         uses: actions/upload-artifact@v2
         with:
           name: logs

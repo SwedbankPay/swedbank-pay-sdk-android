@@ -551,7 +551,6 @@ class PaymentTest {
             } catch (error: AssertionError) {
                 // Attempt i did fail
                 teardown()
-                setupAgain()
             }
         }
         //one last try without catch
