@@ -32,8 +32,8 @@ jobs:
             ./gradlew connectedCheck                  # here run your tests  
       
       - name: Upload Failing Test Report Log
-        if: ${{ always() }}
-        #if: steps.testing.outcome != 'success'        # upload the generated log on failure of the tests job
+        #if: ${{ always() }}
+        if: steps.testing.outcome != 'success'        # upload the generated log on failure of the tests job
         uses: actions/upload-artifact@v2
         with:
           name: logs
