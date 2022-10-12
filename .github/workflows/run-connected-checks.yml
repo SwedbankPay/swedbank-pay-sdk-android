@@ -18,7 +18,7 @@ jobs:
       - name: Run Connected Checks
         id: testing
         uses: reactivecircus/android-emulator-runner@v2
-        continue-on-error: true # IMPORTANT: allow pipeline to continue to Android Test Report step
+        #continue-on-error: true # This does not work
         with:
           api-level: 28
           target: google_apis
