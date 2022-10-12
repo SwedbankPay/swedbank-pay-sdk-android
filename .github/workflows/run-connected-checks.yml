@@ -8,20 +8,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: checkout
       - uses: actions/checkout@v3
-      
-      - name: Chmod Gradlew
-        run: chmod +x gradlew
-
-      - name: Gradle cache # cache the gradle build for faster execution
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-v2-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/buildSrc/**/*.kt') }}
-      
       - name: set up JDK
         uses: actions/setup-java@v3
         with:
@@ -45,12 +32,8 @@ jobs:
             adb logcat >> app/emulator.log &          # pipe all logcat messages into log file as a background process
             ./gradlew connectedCheck
             # copy any screenshots if exists
-            adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app 
+            adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app > /dev/null 
             # silence error, when there are no screenshots > /dev/null 
-            
-      - name: Copy any screenshots
-        if: ${{ always() }}
-        run: adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app
           
       - name: Upload Failing Test Report Log
         if: ${{ always() }}
