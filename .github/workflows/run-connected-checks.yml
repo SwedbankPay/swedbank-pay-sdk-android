@@ -25,7 +25,8 @@ jobs:
           arch: x86_64
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 5120
           script: |
-            adb logcat -c                             # clear logs
+            adb logcat -c                             # clear logs, delete any existing pictures
+            adb shell "rm -rf /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures/*"
             mkdir app
             touch app/emulator.log                    # create log file
             chmod 777 app/emulator.log                # allow writing to log file
@@ -35,7 +36,7 @@ jobs:
             exitcode="${?}"
             
             # copy any screenshots if exists, silencing the error when there are no screenshots
-            adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app > /dev/null
+            adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app 2>&1
             
             # exit with the code from the testrun
             exit ${exitcode}
@@ -48,6 +49,5 @@ jobs:
           path: app/  # path to where all logs and screenshots are
 
       - name: Raise error on test fail # set a red tick on the workflow run if the tests failed
-        if: steps.testing.outcome != 'success'
+        if: ${{ failure() }}  #any failure
         run: exit 1
-          
