@@ -2,6 +2,7 @@ package com.swedbankpay.mobilesdk.merchantbackend.test.integration.util
 
 import android.os.SystemClock
 import androidx.test.uiautomator.UiObject
+import org.junit.Assert
 
 // UI Automator uses 1000 ms internally when waiting for some condition,
 // so we use the same here.
@@ -19,7 +20,7 @@ internal fun retryUntilTrue(timeout: Long, condition: () -> Boolean): Boolean {
     return false
 }
 
-internal fun waitForOne(timeout: Long, objects: Array<UiObject>): UiObject? {
+internal fun waitForOne(timeout: Long, objects: Array<UiObject>, error: String? = null): UiObject? {
     val start = SystemClock.uptimeMillis()
     var elapsedTime = 0L
     while (elapsedTime <= timeout) {
@@ -29,6 +30,9 @@ internal fun waitForOne(timeout: Long, objects: Array<UiObject>): UiObject? {
             }
         }
         elapsedTime = SystemClock.uptimeMillis() - start
+    }
+    if (error != null) {
+        Assert.fail(error)
     }
     return null
 }

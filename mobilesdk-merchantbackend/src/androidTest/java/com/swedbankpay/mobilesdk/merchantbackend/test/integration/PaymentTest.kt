@@ -1,7 +1,9 @@
 package com.swedbankpay.mobilesdk.merchantbackend.test.integration
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.Environment.DIRECTORY_PICTURES
 import android.os.SystemClock
 import android.util.Log
 import android.view.KeyEvent
@@ -12,7 +14,7 @@ import androidx.fragment.app.testing.FragmentScenario
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
@@ -21,13 +23,16 @@ import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.merchantbackend.UnexpectedResponseException
 import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.*
 import kotlinx.coroutines.*
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
 import java.lang.Thread.sleep
 import java.util.*
-
+import androidx.test.runner.screenshot.BasicScreenCaptureProcessor
+import androidx.test.runner.screenshot.ScreenCaptureProcessor
+import androidx.test.runner.screenshot.Screenshot
+import org.junit.*
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
+import java.io.File
+import java.io.IOException
 
 /**
  * End-to-end tests for PaymentFragment
@@ -119,7 +124,7 @@ class PaymentTest {
         }
     
     private val device by lazy {
-        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        UiDevice.getInstance(getInstrumentation())
     }
     
     private val webView: UiScrollable get() {
@@ -253,6 +258,8 @@ class PaymentTest {
 
     private fun prefilledPaymentAttempt() {
 
+        val rule = ScreenshotTestRule()
+        rule.captureScreen("prefilledPaymentAttempt")
         prefilledCardButton.assertExist(timeout, "Could not find prefilledCardButton")
         prefilledCardButton.click()
         
@@ -420,7 +427,7 @@ class PaymentTest {
     /**
      * Sanity check: Check that a WebView is displayed by the PaymentFragment
      */
-    //@Test
+    @Test
     fun itShouldDisplayWebView() {
         buildArguments(isV3 = false)
         scenario
@@ -431,7 +438,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does not invoke 3D-Secure succeeds
      */
-    //@Test
+    @Test
     fun itShouldSucceedAtPaymentWithoutSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -443,7 +450,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    //@Test
+    @Test
     fun itShouldSucceedAtPaymentWithSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -456,7 +463,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    //@Test
+    @Test
     fun itShouldSucceedAtPaymentWithScaV3() {
         fullPaymentTest(
             cardNumbers = scaCardNumbers,
@@ -468,7 +475,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    //@Test
+    @Test
     fun itShouldSucceedAtPaymentWithoutScaV3() {
         for (config in testConfigurations) {
             teardown()
@@ -489,7 +496,7 @@ class PaymentTest {
      * Check that paymentTokens work with V3
      * https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
      */
-    //@Test
+    @Test
     fun testOneClickV3PaymentsOnly() {
         // create a random string as reference
         payerReference = (1..15)
@@ -580,10 +587,23 @@ class PaymentTest {
      * Check that oneClick works for enterprise merchants in V3
      * https://developer.swedbankpay.com/checkout-v3/enterprise/features/optional/enterprise-payer-reference
      */
-    //@Test
+    @Test
     fun testOneClickV3EnterprisePayerReference() {
         
         Log.i("SDK", "starting testOneClickV3EnterprisePayerReference")
+        for (i in 0..2) {
+            try {
+                oneClickV3EnterprisePayerReferenceRun()
+                return
+            } catch (err: Throwable) {
+                //Still error, try again.
+                teardown()
+            }
+        }
+        oneClickV3EnterprisePayerReferenceRun()
+    }
+    
+    private fun oneClickV3EnterprisePayerReferenceRun() { 
         paymentTestConfiguration = enterpriseTestConfiguration
         PaymentFragment.defaultConfiguration = paymentTestConfiguration
 
@@ -594,14 +614,7 @@ class PaymentTest {
             .joinToString("")
 
         val payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
-        try {
-            
-            prefilledCardPurchase(payer)
-        } catch (error: Throwable) {
-            error.printStackTrace()
-            Assert.fail(error.message)
-            throw error
-        }
+        prefilledCardPurchase(payer)
     }
     
     private fun prefilledCardPurchase(payer: PaymentOrderPayer, knownReturningPayer: Boolean = false) {
@@ -614,7 +627,14 @@ class PaymentTest {
         waitForCard()
         
         // Check if the user has card details, otherwise fill them in and retry. If the payer is known, prefilled options must exist.
-        if (!knownReturningPayer && creditCardOption.waitForExists(timeout)) {
+        val first = if (knownReturningPayer) {
+            //we know this exist already
+            prefilledCardButton
+        } else {
+            //could be either one of these
+            waitForOne(timeout, arrayOf(creditCardOption, prefilledCardButton), "Could not find any card options")
+        }
+        if (creditCardOption == first) {
             if (!fillInCardDetails(nonScaCardNumbers.first(), noScaCvv,
                     useConfirmButton = false,
                     scaPaymentButton = false
@@ -638,6 +658,8 @@ class PaymentTest {
         }
         
         lastResult = waitForResult(timeout)
+        // if "PaymentFragment progress timeout" happens it's usually the dreaded "Something went wrong!" error, which gives no feedback of any kind. 
+        //there is nothing we can do about that but try again in a few hours.
         Assert.assertNotNull("PaymentFragment progress timeout", lastResult)
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
     }
@@ -660,7 +682,7 @@ class PaymentTest {
     /**
      * Test specifying and switching instruments.
      */
-    //@Test
+    @Test
     fun testPaymentInstrumentsV3() {
         for (i in 0..6) {
             try {
@@ -776,7 +798,7 @@ class PaymentTest {
     /**
      * Test that we can perform a verify request and set the recur and unscheduled tokens.
      */
-    //@Test
+    @Test
     fun testVerifyRecurTokenV3() {
         for (i in 0..3) {
             try {
@@ -785,7 +807,6 @@ class PaymentTest {
             } catch (error: AssertionError) {
                 // Attempt i did fail
                 teardown()
-                setupAgain()
             }
         }
         //one last try without catch
@@ -881,6 +902,9 @@ class PaymentTest {
         }
         return result
     }
+    
+    @get:Rule
+    val screenshotTestRule = ScreenshotTestRule()
 }
 
 /**
@@ -889,3 +913,54 @@ class PaymentTest {
 data class ExpandedPaymentOrder(
     val paymentOrder: ViewPaymentOrderInfo
 )
+
+/**
+ * Set it to create screenshots on test failures
+ */
+class ScreenshotTestRule : TestWatcher() {
+    override fun finished(description: Description?) {
+        super.finished(description)
+
+        val className = description?.testClass?.simpleName ?: "NullClassname"
+        val methodName = description?.methodName ?: "NullMethodName"
+        val filename = "$className - $methodName"
+        captureScreen(filename)
+    }
+
+    /**
+     * Capture a screenshot, and store it in the Pictures folder in the sdcard:
+     * /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures
+     */
+    fun captureScreen(filename: String) {
+        
+        val capture = Screenshot.capture()
+        capture.name = filename
+        capture.format = Bitmap.CompressFormat.PNG
+
+        val processors = HashSet<ScreenCaptureProcessor>()
+        processors.add(IDTScreenCaptureProcessor())
+
+        try {
+            capture.process(processors)
+        } catch (ioException: IOException) {
+            ioException.printStackTrace()
+        }
+    }
+}
+
+/**
+ * Helper class for when generating screenshots
+ */
+class IDTScreenCaptureProcessor : BasicScreenCaptureProcessor() {
+    init {
+        mTag = "IDTScreenCaptureProcessor"
+        mFileNameDelimiter = "-"
+        mDefaultFilenamePrefix = "Swedbank"
+        mDefaultScreenshotPath = getNewFilename()
+    }
+
+    private fun getNewFilename(): File? {
+        val context = getInstrumentation().targetContext.applicationContext
+        return context.getExternalFilesDir(DIRECTORY_PICTURES)
+    }
+}
