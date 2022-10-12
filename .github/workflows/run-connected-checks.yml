@@ -31,10 +31,6 @@ jobs:
             ./gradlew connectedCheck
             # copy any screenshots if exists
             adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app > /dev/null
-            
-      - name: Copy any screenshots
-        if: ${{ always() }}
-        run: adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app > /dev/null
           
       - name: Upload Failing Test Report Log
         if: ${{ always() }}
