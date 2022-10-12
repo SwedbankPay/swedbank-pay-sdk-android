@@ -887,10 +887,6 @@ class PaymentTest {
         }
         return result
     }
-
-    /**
-     * Set it to create screenshots on test failures 
-     */
     
     @get:Rule
     val screenshotTestRule = ScreenshotTestRule()
@@ -903,6 +899,9 @@ data class ExpandedPaymentOrder(
     val paymentOrder: ViewPaymentOrderInfo
 )
 
+/**
+ * Set it to create screenshots on test failures
+ */
 class ScreenshotTestRule : TestWatcher() {
     override fun finished(description: Description?) {
         super.finished(description)
@@ -912,7 +911,11 @@ class ScreenshotTestRule : TestWatcher() {
         val filename = "$className - $methodName"
         captureScreen(filename)
     }
-    
+
+    /**
+     * Capture a screenshot, and store it in the Pictures folder in the sdcard:
+     * /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures
+     */
     fun captureScreen(filename: String) {
         
         val capture = Screenshot.capture()
