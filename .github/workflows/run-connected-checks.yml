@@ -32,17 +32,12 @@ jobs:
             adb logcat >> app/emulator.log &          # pipe all logcat messages into log file as a background process
             ./gradlew connectedCheck
             # copy any screenshots if exists
-            adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app > /dev/null 
+            adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app 
+            # silence error, when there are no screenshots > /dev/null 
             
       - name: Copy any screenshots
         if: ${{ always() }}
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 28
-          target: google_apis
-          arch: x86_64
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 5120
-          script: adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app
+        run: adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app
           
       - name: Upload Failing Test Report Log
         if: ${{ always() }}
