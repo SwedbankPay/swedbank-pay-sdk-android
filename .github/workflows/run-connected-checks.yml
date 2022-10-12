@@ -8,7 +8,20 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - name: checkout
       - uses: actions/checkout@v3
+      
+      - name: Chmod Gradlew
+        run: chmod +x gradlew
+
+      - name: Gradle cache # cache the gradle build for faster execution
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-v2-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/buildSrc/**/*.kt') }}
+      
       - name: set up JDK
         uses: actions/setup-java@v3
         with:
