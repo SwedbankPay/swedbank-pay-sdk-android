@@ -257,10 +257,11 @@ class PaymentTest {
     }
 
     private fun prefilledPaymentAttempt() {
-
+        
+        prefilledCardButton.assertExist(timeout, "Could not find prefilledCardButton")
+        //If exists, take a screenshot for evaluation
         val rule = ScreenshotTestRule()
         rule.captureScreen("prefilledPaymentAttempt")
-        prefilledCardButton.assertExist(timeout, "Could not find prefilledCardButton")
         prefilledCardButton.click()
         
         if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { Assert.fail("Could not scroll payButton in prefilledPayment") }
