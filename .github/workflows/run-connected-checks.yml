@@ -45,9 +45,5 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
-          name: logs
+          name: appData
           path: app/  # path to where all logs and screenshots are
-
-      - name: Raise error on test fail # set a red tick on the workflow run if the tests failed
-        if: ${{ failure() }}  #any failure
-        run: exit 1
