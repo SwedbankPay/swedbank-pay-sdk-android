@@ -54,7 +54,7 @@ dependencies {
     testImplementation(libs.`androidx-test-junit`)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
-    testImplementation(libs.`mockito-inline`)
+//    testImplementation(libs.`mockito-inline`)
     testImplementation(libs.`mockito-kotlin`)
     testImplementation(libs.mockwebserver)
 
