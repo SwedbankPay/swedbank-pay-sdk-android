@@ -82,7 +82,7 @@ dependencies {
     androidTestImplementation(libs.`espresso-intents`)
     androidTestImplementation(libs.`espresso-web`)
     androidTestImplementation(libs.junit)
-  //  androidTestImplementation(libs.`dexmaker-mockito-inline`)
+    androidTestImplementation(libs.`dexmaker-mockito-inline`)
     androidTestImplementation(libs.`mockito-kotlin`)
     implementation("androidx.core:core-ktx:+")
     implementation(kotlin("stdlib-jdk7", kotlin_version))

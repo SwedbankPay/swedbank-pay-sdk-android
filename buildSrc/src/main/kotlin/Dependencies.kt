@@ -48,5 +48,5 @@ class Dependencies(map: Map<String, String>) {
     val robolectric by map
     //val `mockito-inline` by map
     val `mockito-kotlin` by map
-    //val `dexmaker-mockito-inline` by map
+    val `dexmaker-mockito-inline` by map
 }
