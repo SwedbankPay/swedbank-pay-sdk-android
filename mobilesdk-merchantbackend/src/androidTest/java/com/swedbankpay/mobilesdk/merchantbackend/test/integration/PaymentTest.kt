@@ -39,6 +39,7 @@ import java.io.IOException
  */
 class PaymentTest {
     private companion object {
+        const val shortTimeout = 10_000L
         const val timeout = 30_000L
         const val longTimeout = 60_000L
         // Key input to the web view is laggy, and without a delay between keystrokes, the input may get jumbled.
@@ -155,8 +156,9 @@ class PaymentTest {
     private val payButton
         get() = cardDetails.getChild(UiSelector().className(Button::class.java).textStartsWith("Pay "))
     private val prefilledCardButton
-        get() = cardDetails.getChild(UiSelector().textContains("••••"))
-    
+        get() = cardDetails.getChild(UiSelector().textContains(prefilledCardSecret))
+    private val addAnotherCardLink
+        get() = webView.getChild(UiSelector().textContains("add another card"))
     private val confirmButton
         get() = cardDetails.getChild(UiSelector().className(Button::class.java).textStartsWith("Confirm"))
 
@@ -259,9 +261,6 @@ class PaymentTest {
     private fun prefilledPaymentAttempt() {
         
         prefilledCardButton.assertExist(timeout, "Could not find prefilledCardButton")
-        //If exists, take a screenshot for evaluation
-        val rule = ScreenshotTestRule()
-        rule.captureScreen("prefilledPaymentAttempt")
         prefilledCardButton.click()
         
         if (!webView.waitAndScrollUntilExists(payButton, longTimeout)) { Assert.fail("Could not scroll payButton in prefilledPayment") }
@@ -633,15 +632,26 @@ class PaymentTest {
             prefilledCardButton
         } else {
             //could be either one of these
-            waitForOne(timeout, arrayOf(creditCardOption, prefilledCardButton), "Could not find any card options")
+            waitForOne(shortTimeout, arrayOf(creditCardOption, prefilledCardButton))
         }
-        if (creditCardOption == first) {
-            if (!fillInCardDetails(nonScaCardNumbers.first(), noScaCvv,
+        if (first == null || creditCardOption == first) {
+            //Create the card, we need to know which card is used, since not all cards work for us.
+            if (first == null) {
+                addAnotherCardLink.click()
+            }
+
+            if (!fillInCardDetails(
+                    prefilledCardNo, scaCvv,
                     useConfirmButton = false,
                     scaPaymentButton = false
                 )) {
                 Assert.fail("Could not find prefilled options, and could not fill in new card")
             }
+            if (scaContinueButton.waitForExists(timeout)) {
+                Assert.assertTrue("scaContinueButton could not be clicked", scaContinueButton.click())
+            }
+            waitForResult()
+            
             teardown()
 
             paymentTestConfiguration = enterpriseTestConfiguration
@@ -649,6 +659,7 @@ class PaymentTest {
             prefilledCardPurchase(payer, knownReturningPayer = true)
             return
         }
+        //otherwise the card has already been created, so we just need select & tap
 
         prefilledPaymentAttempt()
         
