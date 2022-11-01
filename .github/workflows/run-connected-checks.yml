@@ -31,9 +31,9 @@ jobs:
             touch app/emulator.log                    # create log file
             chmod 777 app/emulator.log                # allow writing to log file
             adb logcat >> app/emulator.log &          # pipe all logcat messages into log file as a background process
-            ./gradlew connectedCheck
+            ./gradlew connectedCheck 2>&1 | true      # supress errors
             # store the exit code from the test run
-            exitcode="${?}"
+            exitcode="${PIPESTATUS[1]}"
             
             # copy any screenshots if exists, silencing the error when there are no screenshots
             adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app 2>&1
