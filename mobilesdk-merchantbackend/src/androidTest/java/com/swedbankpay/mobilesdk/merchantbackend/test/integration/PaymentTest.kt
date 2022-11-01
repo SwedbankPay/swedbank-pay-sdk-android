@@ -39,7 +39,8 @@ import java.io.IOException
  */
 class PaymentTest {
     private companion object {
-        const val shortTimeout = 10_000L
+        // Remember that 10 sec is too short for github!
+        const val shortTimeout = 15_000L
         const val timeout = 30_000L
         const val longTimeout = 60_000L
         // Key input to the web view is laggy, and without a delay between keystrokes, the input may get jumbled.
@@ -641,6 +642,7 @@ class PaymentTest {
         if (first == null || creditCardOption == first) {
             //Create the card, we need to know which card is used, since not all cards work for us.
             if (first == null) {
+                addAnotherCardLink.waitForExists(timeout)
                 addAnotherCardLink.click()
             }
 
