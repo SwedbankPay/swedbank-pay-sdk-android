@@ -589,6 +589,10 @@ class PaymentTest {
      */
     @Test
     fun testOneClickV3EnterprisePayerReference() {
+
+        Log.i("SDK", "always failing testOneClickV3EnterprisePayerReference")
+        Assert.fail("Fail to test github actions!")
+        return
         
         Log.i("SDK", "starting testOneClickV3EnterprisePayerReference")
         for (i in 0..2) {
