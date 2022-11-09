@@ -27,7 +27,7 @@ extra["libs"] = mapOf(
    "espresso-intents" to "androidx.test.espresso:espresso-intents:3.4.0",
    "espresso-web" to "androidx.test.espresso:espresso-web:3.4.0",
 
-   "androidx-test-junit" to "androidx.test.ext:junit:1.1.3",
+   "androidx-test-junit" to "androidx.test.ext:junit:1.1.4",
    "uiautomator" to "androidx.test.uiautomator:uiautomator:2.2.0",
 
    "material" to "com.google.android.material:material:1.7.0",
