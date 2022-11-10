@@ -428,7 +428,7 @@ class PaymentTest {
     /**
      * Sanity check: Check that a WebView is displayed by the PaymentFragment
      */
-    @Test
+    //@Test
     fun itShouldDisplayWebView() {
         buildArguments(isV3 = false)
         scenario
@@ -439,7 +439,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does not invoke 3D-Secure succeeds
      */
-    @Test
+    //@Test
     fun itShouldSucceedAtPaymentWithoutSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -451,7 +451,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    @Test
+    //@Test
     fun itShouldSucceedAtPaymentWithSca() {
         buildArguments(isV3 = false)
         fullPaymentTest(
@@ -464,7 +464,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    @Test
+    //@Test
     fun itShouldSucceedAtPaymentWithScaV3() {
         fullPaymentTest(
             cardNumbers = scaCardNumbers,
@@ -476,7 +476,7 @@ class PaymentTest {
     /**
      * Check that a card payment that does invoke 3D-Secure succeeds
      */
-    @Test
+    //@Test
     fun itShouldSucceedAtPaymentWithoutScaV3() {
         for (config in testConfigurations) {
             teardown()
@@ -497,7 +497,7 @@ class PaymentTest {
      * Check that paymentTokens work with V3
      * https://developer.swedbankpay.com/checkout-v3/payments-only/features/optional/one-click-payments
      */
-    @Test
+    //@Test
     fun testOneClickV3PaymentsOnly() {
         // create a random string as reference
         payerReference = (1..15)
@@ -548,7 +548,7 @@ class PaymentTest {
     /**
      * Check that oneClick works for enterprise merchants in V3 using social security numbers.
      */
-    @Test
+    //@Test
     fun testOneClickV3EnterpriseNationalIdentifier() {
 
         Log.i("SDK", "starting testOneClickV3EnterpriseNationalIdentifier")
@@ -592,7 +592,7 @@ class PaymentTest {
     fun testOneClickV3EnterprisePayerReference() {
 
         Log.i("SDK", "always failing testOneClickV3EnterprisePayerReference")
-        Assert.fail("Fail to test github actions!")
+        Assert.fail("Always fail this, to test github actions!")
         return
         
         Log.i("SDK", "starting testOneClickV3EnterprisePayerReference")
@@ -700,7 +700,7 @@ class PaymentTest {
     /**
      * Test specifying and switching instruments.
      */
-    @Test
+    //@Test
     fun testPaymentInstrumentsV3() {
         for (i in 0..6) {
             try {
@@ -816,7 +816,7 @@ class PaymentTest {
     /**
      * Test that we can perform a verify request and set the recur and unscheduled tokens.
      */
-    @Test
+    //@Test
     fun testVerifyRecurTokenV3() {
         for (i in 0..3) {
             try {

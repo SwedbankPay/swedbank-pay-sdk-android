@@ -33,13 +33,12 @@ jobs:
             adb logcat >> app/emulator.log &          # pipe all logcat messages into log file as a background process
             ./gradlew connectedCheck 2>&1      # supress errors didn't work
             # store the exit code from the test run
-            #bash uses capital letters, zsh uses lowecase:
-            exitcode=${pipestatus[2]}
+            # bash uses capital letters, zsh uses lowecase:
+            exitcode=$?
+            echo "exitcode became: $exitcode"
             
             # copy any screenshots if exists, silencing the error when there are no screenshots
             adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app 2>&1
-            
-            echo "exitcode became: $exitcode"
             
             # exit with the code from the testrun
             exit ${exitcode}
