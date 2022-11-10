@@ -27,7 +27,7 @@ extra["libs"] = mapOf(
    "espresso-intents" to "androidx.test.espresso:espresso-intents:3.4.0",
    "espresso-web" to "androidx.test.espresso:espresso-web:3.5.0",
 
-   "androidx-test-junit" to "androidx.test.ext:junit:1.1.3",
+   "androidx-test-junit" to "androidx.test.ext:junit:1.1.4",
    "uiautomator" to "androidx.test.uiautomator:uiautomator:2.2.0",
 
    "material" to "com.google.android.material:material:1.7.0",
@@ -38,7 +38,7 @@ extra["libs"] = mapOf(
    "junit" to "junit:junit:4.13.2",
 
    "joda-time" to "joda-time:joda-time:2.12.1",
-   "threetenbp" to "org.threeten:threetenbp:1.6.3",
+   "threetenbp" to "org.threeten:threetenbp:1.6.4",
 
    "okhttp" to "com.squareup.okhttp3:okhttp:4.10.0",
    "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.10.0",
