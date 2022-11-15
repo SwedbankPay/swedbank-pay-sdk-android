@@ -19,7 +19,7 @@ extra["libs"] = mapOf(
    "navigation-fragment" to "androidx.navigation:navigation-fragment:2.5.3",
    "swiperefreshlayout" to "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
 
-   "androidx-test-core" to "androidx.test:core:1.4.0",
+   "androidx-test-core" to "androidx.test:core:1.5.0",
    "androidx-test-runner" to "androidx.test:runner:1.5.1",
    
    "espresso-core" to "androidx.test.espresso:espresso-core:3.5.0",
