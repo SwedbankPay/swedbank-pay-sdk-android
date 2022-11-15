@@ -41,7 +41,9 @@ dependencies {
     implementation(libs.`kotlinx-coroutines-core`)
     implementation(libs.`kotlinx-coroutines-android`)
 
-    debugImplementation(libs.`fragment-testing`)
+    debugImplementation(libs.`fragment-testing`) {
+        isTransitive = false
+    }
 
     implementation(libs.`play-services-base`)
     implementation(libs.`play-services-basement`)

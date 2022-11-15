@@ -20,7 +20,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("android") version "1.7.20" apply false
+    kotlin("android") version "1.7.21" apply false
     id("org.jetbrains.dokka") version "1.7.20" apply false
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
