@@ -48,7 +48,9 @@ dependencies {
     implementation(libs.`androidx-core-ktx`)
 
     implementation(libs.`fragment-ktx`)
-    debugImplementation(libs.`fragment-testing`)
+    debugImplementation(libs.`fragment-testing`) {
+        isTransitive = false
+    }
 
     implementation(libs.`lifecycle-livedata-ktx`)
     implementation(libs.`lifecycle-viewmodel-ktx`)
