@@ -28,11 +28,21 @@ import java.util.*
 import androidx.test.runner.screenshot.BasicScreenCaptureProcessor
 import androidx.test.runner.screenshot.ScreenCaptureProcessor
 import androidx.test.runner.screenshot.Screenshot
+import org.json.JSONObject
 import org.junit.*
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
 import java.io.IOException
+
+class JSEventListener: PaymentViewModel.JavaScriptEventListener {
+    var eventValue: String? = null
+    override fun javaScriptEvent(paymentViewModel: PaymentViewModel, event: String) {
+        val container = JSONObject(event)
+        eventValue = container.get("sourceEvent") as? String
+        //eventValue is first: OnCheckoutLoaded then OnCheckoutResized and so on...
+    }
+}
 
 /**
  * End-to-end tests for PaymentFragment
@@ -434,6 +444,22 @@ class PaymentTest {
         scenario
         assertWebView()
         Assert.assertTrue("Card options not found", cardOption.waitForExists(timeout))
+    }
+
+    @Test
+    fun receiveJSEvents() {
+        buildArguments(isV3 = true)
+        scenario
+        var listener = JSEventListener()
+        scenario.onFragment {
+            val vm = it.requireActivity().paymentViewModel
+            vm.setJavaScriptEventListener(null, listener)
+        }
+        
+        val event = "OnCheckoutLoaded"
+        Assert.assertTrue("Could not get any JS events", retryUntilTrue(timeout) {
+            listener.eventValue == event
+        })
     }
 
     /**
@@ -945,7 +971,7 @@ class ScreenshotTestRule : TestWatcher() {
      * Capture a screenshot, and store it in the Pictures folder in the sdcard:
      * /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures
      */
-    fun captureScreen(filename: String) {
+    private fun captureScreen(filename: String) {
         
         val capture = Screenshot.capture()
         capture.name = filename
