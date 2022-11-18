@@ -203,6 +203,23 @@ class PaymentTest {
             SystemClock.sleep(keyInputDelay) // this is horrible but you do what you gotta do
         }
     }
+    
+    //since github has problems with timing and sometimes just quits, run our tests a few times since they work on a second attempt.
+    private fun runXTimes(times: Int = 3, runFunc: (index: Int) -> Unit) {
+        for (i in 0 until times) {
+            try {
+                runFunc(i)
+                //just return if working!
+                return
+            } catch (error: AssertionError) {
+                // Attempt i did fail
+                teardown()
+            }
+        }
+        //always end with an extra try
+        runFunc(times)
+    }
+
 
     private fun fullPaymentTestAttempt(
         cardNumber: String,
@@ -448,20 +465,22 @@ class PaymentTest {
 
     @Test
     fun receiveJSEvents() {
-        buildArguments(isV3 = true)
-        scenario
-        var listener = JSEventListener()
-        scenario.onFragment {
-            val vm = it.requireActivity().paymentViewModel
-            vm.setJavaScriptEventListener(null, listener)
-        }
-        
-        val event = "OnCheckoutLoaded"
-        Assert.assertTrue("Could not get any JS events", retryUntilTrue(timeout) {
-            listener.eventValue == event
-        })
-    }
+        runXTimes {
+            buildArguments(isV3 = true)
+            scenario
+            var listener = JSEventListener()
+            scenario.onFragment {
+                val vm = it.requireActivity().paymentViewModel
+                vm.setJavaScriptEventListener(null, listener)
+            }
 
+            val event = "OnCheckoutLoaded"
+            Assert.assertTrue("Could not get any JS events", retryUntilTrue(timeout) {
+                listener.eventValue == event
+            })
+        }
+    }
+    
     /**
      * Check that a card payment that does not invoke 3D-Secure succeeds
      */
