@@ -205,15 +205,18 @@ class PaymentTest {
     }
     
     //since github has problems with timing and sometimes just quits, run our tests a few times since they work on a second attempt.
-    private fun runXTimes(times: Int = 3, runFunc: (index: Int) -> Unit) {
+    private fun runXTimes(times: Int = 3, handleSetup: Boolean = true, runFunc: (index: Int) -> Unit) {
         for (i in 0 until times) {
             try {
                 runFunc(i)
-                //just return if working!
+                //just return if success
                 return
-            } catch (error: AssertionError) {
+            } catch (error: Error) {
                 // Attempt i did fail
                 teardown()
+                if (handleSetup) {
+                    setupAgain()
+                }
             }
         }
         //always end with an extra try
@@ -465,16 +468,25 @@ class PaymentTest {
 
     @Test
     fun receiveJSEvents() {
+        
         runXTimes {
             buildArguments(isV3 = true)
-            scenario
             var listener = JSEventListener()
             scenario.onFragment {
                 val vm = it.requireActivity().paymentViewModel
                 vm.setJavaScriptEventListener(null, listener)
             }
-
-            val event = "OnCheckoutLoaded"
+            
+            var event = "OnCheckoutLoaded"
+            if (retryUntilTrue(shortTimeout) {
+                    listener.eventValue == event
+                }) {
+                //success!
+                return@runXTimes
+            }
+            //otherwise already loaded and we need a different event
+            waitForCard()
+            event = "OnCheckoutResized"
             Assert.assertTrue("Could not get any JS events", retryUntilTrue(timeout) {
                 listener.eventValue == event
             })
