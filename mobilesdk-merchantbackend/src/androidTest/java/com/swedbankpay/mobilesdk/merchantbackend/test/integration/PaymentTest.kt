@@ -152,6 +152,8 @@ class PaymentTest {
     
     private val cardOption
         get() = webView.getChild(UiSelector().textStartsWith("Card").checkable(true))
+    private val communicationError
+        get() = webView.getChild(UiSelector().textContains("Communication Error"))
     private val cardDetails
         get() = webView.getChild(UiSelector().text("Pay by Card"))
     private val creditCardOption
@@ -651,7 +653,7 @@ class PaymentTest {
     fun testOneClickV3EnterprisePayerReference() {
         
         Log.i("SDK", "starting testOneClickV3EnterprisePayerReference")
-        for (i in 0..2) {
+        for (i in 0 until 3) {
             try {
                 oneClickV3EnterprisePayerReferenceRun()
                 return
@@ -743,6 +745,11 @@ class PaymentTest {
         }
         
         if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
+            if (communicationError.waitForExists(5)) {
+                //Failure(java.net.UnknownHostException: Unable to resolve host "enterprise-dev-dot-payex-merchant-samples.ey.r.appspot.com": No address associated with hostname)
+                Assert.fail("Could not resolve host! Internal Android problem.")
+            }
+            
             Assert.fail("Could not scroll to see cardOption while waiting for card")
         }
         
@@ -888,6 +895,7 @@ class PaymentTest {
     
     @OptIn(DelicateCoroutinesApi::class)
     private fun runVerifyRecurTokenV3() {
+        PaymentFragment.defaultConfiguration = paymentOnlyTestConfiguration
         val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, generateRecurrenceToken = true, generateUnscheduledToken = true)
         //val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, 
         //    payer = PaymentOrderPayer(email = "leia.ahlstrom@payex.com", msisdn = "+46739000001", payerReference = "unique-identifier")
