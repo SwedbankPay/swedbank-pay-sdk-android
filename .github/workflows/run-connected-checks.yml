@@ -23,10 +23,9 @@ jobs:
           api-level: 28
           target: google_apis
           arch: x86_64
+          disk-size: 8G
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 5120
           script: |
-            # wipe user data from emulator if any would exist.
-            emulator -list-avds | while read line; do emulator -avd $line -wipe-data; done
             adb logcat -c                             # clear logs, delete any existing pictures
             adb shell "rm -rf /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures/*"
             mkdir app
