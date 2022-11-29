@@ -28,11 +28,21 @@ import java.util.*
 import androidx.test.runner.screenshot.BasicScreenCaptureProcessor
 import androidx.test.runner.screenshot.ScreenCaptureProcessor
 import androidx.test.runner.screenshot.Screenshot
+import org.json.JSONObject
 import org.junit.*
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
 import java.io.IOException
+
+class JSEventListener: PaymentViewModel.JavaScriptEventListener {
+    var eventValue: String? = null
+    override fun javaScriptEvent(paymentViewModel: PaymentViewModel, event: String) {
+        val container = JSONObject(event)
+        eventValue = container.get("sourceEvent") as? String
+        //eventValue is first: OnCheckoutLoaded then OnCheckoutResized and so on...
+    }
+}
 
 /**
  * End-to-end tests for PaymentFragment
@@ -142,6 +152,8 @@ class PaymentTest {
     
     private val cardOption
         get() = webView.getChild(UiSelector().textStartsWith("Card").checkable(true))
+    private val communicationError
+        get() = webView.getChild(UiSelector().textContains("Communication Error"))
     private val cardDetails
         get() = webView.getChild(UiSelector().text("Pay by Card"))
     private val creditCardOption
@@ -193,7 +205,27 @@ class PaymentTest {
             SystemClock.sleep(keyInputDelay) // this is horrible but you do what you gotta do
         }
     }
-
+    
+    //since github has problems with timing and sometimes just quits, run our tests a few times since they work on a second attempt.
+    private fun runXTimes(times: Int = 3, handleSetup: Boolean = true, runFunc: (index: Int) -> Unit) {
+        for (i in 0 until times) {
+            try {
+                runFunc(i)
+                //just return if success
+                return
+            } catch (error: Error) {
+                // Attempt i did fail
+                teardown()
+                if (handleSetup) {
+                    paymentTestConfiguration = paymentOnlyTestConfiguration
+                    setupAgain()
+                }
+            }
+        }
+        //always end with an extra try
+        runFunc(times)
+    }
+    
     private fun fullPaymentTestAttempt(
         cardNumber: String,
         cvv: String,
@@ -436,6 +468,35 @@ class PaymentTest {
         Assert.assertTrue("Card options not found", cardOption.waitForExists(timeout))
     }
 
+    @Test
+    fun receiveJSEvents() {
+        
+        runXTimes {
+            paymentTestConfiguration = paymentOnlyTestConfiguration
+            PaymentFragment.defaultConfiguration = paymentTestConfiguration
+            buildArguments(isV3 = true)
+            var listener = JSEventListener()
+            scenario.onFragment {
+                val vm = it.requireActivity().paymentViewModel
+                vm.setJavaScriptEventListener(null, listener)
+            }
+            
+            var event = "OnCheckoutLoaded"
+            if (retryUntilTrue(shortTimeout) {
+                    listener.eventValue == event
+                }) {
+                //success!
+                return@runXTimes
+            }
+            //otherwise already loaded and we need a different event
+            waitForCard()
+            event = "OnCheckoutResized"
+            Assert.assertTrue("Could not get any JS events", retryUntilTrue(timeout) {
+                listener.eventValue == event
+            })
+        }
+    }
+    
     /**
      * Check that a card payment that does not invoke 3D-Secure succeeds
      */
@@ -592,7 +653,7 @@ class PaymentTest {
     fun testOneClickV3EnterprisePayerReference() {
         
         Log.i("SDK", "starting testOneClickV3EnterprisePayerReference")
-        for (i in 0..2) {
+        for (i in 0 until 3) {
             try {
                 oneClickV3EnterprisePayerReferenceRun()
                 return
@@ -684,6 +745,11 @@ class PaymentTest {
         }
         
         if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
+            if (communicationError.waitForExists(5)) {
+                //Failure(java.net.UnknownHostException: Unable to resolve host "enterprise-dev-dot-payex-merchant-samples.ey.r.appspot.com": No address associated with hostname)
+                Assert.fail("Could not resolve host! Internal Android problem.")
+            }
+            
             Assert.fail("Could not scroll to see cardOption while waiting for card")
         }
         
@@ -829,6 +895,7 @@ class PaymentTest {
     
     @OptIn(DelicateCoroutinesApi::class)
     private fun runVerifyRecurTokenV3() {
+        PaymentFragment.defaultConfiguration = paymentOnlyTestConfiguration
         val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, generateRecurrenceToken = true, generateUnscheduledToken = true)
         //val order = paymentOrder.copy(operation = PaymentOrderOperation.VERIFY, 
         //    payer = PaymentOrderPayer(email = "leia.ahlstrom@payex.com", msisdn = "+46739000001", payerReference = "unique-identifier")
@@ -945,7 +1012,7 @@ class ScreenshotTestRule : TestWatcher() {
      * Capture a screenshot, and store it in the Pictures folder in the sdcard:
      * /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures
      */
-    fun captureScreen(filename: String) {
+    private fun captureScreen(filename: String) {
         
         val capture = Screenshot.capture()
         capture.name = filename

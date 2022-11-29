@@ -34,7 +34,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
     private val processState = MutableLiveData<ProcessState?>()
     private val moveToNextStateJob = MutableLiveData<Job?>()
-
+    
     val webViewShowingRootPage = MutableLiveData(false)
 
     var reloadRequested = false
@@ -226,6 +226,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     
     fun onGeneralEvent(message: String) {
         Log.d(LOG_TAG, "onGeneralEvent: $message")
+        publicVm?.run {
+            javaScriptEventListener?.javaScriptEvent(this, message)
+        }
     }
 
     fun getPaymentMenuHtmlContent(): HtmlContent? {

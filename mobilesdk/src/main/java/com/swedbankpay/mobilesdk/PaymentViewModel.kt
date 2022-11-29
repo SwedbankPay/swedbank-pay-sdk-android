@@ -191,6 +191,19 @@ class PaymentViewModel : AndroidViewModel {
         fun onTermsOfServiceClick(paymentViewModel: PaymentViewModel, url: String): Boolean
     }
 
+    /**
+     * Interface you can implement to be notified when the PaymentMenu sends JS-events
+     */
+    fun interface JavaScriptEventListener {
+        /**
+         * Called when the user clicks on the Terms of Service link in the Payment Menu.
+         *
+         * @param paymentViewModel the [PaymentViewModel] of the [PaymentFragment] the user is interacting with
+         * @param event a text representation of the event, usually a JSON object.
+         */
+        fun javaScriptEvent(paymentViewModel: PaymentViewModel, event: String)
+    }
+
     // Explicit null value to have the dependent MediatorLiveDatas set their initial values
     private val internalVm = MutableLiveData<InternalPaymentViewModel?>(null)
 
@@ -229,6 +242,8 @@ class PaymentViewModel : AndroidViewModel {
         internalVm.value = null
         onTermsOfServiceClickListener = null
         onTermsOfServiceClickListenerOwner = null
+        javaScriptEventListener = null
+        javaScriptEventListenerOwner = null
     }
 
     /**
@@ -339,6 +354,42 @@ class PaymentViewModel : AndroidViewModel {
     ) {
         onTermsOfServiceClickListener = listener
         onTermsOfServiceClickListenerOwner = when (listener) {
+            null -> null
+            else -> lifecycleOwner
+        }
+    }
+
+    internal var javaScriptEventListener: JavaScriptEventListener? = null
+    private var javaScriptEventListenerOwner: LifecycleOwner? = null
+        set(value) {
+            field?.lifecycle?.removeObserver(javaScriptEventListenerLifecycleObserver)
+            field = value
+            value?.lifecycle?.addObserver(javaScriptEventListenerLifecycleObserver)
+        }
+    private val javaScriptEventListenerLifecycleObserver =
+        LifecycleEventObserver { source, _ ->
+            if (source.lifecycle.currentState == Lifecycle.State.DESTROYED) {
+                javaScriptEventListener = null
+                javaScriptEventListenerOwner = null
+            }
+        }
+
+    /**
+     * Set an JavaScriptEventListener to be notified of all the payment menu's JavaScript events.
+     *
+     * Optionally, you may provide a [LifecycleOwner] that this listener is bound to.
+     * It will then be automatically removed when the LifecycleOwner is destroyed.
+     * If you do not provide a LifecycleOwner, be careful not to leak expensive objects here.
+     *
+     * @param lifecycleOwner: the LifecycleOwner to bind the listener to, or `null` to keep the listener until the next call to this method
+     * @param listener the JavaScriptEventListener to set, or `null` to remove the listener
+     */
+    fun setJavaScriptEventListener(
+        lifecycleOwner: LifecycleOwner?,
+        listener: JavaScriptEventListener?
+    ) {
+        javaScriptEventListener = listener
+        javaScriptEventListenerOwner = when (listener) {
             null -> null
             else -> lifecycleOwner
         }
