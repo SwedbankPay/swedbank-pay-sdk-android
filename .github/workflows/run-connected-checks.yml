@@ -6,6 +6,9 @@ jobs:
   connected_check:
 
     runs-on: macos-latest
+    strategy:
+      matrix:
+        api-level: [28, 33]
 
     steps:
       - uses: actions/checkout@v3
@@ -20,27 +23,18 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         #continue-on-error: true # This does not work
         with:
-          api-level: 28
+          api-level: ${{ matrix.api-level }}
           target: google_apis
           arch: x86_64
           disk-size: 8G
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 5120
           script: |
             adb logcat -c                             # clear logs, delete any existing pictures
-            adb shell "rm -rf /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures/*"
             mkdir app
             touch app/emulator.log                    # create log file
             chmod 777 app/emulator.log                # allow writing to log file
             adb logcat >> app/emulator.log &          # pipe all logcat messages into log file as a background process
             ./gradlew connectedCheck
-            # store the exit code from the test run
-            exitcode="${?}"
-            
-            # copy any screenshots if exists, silencing the error when there are no screenshots
-            adb pull /sdcard/Android/data/com.swedbankpay.mobilesdk.merchantbackend.test/files/Pictures app 2>&1
-            
-            # exit with the code from the testrun
-            exit ${exitcode}
           
       - name: Upload Failing Test Report Log
         if: ${{ always() }}
