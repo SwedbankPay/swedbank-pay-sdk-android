@@ -193,6 +193,11 @@ class PaymentTest {
     private val ndmChallangeInput
         get() = webView.getChild(UiSelector().className(EditText::class.java).instance(0))
     
+    private val ssnInput
+        get() = webView.getChild(UiSelector().resourceId("ssn"))
+    private val saveCredentialsButton
+        get() = webView.getChild(UiSelector().className(Button::class.java).textStartsWith("Save my credentials"))
+    
     private fun UiObject.inputText(text: String) {
         this.text = text
         clickUntilFocusedAndAssert(timeout)
@@ -667,14 +672,14 @@ class PaymentTest {
     
     private fun oneClickV3EnterprisePayerReferenceRun() { 
         paymentTestConfiguration = enterpriseTestConfiguration
-        PaymentFragment.defaultConfiguration = paymentTestConfiguration
+        PaymentFragment.defaultConfiguration = enterpriseTestConfiguration
 
         // create a random string as reference
         payerReference = (1..15)
             .map { Random().nextInt(charPool.size) }
             .map(charPool::get)
             .joinToString("")
-
+        
         val payer = PaymentOrderPayer(payerReference = payerReference, email = "leia.ahlstrom@payex.com", msisdn = "+46739000001")
         prefilledCardPurchase(payer)
     }
@@ -686,6 +691,15 @@ class PaymentTest {
         scenario
         sleep(2000)
 
+        if (!webView.waitForExists(timeout)) {
+            Assert.fail("No webview while waiting for oneClick")
+        }
+        // ssnInput was not required before so we need to allow it to pass if it changes again.
+        waitForOne(timeout, arrayOf(ssnInput, cardOption))
+        if (ssnInput.exists()) {
+            ssnInput.inputText("199710202392")
+            saveCredentialsButton.click()
+        }
         waitForCard()
         
         // Check if the user has card details, otherwise fill them in and retry. If the payer is known, prefilled options must exist.
