@@ -15,10 +15,6 @@ import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
-import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.UiObject
-import androidx.test.uiautomator.UiScrollable
-import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.*
 import com.swedbankpay.mobilesdk.merchantbackend.UnexpectedResponseException
 import com.swedbankpay.mobilesdk.merchantbackend.test.integration.util.*
@@ -28,6 +24,7 @@ import java.util.*
 import androidx.test.runner.screenshot.BasicScreenCaptureProcessor
 import androidx.test.runner.screenshot.ScreenCaptureProcessor
 import androidx.test.runner.screenshot.Screenshot
+import androidx.test.uiautomator.*
 import org.json.JSONObject
 import org.junit.*
 import org.junit.rules.TestWatcher
@@ -149,7 +146,7 @@ class PaymentTest {
     private fun assertWebView() {
         Assert.assertTrue("WebView not found", webView.waitForExists(timeout))
     }
-    
+
     private val cardOption
         get() = webView.getChild(UiSelector().textStartsWith("Card").checkable(true))
     private val communicationError
@@ -480,7 +477,7 @@ class PaymentTest {
             paymentTestConfiguration = paymentOnlyTestConfiguration
             PaymentFragment.defaultConfiguration = paymentTestConfiguration
             buildArguments(isV3 = true)
-            var listener = JSEventListener()
+            val listener = JSEventListener()
             scenario.onFragment {
                 val vm = it.requireActivity().paymentViewModel
                 vm.setJavaScriptEventListener(null, listener)
@@ -700,7 +697,7 @@ class PaymentTest {
             ssnInput.inputText("199710202392")
             saveCredentialsButton.click()
         }
-        waitForCard()
+        waitForCard(true)
         
         // Check if the user has card details, otherwise fill them in and retry. If the payer is known, prefilled options must exist.
         val first = if (knownReturningPayer) {
@@ -710,7 +707,7 @@ class PaymentTest {
             //could be either one of these
             waitForOne(shortTimeout, arrayOf(creditCardOption, prefilledCardButton))
         }
-        if (first == null || creditCardOption == first) {
+        if (!prefilledCardButton.exists()) {
             //Create the card, we need to know which card is used, since not all cards work for us.
             if (first == null) {
                 addAnotherCardLink.waitForExists(timeout)
@@ -753,24 +750,31 @@ class PaymentTest {
         Assert.assertEquals(PaymentViewModel.State.COMPLETE, lastResult)
     }
     
-    private fun waitForCard() {
+    private fun waitForCard(blindClick: Boolean = false) {
         if (!webView.waitForExists(timeout)) {
             Assert.fail("No webview while waiting for card")
         }
         
         if (!webView.waitAndScrollUntilExists(cardOption, timeout)) {
+            if (blindClick) {
+                val width = device.displayWidth
+                //val scale = device.displaySizeDp.x / width
+                device.click(width / 2, device.displayHeight / 4)
+
+                return
+            }
             if (communicationError.waitForExists(5)) {
                 //Failure(java.net.UnknownHostException: Unable to resolve host "enterprise-dev-dot-payex-merchant-samples.ey.r.appspot.com": No address associated with hostname)
                 Assert.fail("Could not resolve host! Internal Android problem.")
             }
             
-            Assert.fail("Could not scroll to see cardOption while waiting for card")
+            Assert.fail("Could not scroll to see cardPaymentButton while waiting for card")
         }
         
         val didClick = retryUntilTrue(longTimeout) {
             cardOption.click()
         }
-        Assert.assertTrue("Could not click cardOption while waiting for card", didClick)
+        Assert.assertTrue("Could not click cardPaymentButton while waiting for card", didClick)
     }
 
     /**
