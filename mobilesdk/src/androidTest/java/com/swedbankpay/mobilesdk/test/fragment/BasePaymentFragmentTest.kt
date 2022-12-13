@@ -6,6 +6,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.espresso.web.assertion.WebViewAssertions
 import androidx.test.espresso.web.matcher.DomMatchers
 import androidx.test.espresso.web.sugar.Web
+import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiSelector
 import com.nhaarman.mockitokotlin2.stub
 import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.PaymentFragment
@@ -27,6 +30,7 @@ import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
+
 
 /**
  * Base class for instrumented PaymentFragment tests
@@ -95,7 +99,21 @@ abstract class BasePaymentFragmentTest {
      */
     @Before
     fun setup() {
+        removeDialogs()
         PaymentFragment.defaultConfiguration = configuration
+    }
+
+    private fun removeDialogs() {
+
+        val device = UiDevice.getInstance(getInstrumentation())
+        var waitButton = device.findObject(UiSelector().textContains("OK"))
+        if (waitButton.exists()) waitButton.click()
+
+        waitButton = device.findObject(UiSelector().textContains("Cancel"))
+        if (waitButton.exists()) waitButton.click()
+
+        waitButton = device.findObject(UiSelector().textContains("wait"))
+        if (waitButton.exists()) waitButton.click()
     }
 
     /**
