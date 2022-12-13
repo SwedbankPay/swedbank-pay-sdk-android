@@ -8,7 +8,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        api-level: [28, 33]
+        api-level: [28] #wait with this until tests are more stable 33
 
     steps:
       - uses: actions/checkout@v3
@@ -21,7 +21,6 @@ jobs:
       - name: Run Connected Checks
         id: testing
         uses: reactivecircus/android-emulator-runner@v2
-        #continue-on-error: true # This does not work
         with:
           api-level: ${{ matrix.api-level }}
           target: google_apis

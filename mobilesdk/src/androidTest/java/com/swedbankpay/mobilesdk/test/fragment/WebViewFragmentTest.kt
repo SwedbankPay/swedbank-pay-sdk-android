@@ -10,6 +10,7 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.espresso.web.assertion.WebViewAssertions
 import androidx.test.espresso.web.matcher.DomMatchers
@@ -217,6 +218,7 @@ class WebViewFragmentTest {
             sleep(1000)
             
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
+                .inRoot(isDialog())
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_value))
