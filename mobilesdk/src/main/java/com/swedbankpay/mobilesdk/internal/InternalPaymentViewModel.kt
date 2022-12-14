@@ -193,7 +193,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     }
 
     fun resumeFromSavedState(bundle: Bundle) {
-        setProcessState(bundle.getParcelable(KEY_STATE))
+        setProcessState(bundle.getParcelableInternal(KEY_STATE, ProcessState::class.java))
     }
 
     fun retryFromRetryableError() {

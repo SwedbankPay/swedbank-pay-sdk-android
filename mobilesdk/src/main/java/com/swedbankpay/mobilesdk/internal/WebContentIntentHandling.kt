@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.pm.PackageManager.ResolveInfoFlags
 import android.os.Build
 import java.net.URISyntaxException
 
@@ -80,9 +81,17 @@ private fun InternalPaymentViewModel.requireNonBrowser(intent: Intent) {
 private fun InternalPaymentViewModel.legacyRequireNonBrowser(intent: Intent) {
     val scheme = intent.scheme
     if (scheme == "http" || scheme == "https" || scheme == "about") {
-        val resolveInfo = getApplication<Application>().packageManager
-            .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-            ?: throw ActivityNotFoundException()
+        val resolveInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val matchDefaultOnly = ResolveInfoFlags.of((PackageManager.MATCH_DEFAULT_ONLY.toLong()))
+            getApplication<Application>().packageManager
+                .resolveActivity(intent, matchDefaultOnly)
+                ?: throw ActivityNotFoundException()
+        } else {
+            getApplication<Application>().packageManager
+                .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+                ?: throw ActivityNotFoundException()
+        }
+        
         val matchCategory = resolveInfo.match and IntentFilter.MATCH_CATEGORY_MASK
         // Using "host" match category as a heuristic here.
         // An app that handles http(s) uris for any host is more than likely a browser.

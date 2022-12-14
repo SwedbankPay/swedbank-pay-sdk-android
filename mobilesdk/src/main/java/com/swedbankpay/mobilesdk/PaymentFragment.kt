@@ -17,6 +17,7 @@ import com.swedbankpay.mobilesdk.PaymentFragment.Companion.ARG_VIEW_MODEL_PROVID
 import com.swedbankpay.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
+import com.swedbankpay.mobilesdk.internal.getParcelableInternal
 import java.io.Serializable
 
 /**
@@ -488,8 +489,8 @@ open class PaymentFragment : Fragment() {
                 
                 val checkoutV3 = getBoolean(ARG_CHECKOUT_V3)
                 val useCheckin = getBoolean(ARG_USE_CHECKIN)
-                val consumer = getParcelable<Consumer>(ARG_CONSUMER)
-                val paymentOrder = getParcelable<PaymentOrder>(ARG_PAYMENT_ORDER)
+                val consumer = getParcelableInternal(ARG_CONSUMER, Consumer::class.java)
+                val paymentOrder = getParcelableInternal(ARG_PAYMENT_ORDER, PaymentOrder::class.java)
                 val userData = get(ARG_USER_DATA)
                 val style = getBundle(ARG_STYLE)
                 val useExternal = getBoolean(ARG_USE_BROWSER)

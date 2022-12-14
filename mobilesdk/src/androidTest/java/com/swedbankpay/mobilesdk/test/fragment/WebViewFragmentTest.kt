@@ -10,18 +10,18 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.espresso.web.assertion.WebViewAssertions
 import androidx.test.espresso.web.matcher.DomMatchers
 import androidx.test.espresso.web.model.SimpleAtom
 import androidx.test.espresso.web.sugar.Web
-import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
 import com.swedbankpay.mobilesdk.test.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.hamcrest.Matchers
 import org.junit.After
 import org.junit.Assert
@@ -61,7 +61,24 @@ class WebViewFragmentTest {
      */
     @After
     fun teardown() {
+
+        removeDialogs()
         scenario.moveToState(Lifecycle.State.DESTROYED)
+    }
+
+    private fun removeDialogs() {
+
+        //testDialog("alert('I whould go away now')")
+        
+        val device = UiDevice.getInstance(getInstrumentation())
+        var waitButton = device.findObject(UiSelector().textContains("wait"))
+        if (waitButton.exists()) waitButton.click()
+
+        waitButton = device.findObject(UiSelector().textContains("OK"))
+        if (waitButton.exists()) waitButton.click()
+
+        waitButton = device.findObject(UiSelector().textContains("Cancel"))
+        if (waitButton.exists()) waitButton.click()
     }
 
     /**
@@ -201,6 +218,7 @@ class WebViewFragmentTest {
             sleep(1000)
             
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
+                .inRoot(isDialog())
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_value))
@@ -424,12 +442,12 @@ class WebViewFragmentTest {
     ): Boolean
     {
         val desiredLocale = Locale(lang)
-        val context = InstrumentationRegistry.getInstrumentation().getContext()
-        var conf: Configuration = context.getResources().getConfiguration()
+        val context = getInstrumentation().context
+        var conf: Configuration = context.resources.configuration
         conf = Configuration(conf)
         conf.setLocale(desiredLocale)
         val localizedContext = context.createConfigurationContext(conf)
-        return localizedContext.getResources().getString(resource) == translation
+        return localizedContext.resources.getString(resource) == translation
     }
 
     private fun testJsDialog(

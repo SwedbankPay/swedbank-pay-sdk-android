@@ -74,7 +74,6 @@ dependencies {
     testImplementation(libs.`androidx-test-junit`)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
-//    testImplementation(libs.`mockito-inline`)
     testImplementation(libs.`mockito-kotlin`)
 
     androidTestImplementation(kotlin("reflect"))
@@ -83,6 +82,7 @@ dependencies {
     androidTestImplementation(libs.`espresso-core`)
     androidTestImplementation(libs.`espresso-intents`)
     androidTestImplementation(libs.`espresso-web`)
+    androidTestImplementation(libs.`uiautomator`)
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.`dexmaker-mockito-inline`)
     androidTestImplementation(libs.`mockito-kotlin`)
