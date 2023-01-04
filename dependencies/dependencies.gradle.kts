@@ -20,7 +20,7 @@ extra["libs"] = mapOf(
    "swiperefreshlayout" to "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
 
    "androidx-test-core" to "androidx.test:core:1.5.0",
-   "androidx-test-runner" to "androidx.test:runner:1.5.1",
+   "androidx-test-runner" to "androidx.test:runner:1.5.2",
    
    "espresso-core" to "androidx.test.espresso:espresso-core:3.5.1",
    "espresso-intents" to "androidx.test.espresso:espresso-intents:3.5.0",
