@@ -9,7 +9,7 @@ pull_request_rules:
   - name: Automatically merge Dependabot PR
     conditions:
       - author~=^dependabot(|-preview)\[bot\]$
-      - '#commits-behind=0' # Only merge up to date pull requests
+      #This does not seem to be working anymore: - '#commits-behind=0' # Only merge up to date pull requests
       - check-success=connected_check
       - check-success=check
       - check-success=Codacy Static Code Analysis
