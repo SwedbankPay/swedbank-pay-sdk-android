@@ -23,7 +23,7 @@ extra["libs"] = mapOf(
    "androidx-test-runner" to "androidx.test:runner:1.5.2",
    
    "espresso-core" to "androidx.test.espresso:espresso-core:3.5.1",
-   "espresso-intents" to "androidx.test.espresso:espresso-intents:3.5.0",
+   "espresso-intents" to "androidx.test.espresso:espresso-intents:3.5.1",
    "espresso-web" to "androidx.test.espresso:espresso-web:3.5.1",
 
    "androidx-test-junit" to "androidx.test.ext:junit:1.1.5",
