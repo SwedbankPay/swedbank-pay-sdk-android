@@ -2,7 +2,7 @@
 
 buildscript {
     var kotlin_version: String by extra
-    kotlin_version = "1.7.20"
+    kotlin_version = "1.8.0"
     extra["kotlin_version"] = kotlin_version
     apply(from = "dependencies/dependencies.gradle.kts")
 
