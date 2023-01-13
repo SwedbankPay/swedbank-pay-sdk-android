@@ -1,5 +1,5 @@
 //val kotlin_version: String by extra
-val kotlin_version:String = "1.7.20"   //project.extra["kotlin_version"] as String 
+val kotlin_version:String = "1.8.0"   //project.extra["kotlin_version"] as String 
 plugins {
     id("com.android.library")
     kotlin("android")
@@ -65,7 +65,7 @@ dependencies {
     androidTestImplementation(libs.uiautomator)
     androidTestImplementation(libs.junit)
     implementation("androidx.core:core-ktx:+")
-    implementation(kotlin("stdlib-jdk7", kotlin_version))   //project.extra["kotlin_version"] as String))
+    implementation(kotlin("stdlib-jdk8", kotlin_version))   //project.extra["kotlin_version"] as String))
 }
 
 publishToMaven(

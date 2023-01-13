@@ -2,7 +2,7 @@
 
 buildscript {
     var kotlin_version: String by extra
-    kotlin_version = "1.7.20"
+    kotlin_version = "1.8.0"
     extra["kotlin_version"] = kotlin_version
     apply(from = "dependencies/dependencies.gradle.kts")
 
@@ -20,7 +20,7 @@ buildscript {
 }
 
 plugins {
-    kotlin("android") version "1.7.22" apply false
+    kotlin("android") version "1.8.0" apply false
     id("org.jetbrains.dokka") version "1.7.20" apply false
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }

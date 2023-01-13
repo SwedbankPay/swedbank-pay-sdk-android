@@ -1,5 +1,5 @@
 //val kotlin_version: String by extra
-val kotlin_version:String = "1.7.20"
+val kotlin_version:String = "1.8.0"
 plugins {
     id("com.android.library")
     kotlin("android")
@@ -32,7 +32,7 @@ dependencies {
     implementation(libs.junit)
     implementation(libs.`mockito-kotlin`)
     implementation("androidx.core:core-ktx:+")
-    implementation(kotlin("stdlib-jdk7", kotlin_version))
+    implementation(kotlin("stdlib-jdk8", kotlin_version))
 }
 repositories {
     mavenCentral()
