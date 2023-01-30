@@ -29,7 +29,7 @@ extra["libs"] = mapOf(
    "androidx-test-junit" to "androidx.test.ext:junit:1.1.5",
    "uiautomator" to "androidx.test.uiautomator:uiautomator:2.2.0",
 
-   "material" to "com.google.android.material:material:1.7.0",
+   "material" to "com.google.android.material:material:1.8.0",
    "play-services-base" to "com.google.android.gms:play-services-base:18.1.0",
    "play-services-basement" to "com.google.android.gms:play-services-basement:18.1.0",
    "gson" to "com.google.code.gson:gson:2.10.1",
