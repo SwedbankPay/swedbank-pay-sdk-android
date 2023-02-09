@@ -319,7 +319,7 @@ class PaymentTest {
     private fun continueSCAPayment() {
         waitForOne(timeout, arrayOf(scaContinueButton, whitelistMerchantBox))
         if (scaContinueButton.exists()) {
-            if (!scaContinueButton.click()) { throw Error("Could not click scaContinueButton") }
+            if (!scaContinueButton.click()) { throw AssertionError("Could not click scaContinueButton") }
         }
         else if (ndmChallangeInput.waitForExists(timeout)) {
             ndmChallangeInput.inputText("1234")
@@ -329,11 +329,11 @@ class PaymentTest {
             if (!retryUntilTrue(timeout) {
                 sendOtpButton.click()
             }) {
-                throw Error("Could click OTP button to continue SCA payment")
+                throw AssertionError("Could click OTP button to continue SCA payment")
             }
         }
         else {
-            throw Error("Could not continue SCA payment")
+            throw AssertionError("Could not continue SCA payment")
         }
     }
     
