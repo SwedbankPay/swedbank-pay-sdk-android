@@ -31,7 +31,7 @@ dependencies {
     implementation(libs.`lifecycle-livedata-ktx`)
     implementation(libs.junit)
     implementation(libs.`mockito-kotlin`)
-    implementation("androidx.core:core-ktx:+")
+    //implementation("androidx.core:core-ktx:+")
     implementation(kotlin("stdlib-jdk8", kotlin_version))
 }
 repositories {
