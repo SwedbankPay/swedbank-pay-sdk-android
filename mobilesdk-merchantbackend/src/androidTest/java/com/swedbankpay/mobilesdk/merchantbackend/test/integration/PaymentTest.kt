@@ -194,6 +194,13 @@ class PaymentTest {
         get() = webView.getChild(UiSelector().resourceId("ssn"))
     private val saveCredentialsButton
         get() = webView.getChild(UiSelector().className(Button::class.java).textStartsWith("Save my credentials"))
+
+    private val invoiceOption
+        get() = webView.getChild(UiSelector().textStartsWith("Invoice").checkable(true))
+    private val yourMobileNumberInput
+        get() = webView.getChild(UiSelector().textStartsWith("Your mobile number"))
+    private val yourZipCodeInput
+        get() = webView.getChild(UiSelector().textStartsWith("Your zip code"))
     
     private fun UiObject.inputText(text: String) {
         this.text = text
@@ -310,8 +317,8 @@ class PaymentTest {
     
     /// sometimes the ndm-challange form appears here instead of regular 3d-secure. We need to wait to see which appears
     private fun continueSCAPayment(): Boolean {
-        val existingObject = waitForOne(timeout, arrayOf(scaContinueButton, whitelistMerchantBox))
-        if (scaContinueButton == existingObject) {
+        waitForOne(timeout, arrayOf(scaContinueButton, whitelistMerchantBox))
+        if (scaContinueButton.exists()) {
             if (!scaContinueButton.click()) { return false }
         }
         else if (ndmChallangeInput.waitForExists(timeout)) {
@@ -721,8 +728,9 @@ class PaymentTest {
                 )) {
                 Assert.fail("Could not find prefilled options, and could not fill in new card")
             }
-            if (scaContinueButton.waitForExists(timeout)) {
-                Assert.assertTrue("scaContinueButton could not be clicked", scaContinueButton.click())
+            
+            if (!continueSCAPayment()) {
+                Assert.fail("Could not confirm payment")
             }
             waitForResult()
             
@@ -739,8 +747,8 @@ class PaymentTest {
         
         // Since we don't know if the stored card is an sca-card or not, we can't assert on the continue button
         // perhaps speed thing up by getting the result first...
-        if (scaContinueButton.waitForExists(timeout)) {
-            Assert.assertTrue("scaContinueButton could not be clicked", scaContinueButton.click())
+        if (!continueSCAPayment()) {
+            Assert.fail("Could not confirm payment")
         }
         
         lastResult = waitForResult(timeout)
@@ -1000,6 +1008,36 @@ class PaymentTest {
             }
         }
         return result
+    }
+
+    //Must be run manually at the moment. @Test
+    fun testInvoicePaymentV2() {
+
+        var order = paymentOrder.copy(language = Language.SWEDISH)
+        buildArguments(isV3 = false)    //, paymentOrder = order
+        scenario
+        assertWebView()
+
+        /*
+        Månadsfaktura
+        Ditt personnummer
+        Din e-post
+        Ditt mobilnummer
+    
+        YYYYMMDD-XXXX
+        invoiceOption.assertExist(shortTimeout)
+        invoiceOption.click()
+        ssnInput.inputText("199710202392")
+        yourEmailInput.inputText("leia.ahlstrom@payex.com")
+        yourMobileNumberInput.inputText("+46739000001")
+        yourZipCodeInput.inputText("17674")
+        
+        */
+        var lastResult: PaymentViewModel.State? = PaymentViewModel.State.IDLE
+        while (lastResult != PaymentViewModel.State.COMPLETE) {
+            //wait forever or until complete
+            lastResult = waitForResult(waitTime = 99898989898)
+        }
     }
     
     @get:Rule
