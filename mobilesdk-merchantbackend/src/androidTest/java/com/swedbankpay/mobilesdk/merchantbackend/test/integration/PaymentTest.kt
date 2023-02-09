@@ -1011,7 +1011,8 @@ class PaymentTest {
     }
 
     //Must be run manually at the moment. @Test
-    fun testInvoicePaymentV2() {
+    /// Test invoices by running manually
+    private fun testInvoicePaymentV2() {
 
         var order = paymentOrder.copy(language = Language.SWEDISH)
         buildArguments(isV3 = false)    //, paymentOrder = order
