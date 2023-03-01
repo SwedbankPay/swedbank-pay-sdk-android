@@ -1,5 +1,6 @@
-//val kotlin_version: String by extra
-val kotlin_version:String = "1.8.0"
+apply(from = "../dependencies/dependencies.gradle.kts")
+val kotlin_version: String by extra
+
 plugins {
     id("com.android.library")
     kotlin("android")

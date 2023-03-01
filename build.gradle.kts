@@ -1,11 +1,9 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    var kotlin_version: String by extra
-    kotlin_version = "1.8.0"
-    extra["kotlin_version"] = kotlin_version
     apply(from = "dependencies/dependencies.gradle.kts")
-
+    val kotlin_version: String by extra
+    
     repositories {
         google()
         mavenCentral()

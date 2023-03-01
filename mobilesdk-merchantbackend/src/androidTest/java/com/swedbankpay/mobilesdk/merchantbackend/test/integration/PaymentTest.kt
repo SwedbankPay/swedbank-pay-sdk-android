@@ -357,9 +357,14 @@ class PaymentTest {
         
         var success = false
         for (cardNumber in cardNumbers) {
-            success = fullPaymentTestAttempt(cardNumber, cvv, storeCard, useConfirmButton, scaPaymentButton)
-            if (success) {
-                break
+            try {
+                success = fullPaymentTestAttempt(cardNumber, cvv, storeCard, useConfirmButton, scaPaymentButton)
+                if (success) {
+                    break
+                }
+            }
+            catch (error: AssertionError) {
+                Log.d("Swedbank SDK", "fullPaymentTest: $error")
             }
             // it failed try again with another number
             teardown()

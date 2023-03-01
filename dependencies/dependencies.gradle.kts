@@ -1,4 +1,5 @@
 // Declare all dependency versions here so that they are consistent between subprojects.
+extra["kotlin_version"] = "1.8.10"
 
 extra["libs"] = mapOf(
    "android-gradle-plugin" to "com.android.tools.build:gradle:7.4.2",   //7.1.3
@@ -7,7 +8,7 @@ extra["libs"] = mapOf(
 
    "kotlinx-coroutines-core" to "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4",
    "kotlinx-coroutines-android" to "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4",
-   "kotlinx-serialization-json" to "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1",
+   "kotlinx-serialization-json" to "org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0",
 
    "androidx-appcompat" to "androidx.appcompat:appcompat:1.6.1",
    "androidx-core-ktx" to "androidx.core:core-ktx:1.9.0",
