@@ -1,4 +1,5 @@
 // Declare all dependency versions here so that they are consistent between subprojects.
+extra["kotlin_version"] = "1.8.10"
 
 extra["libs"] = mapOf(
    "android-gradle-plugin" to "com.android.tools.build:gradle:7.4.2",   //7.1.3
