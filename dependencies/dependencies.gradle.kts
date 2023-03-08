@@ -4,7 +4,7 @@ extra["kotlin_version"] = "1.8.10"
 extra["libs"] = mapOf(
    "android-gradle-plugin" to "com.android.tools.build:gradle:7.4.2",   //7.1.3
 
-   "jgit" to "org.eclipse.jgit:org.eclipse.jgit:6.4.0.202211300538-r",
+   "jgit" to "org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r",
 
    "kotlinx-coroutines-core" to "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4",
    "kotlinx-coroutines-android" to "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4",
