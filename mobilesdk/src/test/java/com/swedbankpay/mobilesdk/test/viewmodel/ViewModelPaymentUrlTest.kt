@@ -48,15 +48,19 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
     /**
      * Use AndroidViewModelFactory when creating ViewModels for this test
      */
-    override fun getDefaultViewModelProviderFactory() = ViewModelProvider.AndroidViewModelFactory(application)
-
+    override val defaultViewModelProviderFactory: ViewModelProvider.Factory
+        get() {
+            return ViewModelProvider.AndroidViewModelFactory(application)
+        }
+    
     private val viewModel get() = getViewModel<InternalPaymentViewModel>()
-
+    
     /**
      * Set up viewmodels and mock paymentorder
      */
     @Before
     fun setup() {
+        
         application.stub {
             on {
                 getString(R.string.swedbankpaysdk_view_paymentorder_template,
@@ -88,6 +92,7 @@ class ViewModelPaymentUrlTest : AbstractViewModelTest(), HasDefaultViewModelProv
      */
     @Test
     fun itShouldLoadPaymentMenuHtml() {
+        
         observing(viewModel.currentHtmlContent) {
             verify(it).onChanged(argThat {
                 getWebViewPage(application) == TestConstants.paymentorderHtmlPage

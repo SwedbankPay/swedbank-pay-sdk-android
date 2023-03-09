@@ -45,7 +45,8 @@ class ViewModelIdentifiedConsumerTest : AbstractViewModelTest(), HasDefaultViewM
     /**
      * Use AndroidViewModelFactory when creating ViewModels for this test
      */
-    override fun getDefaultViewModelProviderFactory() = ViewModelProvider.AndroidViewModelFactory(application)
+    override val defaultViewModelProviderFactory: ViewModelProvider.Factory
+        get() = ViewModelProvider.AndroidViewModelFactory(application)
 
     private val viewModel get() = getViewModel<InternalPaymentViewModel>()
     private val publicViewModel get() = getViewModel<PaymentViewModel>()
