@@ -41,11 +41,11 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
     val enabledDefaultUI = MutableLiveData<@PaymentFragment.DefaultUI Int>().apply { value = 0 }
 
-    val uiState = Transformations.map(processState) { it?.uiState }
+    val uiState = processState.map { it?.uiState }
 
-    val loading = Transformations.map(uiState) { it == UIState.Loading }
+    val loading = uiState.map { it == UIState.Loading }
 
-    val updatingPaymentOrder = Transformations.map(uiState) { it is UIState.UpdatingPaymentOrder }
+    val updatingPaymentOrder = uiState.map { it is UIState.UpdatingPaymentOrder }
 
     val currentHtmlContent = MediatorLiveData<HtmlContent>().apply {
         addSource(uiState) {
@@ -79,11 +79,11 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         addSource(uiState, observer)
     }
 
-    val messageTitle = Transformations.map(message) { it?.title }
+    val messageTitle = message.map { it?.title }
 
-    val messageBody = Transformations.map(message) { it?.body }
+    val messageBody = message.map { it?.body }
 
-    val retryActionAvailable = Transformations.map(uiState) { it is UIState.RetryableError }
+    val retryActionAvailable = uiState.map { it is UIState.RetryableError }
 
     val javascriptInterface = JSInterface(this)
 

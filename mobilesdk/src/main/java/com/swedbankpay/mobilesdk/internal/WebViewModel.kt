@@ -39,7 +39,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     private var lastRootHtml: String? = null
 
     private val javascriptDialogs = MutableLiveData<Map<String, JSDialogInfo<*>>?>()
-    val javascriptDialogTags = Transformations.map(javascriptDialogs) { it?.keys ?: emptySet() }
+    val javascriptDialogTags = javascriptDialogs.map { it?.keys ?: emptySet() }
     private var nextTag = 0L
     private fun addDialog(info: JSDialogInfo<*>) {
         val tag = nextTag.toHexString()
@@ -157,6 +157,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     private inner class MyWebViewClient(
         private val parentViewModel: InternalPaymentViewModel
     ) : WebViewClient() {
+        @Deprecated("Deprecated in Java")
         override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
             return shouldOverrideUrlLoading(url?.let(Uri::parse))
         }
@@ -190,6 +191,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             else -> false
         }
 
+        @Deprecated("Deprecated in Java")
         override fun onReceivedError(
             view: WebView?,
             errorCode: Int,
@@ -302,6 +304,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     private inner class ExtraWebViewInitialLoadClient(
         private val parentViewModel: InternalPaymentViewModel
     ) : WebViewClient() {
+        @Deprecated("Deprecated in Java")
         override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
             return shouldOverrideUrlLoading(view, url?.let(Uri::parse))
         }

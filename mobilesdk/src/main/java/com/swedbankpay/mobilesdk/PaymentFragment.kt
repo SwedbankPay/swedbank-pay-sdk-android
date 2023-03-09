@@ -450,7 +450,7 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun InternalPaymentViewModel.observeMessage() {
-        messageTitle.observe(this@PaymentFragment) {
+        messageTitle.observe(this@PaymentFragment) { 
             requireView().findViewById<View>(R.id.swedbankpaysdk_message).visibility =
                 if (it != null) View.VISIBLE else View.INVISIBLE
             requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it

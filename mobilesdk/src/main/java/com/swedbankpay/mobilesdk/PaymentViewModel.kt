@@ -254,13 +254,14 @@ class PaymentViewModel : AndroidViewModel {
      * this property will reflect that PaymentFragment from there on. To support multiple
      * PaymentFragments in an Activity, see [PaymentFragment.ArgumentsBuilder.viewModelProviderKey].
      *
-     * Due to the semantics of [Transformations], you should be careful if accessing
+     * Due to the semantics of "Transformations" (now just "liveData.map {...}"), you should be 
+     * careful if accessing
      * this value using [LiveData.getValue] directly rather than by an [Observer].
      * Specifically, if nothing is observing this property (possibly indirectly, such as through
      * the [state] property), then the value will not be updated, and the state may be permanently
      * lost if the PaymentFragment is removed before adding an observer to this property.
      */
-    val richState = Transformations.map(internalState) {
+    val richState = internalState.map {
         val state = when (it) {
             null -> State.IDLE
             InternalPaymentViewModel.UIState.Loading -> State.IN_PROGRESS
@@ -312,7 +313,7 @@ class PaymentViewModel : AndroidViewModel {
      *
      * See notes at [richState].
      */
-    val state = Transformations.map(richState) { it.state }
+    val state = richState.map { it.state }
 
     /**
      * `true` if the payment menu is currently shown in the [PaymentFragment],
@@ -320,7 +321,7 @@ class PaymentViewModel : AndroidViewModel {
      *
      * You can use this property to control the visibility of a customized instrument chooser.
      */
-    val showingPaymentMenu = Transformations.switchMap(internalVm) { it?.showingPaymentMenu }
+    val showingPaymentMenu = internalVm.switchMap { it?.showingPaymentMenu }
 
     internal var onTermsOfServiceClickListener: OnTermsOfServiceClickListener? = null
     private var onTermsOfServiceClickListenerOwner: LifecycleOwner? = null
