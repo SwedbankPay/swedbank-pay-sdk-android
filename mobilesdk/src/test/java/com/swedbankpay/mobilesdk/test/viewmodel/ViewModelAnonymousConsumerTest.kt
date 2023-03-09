@@ -47,7 +47,10 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
     /**
      * Use AndroidViewModelFactory when creating ViewModels for this test
      */
-    override fun getDefaultViewModelProviderFactory() = ViewModelProvider.AndroidViewModelFactory(application)
+    override val defaultViewModelProviderFactory: ViewModelProvider.Factory
+        get() {
+            return ViewModelProvider.AndroidViewModelFactory(application)
+        }
 
     private val viewModel get() = getViewModel<InternalPaymentViewModel>()
     private val publicViewModel get() = getViewModel<PaymentViewModel>()
@@ -57,6 +60,7 @@ class ViewModelAnonymousConsumerTest : AbstractViewModelTest(), HasDefaultViewMo
      */
     @Before
     fun setup() {
+        
         viewModel.let {
             it.publicVm = publicViewModel
             it.configuration = configuration

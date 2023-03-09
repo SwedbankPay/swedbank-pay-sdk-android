@@ -65,8 +65,7 @@ dependencies {
     androidTestImplementation(libs.`androidx-test-runner`)
     androidTestImplementation(libs.uiautomator)
     androidTestImplementation(libs.junit)
-    //implementation("androidx.core:core-ktx:+")
-    implementation(kotlin("stdlib-jdk8", kotlin_version))   //project.extra["kotlin_version"] as String))
+    implementation(kotlin("stdlib-jdk8", kotlin_version))
 }
 
 publishToMaven(

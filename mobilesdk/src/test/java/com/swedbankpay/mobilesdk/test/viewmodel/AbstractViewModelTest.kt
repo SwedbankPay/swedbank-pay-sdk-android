@@ -13,9 +13,8 @@ import org.junit.After
  * a scope for ViewModels. The ViewModelStore is cleared after each test.
  */
 abstract class AbstractViewModelTest : ViewModelStoreOwner {
-    private val viewModelStore = ViewModelStore()
-    override fun getViewModelStore() = viewModelStore
-
+    override val viewModelStore = ViewModelStore()
+    
     /**
      * Convenience function: gets the ViewModel of class T backed by this object's ViewModelStore
      */
