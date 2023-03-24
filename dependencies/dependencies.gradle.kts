@@ -38,7 +38,7 @@ extra["libs"] = mapOf(
    "junit" to "junit:junit:4.13.2",
 
    "joda-time" to "joda-time:joda-time:2.12.2",
-   "threetenbp" to "org.threeten:threetenbp:1.6.5",
+   "threetenbp" to "org.threeten:threetenbp:1.6.6",
 
    "okhttp" to "com.squareup.okhttp3:okhttp:4.10.0",
    "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.10.0",
