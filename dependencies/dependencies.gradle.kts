@@ -13,7 +13,7 @@ extra["libs"] = mapOf(
    "androidx-appcompat" to "androidx.appcompat:appcompat:1.6.1",
    "androidx-core-ktx" to "androidx.core:core-ktx:1.9.0",
    "fragment-ktx" to "androidx.fragment:fragment-ktx:1.5.6",
-   "lifecycle-livedata-ktx" to "androidx.lifecycle:lifecycle-livedata-ktx:2.6.0",
+   "lifecycle-livedata-ktx" to "androidx.lifecycle:lifecycle-livedata-ktx:2.6.1",
    "lifecycle-viewmodel-ktx" to "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1",
    "constraintlayout" to "androidx.constraintlayout:constraintlayout:2.1.4",
    "coordinatorlayout" to "androidx.coordinatorlayout:coordinatorlayout:1.2.0",
