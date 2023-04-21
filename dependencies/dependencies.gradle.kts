@@ -47,5 +47,5 @@ extra["libs"] = mapOf(
    //"mockito-inline" to "org.mockito:mockito-inline:4.8.1",
    "mockito-kotlin" to "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0",
    "dexmaker-mockito-inline" to "com.linkedin.dexmaker:dexmaker-mockito-inline:2.28.3",
-   "fragment-testing" to "androidx.fragment:fragment-testing:1.5.6",
+   "fragment-testing" to "androidx.fragment:fragment-testing:1.5.7",
 )
