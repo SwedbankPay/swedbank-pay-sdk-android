@@ -33,7 +33,7 @@ data class ViewPaymentOrderInfo(
     /**
      * The `view-paymentorder` link from Swedbank Pay (v2), or the `view-checkout` link (v3).
      */
-    val viewPaymentLink: String,
+    val viewPaymentLink: String? = null,
 
     /**
      * If CheckoutV3 is used
@@ -70,7 +70,7 @@ data class ViewPaymentOrderInfo(
 
     /**
      * If the payment order is in instrument mode, all the valid instruments for it.
-     * 
+     *
      * The SDK does not use this value, but it may be useful if you have
      * customized instrument selection.
      */
@@ -90,16 +90,17 @@ data class ViewPaymentOrderInfo(
     val userData: @RawValue Any? = null,
 
     /**
-     * Any available operations that can be applied to this payment.  
+     * Any available operations that can be applied to this payment.
      */
     val operations: List<Operation>? = null
-): Parcelable {
+) : Parcelable {
     @Deprecated("Renamed: viewPaymentLink", ReplaceWith("viewPaymentLink"))
-    val viewPaymentOrder: String get() = viewPaymentLink
+    val viewPaymentOrder: String? get() = viewPaymentLink
+
 }
 
 /**
- * Data specific to the paid entity of a payment. Contains the payment tokens if applicable. 
+ * Data specific to the paid entity of a payment. Contains the payment tokens if applicable.
  */
 @Parcelize
 data class PaymentOrderPaid(
@@ -116,4 +117,9 @@ data class PaymentOrderToken(
     val token: String? = null,
     val name: String? = null,
     val expiryDate: String? = null
-): Parcelable 
+) : Parcelable
+
+
+fun String.isAlphaNumeric(): Boolean {
+    return this.matches("^[a-zA-Z0-9]*$".toRegex())
+}
