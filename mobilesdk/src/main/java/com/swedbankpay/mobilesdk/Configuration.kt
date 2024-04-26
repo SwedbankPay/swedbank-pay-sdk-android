@@ -25,6 +25,12 @@ import android.content.Context
  */
 abstract class Configuration {
     /**
+     * This is used to create callback url:s for swish payments
+     *
+     */
+     open var packageName: String? = null
+
+    /**
      * Called by [PaymentFragment] when it needs to show an error message
      * because an operation failed.
      *
@@ -85,6 +91,13 @@ abstract class Configuration {
         userData: Any?,
         consumerProfileRef: String?
     ): ViewPaymentOrderInfo
+
+    /**
+     * Is used by the native payment flow where we only care about the different urls
+     * Your implementation must ultimately make the call to Swedbank Pay API
+     * and return a [ViewPaymentOrderInfo] describing the result.
+     */
+    abstract fun postNativePaymentOrders() : ViewPaymentOrderInfo
 
     /**
      * Called by [PaymentFragment] to determine whether it should fail or allow

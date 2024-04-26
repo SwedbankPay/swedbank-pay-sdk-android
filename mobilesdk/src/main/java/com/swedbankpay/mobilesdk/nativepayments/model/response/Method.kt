@@ -81,7 +81,7 @@ enum class Instrument(name: String) {
     SWISH("Swish"),
 
     @SerializedName("CreditCard")
-    CREDIT_CARD("CreditCard"),
+    CREDIT_CARD("Credit Card"),
 }
 
 // Type factory is used to be able to parse the different method models

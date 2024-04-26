@@ -1,23 +1,39 @@
 package com.swedbankpay.mobilesdk.nativepayments
 
 
+import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.Configuration
+import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
 import com.swedbankpay.mobilesdk.nativepayments.model.response.Instrument
-import com.swedbankpay.mobilesdk.nativepayments.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.nativepayments.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.model.response.Session
+import com.swedbankpay.mobilesdk.nativepayments.util.NativePaymentState
+import com.swedbankpay.mobilesdk.nativepayments.util.SwishUriUtil.toIntentUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.net.URL
 
 class NativePayments(
-    configuration: Configuration
+    val configuration: Configuration
 ) {
+    companion object {
+        private val _nativePaymentState: MutableLiveData<NativePaymentState> = MutableLiveData()
+        val nativePaymentState: LiveData<NativePaymentState> = _nativePaymentState
+    }
+
+    private val callbackUrlObserver = Observer<Unit> {
+        Log.d("sessionui", "we are back")
+    }
+
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private var currentSessionState: Session? = null
@@ -26,6 +42,10 @@ class NativePayments(
 
     private val client: NativePaymentsAPIClient by lazy {
         NativePaymentsAPIClient()
+    }
+
+    init {
+        CallbackActivity.onCallbackUrlInvoked.observeForever(callbackUrlObserver)
     }
 
     private fun executeNextStepUntilFurtherInstructions(
@@ -41,12 +61,16 @@ class NativePayments(
             while (nextStep.instruction == null) {
                 when (val nativePaymentResponse = client.executeNextRequest(nextStep)) {
                     is NativePaymentResponse.PaymentError -> {
-                        onError(nativePaymentResponse.paymentError.detail)
+                        withContext(Dispatchers.Main) {
+                            onError(nativePaymentResponse.paymentError.detail)
+                        }
                         break
                     }
 
                     is NativePaymentResponse.UnknownError -> {
-                        onError(nativePaymentResponse.message)
+                        withContext(Dispatchers.Main) {
+                            onError(nativePaymentResponse.message)
+                        }
                         break
                     }
 
@@ -59,10 +83,12 @@ class NativePayments(
                             nextStep = step
                             if (step.instruction != null
                             ) {
-                                if (step.instruction.errorMessage != null) {
-                                    onError(step.instruction.errorMessage)
-                                } else {
-                                    onSuccess(step.instruction)
+                                withContext(Dispatchers.Main) {
+                                    if (step.instruction.errorMessage != null) {
+                                        onError(step.instruction.errorMessage)
+                                    } else {
+                                        onSuccess(step.instruction)
+                                    }
                                 }
                             }
                         }
@@ -73,18 +99,13 @@ class NativePayments(
     }
 
     /**
-     * This method will start the native payment session and return
-     * a list with available payment methods aka instruments (Swish, Credit Card)
+     * This method will start the native payment session
      *
      * @param url An url to start the payment session. Will come from merchants backend
-     * @param onSuccess Contains a list with available payment method
-     * @param onError Contains an error message
      *
      */
     fun startNativePaymentSession(
         url: String,
-        onSuccess: (List<MethodBaseModel>) -> Unit,
-        onError: (String) -> Unit
     ) {
         executeNextStepUntilFurtherInstructions(
             operationStep = OperationStep(
@@ -94,19 +115,25 @@ class NativePayments(
             onSuccess = { stepInstruction ->
                 when (stepInstruction) {
                     is StepInstruction.AvailableInstrumentStep ->
-                        onSuccess(stepInstruction.availableInstruments)
+                        _nativePaymentState.value =
+                            NativePaymentState.AvailablePaymentMethods(stepInstruction.availableInstruments.map {
+                                it.instrument ?: Instrument.SWISH
+                            })
 
-                    else -> onError("Wrong step")
+                    else -> _nativePaymentState.value = NativePaymentState.Error("Wrong step")
                 }
             },
-            onError = onError
+            onError = {
+                _nativePaymentState.value = NativePaymentState.Error(it)
+            }
         )
     }
 
+    /**
+     * This method will start a native payment with the supplied payment method aka instrument
+     */
     fun startNativePaymentFor(
         instrument: Instrument,
-        onSuccess: (String) -> Unit,
-        onError: (String) -> Unit
     ) {
         chosenInstrumentForThePayment = instrument
         executeNextStepUntilFurtherInstructions(
@@ -116,11 +143,23 @@ class NativePayments(
             ),
             onSuccess = { stepInstruction ->
                 when (stepInstruction) {
-                    is StepInstruction.LaunchSwishAppStep -> onSuccess(stepInstruction.uri)
-                    else -> onError("Wrong step")
+                    is StepInstruction.LaunchSwishAppStep -> {
+                        val swishUri = stepInstruction.uri.toIntentUri(configuration)
+
+                        if (swishUri != null) {
+                            _nativePaymentState.value = NativePaymentState.LaunchSwish(swishUri)
+                        } else {
+                            _nativePaymentState.value =
+                                NativePaymentState.Error("Not a valid swish url")
+                        }
+                    }
+
+                    else -> _nativePaymentState.value = NativePaymentState.Error("Wrong step")
                 }
             },
-            onError = onError
+            onError = {
+                _nativePaymentState.value = NativePaymentState.Error(it)
+            }
         )
     }
 
