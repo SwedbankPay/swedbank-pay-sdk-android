@@ -5,19 +5,13 @@ import com.swedbankpay.mobilesdk.Configuration
 
 internal object SwishUriUtil {
 
-    fun String.toIntentUri(configuration: Configuration): Uri? {
+    fun String.addCallbackUrl(configuration: Configuration): Uri? {
         var swishUri = Uri.parse(this)
 
         if (swishUri.scheme == "swish") {
-            val paymentUrl = Uri.parse(configuration.postNativePaymentOrders().paymentUrl)
-            val callbackUrl =
-                Uri.Builder()
-                    .scheme("intent")
-                    .authority(paymentUrl.host)
-                    .path(paymentUrl.path)
-                    .fragment("Intent;scheme=${paymentUrl.scheme};action=com.swedbankpay.mobilesdk.NATIVE_PAYMENT_CALLBACK;package=${configuration.packageName};end;")
+            val paymentUrl = configuration.postNativePaymentOrders().paymentUrl ?: return null
 
-            swishUri = swishUri.addUriParameter("callbackUrl", callbackUrl.toString())
+            swishUri = swishUri.addUriParameter("callbackurl", paymentUrl)
 
             return swishUri
         }

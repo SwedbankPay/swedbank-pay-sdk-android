@@ -16,11 +16,10 @@
             <intent-filter android:priority="-100">
                 <!--  Priority is negative on purpose. This way you can
                  easily override this intent filter in your app. -->
-                <action android:name="com.swedbankpay.mobilesdk.NATIVE_PAYMENT_CALLBACK" />
+                <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" />
-                <data android:scheme="http" />
+                <data android:scheme="${swedbankPaymentUrlScheme}" />
             </intent-filter>
         </activity>
     </application>

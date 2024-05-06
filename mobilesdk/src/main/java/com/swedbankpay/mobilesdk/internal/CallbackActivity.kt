@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.lifecycle.MutableLiveData
 
-internal class CallbackActivity : Activity() {
+class CallbackActivity : Activity() {
     companion object {
         val onCallbackUrlInvoked = MutableLiveData<Unit>()
         private val invokedCallbackUrls = HashSet<String>()

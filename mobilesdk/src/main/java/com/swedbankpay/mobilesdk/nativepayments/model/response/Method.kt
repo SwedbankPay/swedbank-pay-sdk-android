@@ -6,7 +6,7 @@ import androidx.annotation.Keep
 import com.swedbankpay.mobilesdk.RuntimeTypeAdapterFactory
 
 @Keep
-open class MethodBaseModel {
+internal open class MethodBaseModel {
     @SerializedName("amount")
     val amount: Int? = null
 
@@ -25,7 +25,7 @@ open class MethodBaseModel {
 }
 
 @Keep
-class SwishMethodModel : MethodBaseModel() {
+internal class SwishMethodModel : MethodBaseModel() {
     @SerializedName("isMobileDevice")
     val isMobileDevice: Boolean = false
 
@@ -37,7 +37,7 @@ class SwishMethodModel : MethodBaseModel() {
 }
 
 @Keep
-class CreditCardMethodModel : MethodBaseModel() {
+internal class CreditCardMethodModel : MethodBaseModel() {
     @SerializedName("cardBrands")
     val cardBrands: List<String> = listOf()
 
@@ -50,7 +50,7 @@ class CreditCardMethodModel : MethodBaseModel() {
 }
 
 @Keep
-class GooglePayMethodModel : MethodBaseModel() {
+internal class GooglePayMethodModel : MethodBaseModel() {
     @SerializedName("usFormattedAmount")
     val usFormattedAmount: String? = null
 
@@ -76,18 +76,18 @@ class GooglePayMethodModel : MethodBaseModel() {
     }
 }
 
-enum class Instrument(name: String) {
+enum class Instrument {
     @SerializedName("Swish")
-    SWISH("Swish"),
+    SWISH,
 
     @SerializedName("CreditCard")
-    CREDIT_CARD("Credit Card"),
+    CREDIT_CARD,
 }
 
 // Type factory is used to be able to parse the different method models
-// If the method is not present in the registerSubtype. It will not show up in the parsed response
-val methodBaseModelFactory: RuntimeTypeAdapterFactory<MethodBaseModel>? = RuntimeTypeAdapterFactory
+// If the method is not present in the registerSubtype it will
+// not be in the list with available payment methods for the merchant.
+internal val methodBaseModelFactory: RuntimeTypeAdapterFactory<MethodBaseModel>? = RuntimeTypeAdapterFactory
     .of(MethodBaseModel::class.java, "instrument", true)
     .registerSubtype(SwishMethodModel::class.java, "Swish")
-    .registerSubtype(CreditCardMethodModel::class.java, "CreditCard")
 

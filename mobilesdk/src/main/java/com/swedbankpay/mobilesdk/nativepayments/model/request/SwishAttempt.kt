@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
 
 @Keep
-data class SwishAttempt(
+internal data class SwishAttempt(
     @SerializedName("culture")
     val culture: String,
     @SerializedName("msisdn")

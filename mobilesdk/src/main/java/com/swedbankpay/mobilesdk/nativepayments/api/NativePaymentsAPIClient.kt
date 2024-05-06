@@ -1,19 +1,17 @@
 package com.swedbankpay.mobilesdk.nativepayments.api
 
-import android.util.Log
 import com.swedbankpay.mobilesdk.nativepayments.OperationStep
 import com.swedbankpay.mobilesdk.nativepayments.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentErrorModel
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toSessionModel
 import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class NativePaymentsAPIClient {
+internal class NativePaymentsAPIClient {
 
     suspend fun executeNextRequest(
         operation: OperationStep
@@ -63,6 +61,7 @@ class NativePaymentsAPIClient {
             } else {
                 val errorResponse = connection.errorStream.bufferedReader()
                     .use { it.readText() }
+
                 continuation.resume(
                     NativePaymentResponse.PaymentError(
                         paymentError = errorResponse.toPaymentErrorModel()
@@ -77,9 +76,8 @@ class NativePaymentsAPIClient {
         url: URL?,
         data: String
     ): NativePaymentResponse = suspendCoroutine { continuation ->
-
         url?.let {
-            val connection = url.openConnection() as HttpURLConnection
+            val connection = url.openConnection() as HttpsURLConnection
 
             connection.requestMethod = "POST"
             connection.setRequestProperty("Content-Type", "application/json")

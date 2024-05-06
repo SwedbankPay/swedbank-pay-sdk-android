@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
 
 @Keep
-data class Session(
+internal data class Session(
     @SerializedName("operations")
     val operations: List<Operation>,
     @SerializedName("paymentSession")

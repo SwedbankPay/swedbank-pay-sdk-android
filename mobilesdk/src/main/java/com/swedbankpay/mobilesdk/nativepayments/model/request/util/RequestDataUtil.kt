@@ -1,22 +1,20 @@
 package com.swedbankpay.mobilesdk.nativepayments.model.request.util
 
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.model.request.Browser
 import com.swedbankpay.mobilesdk.nativepayments.model.request.Client
 import com.swedbankpay.mobilesdk.nativepayments.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.nativepayments.model.request.Integration
 import com.swedbankpay.mobilesdk.nativepayments.model.request.SwishAttempt
 import com.swedbankpay.mobilesdk.nativepayments.model.request.SwishClient
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Instrument
 import com.swedbankpay.mobilesdk.nativepayments.model.response.Rel
 
-
-object RequestDataUtil {
+internal object RequestDataUtil {
 
     private val gson = GsonBuilder().serializeNulls().create()
 
-    fun Rel.getRequestDataIfAny(instrument: Instrument? = null) =
+    fun Rel.getRequestDataIfAny(instrument: PaymentAttemptInstrument? = null) =
         when (this) {
             Rel.PREPARE_PAYMENT -> getIntegrationRequestData()
             Rel.START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(instrument)
@@ -28,28 +26,28 @@ object RequestDataUtil {
         return Integration(
             browser = Browser(
                 acceptHeader = null,
-                colorDepth = null,
+                colorDepth = "24",
                 languageHeader = null,
-                screenHeight = null,
-                screenWidth = null,
-                timeZoneOffset = null
+                screenHeight = IntegrationRequestDataUtil.getPhoneSize().heightPixels.toString(),
+                screenWidth = IntegrationRequestDataUtil.getPhoneSize().widthPixels.toString(),
+                timeZoneOffset = IntegrationRequestDataUtil.getTimeZoneOffset()
             ),
             client = Client(
-                ipAddress = "192.168.0.1",
-                userAgent = "mobile-sdk"
+                ipAddress = IntegrationRequestDataUtil.getLocalIpAddress() ?: "" ,
+                userAgent = "swedbank-pay-sdk-android"
             ),
-            deviceAcceptedWallets = "GooglePay",
-            initiatingSystem = "mobile-sdk",
-            initiatingSystemVersion = "0.1",
+            deviceAcceptedWallets = "",
+            initiatingSystem = "swedbank-pay-sdk-android",
+            initiatingSystemVersion = IntegrationRequestDataUtil.getVersion(),
             integration = "HostedView"
 
         ).toJsonString()
     }
 
-    private fun getInstrumentViewsData(instrument: Instrument?): String {
+    private fun getInstrumentViewsData(instrument: PaymentAttemptInstrument?): String {
         return when (instrument) {
-            Instrument.SWISH -> InstrumentView(
-                instrumentName = instrument.name
+            is PaymentAttemptInstrument.Swish -> InstrumentView(
+                instrumentName = "Swish"
             ).toJsonString()
 
             else -> ""
@@ -57,13 +55,14 @@ object RequestDataUtil {
 
     }
 
-    private fun getPaymentAttemptDataFor(instrument: Instrument?): String {
+    private fun getPaymentAttemptDataFor(instrument: PaymentAttemptInstrument?): String {
         return when (instrument) {
-            Instrument.SWISH -> SwishAttempt(
+            is PaymentAttemptInstrument.Swish -> SwishAttempt(
                 culture = "sv-SE",
                 client = SwishClient(
-                    ipAddress = "192.168.0.1",
-                )
+                    ipAddress = IntegrationRequestDataUtil.getLocalIpAddress() ?: "",
+                ),
+                msisdn = instrument.msisdn
             ).toJsonString()
 
             else -> ""

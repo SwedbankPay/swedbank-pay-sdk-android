@@ -24,11 +24,6 @@ import android.content.Context
  * is provided.
  */
 abstract class Configuration {
-    /**
-     * This is used to create callback url:s for swish payments
-     *
-     */
-     open var packageName: String? = null
 
     /**
      * Called by [PaymentFragment] when it needs to show an error message

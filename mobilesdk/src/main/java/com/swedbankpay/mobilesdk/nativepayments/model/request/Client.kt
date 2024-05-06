@@ -4,7 +4,7 @@ import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
 
 @Keep
-data class Client(
+internal data class Client(
     @SerializedName("ipAddress")
     val ipAddress: String,
     @SerializedName("userAgent")
@@ -12,7 +12,17 @@ data class Client(
 )
 
 @Keep
-data class SwishClient(
+internal data class SwishClient(
     @SerializedName("ipAddress")
     val ipAddress: String,
+)
+
+@Keep
+internal data class Version(
+    val major: Int,
+    val minor: Int,
+    val build: Int,
+    val revision: Int,
+    val majorRevision: Int,
+    val minorRevision: Int,
 )

@@ -7,7 +7,7 @@ import com.swedbankpay.mobilesdk.nativepayments.model.response.Session
 import com.swedbankpay.mobilesdk.nativepayments.model.response.methodBaseModelFactory
 import com.swedbankpay.mobilesdk.nativepayments.model.response.prefillBaseModelFactory
 
-object JsonUtil {
+internal object JsonUtil {
 
     private val gson: Gson =
         GsonBuilder()
@@ -24,5 +24,6 @@ object JsonUtil {
 
     fun String.toPaymentErrorModel(): NativePaymentError =
         gson.fromJson(this, NativePaymentError::class.java)
+
 
 }

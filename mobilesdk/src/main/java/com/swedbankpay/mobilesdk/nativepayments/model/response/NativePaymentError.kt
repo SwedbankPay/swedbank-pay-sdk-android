@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
 
 @Keep
-data class NativePaymentError(
+internal data class NativePaymentError(
     @SerializedName("detail")
     val detail: String,
     @SerializedName("instance")

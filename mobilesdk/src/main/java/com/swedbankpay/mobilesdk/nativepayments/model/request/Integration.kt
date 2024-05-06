@@ -7,7 +7,7 @@ import androidx.annotation.Keep
  * A class which contains the data needed for 'prepare-payment' request call
  */
 @Keep
-data class Integration(
+internal data class Integration(
     @SerializedName("browser")
     val browser: Browser,
     @SerializedName("client")
@@ -25,17 +25,17 @@ data class Integration(
 @Keep
 data class Browser(
     @SerializedName("acceptHeader")
-    val acceptHeader: Any?,
+    val acceptHeader: String?,
     @SerializedName("colorDepth")
-    val colorDepth: Any?,
+    val colorDepth: String?,
     @SerializedName("languageHeader")
-    val languageHeader: Any?,
+    val languageHeader: String?,
     @SerializedName("screenHeight")
-    val screenHeight: Any?,
+    val screenHeight: String?,
     @SerializedName("screenWidth")
-    val screenWidth: Any?,
+    val screenWidth: String?,
     @SerializedName("timeZoneOffset")
-    val timeZoneOffset: Any?
+    val timeZoneOffset: String?
 )
 
 
