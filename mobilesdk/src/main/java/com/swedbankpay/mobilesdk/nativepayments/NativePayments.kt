@@ -104,7 +104,7 @@ class NativePayments(
                             if (step.instruction != null
                             ) {
                                 if (step.instruction is StepInstruction.ProblemOccurred) {
-                                    client.postProblemRequest(step.instruction.problem)
+                                    client.postFailedAttemptRequest(step.instruction.problem)
                                 }
                                 withContext(Dispatchers.Main) {
                                     if (step.instruction.errorMessage != null) {

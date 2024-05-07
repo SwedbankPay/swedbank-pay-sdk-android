@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.nativepayments.api
 
+import android.util.Log
 import com.swedbankpay.mobilesdk.nativepayments.OperationStep
 import com.swedbankpay.mobilesdk.nativepayments.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.model.response.Problem
@@ -112,8 +113,30 @@ internal class NativePaymentsAPIClient {
 
     }
 
-    fun postProblemRequest(problem: Problem) {
-        //TODO Do a request to problem. Don't care about the response??
+    fun postFailedAttemptRequest(problem: Problem) {
+        val url = URL(problem.operation.href)
+
+        val connection = url.openConnection() as HttpsURLConnection
+
+        connection.requestMethod = "POST"
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.setRequestProperty("Accept", "application/json")
+        connection.doInput = true
+        connection.doOutput = true
+
+        val responseCode = connection.responseCode
+        if (responseCode == HttpsURLConnection.HTTP_NO_CONTENT) {
+            try {
+                val response = connection.inputStream.bufferedReader()
+                    .use { it.readText() }
+
+                Log.d("session", "postFailedAttemptRequest: success")
+            } catch (e: Exception) {
+                Log.d("session", "postFailedAttemptRequest: $e")
+            }
+        } else {
+            Log.d("session", "postFailedAttemptRequest: error")
+        }
     }
 
 }
