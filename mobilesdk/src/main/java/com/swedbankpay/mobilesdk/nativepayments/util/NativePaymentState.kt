@@ -12,7 +12,8 @@ sealed class NativePaymentState {
     /**
      * [AvailablePaymentMethods] contains available payment methods like swish or credit card
      */
-    class AvailablePaymentMethods(val availableInstruments: List<AvailableInstrument>) : NativePaymentState()
+    class AvailablePaymentMethods(val availableInstruments: List<AvailableInstrument>) :
+        NativePaymentState()
 
     /**
      * [LaunchSwish] contains the uri which swish is supposed to launch with
@@ -20,6 +21,12 @@ sealed class NativePaymentState {
     class LaunchSwish(val uri: Uri) : NativePaymentState()
 
     object PaymentComplete : NativePaymentState()
+
+    class NativeProblem(
+        val title: String,
+        val status: Int,
+        val detail: String
+    ) : NativePaymentState()
 
     /**
      * [Error] contains what went wrong

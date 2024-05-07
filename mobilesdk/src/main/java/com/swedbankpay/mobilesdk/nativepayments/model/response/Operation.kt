@@ -41,6 +41,9 @@ enum class Rel {
     @SerializedName("redirect-payer")
     REDIRECT_PAYER,
 
+    @SerializedName("acknowledge-failed-attempt")
+    ACKNOWLEDGE_FAILED_ATTEMPT,
+
     @SerializedName("failed")
     FAILED
 }

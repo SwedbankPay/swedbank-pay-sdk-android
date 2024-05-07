@@ -9,6 +9,7 @@ import com.swedbankpay.mobilesdk.nativepayments.model.request.util.RequestDataUt
 import com.swedbankpay.mobilesdk.nativepayments.model.response.Instrument
 import com.swedbankpay.mobilesdk.nativepayments.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.nativepayments.model.response.Operation
+import com.swedbankpay.mobilesdk.nativepayments.model.response.Problem
 import com.swedbankpay.mobilesdk.nativepayments.model.response.Rel
 import com.swedbankpay.mobilesdk.nativepayments.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.model.response.Session
@@ -39,11 +40,26 @@ internal object SessionOperationHandler {
                 it?.operations ?: listOf()
             }
 
-        // If we find a operation where next is true
-        // return that step without caring about the rest
-        val op = operations.firstOrNull { it.next }
-        if (op != null) {
-            operations = listOf(op)
+        // If we find a problem. Use that
+        if (session.problem != null) {
+            val problemOperation = session.problem.operation
+            operations = listOf(problemOperation)
+
+            val acknowledgeFailedAttempt =
+                operations.firstOrNull() { it.rel == Rel.ACKNOWLEDGE_FAILED_ATTEMPT }
+            if (acknowledgeFailedAttempt != null) {
+                return OperationStep(
+                    requestMethod = acknowledgeFailedAttempt.method,
+                    url = URL(acknowledgeFailedAttempt.href),
+                    instruction = StepInstruction.ProblemOccurred(session.problem)
+                )
+            }
+        } else {
+            // If we find a operation where next is true use that
+            val op = operations.firstOrNull { it.next }
+            if (op != null) {
+                operations = listOf(op)
+            }
         }
 
         // 1. Search for Rel.PREPARE_PAYMENT
@@ -128,8 +144,15 @@ internal object SessionOperationHandler {
 
     /**
      * This method is used to get an operation to start the payment with chosen instrument.
+     *
+     * Payment can be in two states when calling this method.
+     * First time calling this method will result in an operation containing [Rel.EXPAND_METHOD].
+     * If problem occurs and you call this method again with the same instrument you will have
+     * an operation containing [Rel.START_PAYMENT_ATTEMPT] or if a polling has occurred it will have [Rel.GET_PAYMENT].
+     * If you call it again after the problem with a different instrument you will again have [Rel.EXPAND_METHOD]
+     * on that operation.
      */
-    fun getOperationStepForInstrumentViews(
+    fun getOperationStepForPaymentAttempt(
         session: Session?,
         paymentAttemptInstrument: PaymentAttemptInstrument
     ): OperationStep {
@@ -141,7 +164,11 @@ internal object SessionOperationHandler {
 
         val op = session.paymentSession.methods
             .firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }?.operations
-            ?.firstOrNull { it.rel == Rel.EXPAND_METHOD }
+            ?.firstOrNull {
+                it.rel == Rel.EXPAND_METHOD
+                        || it.rel == Rel.START_PAYMENT_ATTEMPT
+                        || it.rel == Rel.GET_PAYMENT
+            }
 
         return if (op != null) {
             OperationStep(
@@ -155,48 +182,11 @@ internal object SessionOperationHandler {
             )
         }
     }
-
-    /**
-     * This method is use to get an operation for getting a session after a payment is completed
-     * to be able to see if it is successful or a failure
-     *
-     * @param session Current session stored in memory
-     * @param instrument Current chosen instrument
-     */
-    fun getOperationStepForPaymentComplete(
-        session: Session?,
-        instrument: PaymentAttemptInstrument?,
-
-        ): OperationStep {
-        if (session == null) {
-            return OperationStep(
-                instruction = StepInstruction.SessionNotFound()
-            )
-        }
-
-        val op =
-            session.paymentSession.methods
-                .firstOrNull { it?.instrument == instrument }?.operations
-                ?.firstOrNull { it.next && it.rel == Rel.GET_PAYMENT }
-
-        return if (op != null) {
-            OperationStep(
-                requestMethod = op.method,
-                url = URL(op.href),
-                data = op.rel.getRequestDataIfAny(instrument)
-            )
-        } else {
-            OperationStep(
-                instruction = StepInstruction.StepNotFound()
-            )
-        }
-    }
 }
-
 
 sealed class StepInstruction(
     val informMerchantApp: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 ) {
     class AvailableInstrumentStep(val availableInstruments: List<AvailableInstrument>) :
         StepInstruction(true)
@@ -208,6 +198,8 @@ sealed class StepInstruction(
     class StepNotFound(message: String = "Step not found") : StepInstruction(true, message)
 
     class SessionNotFound(message: String = "Session not found") : StepInstruction(true, message)
+
+    class ProblemOccurred(val problem: Problem) : StepInstruction(true)
 
 }
 

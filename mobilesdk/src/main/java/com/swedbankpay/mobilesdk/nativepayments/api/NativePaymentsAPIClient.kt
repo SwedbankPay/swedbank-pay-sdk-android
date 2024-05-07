@@ -2,6 +2,7 @@ package com.swedbankpay.mobilesdk.nativepayments.api
 
 import com.swedbankpay.mobilesdk.nativepayments.OperationStep
 import com.swedbankpay.mobilesdk.nativepayments.model.response.NativePaymentResponse
+import com.swedbankpay.mobilesdk.nativepayments.model.response.Problem
 import com.swedbankpay.mobilesdk.nativepayments.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentErrorModel
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toSessionModel
@@ -109,6 +110,10 @@ internal class NativePaymentsAPIClient {
             }
         }
 
+    }
+
+    fun postProblemRequest(problem: Problem) {
+        //TODO Do a request to problem. Don't care about the response??
     }
 
 }

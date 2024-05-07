@@ -8,6 +8,8 @@ import androidx.annotation.Keep
 internal data class Session(
     @SerializedName("operations")
     val operations: List<Operation>,
+    @SerializedName("problem")
+    val problem: Problem?,
     @SerializedName("paymentSession")
     val paymentSession: PaymentSession
 )

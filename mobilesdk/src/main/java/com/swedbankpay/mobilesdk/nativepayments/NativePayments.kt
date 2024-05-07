@@ -10,6 +10,7 @@ import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.model.response.NativePaymentResponse
+import com.swedbankpay.mobilesdk.nativepayments.model.response.Problem
 import com.swedbankpay.mobilesdk.nativepayments.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.model.response.Session
 import com.swedbankpay.mobilesdk.nativepayments.util.NativePaymentState
@@ -102,6 +103,9 @@ class NativePayments(
                             nextStep = step
                             if (step.instruction != null
                             ) {
+                                if (step.instruction is StepInstruction.ProblemOccurred) {
+                                    client.postProblemRequest(step.instruction.problem)
+                                }
                                 withContext(Dispatchers.Main) {
                                     if (step.instruction.errorMessage != null) {
                                         onError(step.instruction.errorMessage)
@@ -147,6 +151,10 @@ class NativePayments(
                         onPaymentComplete(stepInstruction.url)
                     }
 
+                    is StepInstruction.ProblemOccurred -> {
+                        onProblemOccurred(stepInstruction.problem)
+                    }
+
                     else -> _nativePaymentState.value = NativePaymentState.Error("Wrong step")
                 }
             },
@@ -159,12 +167,13 @@ class NativePayments(
     /**
      * This method will start a native payment with the supplied payment method aka instrument
      */
-    fun startNativePaymentFor(
+    fun makePaymentAttempt(
         instrument: PaymentAttemptInstrument,
     ) {
+        currentPaymentState = PaymentViewModel.State.IN_PROGRESS
         choosenPaymentAttempInstrument = instrument
         executeNextStepUntilFurtherInstructions(
-            operationStep = SessionOperationHandler.getOperationStepForInstrumentViews(
+            operationStep = SessionOperationHandler.getOperationStepForPaymentAttempt(
                 currentSessionState,
                 instrument
             ),
@@ -185,7 +194,12 @@ class NativePayments(
                         onPaymentComplete(stepInstruction.url)
                     }
 
-                    else -> _nativePaymentState.value = NativePaymentState.Error("Wrong step")
+                    is StepInstruction.ProblemOccurred -> {
+                        onProblemOccurred(stepInstruction.problem)
+                    }
+
+                    else -> _nativePaymentState.value =
+                        NativePaymentState.Error("Inconsistent state. Please abort the payment and try again.")
                 }
             },
             onError = {
@@ -211,6 +225,14 @@ class NativePayments(
                     NativePaymentState.Error("Something strange happened")
             }
         }
+    }
+
+    private fun onProblemOccurred(problem: Problem) {
+        _nativePaymentState.value = NativePaymentState.NativeProblem(
+            title = problem.title,
+            status = problem.status,
+            detail = problem.detail
+        )
     }
 
 }
