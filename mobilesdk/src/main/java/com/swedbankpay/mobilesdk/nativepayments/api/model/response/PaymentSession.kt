@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk.nativepayments.model.response
+package com.swedbankpay.mobilesdk.nativepayments.api.model.response
 
 
 import com.google.gson.annotations.SerializedName
@@ -7,17 +7,17 @@ import androidx.annotation.Keep
 @Keep
 internal data class PaymentSession(
     @SerializedName("culture")
-    val culture: String,
+    val culture: String?,
     @SerializedName("currency")
-    val currency: String,
+    val currency: String?,
     @SerializedName("description")
-    val description: String,
+    val description: String?,
     @SerializedName("id")
-    val id: String,
+    val id: String?,
     @SerializedName("methods")
-    val methods: List<MethodBaseModel?>,
+    val methods: List<MethodBaseModel?>? = listOf(),
     @SerializedName("payeeName")
-    val payeeName: String,
+    val payeeName: String?,
     @SerializedName("settings")
-    val settings: Settings
+    val settings: Settings?
 )

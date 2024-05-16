@@ -10,26 +10,29 @@ import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
 sealed class NativePaymentState {
 
     /**
-     * [AvailablePaymentMethods] contains available payment methods like swish or credit card
+     * [AvailableInstrumentsFetched] contains available payment instruments like swish or credit card
      */
-    class AvailablePaymentMethods(val availableInstruments: List<AvailableInstrument>) :
+    class AvailableInstrumentsFetched(val availableInstruments: List<AvailableInstrument>) :
         NativePaymentState()
 
     /**
-     * [LaunchSwish] contains the uri which swish is supposed to launch with
+     * [LaunchClientApp] contains the uri which is supposed to open another app by the merchant
      */
-    class LaunchSwish(val uri: Uri) : NativePaymentState()
+    class LaunchClientApp(val uri: Uri) : NativePaymentState()
 
-    object PaymentComplete : NativePaymentState()
+    object PaymentSucceeded : NativePaymentState()
 
-    class NativeProblem(
+    /**
+     * [PaymentFailed] contains an error from [Problem] node
+     */
+    class PaymentFailed(
         val title: String,
         val status: Int,
         val detail: String
     ) : NativePaymentState()
 
     /**
-     * [Error] contains what went wrong
+     * [Error] contains an unexpected error
      * */
     class Error(val message: String) : NativePaymentState()
 }

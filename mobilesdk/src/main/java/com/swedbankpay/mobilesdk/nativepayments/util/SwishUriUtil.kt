@@ -1,15 +1,15 @@
 package com.swedbankpay.mobilesdk.nativepayments.util
 
 import android.net.Uri
-import com.swedbankpay.mobilesdk.Configuration
+import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
 
 internal object SwishUriUtil {
 
-    fun String.addCallbackUrl(configuration: Configuration): Uri? {
+    fun String.addCallbackUrl(orderInfo: ViewPaymentOrderInfo): Uri? {
         var swishUri = Uri.parse(this)
 
         if (swishUri.scheme == "swish") {
-            val paymentUrl = configuration.postNativePaymentOrders().paymentUrl ?: return null
+            val paymentUrl = orderInfo.paymentUrl ?: return null
 
             swishUri = swishUri.addUriParameter("callbackurl", paymentUrl)
 

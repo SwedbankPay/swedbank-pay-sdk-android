@@ -1,9 +1,23 @@
-package com.swedbankpay.mobilesdk.nativepayments.model.response
+package com.swedbankpay.mobilesdk.nativepayments.api.model.response
 
 
 import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
-import com.swedbankpay.mobilesdk.RuntimeTypeAdapterFactory
+import com.swedbankpay.mobilesdk.nativepayments.util.gson.PrefillBaseModelDeserializer
+import com.swedbankpay.mobilesdk.nativepayments.util.gson.RuntimeTypeAdapterFactory
+
+/**
+ * Type factory is used to be able to parse the different method models
+ * If the method is not present in the registerSubtype it will
+ * not be in the list with available payment methods for the merchant.
+ *
+ * If a new subtype is registered add new prefill model to [PrefillBaseModelDeserializer]
+ * */
+internal val methodBaseModelFactory: RuntimeTypeAdapterFactory<MethodBaseModel>? =
+    RuntimeTypeAdapterFactory
+        .of(MethodBaseModel::class.java, "instrument", true)
+        .registerSubtype(SwishMethodModel::class.java, "Swish")
+        .registerSubtype(CreditCardMethodModel::class.java, "CreditCard")
 
 @Keep
 internal open class MethodBaseModel {
@@ -83,11 +97,4 @@ enum class Instrument {
     @SerializedName("CreditCard")
     CREDIT_CARD,
 }
-
-// Type factory is used to be able to parse the different method models
-// If the method is not present in the registerSubtype it will
-// not be in the list with available payment methods for the merchant.
-internal val methodBaseModelFactory: RuntimeTypeAdapterFactory<MethodBaseModel>? = RuntimeTypeAdapterFactory
-    .of(MethodBaseModel::class.java, "instrument", true)
-    .registerSubtype(SwishMethodModel::class.java, "Swish")
 

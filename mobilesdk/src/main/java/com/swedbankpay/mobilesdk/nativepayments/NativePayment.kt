@@ -1,18 +1,18 @@
 package com.swedbankpay.mobilesdk.nativepayments
 
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import com.swedbankpay.mobilesdk.Configuration
-import com.swedbankpay.mobilesdk.PaymentViewModel
+import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
 import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
-import com.swedbankpay.mobilesdk.nativepayments.model.response.NativePaymentResponse
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Problem
-import com.swedbankpay.mobilesdk.nativepayments.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Session
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Problem
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Session
 import com.swedbankpay.mobilesdk.nativepayments.util.NativePaymentState
 import com.swedbankpay.mobilesdk.nativepayments.util.SwishUriUtil.addCallbackUrl
 import kotlinx.coroutines.CoroutineScope
@@ -24,14 +24,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
 
-class NativePayments(
-    val configuration: Configuration
+class NativePayment(
+    private val orderInfo: ViewPaymentOrderInfo
 ) {
     companion object {
         private val _nativePaymentState: MutableLiveData<NativePaymentState> = MutableLiveData()
         val nativePaymentState: LiveData<NativePaymentState> = _nativePaymentState
     }
 
+    /**
+     * When redirected from swish this callback will be triggered
+     */
     private val callbackUrlObserver = Observer<Unit> {
         checkCallbacks()
     }
@@ -40,9 +43,7 @@ class NativePayments(
 
     private var currentSessionState: Session? = null
 
-    private var choosenPaymentAttempInstrument: PaymentAttemptInstrument? = null
-
-    private var currentPaymentState: PaymentViewModel.State = PaymentViewModel.State.IDLE
+    private var chosenPaymentAttemptInstrument: PaymentAttemptInstrument? = null
 
     private var paymentSessionUrl: URL? = null
 
@@ -50,20 +51,21 @@ class NativePayments(
         NativePaymentsAPIClient()
     }
 
-    private val viewPaymentOrderInfo = configuration.postNativePaymentOrders()
-
     init {
         CallbackActivity.onCallbackUrlInvoked.observeForever(callbackUrlObserver)
     }
 
     private fun checkCallbacks() {
-        val callbackUrl = viewPaymentOrderInfo.paymentUrl
+        val callbackUrl = orderInfo.paymentUrl
         if (callbackUrl != null && CallbackActivity.consumeCallbackUrl(callbackUrl)) {
-            currentPaymentState = PaymentViewModel.State.COMPLETE
             getPaymentSession()
         }
     }
 
+    /**
+     * This method will call the api until we need to inform the
+     * merchant app to take some kind of action
+     */
     private fun executeNextStepUntilFurtherInstructions(
         operationStep: OperationStep,
         onSuccess: (StepInstruction) -> Unit,
@@ -75,13 +77,16 @@ class NativePayments(
             var nextStep = operationStep
 
             while (nextStep.instruction == null) {
+                // This is here for polling purposes
                 if (nextStep.delayRequestDuration > 0) {
                     delay(nextStep.delayRequestDuration)
                 }
                 when (val nativePaymentResponse = client.executeNextRequest(nextStep)) {
                     is NativePaymentResponse.PaymentError -> {
                         withContext(Dispatchers.Main) {
-                            onError(nativePaymentResponse.paymentError.detail)
+                            onError(
+                                nativePaymentResponse.paymentError.detail ?: "Something went wrong"
+                            )
                         }
                         break
                     }
@@ -97,8 +102,7 @@ class NativePayments(
                         currentSessionState = nativePaymentResponse.session
                         SessionOperationHandler.getNextStep(
                             session = currentSessionState,
-                            paymentState = currentPaymentState,
-                            instrument = choosenPaymentAttempInstrument
+                            instrument = chosenPaymentAttemptInstrument
                         ).let { step ->
                             nextStep = step
                             if (step.instruction != null
@@ -124,14 +128,14 @@ class NativePayments(
     /**
      * This method will start the native payment session
      *
-     * @param url An url to start the payment session. Will come from merchants backend
+     * @param url An url to start the payment session. Will be supplied by merchant
      *
      */
-    fun startNativePaymentSession(
+    fun startPaymentSession(
         url: String,
     ) {
         paymentSessionUrl = URL(url)
-        currentPaymentState = PaymentViewModel.State.IN_PROGRESS
+        SessionOperationHandler.clearUsedSwishUrls()
         getPaymentSession()
     }
 
@@ -145,7 +149,7 @@ class NativePayments(
                 when (stepInstruction) {
                     is StepInstruction.AvailableInstrumentStep ->
                         _nativePaymentState.value =
-                            NativePaymentState.AvailablePaymentMethods(stepInstruction.availableInstruments)
+                            NativePaymentState.AvailableInstrumentsFetched(stepInstruction.availableInstruments)
 
                     is StepInstruction.PaymentSessionCompleted -> {
                         onPaymentComplete(stepInstruction.url)
@@ -155,7 +159,7 @@ class NativePayments(
                         onProblemOccurred(stepInstruction.problem)
                     }
 
-                    else -> _nativePaymentState.value = NativePaymentState.Error("Wrong step")
+                    else -> _nativePaymentState.value = NativePaymentState.Error("Internal error")
                 }
             },
             onError = {
@@ -168,22 +172,21 @@ class NativePayments(
      * This method will start a native payment with the supplied payment method aka instrument
      */
     fun makePaymentAttempt(
-        instrument: PaymentAttemptInstrument,
+        with: PaymentAttemptInstrument,
     ) {
-        currentPaymentState = PaymentViewModel.State.IN_PROGRESS
-        choosenPaymentAttempInstrument = instrument
+        chosenPaymentAttemptInstrument = with
         executeNextStepUntilFurtherInstructions(
             operationStep = SessionOperationHandler.getOperationStepForPaymentAttempt(
                 currentSessionState,
-                instrument
+                with
             ),
             onSuccess = { stepInstruction ->
                 when (stepInstruction) {
                     is StepInstruction.LaunchSwishAppStep -> {
-                        val swishUri = stepInstruction.uri.addCallbackUrl(configuration)
+                        val swishUri = stepInstruction.uri.addCallbackUrl(orderInfo)
 
                         if (swishUri != null) {
-                            _nativePaymentState.value = NativePaymentState.LaunchSwish(swishUri)
+                            _nativePaymentState.value = NativePaymentState.LaunchClientApp(swishUri)
                         } else {
                             _nativePaymentState.value =
                                 NativePaymentState.Error("Not a valid swish url")
@@ -208,14 +211,45 @@ class NativePayments(
         )
     }
 
+    /**
+     * This method aborts the payment completely
+     * After this a new call to [startPaymentSession] must be done to make a new payment attempt
+     */
+    fun abortPaymentSession() {
+        executeNextStepUntilFurtherInstructions(
+            operationStep = SessionOperationHandler.getOperationStepForAbortPayment(
+                currentSessionState
+            ),
+            onSuccess = { stepInstruction ->
+                when (stepInstruction) {
+                    is StepInstruction.PaymentSessionCompleted -> {
+                        onPaymentComplete(stepInstruction.url)
+                    }
+
+                    is StepInstruction.ProblemOccurred -> {
+                        onProblemOccurred(stepInstruction.problem)
+                    }
+
+                    else -> _nativePaymentState.value =
+                        NativePaymentState.Error("Inconsistent state. Please abort the payment and try again.")
+                }
+            },
+            onError = {
+                _nativePaymentState.value = NativePaymentState.Error(it)
+            }
+        )
+    }
+
     private fun onPaymentComplete(url: String) {
-        currentPaymentState = PaymentViewModel.State.IDLE
+        currentSessionState = null
+        chosenPaymentAttemptInstrument = null
+
         when (url) {
-            configuration.postNativePaymentOrders().completeUrl -> {
-                _nativePaymentState.value = NativePaymentState.PaymentComplete
+            orderInfo.completeUrl -> {
+                _nativePaymentState.value = NativePaymentState.PaymentSucceeded
             }
 
-            configuration.postNativePaymentOrders().cancelUrl -> {
+            orderInfo.cancelUrl -> {
                 _nativePaymentState.value =
                     NativePaymentState.Error("Payment failed")
             }
@@ -228,10 +262,10 @@ class NativePayments(
     }
 
     private fun onProblemOccurred(problem: Problem) {
-        _nativePaymentState.value = NativePaymentState.NativeProblem(
-            title = problem.title,
-            status = problem.status,
-            detail = problem.detail
+        _nativePaymentState.value = NativePaymentState.PaymentFailed(
+            title = problem.title ?: "Error",
+            status = problem.status ?: -1,
+            detail = problem.detail ?: "Something went wrong"
         )
     }
 

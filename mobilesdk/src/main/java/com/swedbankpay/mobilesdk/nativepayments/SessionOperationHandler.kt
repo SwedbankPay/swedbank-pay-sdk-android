@@ -1,31 +1,31 @@
 package com.swedbankpay.mobilesdk.nativepayments
 
-import com.swedbankpay.mobilesdk.PaymentViewModel
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.Mapper.toAvailableInstrument
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
-import com.swedbankpay.mobilesdk.nativepayments.model.request.util.RequestDataUtil.getRequestDataIfAny
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Instrument
-import com.swedbankpay.mobilesdk.nativepayments.model.response.MethodBaseModel
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Operation
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Problem
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Rel
-import com.swedbankpay.mobilesdk.nativepayments.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Session
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.RequestUtil.getRequestDataIfAny
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Instrument
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.MethodBaseModel
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Operation
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Problem
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Rel
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Session
 import java.net.URL
 
 internal object SessionOperationHandler {
 
+    private val alreadyUsedSwishUrls: MutableList<String> = mutableListOf()
+
     /**
-     * This method will figure out what next step in the payment session will be
+     * This method will figure out what the next step in the payment session will be
      *
      * @param session Current session
      * @param instrument Chosen [Instrument] for the payment.
      */
     fun getNextStep(
         session: Session?,
-        paymentState: PaymentViewModel.State,
         instrument: PaymentAttemptInstrument? = null,
     ): OperationStep {
         if (session == null) {
@@ -36,9 +36,9 @@ internal object SessionOperationHandler {
 
         // Extract every operation we have on the session object
         var operations: List<Operation> =
-            session.operations + session.paymentSession.methods.flatMap {
+            session.operations + (session.paymentSession.methods?.flatMap {
                 it?.operations ?: listOf()
-            }
+            } ?: listOf())
 
         // If we find a problem. Use that
         if (session.problem != null) {
@@ -46,7 +46,7 @@ internal object SessionOperationHandler {
             operations = listOf(problemOperation)
 
             val acknowledgeFailedAttempt =
-                operations.firstOrNull() { it.rel == Rel.ACKNOWLEDGE_FAILED_ATTEMPT }
+                operations.firstOrNull { it.rel == Rel.ACKNOWLEDGE_FAILED_ATTEMPT }
             if (acknowledgeFailedAttempt != null) {
                 return OperationStep(
                     requestMethod = acknowledgeFailedAttempt.method,
@@ -56,7 +56,7 @@ internal object SessionOperationHandler {
             }
         } else {
             // If we find a operation where next is true use that
-            val op = operations.firstOrNull { it.next }
+            val op = operations.firstOrNull { it.next ?: false }
             if (op != null) {
                 operations = listOf(op)
             }
@@ -68,7 +68,7 @@ internal object SessionOperationHandler {
             return OperationStep(
                 requestMethod = preparePayment.method,
                 url = URL(preparePayment.href),
-                data = preparePayment.rel.getRequestDataIfAny()
+                data = preparePayment.rel?.getRequestDataIfAny()
             )
         }
 
@@ -78,26 +78,24 @@ internal object SessionOperationHandler {
             return OperationStep(
                 requestMethod = startPaymentAttempt.method,
                 url = URL(startPaymentAttempt.href),
-                data = startPaymentAttempt.rel.getRequestDataIfAny(instrument)
+                data = startPaymentAttempt.rel?.getRequestDataIfAny(instrument)
             )
         }
 
         // 3. Search for Rel.LAUNCH_CLIENT_APP
-        // Only do this step if payment is not complete
-        // We don't want to try open for example swish if we already have done that
-        if (paymentState != PaymentViewModel.State.COMPLETE) {
-            val launchClientApp = operations.flatMap { it.tasks }
-                .firstOrNull { task -> task.rel == Rel.LAUNCH_CLIENT_APP }
-            if (launchClientApp != null) {
-                return OperationStep(
-                    instruction = StepInstruction.LaunchSwishAppStep(launchClientApp.href)
-                )
-            }
+        // Only return this if swishUrl hasn't been used yet
+        val launchClientApp = operations.flatMap { it.tasks ?: listOf() }
+            .firstOrNull { task -> task.rel == Rel.LAUNCH_CLIENT_APP }
+        if (launchClientApp != null && !alreadyUsedSwishUrls.contains(launchClientApp.href) && launchClientApp.href != null) {
+            alreadyUsedSwishUrls.add(launchClientApp.href)
+            return OperationStep(
+                instruction = StepInstruction.LaunchSwishAppStep(launchClientApp.href)
+            )
         }
 
         // 4. Search for Rel.REDIRECT_PAYER
         val redirectPayer = operations.firstOrNull { it.rel == Rel.REDIRECT_PAYER }
-        if (redirectPayer != null) {
+        if (redirectPayer?.href != null) {
             return OperationStep(
                 instruction = StepInstruction.PaymentSessionCompleted(redirectPayer.href)
             )
@@ -110,7 +108,7 @@ internal object SessionOperationHandler {
         if (expandMethod != null) {
             val availableInstruments = arrayListOf<MethodBaseModel>()
 
-            session.paymentSession.methods.forEach { method ->
+            session.paymentSession.methods?.forEach { method ->
                 if (method?.operations?.firstOrNull { op -> op.rel == Rel.EXPAND_METHOD } != null) {
                     availableInstruments.add(method)
                 }
@@ -132,7 +130,7 @@ internal object SessionOperationHandler {
             return OperationStep(
                 requestMethod = getPayment.method,
                 url = URL(getPayment.href),
-                data = getPayment.rel.getRequestDataIfAny(instrument),
+                data = getPayment.rel?.getRequestDataIfAny(instrument),
                 delayRequestDuration = 2000
             )
         }
@@ -163,7 +161,7 @@ internal object SessionOperationHandler {
         }
 
         val op = session.paymentSession.methods
-            .firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }?.operations
+            ?.firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }?.operations
             ?.firstOrNull {
                 it.rel == Rel.EXPAND_METHOD
                         || it.rel == Rel.START_PAYMENT_ATTEMPT
@@ -174,7 +172,7 @@ internal object SessionOperationHandler {
             OperationStep(
                 requestMethod = op.method,
                 url = URL(op.href),
-                data = op.rel.getRequestDataIfAny(paymentAttemptInstrument)
+                data = op.rel?.getRequestDataIfAny(paymentAttemptInstrument)
             )
         } else {
             OperationStep(
@@ -182,9 +180,37 @@ internal object SessionOperationHandler {
             )
         }
     }
+
+    fun getOperationStepForAbortPayment(session: Session?): OperationStep {
+        if (session == null) {
+            return OperationStep(
+                instruction = StepInstruction.SessionNotFound()
+            )
+        }
+
+        val abortPayment = session.operations.firstOrNull {
+            it.rel == Rel.ABORT_PAYMENT
+        }
+
+        return if (abortPayment != null) {
+            OperationStep(
+                requestMethod = abortPayment.method,
+                url = URL(abortPayment.href),
+            )
+        } else {
+            OperationStep(
+                instruction = StepInstruction.StepNotFound()
+            )
+        }
+    }
+
+    fun clearUsedSwishUrls() {
+        alreadyUsedSwishUrls.clear()
+    }
 }
 
-sealed class StepInstruction(
+
+internal sealed class StepInstruction(
     val informMerchantApp: Boolean = false,
     val errorMessage: String? = null,
 ) {
@@ -203,8 +229,8 @@ sealed class StepInstruction(
 
 }
 
-data class OperationStep(
-    val requestMethod: RequestMethod = RequestMethod.GET,
+internal data class OperationStep(
+    val requestMethod: RequestMethod? = RequestMethod.GET,
     val url: URL? = null,
     val data: String? = null,
     val instruction: StepInstruction? = null,

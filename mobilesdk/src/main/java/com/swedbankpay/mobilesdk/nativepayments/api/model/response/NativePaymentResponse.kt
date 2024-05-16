@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk.nativepayments.model.response
+package com.swedbankpay.mobilesdk.nativepayments.api.model.response
 
 internal sealed class NativePaymentResponse(
 ) {

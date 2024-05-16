@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk.nativepayments.model.response
+package com.swedbankpay.mobilesdk.nativepayments.api.model.response
 
 
 import com.google.gson.annotations.SerializedName
@@ -7,19 +7,19 @@ import androidx.annotation.Keep
 @Keep
 data class Operation(
     @SerializedName("contentType")
-    val contentType: String,
+    val contentType: String?,
     @SerializedName("expects")
-    val expects: List<Any>,
+    val expects: List<Any>? = listOf(),
     @SerializedName("href")
-    val href: String,
+    val href: String?,
     @SerializedName("method")
-    val method: RequestMethod,
+    val method: RequestMethod?,
     @SerializedName("next")
-    val next: Boolean,
+    val next: Boolean?,
     @SerializedName("rel")
-    val rel: Rel,
+    val rel: Rel?,
     @SerializedName("tasks")
-    val tasks: List<Task>
+    val tasks: List<Task>? = listOf()
 )
 
 enum class Rel {
@@ -44,8 +44,8 @@ enum class Rel {
     @SerializedName("acknowledge-failed-attempt")
     ACKNOWLEDGE_FAILED_ATTEMPT,
 
-    @SerializedName("failed")
-    FAILED
+    @SerializedName("abort-payment")
+    ABORT_PAYMENT,
 }
 
 enum class RequestMethod {

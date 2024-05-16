@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk.nativepayments.model.request
+package com.swedbankpay.mobilesdk.nativepayments.api.model.request
 
 
 import com.google.gson.annotations.SerializedName
@@ -11,5 +11,5 @@ internal data class SwishAttempt(
     @SerializedName("msisdn")
     val msisdn: String? = null,
     @SerializedName("client")
-    val client: SwishClient
+    val client: Client
 )

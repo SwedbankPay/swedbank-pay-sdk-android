@@ -1,6 +1,6 @@
 package com.swedbankpay.mobilesdk.nativepayments.exposedmodel
 
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Instrument
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Instrument
 
 sealed class PaymentAttemptInstrument {
 

@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk.nativepayments.model.response
+package com.swedbankpay.mobilesdk.nativepayments.api.model.response
 
 
 import com.google.gson.annotations.SerializedName
@@ -7,13 +7,15 @@ import androidx.annotation.Keep
 @Keep
 data class Problem(
     @SerializedName("type")
-    val type: String,
+    val type: String?,
     @SerializedName("title")
-    val title: String,
+    val title: String?,
     @SerializedName("status")
-    val status: Int,
+    val status: Int?,
     @SerializedName("detail")
-    val detail: String,
+    val detail: String?,
+    @SerializedName("instance")
+    val instance: String?,
     @SerializedName("operation")
     val operation: Operation
 )

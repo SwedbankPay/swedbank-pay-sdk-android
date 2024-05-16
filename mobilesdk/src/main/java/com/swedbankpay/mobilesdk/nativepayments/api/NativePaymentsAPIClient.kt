@@ -2,9 +2,9 @@ package com.swedbankpay.mobilesdk.nativepayments.api
 
 import android.util.Log
 import com.swedbankpay.mobilesdk.nativepayments.OperationStep
-import com.swedbankpay.mobilesdk.nativepayments.model.response.NativePaymentResponse
-import com.swedbankpay.mobilesdk.nativepayments.model.response.Problem
-import com.swedbankpay.mobilesdk.nativepayments.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Problem
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentErrorModel
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toSessionModel
 import java.io.OutputStreamWriter
@@ -26,6 +26,8 @@ internal class NativePaymentsAPIClient {
             RequestMethod.POST -> {
                 postRequest(operation.url, operation.data ?: "")
             }
+
+            else -> NativePaymentResponse.UnknownError("Something went wrong")
         }
 
         return suspendCoroutine {
@@ -113,30 +115,34 @@ internal class NativePaymentsAPIClient {
 
     }
 
+    /**
+     * We need to tell the api that we have taken care of the problem or
+     * else it will not disappear from future responses during the payment session
+     */
     fun postFailedAttemptRequest(problem: Problem) {
-        val url = URL(problem.operation.href)
+        problem.operation.href?.let {
+            val url = URL(it)
 
-        val connection = url.openConnection() as HttpsURLConnection
+            val connection = url.openConnection() as HttpsURLConnection
 
-        connection.requestMethod = "POST"
-        connection.setRequestProperty("Content-Type", "application/json")
-        connection.setRequestProperty("Accept", "application/json")
-        connection.doInput = true
-        connection.doOutput = true
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Accept", "application/json")
+            connection.doInput = true
+            connection.doOutput = true
 
-        val responseCode = connection.responseCode
-        if (responseCode == HttpsURLConnection.HTTP_NO_CONTENT) {
-            try {
-                val response = connection.inputStream.bufferedReader()
-                    .use { it.readText() }
-
-                Log.d("session", "postFailedAttemptRequest: success")
-            } catch (e: Exception) {
-                Log.d("session", "postFailedAttemptRequest: $e")
+            val responseCode = connection.responseCode
+            if (responseCode == HttpsURLConnection.HTTP_NO_CONTENT) {
+                try {
+                    Log.d("session", "postFailedAttemptRequest: success")
+                } catch (e: Exception) {
+                    Log.d("session", "postFailedAttemptRequest: $e")
+                }
+            } else {
+                Log.d("session", "postFailedAttemptRequest: error")
             }
-        } else {
-            Log.d("session", "postFailedAttemptRequest: error")
         }
     }
+
 
 }

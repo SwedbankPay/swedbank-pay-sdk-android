@@ -88,13 +88,6 @@ abstract class Configuration {
     ): ViewPaymentOrderInfo
 
     /**
-     * Is used by the native payment flow where we only care about the different urls
-     * Your implementation must ultimately make the call to Swedbank Pay API
-     * and return a [ViewPaymentOrderInfo] describing the result.
-     */
-    abstract fun postNativePaymentOrders() : ViewPaymentOrderInfo
-
-    /**
      * Called by [PaymentFragment] to determine whether it should fail or allow
      * retry after it failed to create the payment order.
      *
