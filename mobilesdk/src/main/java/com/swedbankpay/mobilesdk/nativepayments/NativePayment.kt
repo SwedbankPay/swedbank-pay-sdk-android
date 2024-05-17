@@ -1,7 +1,9 @@
 package com.swedbankpay.mobilesdk.nativepayments
 
 
-import android.util.Log
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -185,8 +187,8 @@ class NativePayment(
                     is StepInstruction.LaunchSwishAppStep -> {
                         val swishUri = stepInstruction.uri.addCallbackUrl(orderInfo)
 
-                        if (swishUri != null) {
-                            _nativePaymentState.value = NativePaymentState.LaunchClientApp(swishUri)
+                        if (swishUri != null && with is PaymentAttemptInstrument.Swish) {
+                            launchClientApp(swishUri, with.localStartContext)
                         } else {
                             _nativePaymentState.value =
                                 NativePaymentState.Error("Not a valid swish url")
@@ -238,6 +240,16 @@ class NativePayment(
                 _nativePaymentState.value = NativePaymentState.Error(it)
             }
         )
+    }
+
+    private fun launchClientApp(uri: Uri, context: Context?) {
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context?.startActivity(intent)
+        } catch (e: Exception) {
+           // TODO Beacon logging that app was not able to launch
+        }
     }
 
     private fun onPaymentComplete(url: String) {

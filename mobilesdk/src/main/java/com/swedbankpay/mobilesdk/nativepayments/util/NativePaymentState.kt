@@ -15,11 +15,6 @@ sealed class NativePaymentState {
     class AvailableInstrumentsFetched(val availableInstruments: List<AvailableInstrument>) :
         NativePaymentState()
 
-    /**
-     * [LaunchClientApp] contains the uri which is supposed to open another app by the merchant
-     */
-    class LaunchClientApp(val uri: Uri) : NativePaymentState()
-
     object PaymentSucceeded : NativePaymentState()
 
     /**
