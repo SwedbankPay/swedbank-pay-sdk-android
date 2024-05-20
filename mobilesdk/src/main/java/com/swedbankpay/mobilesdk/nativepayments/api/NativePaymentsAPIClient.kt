@@ -118,6 +118,8 @@ internal class NativePaymentsAPIClient {
     /**
      * We need to tell the api that we have taken care of the problem or
      * else it will not disappear from future responses during the payment session
+     *
+     * So if this request fails we need to call this again until it succeeds
      */
     fun postFailedAttemptRequest(problem: Problem) {
         problem.operation.href?.let {
@@ -134,6 +136,7 @@ internal class NativePaymentsAPIClient {
             val responseCode = connection.responseCode
             if (responseCode == HttpsURLConnection.HTTP_NO_CONTENT) {
                 try {
+                    // TODO Send failed ack och success ack to beacon logging?
                     Log.d("session", "postFailedAttemptRequest: success")
                 } catch (e: Exception) {
                     Log.d("session", "postFailedAttemptRequest: $e")

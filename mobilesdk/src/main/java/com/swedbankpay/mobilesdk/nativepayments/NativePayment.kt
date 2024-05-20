@@ -78,7 +78,7 @@ class NativePayment(
         scope.launch {
             var nextStep = operationStep
 
-            while (nextStep.instruction == null) {
+            while (nextStep.instructions.firstOrNull { it.informMerchantApp } == null) {
                 // This is here for polling purposes
                 if (nextStep.delayRequestDuration > 0) {
                     delay(nextStep.delayRequestDuration)
@@ -107,16 +107,27 @@ class NativePayment(
                             instrument = chosenPaymentAttemptInstrument
                         ).let { step ->
                             nextStep = step
-                            if (step.instruction != null
+                            if (step.instructions.isNotEmpty()
                             ) {
-                                if (step.instruction is StepInstruction.ProblemOccurred) {
-                                    client.postFailedAttemptRequest(step.instruction.problem)
+                                val (instruction, problem) = step.instructions
+
+                                if (instruction is StepInstruction.ProblemOccurred) {
+                                    client.postFailedAttemptRequest(instruction.problem)
                                 }
+
+                                if (problem != null && problem is StepInstruction.ProblemOccurred) {
+                                    client.postFailedAttemptRequest(problem.problem)
+                                }
+
                                 withContext(Dispatchers.Main) {
-                                    if (step.instruction.errorMessage != null) {
-                                        onError(step.instruction.errorMessage)
+                                    if (instruction?.errorMessage != null) {
+                                        onError(instruction.errorMessage)
                                     } else {
-                                        onSuccess(step.instruction)
+                                        // In this case instruction shouldn't be null.
+                                        // And if so we want to find out fast
+                                        if (instruction?.informMerchantApp == true) {
+                                            onSuccess(instruction)
+                                        }
                                     }
                                 }
                             }
@@ -137,7 +148,7 @@ class NativePayment(
         url: String,
     ) {
         paymentSessionUrl = URL(url)
-        SessionOperationHandler.clearUsedSwishUrls()
+        SessionOperationHandler.clearUsedUrls()
         getPaymentSession()
     }
 
@@ -184,7 +195,7 @@ class NativePayment(
             ),
             onSuccess = { stepInstruction ->
                 when (stepInstruction) {
-                    is StepInstruction.LaunchSwishAppStep -> {
+                    is StepInstruction.LaunchClientAppStep -> {
                         val swishUri = stepInstruction.uri.addCallbackUrl(orderInfo)
 
                         if (swishUri != null && with is PaymentAttemptInstrument.Swish) {
@@ -248,7 +259,7 @@ class NativePayment(
         try {
             context?.startActivity(intent)
         } catch (e: Exception) {
-           // TODO Beacon logging that app was not able to launch
+            // TODO Beacon logging that app was not able to launch
         }
     }
 
@@ -280,5 +291,11 @@ class NativePayment(
             detail = problem.detail ?: "Something went wrong"
         )
     }
+
+    /**
+     * To be able to destruct list where the size can vary
+     */
+    operator fun <T> List<T>.component1(): T? = if (isNotEmpty()) get(0) else null
+    operator fun <T> List<T>.component2(): T? = if (size > 1) get(1) else null
 
 }

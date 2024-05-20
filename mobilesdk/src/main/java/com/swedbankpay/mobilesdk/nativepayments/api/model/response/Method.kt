@@ -20,7 +20,7 @@ internal val methodBaseModelFactory: RuntimeTypeAdapterFactory<MethodBaseModel>?
         .registerSubtype(CreditCardMethodModel::class.java, "CreditCard")
 
 @Keep
-internal open class MethodBaseModel {
+open class MethodBaseModel {
     @SerializedName("amount")
     val amount: Int? = null
 

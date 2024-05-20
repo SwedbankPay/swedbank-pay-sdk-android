@@ -9,7 +9,7 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.MethodBaseMod
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.SwishMethodModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.SwishPrefillModel
 
-internal fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument? = when (this) {
+fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument? = when (this) {
     is SwishMethodModel -> AvailableInstrument.Swish(
         prefills = this.prefills.map { model ->
             SwishPrefill(

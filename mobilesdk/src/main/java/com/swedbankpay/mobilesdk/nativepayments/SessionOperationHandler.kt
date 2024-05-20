@@ -1,9 +1,9 @@
 package com.swedbankpay.mobilesdk.nativepayments
 
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.RequestUtil.getRequestDataIfAny
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Instrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.MethodBaseModel
@@ -16,6 +16,7 @@ import java.net.URL
 
 internal object SessionOperationHandler {
 
+    private val alreadyUsedProblemUrls: MutableList<String> = mutableListOf()
     private val alreadyUsedSwishUrls: MutableList<String> = mutableListOf()
 
     /**
@@ -30,9 +31,11 @@ internal object SessionOperationHandler {
     ): OperationStep {
         if (session == null) {
             return OperationStep(
-                instruction = StepInstruction.SessionNotFound()
+                instructions = listOf(StepInstruction.SessionNotFound())
             )
         }
+
+        val instructions = mutableListOf<StepInstruction>()
 
         // Extract every operation we have on the session object
         var operations: List<Operation> =
@@ -40,26 +43,35 @@ internal object SessionOperationHandler {
                 it?.operations ?: listOf()
             } ?: listOf())
 
-        // If we find a problem. Use that
+        // If we find a problem that we haven't used return it. Otherwise just acknowledge it and
+        // add it to the instructions without informing the merchant app
         if (session.problem != null) {
             val problemOperation = session.problem.operation
-            operations = listOf(problemOperation)
+            if (problemOperation.rel == Rel.ACKNOWLEDGE_FAILED_ATTEMPT) {
+                if (problemOperation.href != null) {
+                    if (alreadyUsedProblemUrls.contains(problemOperation.href)) {
+                        instructions.add(StepInstruction.ProblemOccurred(session.problem, false))
+                    } else {
+                        alreadyUsedProblemUrls.add(problemOperation.href)
+                        return OperationStep(
+                            requestMethod = problemOperation.method,
+                            url = URL(problemOperation.href),
+                            instructions = listOf(
+                                StepInstruction.ProblemOccurred(
+                                    session.problem,
+                                    true
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+        }
 
-            val acknowledgeFailedAttempt =
-                operations.firstOrNull { it.rel == Rel.ACKNOWLEDGE_FAILED_ATTEMPT }
-            if (acknowledgeFailedAttempt != null) {
-                return OperationStep(
-                    requestMethod = acknowledgeFailedAttempt.method,
-                    url = URL(acknowledgeFailedAttempt.href),
-                    instruction = StepInstruction.ProblemOccurred(session.problem)
-                )
-            }
-        } else {
-            // If we find a operation where next is true use that
-            val op = operations.firstOrNull { it.next ?: false }
-            if (op != null) {
-                operations = listOf(op)
-            }
+        // If we find a operation where next is true use that
+        val op = operations.firstOrNull { it.next ?: false }
+        if (op != null) {
+            operations = listOf(op)
         }
 
         // 1. Search for Rel.PREPARE_PAYMENT
@@ -68,7 +80,8 @@ internal object SessionOperationHandler {
             return OperationStep(
                 requestMethod = preparePayment.method,
                 url = URL(preparePayment.href),
-                data = preparePayment.rel?.getRequestDataIfAny()
+                data = preparePayment.rel?.getRequestDataIfAny(),
+                instructions = instructions
             )
         }
 
@@ -78,7 +91,8 @@ internal object SessionOperationHandler {
             return OperationStep(
                 requestMethod = startPaymentAttempt.method,
                 url = URL(startPaymentAttempt.href),
-                data = startPaymentAttempt.rel?.getRequestDataIfAny(instrument)
+                data = startPaymentAttempt.rel?.getRequestDataIfAny(instrument),
+                instructions = instructions
             )
         }
 
@@ -88,16 +102,18 @@ internal object SessionOperationHandler {
             .firstOrNull { task -> task.rel == Rel.LAUNCH_CLIENT_APP }
         if (launchClientApp != null && !alreadyUsedSwishUrls.contains(launchClientApp.href) && launchClientApp.href != null) {
             alreadyUsedSwishUrls.add(launchClientApp.href)
+            instructions.add(0, StepInstruction.LaunchClientAppStep(launchClientApp.href))
             return OperationStep(
-                instruction = StepInstruction.LaunchSwishAppStep(launchClientApp.href)
+                instructions = instructions
             )
         }
 
         // 4. Search for Rel.REDIRECT_PAYER
         val redirectPayer = operations.firstOrNull { it.rel == Rel.REDIRECT_PAYER }
         if (redirectPayer?.href != null) {
+            instructions.add(0, StepInstruction.PaymentSessionCompleted(redirectPayer.href))
             return OperationStep(
-                instruction = StepInstruction.PaymentSessionCompleted(redirectPayer.href)
+                instructions = instructions
             )
         }
 
@@ -114,11 +130,15 @@ internal object SessionOperationHandler {
                 }
             }
 
+            instructions.add(
+                0, StepInstruction
+                    .AvailableInstrumentStep(availableInstruments = availableInstruments.mapNotNull { it.toAvailableInstrument() })
+            )
+
             return OperationStep(
                 requestMethod = expandMethod.method,
                 url = URL(expandMethod.href),
-                instruction = StepInstruction
-                    .AvailableInstrumentStep(availableInstruments = availableInstruments.mapNotNull { it.toAvailableInstrument() })
+                instructions = instructions
             )
         }
 
@@ -131,19 +151,21 @@ internal object SessionOperationHandler {
                 requestMethod = getPayment.method,
                 url = URL(getPayment.href),
                 data = getPayment.rel?.getRequestDataIfAny(instrument),
-                delayRequestDuration = 2000
+                delayRequestDuration = 2000,
+                instructions = instructions
             )
         }
 
+        instructions.add(0, StepInstruction.StepNotFound())
         return OperationStep(
-            instruction = StepInstruction.StepNotFound()
+            instructions = instructions
         )
     }
 
     /**
      * This method is used to get an operation to start the payment with chosen instrument.
      *
-     * Payment can be in two states when calling this method.
+     * Payment session can be in different states when calling this method.
      * First time calling this method will result in an operation containing [Rel.EXPAND_METHOD].
      * If problem occurs and you call this method again with the same instrument you will have
      * an operation containing [Rel.START_PAYMENT_ATTEMPT] or if a polling has occurred it will have [Rel.GET_PAYMENT].
@@ -156,7 +178,7 @@ internal object SessionOperationHandler {
     ): OperationStep {
         if (session == null) {
             return OperationStep(
-                instruction = StepInstruction.SessionNotFound()
+                instructions = listOf(StepInstruction.SessionNotFound())
             )
         }
 
@@ -176,7 +198,7 @@ internal object SessionOperationHandler {
             )
         } else {
             OperationStep(
-                instruction = StepInstruction.StepNotFound()
+                instructions = listOf(StepInstruction.StepNotFound())
             )
         }
     }
@@ -184,7 +206,7 @@ internal object SessionOperationHandler {
     fun getOperationStepForAbortPayment(session: Session?): OperationStep {
         if (session == null) {
             return OperationStep(
-                instruction = StepInstruction.SessionNotFound()
+                instructions = listOf(StepInstruction.SessionNotFound())
             )
         }
 
@@ -199,13 +221,14 @@ internal object SessionOperationHandler {
             )
         } else {
             OperationStep(
-                instruction = StepInstruction.StepNotFound()
+                instructions = listOf(StepInstruction.StepNotFound())
             )
         }
     }
 
-    fun clearUsedSwishUrls() {
+    fun clearUsedUrls() {
         alreadyUsedSwishUrls.clear()
+        alreadyUsedProblemUrls.clear()
     }
 }
 
@@ -217,7 +240,7 @@ internal sealed class StepInstruction(
     class AvailableInstrumentStep(val availableInstruments: List<AvailableInstrument>) :
         StepInstruction(true)
 
-    class LaunchSwishAppStep(val uri: String) : StepInstruction(true)
+    class LaunchClientAppStep(val uri: String) : StepInstruction(true)
 
     class PaymentSessionCompleted(val url: String) : StepInstruction(true)
 
@@ -225,14 +248,23 @@ internal sealed class StepInstruction(
 
     class SessionNotFound(message: String = "Session not found") : StepInstruction(true, message)
 
-    class ProblemOccurred(val problem: Problem) : StepInstruction(true)
+    class ProblemOccurred(val problem: Problem, informMerchantApp: Boolean) :
+        StepInstruction(informMerchantApp)
 
 }
 
+/**
+ * This class holds what the next step would be in the payment session
+ * [instructions] can hold zero, one or at most two [StepInstruction]
+ * If two [StepInstruction] is present in the list.
+ * The second one will always be a [StepInstruction.ProblemOccurred] with informMerchantApp
+ * set to false
+ *
+ */
 internal data class OperationStep(
     val requestMethod: RequestMethod? = RequestMethod.GET,
     val url: URL? = null,
     val data: String? = null,
-    val instruction: StepInstruction? = null,
+    val instructions: List<StepInstruction> = listOf(),
     val delayRequestDuration: Long = 0
 )
