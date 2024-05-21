@@ -7,4 +7,8 @@ internal sealed class NativePaymentResponse(
         NativePaymentResponse()
 
     class UnknownError(val message: String) : NativePaymentResponse()
+
+    object Retry : NativePaymentResponse()
+
 }
+

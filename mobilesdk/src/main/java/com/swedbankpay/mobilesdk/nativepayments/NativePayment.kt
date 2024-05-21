@@ -30,8 +30,10 @@ class NativePayment(
     private val orderInfo: ViewPaymentOrderInfo
 ) {
     companion object {
-        private val _nativePaymentState: MutableLiveData<NativePaymentState> = MutableLiveData()
+        private var _nativePaymentState: MutableLiveData<NativePaymentState> = MutableLiveData()
         val nativePaymentState: LiveData<NativePaymentState> = _nativePaymentState
+
+        private const val RETRIES_TIME_LIMIT_IN_MS = 20 * 1000
     }
 
     /**
@@ -48,6 +50,8 @@ class NativePayment(
     private var chosenPaymentAttemptInstrument: PaymentAttemptInstrument? = null
 
     private var paymentSessionUrl: URL? = null
+
+    private var startRequestTimestamp: Long = 0
 
     private val client: NativePaymentsAPIClient by lazy {
         NativePaymentsAPIClient()
@@ -73,6 +77,7 @@ class NativePayment(
         onSuccess: (StepInstruction) -> Unit,
         onError: (String) -> Unit
     ) {
+        startRequestTimestamp = System.currentTimeMillis()
         // So we don't launch multiple jobs when calling this method again
         scope.coroutineContext.cancelChildren()
         scope.launch {
@@ -82,6 +87,8 @@ class NativePayment(
                 // This is here for polling purposes
                 if (nextStep.delayRequestDuration > 0) {
                     delay(nextStep.delayRequestDuration)
+                    // When we poll we need to reset requestTimestamp so we don't end it to early
+                    startRequestTimestamp = System.currentTimeMillis()
                 }
                 when (val nativePaymentResponse = client.executeNextRequest(nextStep)) {
                     is NativePaymentResponse.PaymentError -> {
@@ -91,6 +98,19 @@ class NativePayment(
                             )
                         }
                         break
+                    }
+
+                    is NativePaymentResponse.Retry -> {
+                        // If request timer has tried for more than twenty second. Send an error to merchant
+                        // or wait one second then retry
+                        if (System.currentTimeMillis() - startRequestTimestamp > RETRIES_TIME_LIMIT_IN_MS) {
+                            withContext(Dispatchers.Main) {
+                                onError("Retries over time limit")
+                            }
+                            break
+                        } else {
+                            delay(1000)
+                        }
                     }
 
                     is NativePaymentResponse.UnknownError -> {
@@ -282,6 +302,7 @@ class NativePayment(
                     NativePaymentState.Error("Something strange happened")
             }
         }
+
     }
 
     private fun onProblemOccurred(problem: Problem) {

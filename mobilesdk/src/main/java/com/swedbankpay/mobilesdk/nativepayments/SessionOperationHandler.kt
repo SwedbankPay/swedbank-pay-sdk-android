@@ -3,7 +3,6 @@ package com.swedbankpay.mobilesdk.nativepayments
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.RequestUtil.getRequestDataIfAny
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Instrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.MethodBaseModel
@@ -12,6 +11,7 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Problem
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Rel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Session
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.mapper.toAvailableInstrument
 import java.net.URL
 
 internal object SessionOperationHandler {

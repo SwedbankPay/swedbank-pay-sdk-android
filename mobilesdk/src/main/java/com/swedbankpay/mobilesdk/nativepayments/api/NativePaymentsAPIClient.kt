@@ -8,6 +8,7 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentErrorModel
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toSessionModel
 import java.io.OutputStreamWriter
+import java.net.SocketTimeoutException
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 import kotlin.coroutines.resume
@@ -39,36 +40,46 @@ internal class NativePaymentsAPIClient {
         url: URL?
     ): NativePaymentResponse = suspendCoroutine { continuation ->
         url?.let {
-            val connection = url.openConnection() as HttpsURLConnection
+            try {
+                val connection = url.openConnection() as HttpsURLConnection
 
-            connection.requestMethod = "GET"
-            connection.setRequestProperty("Accept", "application/json")
-            connection.doInput = true
-            connection.doOutput = false
+                connection.connectTimeout = REQUEST_TIMEOUT_IN_MS
+                connection.readTimeout = REQUEST_TIMEOUT_IN_MS
 
-            val responseCode = connection.responseCode
-            if (responseCode == HttpsURLConnection.HTTP_OK) {
-                try {
+                connection.requestMethod = "GET"
+                connection.setRequestProperty("Accept", "application/json")
+                connection.doInput = true
+                connection.doOutput = false
+
+                val responseCode = connection.responseCode
+                if (responseCode == HttpsURLConnection.HTTP_OK) {
+
                     val response = connection.inputStream.bufferedReader()
                         .use { it.readText() }
 
                     continuation.resume(
                         NativePaymentResponse.Success(session = response.toSessionModel())
                     )
-                } catch (e: Exception) {
+                } else if ((500.until(600)).contains(responseCode)) {
+                    // When we get a server error we want to retry the request
+                    continuation.resume(NativePaymentResponse.Retry)
+                } else {
+                    val errorResponse = connection.errorStream.bufferedReader()
+                        .use { it.readText() }
+
                     continuation.resume(
-                        NativePaymentResponse.UnknownError(
-                            e.message ?: "Unknown error"
+                        NativePaymentResponse.PaymentError(
+                            paymentError = errorResponse.toPaymentErrorModel()
                         )
                     )
                 }
-            } else {
-                val errorResponse = connection.errorStream.bufferedReader()
-                    .use { it.readText() }
-
+            } catch (timeoutException: SocketTimeoutException) {
+                // When we get a time out we want to retry the request
+                continuation.resume(NativePaymentResponse.Retry)
+            } catch (e: Exception) {
                 continuation.resume(
-                    NativePaymentResponse.PaymentError(
-                        paymentError = errorResponse.toPaymentErrorModel()
+                    NativePaymentResponse.UnknownError(
+                        e.message ?: "Unknown error"
                     )
                 )
             }
@@ -81,35 +92,44 @@ internal class NativePaymentsAPIClient {
         data: String
     ): NativePaymentResponse = suspendCoroutine { continuation ->
         url?.let {
-            val connection = url.openConnection() as HttpsURLConnection
+            try {
+                val connection = url.openConnection() as HttpsURLConnection
 
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("Accept", "application/json")
-            connection.doInput = true
-            connection.doOutput = true
+                connection.connectTimeout = REQUEST_TIMEOUT_IN_MS
+                connection.readTimeout = REQUEST_TIMEOUT_IN_MS
 
-            val outputStreamWriter = OutputStreamWriter(connection.outputStream)
-            outputStreamWriter.write(data)
-            outputStreamWriter.flush()
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.setRequestProperty("Accept", "application/json")
+                connection.doInput = true
+                connection.doOutput = true
 
-            val responseCode = connection.responseCode
-            if (responseCode == HttpsURLConnection.HTTP_OK) {
-                try {
+                val outputStreamWriter = OutputStreamWriter(connection.outputStream)
+                outputStreamWriter.write(data)
+                outputStreamWriter.flush()
+
+                val responseCode = connection.responseCode
+                if (responseCode == HttpsURLConnection.HTTP_OK) {
                     val response = connection.inputStream.bufferedReader()
                         .use { it.readText() }
                     continuation.resume(NativePaymentResponse.Success(response.toSessionModel()))
-                } catch (e: Exception) {
-                    continuation.resume(
-                        NativePaymentResponse.UnknownError(
-                            e.message ?: "Unknown error"
-                        )
-                    )
+                } else if ((500.until(600)).contains(responseCode)) {
+                    // When we get a server error we want to retry the request
+                    continuation.resume(NativePaymentResponse.Retry)
+                } else {
+                    val errorResponse = connection.errorStream.bufferedReader()
+                        .use { it.readText() }
+                    continuation.resume(NativePaymentResponse.PaymentError(errorResponse.toPaymentErrorModel()))
                 }
-            } else {
-                val errorResponse = connection.errorStream.bufferedReader()
-                    .use { it.readText() }
-                continuation.resume(NativePaymentResponse.PaymentError(errorResponse.toPaymentErrorModel()))
+            } catch (timeoutException: SocketTimeoutException) {
+                // When we get a time out we want to retry the request
+                continuation.resume(NativePaymentResponse.Retry)
+            } catch (e: Exception) {
+                continuation.resume(
+                    NativePaymentResponse.UnknownError(
+                        e.message ?: "Unknown error"
+                    )
+                )
             }
         }
 
@@ -145,6 +165,10 @@ internal class NativePaymentsAPIClient {
                 Log.d("session", "postFailedAttemptRequest: error")
             }
         }
+    }
+
+    companion object {
+        private const val REQUEST_TIMEOUT_IN_MS = 4 * 1000
     }
 
 
