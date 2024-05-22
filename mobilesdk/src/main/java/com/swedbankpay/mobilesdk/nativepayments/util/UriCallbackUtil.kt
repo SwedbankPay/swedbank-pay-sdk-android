@@ -3,17 +3,17 @@ package com.swedbankpay.mobilesdk.nativepayments.util
 import android.net.Uri
 import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
 
-internal object SwishUriUtil {
+internal object UriCallbackUtil {
 
     fun String.addCallbackUrl(orderInfo: ViewPaymentOrderInfo): Uri? {
-        var swishUri = Uri.parse(this)
+        var uri = Uri.parse(this)
 
-        if (swishUri.scheme == "swish") {
+        if (uri.scheme == "swish") {
             val paymentUrl = orderInfo.paymentUrl ?: return null
 
-            swishUri = swishUri.addUriParameter("callbackurl", paymentUrl)
+            uri = uri.addUriParameter("callbackurl", paymentUrl)
 
-            return swishUri
+            return uri
         }
 
         return null

@@ -16,7 +16,8 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Problem
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Session
 import com.swedbankpay.mobilesdk.nativepayments.util.NativePaymentState
-import com.swedbankpay.mobilesdk.nativepayments.util.SwishUriUtil.addCallbackUrl
+import com.swedbankpay.mobilesdk.nativepayments.util.UriCallbackUtil.addCallbackUrl
+import com.swedbankpay.mobilesdk.nativepayments.util.extension.safeLet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -73,9 +74,7 @@ class NativePayment(
      * merchant app to take some kind of action
      */
     private fun executeNextStepUntilFurtherInstructions(
-        operationStep: OperationStep,
-        onSuccess: (StepInstruction) -> Unit,
-        onError: (String) -> Unit
+        operationStep: OperationStep
     ) {
         startRequestTimestamp = System.currentTimeMillis()
         // So we don't launch multiple jobs when calling this method again
@@ -83,7 +82,7 @@ class NativePayment(
         scope.launch {
             var nextStep = operationStep
 
-            while (nextStep.instructions.firstOrNull { it.informMerchantApp } == null) {
+            while (nextStep.instructions.firstOrNull { it.waitForAction } == null) {
                 // This is here for polling purposes
                 if (nextStep.delayRequestDuration > 0) {
                     delay(nextStep.delayRequestDuration)
@@ -93,7 +92,7 @@ class NativePayment(
                 when (val nativePaymentResponse = client.executeNextRequest(nextStep)) {
                     is NativePaymentResponse.PaymentError -> {
                         withContext(Dispatchers.Main) {
-                            onError(
+                            _nativePaymentState.value = NativePaymentState.Error(
                                 nativePaymentResponse.paymentError.detail ?: "Something went wrong"
                             )
                         }
@@ -105,7 +104,8 @@ class NativePayment(
                         // or wait one second then retry
                         if (System.currentTimeMillis() - startRequestTimestamp > RETRIES_TIME_LIMIT_IN_MS) {
                             withContext(Dispatchers.Main) {
-                                onError("Retries over time limit")
+                                _nativePaymentState.value =
+                                    NativePaymentState.Error("Retries over time limit")
                             }
                             break
                         } else {
@@ -115,7 +115,8 @@ class NativePayment(
 
                     is NativePaymentResponse.UnknownError -> {
                         withContext(Dispatchers.Main) {
-                            onError(nativePaymentResponse.message)
+                            _nativePaymentState.value =
+                                NativePaymentState.Error(nativePaymentResponse.message)
                         }
                         break
                     }
@@ -141,12 +142,13 @@ class NativePayment(
 
                                 withContext(Dispatchers.Main) {
                                     if (instruction?.errorMessage != null) {
-                                        onError(instruction.errorMessage)
+                                        _nativePaymentState.value =
+                                            NativePaymentState.Error(instruction.errorMessage)
                                     } else {
                                         // In this case instruction shouldn't be null.
                                         // And if so we want to find out fast
-                                        if (instruction?.informMerchantApp == true) {
-                                            onSuccess(instruction)
+                                        if (instruction?.waitForAction == true) {
+                                            checkWhatTodo(instruction)
                                         }
                                     }
                                 }
@@ -154,6 +156,30 @@ class NativePayment(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private fun checkWhatTodo(instruction: StepInstruction) {
+        when (instruction) {
+            is StepInstruction.AvailableInstrumentStep ->
+                _nativePaymentState.value =
+                    NativePaymentState.AvailableInstrumentsFetched(instruction.availableInstruments)
+
+            is StepInstruction.LaunchClientAppStep -> {
+                launchClientApp(instruction.href)
+            }
+
+            is StepInstruction.PaymentSessionCompleted -> {
+                onPaymentComplete(instruction.url)
+            }
+
+            is StepInstruction.ProblemOccurred -> {
+                onProblemOccurred(instruction.problem)
+            }
+
+            else -> {
+                _nativePaymentState.value = NativePaymentState.Error("Internal error")
             }
         }
     }
@@ -177,27 +203,7 @@ class NativePayment(
             operationStep = OperationStep(
                 requestMethod = RequestMethod.GET,
                 url = paymentSessionUrl
-            ),
-            onSuccess = { stepInstruction ->
-                when (stepInstruction) {
-                    is StepInstruction.AvailableInstrumentStep ->
-                        _nativePaymentState.value =
-                            NativePaymentState.AvailableInstrumentsFetched(stepInstruction.availableInstruments)
-
-                    is StepInstruction.PaymentSessionCompleted -> {
-                        onPaymentComplete(stepInstruction.url)
-                    }
-
-                    is StepInstruction.ProblemOccurred -> {
-                        onProblemOccurred(stepInstruction.problem)
-                    }
-
-                    else -> _nativePaymentState.value = NativePaymentState.Error("Internal error")
-                }
-            },
-            onError = {
-                _nativePaymentState.value = NativePaymentState.Error(it)
-            }
+            )
         )
     }
 
@@ -212,35 +218,7 @@ class NativePayment(
             operationStep = SessionOperationHandler.getOperationStepForPaymentAttempt(
                 currentSessionState,
                 with
-            ),
-            onSuccess = { stepInstruction ->
-                when (stepInstruction) {
-                    is StepInstruction.LaunchClientAppStep -> {
-                        val swishUri = stepInstruction.uri.addCallbackUrl(orderInfo)
-
-                        if (swishUri != null && with is PaymentAttemptInstrument.Swish) {
-                            launchClientApp(swishUri, with.localStartContext)
-                        } else {
-                            _nativePaymentState.value =
-                                NativePaymentState.Error("Not a valid swish url")
-                        }
-                    }
-
-                    is StepInstruction.PaymentSessionCompleted -> {
-                        onPaymentComplete(stepInstruction.url)
-                    }
-
-                    is StepInstruction.ProblemOccurred -> {
-                        onProblemOccurred(stepInstruction.problem)
-                    }
-
-                    else -> _nativePaymentState.value =
-                        NativePaymentState.Error("Inconsistent state. Please abort the payment and try again.")
-                }
-            },
-            onError = {
-                _nativePaymentState.value = NativePaymentState.Error(it)
-            }
+            )
         )
     }
 
@@ -252,28 +230,35 @@ class NativePayment(
         executeNextStepUntilFurtherInstructions(
             operationStep = SessionOperationHandler.getOperationStepForAbortPayment(
                 currentSessionState
-            ),
-            onSuccess = { stepInstruction ->
-                when (stepInstruction) {
-                    is StepInstruction.PaymentSessionCompleted -> {
-                        onPaymentComplete(stepInstruction.url)
-                    }
-
-                    is StepInstruction.ProblemOccurred -> {
-                        onProblemOccurred(stepInstruction.problem)
-                    }
-
-                    else -> _nativePaymentState.value =
-                        NativePaymentState.Error("Inconsistent state. Please abort the payment and try again.")
-                }
-            },
-            onError = {
-                _nativePaymentState.value = NativePaymentState.Error(it)
-            }
+            )
         )
     }
 
-    private fun launchClientApp(uri: Uri, context: Context?) {
+    private fun launchClientApp(href: String) {
+        val uriWithCallback = href.addCallbackUrl(orderInfo)
+
+        safeLet(uriWithCallback, chosenPaymentAttemptInstrument) { uri, paymentInstrument ->
+            when (paymentInstrument) {
+                is PaymentAttemptInstrument.Swish -> {
+                    launchSwish(uri, paymentInstrument.localStartContext)
+                }
+
+                else -> {
+                    _nativePaymentState.value =
+                        NativePaymentState.Error("Payment instrument is not supported")
+                }
+            }
+        } ?: kotlin.run {
+            _nativePaymentState.value = if (uriWithCallback == null) {
+                NativePaymentState.Error("No valid uri")
+            } else {
+                NativePaymentState.Error("Couldn't not find any payment instrument")
+            }
+
+        }
+    }
+
+    private fun launchSwish(uri: Uri, context: Context?) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {

@@ -39,9 +39,9 @@ internal class NativePaymentsAPIClient {
     private suspend fun getRequest(
         url: URL?
     ): NativePaymentResponse = suspendCoroutine { continuation ->
-        url?.let {
+        url?.let { requestUrl ->
             try {
-                val connection = url.openConnection() as HttpsURLConnection
+                val connection = requestUrl.openConnection() as HttpsURLConnection
 
                 connection.connectTimeout = REQUEST_TIMEOUT_IN_MS
                 connection.readTimeout = REQUEST_TIMEOUT_IN_MS
@@ -91,9 +91,9 @@ internal class NativePaymentsAPIClient {
         url: URL?,
         data: String
     ): NativePaymentResponse = suspendCoroutine { continuation ->
-        url?.let {
+        url?.let { requestUrl ->
             try {
-                val connection = url.openConnection() as HttpsURLConnection
+                val connection = requestUrl.openConnection() as HttpsURLConnection
 
                 connection.connectTimeout = REQUEST_TIMEOUT_IN_MS
                 connection.readTimeout = REQUEST_TIMEOUT_IN_MS
@@ -168,7 +168,7 @@ internal class NativePaymentsAPIClient {
     }
 
     companion object {
-        private const val REQUEST_TIMEOUT_IN_MS = 4 * 1000
+        private const val REQUEST_TIMEOUT_IN_MS = 10 * 1000
     }
 
 

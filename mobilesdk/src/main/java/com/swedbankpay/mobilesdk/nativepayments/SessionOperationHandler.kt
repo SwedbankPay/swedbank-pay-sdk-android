@@ -234,13 +234,13 @@ internal object SessionOperationHandler {
 
 
 internal sealed class StepInstruction(
-    val informMerchantApp: Boolean = false,
+    val waitForAction: Boolean = false,
     val errorMessage: String? = null,
 ) {
     class AvailableInstrumentStep(val availableInstruments: List<AvailableInstrument>) :
         StepInstruction(true)
 
-    class LaunchClientAppStep(val uri: String) : StepInstruction(true)
+    class LaunchClientAppStep(val href: String) : StepInstruction(true)
 
     class PaymentSessionCompleted(val url: String) : StepInstruction(true)
 
@@ -256,10 +256,8 @@ internal sealed class StepInstruction(
 /**
  * This class holds what the next step would be in the payment session
  * [instructions] can hold zero, one or at most two [StepInstruction]
- * If two [StepInstruction] is present in the list.
- * The second one will always be a [StepInstruction.ProblemOccurred] with informMerchantApp
- * set to false
- *
+ * If two [StepInstruction] is present in the list the second one
+ * will always be a [StepInstruction.ProblemOccurred] with waitForAction set to false
  */
 internal data class OperationStep(
     val requestMethod: RequestMethod? = RequestMethod.GET,
