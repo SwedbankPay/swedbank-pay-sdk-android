@@ -12,6 +12,7 @@ import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetailsWithOperation
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
@@ -48,7 +49,7 @@ class NativePayment(
 
     private var currentPaymentOutputModel: PaymentOutputModel? = null
 
-    private var chosenPaymentAttemptInstrument: PaymentAttemptInstrument? = null
+    private var paymentAttemptInstrument: PaymentAttemptInstrument? = null
 
     private var paymentSessionUrl: URL? = null
 
@@ -125,8 +126,10 @@ class NativePayment(
                         currentPaymentOutputModel = nativePaymentResponse.paymentOutputModel
                         SessionOperationHandler.getNextStep(
                             paymentOutputModel = currentPaymentOutputModel,
-                            instrument = chosenPaymentAttemptInstrument
+                            instrument = paymentAttemptInstrument
                         ).let { step ->
+                            clearPaymentAttemptInstrument(nextStep.operationRel)
+
                             nextStep = step
                             if (step.instructions.isNotEmpty()
                             ) {
@@ -156,6 +159,17 @@ class NativePayment(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * If we have done a payment attempt. Clear chosen payment attempt instrument
+     */
+    private fun clearPaymentAttemptInstrument(rel: OperationRel?) {
+        rel?.let {
+            if (rel == OperationRel.START_PAYMENT_ATTEMPT) {
+                paymentAttemptInstrument = null
             }
         }
     }
@@ -193,8 +207,11 @@ class NativePayment(
     fun startPaymentSession(
         url: String,
     ) {
-        paymentSessionUrl = URL(url)
+        paymentAttemptInstrument = null
+        currentPaymentOutputModel = null
         SessionOperationHandler.clearUsedUrls()
+
+        paymentSessionUrl = URL(url)
         getPaymentSession()
     }
 
@@ -213,7 +230,7 @@ class NativePayment(
     fun makePaymentAttempt(
         with: PaymentAttemptInstrument,
     ) {
-        chosenPaymentAttemptInstrument = with
+        paymentAttemptInstrument = with
         executeNextStepUntilFurtherInstructions(
             operationStep = SessionOperationHandler.getOperationStepForPaymentAttempt(
                 currentPaymentOutputModel,
@@ -237,7 +254,7 @@ class NativePayment(
     private fun launchClientApp(href: String) {
         val uriWithCallback = href.addCallbackUrl(orderInfo)
 
-        safeLet(uriWithCallback, chosenPaymentAttemptInstrument) { uri, paymentInstrument ->
+        safeLet(uriWithCallback, paymentAttemptInstrument) { uri, paymentInstrument ->
             when (paymentInstrument) {
                 is PaymentAttemptInstrument.Swish -> {
                     launchSwish(uri, paymentInstrument.localStartContext)
@@ -270,7 +287,7 @@ class NativePayment(
 
     private fun onPaymentComplete(url: String) {
         currentPaymentOutputModel = null
-        chosenPaymentAttemptInstrument = null
+        paymentAttemptInstrument = null
 
         when (url) {
             orderInfo.completeUrl -> {

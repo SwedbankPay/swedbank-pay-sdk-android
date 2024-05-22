@@ -62,6 +62,7 @@ internal object SessionOperationHandler {
                         return OperationStep(
                             requestMethod = problemOperation.method,
                             url = URL(problemOperation.href),
+                            operationRel = problemOperation.rel,
                             instructions = listOf(
                                 StepInstruction.ProblemOccurred(
                                     paymentOutputModel.problem,
@@ -87,6 +88,7 @@ internal object SessionOperationHandler {
             return OperationStep(
                 requestMethod = preparePayment.method,
                 url = URL(preparePayment.href),
+                operationRel = preparePayment.rel,
                 data = preparePayment.rel?.getRequestDataIfAny(),
                 instructions = instructions
             )
@@ -99,6 +101,7 @@ internal object SessionOperationHandler {
             return OperationStep(
                 requestMethod = startPaymentAttempt.method,
                 url = URL(startPaymentAttempt.href),
+                operationRel = startPaymentAttempt.rel,
                 data = startPaymentAttempt.rel?.getRequestDataIfAny(instrument),
                 instructions = instructions
             )
@@ -148,6 +151,7 @@ internal object SessionOperationHandler {
             return OperationStep(
                 requestMethod = expandMethod.method,
                 url = URL(expandMethod.href),
+                operationRel = expandMethod.rel,
                 instructions = instructions
             )
         }
@@ -160,7 +164,8 @@ internal object SessionOperationHandler {
             return OperationStep(
                 requestMethod = getPayment.method,
                 url = URL(getPayment.href),
-                data = getPayment.rel?.getRequestDataIfAny(instrument),
+                operationRel = getPayment.rel,
+                data = getPayment.rel?.getRequestDataIfAny(),
                 delayRequestDuration = 2000,
                 instructions = instructions
             )
@@ -204,6 +209,7 @@ internal object SessionOperationHandler {
             OperationStep(
                 requestMethod = op.method,
                 url = URL(op.href),
+                operationRel = op.rel,
                 data = op.rel?.getRequestDataIfAny(paymentAttemptInstrument)
             )
         } else {
@@ -228,6 +234,7 @@ internal object SessionOperationHandler {
             OperationStep(
                 requestMethod = abortPayment.method,
                 url = URL(abortPayment.href),
+                operationRel = abortPayment.rel
             )
         } else {
             OperationStep(
@@ -275,6 +282,7 @@ internal sealed class StepInstruction(
 internal data class OperationStep(
     val requestMethod: RequestMethod? = RequestMethod.GET,
     val url: URL? = null,
+    val operationRel: OperationRel? = null,
     val data: String? = null,
     val instructions: List<StepInstruction> = listOf(),
     val delayRequestDuration: Long = 0
