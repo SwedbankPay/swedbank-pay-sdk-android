@@ -1,5 +1,8 @@
 package com.swedbankpay.mobilesdk.nativepayments.exposedmodel
 
+import androidx.annotation.Keep
+
+@Keep
 sealed class AvailableInstrument {
 
     data class Swish(
@@ -12,11 +15,13 @@ sealed class AvailableInstrument {
 
 }
 
+@Keep
 data class SwishPrefill(
     val rank: Int?,
     val msisdn: String?
 )
 
+@Keep
 data class CreditCardPrefill(
     val rank: Int?,
     val paymentToken: String?,

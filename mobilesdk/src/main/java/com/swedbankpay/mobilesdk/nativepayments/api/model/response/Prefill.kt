@@ -15,7 +15,7 @@ internal open class PrefillBaseModel {
 }
 
 @Keep
-internal class SwishPrefillModel : PrefillBaseModel() {
+internal class SwishMethodPrefillModel : PrefillBaseModel() {
     @SerializedName("msisdn")
     val msisdn: String? = null
     override fun toString(): String {
@@ -26,7 +26,7 @@ internal class SwishPrefillModel : PrefillBaseModel() {
 }
 
 @Keep
-internal class CreditCardPrefillModel : PrefillBaseModel() {
+internal class CreditCardMethodPrefillModel : PrefillBaseModel() {
     @SerializedName("paymentToken")
     val paymentToken: String? = null
 

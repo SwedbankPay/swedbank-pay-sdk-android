@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
 
 @Keep
-internal data class PaymentSession(
+internal data class PaymentSessionModel(
     @SerializedName("culture")
     val culture: String?,
     @SerializedName("currency")

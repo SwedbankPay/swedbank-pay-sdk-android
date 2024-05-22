@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
 
 @Keep
-data class Problem(
+data class ProblemDetailsWithOperation(
     @SerializedName("type")
     val type: String?,
     @SerializedName("title")
@@ -17,5 +17,5 @@ data class Problem(
     @SerializedName("instance")
     val instance: String?,
     @SerializedName("operation")
-    val operation: Operation
+    val operations: OperationOutputModel
 )

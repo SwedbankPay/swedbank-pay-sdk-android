@@ -12,9 +12,9 @@ import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Problem
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetailsWithOperation
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Session
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.util.NativePaymentState
 import com.swedbankpay.mobilesdk.nativepayments.util.UriCallbackUtil.addCallbackUrl
 import com.swedbankpay.mobilesdk.nativepayments.util.extension.safeLet
@@ -46,7 +46,7 @@ class NativePayment(
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    private var currentSessionState: Session? = null
+    private var currentPaymentOutputModel: PaymentOutputModel? = null
 
     private var chosenPaymentAttemptInstrument: PaymentAttemptInstrument? = null
 
@@ -122,9 +122,9 @@ class NativePayment(
                     }
 
                     is NativePaymentResponse.Success -> {
-                        currentSessionState = nativePaymentResponse.session
+                        currentPaymentOutputModel = nativePaymentResponse.paymentOutputModel
                         SessionOperationHandler.getNextStep(
-                            session = currentSessionState,
+                            paymentOutputModel = currentPaymentOutputModel,
                             instrument = chosenPaymentAttemptInstrument
                         ).let { step ->
                             nextStep = step
@@ -133,11 +133,11 @@ class NativePayment(
                                 val (instruction, problem) = step.instructions
 
                                 if (instruction is StepInstruction.ProblemOccurred) {
-                                    client.postFailedAttemptRequest(instruction.problem)
+                                    client.postFailedAttemptRequest(instruction.problemDetailsWithOperation)
                                 }
 
                                 if (problem != null && problem is StepInstruction.ProblemOccurred) {
-                                    client.postFailedAttemptRequest(problem.problem)
+                                    client.postFailedAttemptRequest(problem.problemDetailsWithOperation)
                                 }
 
                                 withContext(Dispatchers.Main) {
@@ -175,7 +175,7 @@ class NativePayment(
             }
 
             is StepInstruction.ProblemOccurred -> {
-                onProblemOccurred(instruction.problem)
+                onProblemOccurred(instruction.problemDetailsWithOperation)
             }
 
             else -> {
@@ -216,7 +216,7 @@ class NativePayment(
         chosenPaymentAttemptInstrument = with
         executeNextStepUntilFurtherInstructions(
             operationStep = SessionOperationHandler.getOperationStepForPaymentAttempt(
-                currentSessionState,
+                currentPaymentOutputModel,
                 with
             )
         )
@@ -229,7 +229,7 @@ class NativePayment(
     fun abortPaymentSession() {
         executeNextStepUntilFurtherInstructions(
             operationStep = SessionOperationHandler.getOperationStepForAbortPayment(
-                currentSessionState
+                currentPaymentOutputModel
             )
         )
     }
@@ -269,7 +269,7 @@ class NativePayment(
     }
 
     private fun onPaymentComplete(url: String) {
-        currentSessionState = null
+        currentPaymentOutputModel = null
         chosenPaymentAttemptInstrument = null
 
         when (url) {
@@ -290,11 +290,11 @@ class NativePayment(
 
     }
 
-    private fun onProblemOccurred(problem: Problem) {
+    private fun onProblemOccurred(problemDetailsWithOperation: ProblemDetailsWithOperation) {
         _nativePaymentState.value = NativePaymentState.PaymentFailed(
-            title = problem.title ?: "Error",
-            status = problem.status ?: -1,
-            detail = problem.detail ?: "Something went wrong"
+            title = problemDetailsWithOperation.title ?: "Error",
+            status = problemDetailsWithOperation.status ?: -1,
+            detail = problemDetailsWithOperation.detail ?: "Something went wrong"
         )
     }
 

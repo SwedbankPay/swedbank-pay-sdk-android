@@ -3,10 +3,10 @@ package com.swedbankpay.mobilesdk.nativepayments.api
 import android.util.Log
 import com.swedbankpay.mobilesdk.nativepayments.OperationStep
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Problem
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetailsWithOperation
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentErrorModel
-import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toSessionModel
+import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentOutputModel
 import java.io.OutputStreamWriter
 import java.net.SocketTimeoutException
 import java.net.URL
@@ -58,7 +58,7 @@ internal class NativePaymentsAPIClient {
                         .use { it.readText() }
 
                     continuation.resume(
-                        NativePaymentResponse.Success(session = response.toSessionModel())
+                        NativePaymentResponse.Success(paymentOutputModel = response.toPaymentOutputModel())
                     )
                 } else if ((500.until(600)).contains(responseCode)) {
                     // When we get a server error we want to retry the request
@@ -112,7 +112,7 @@ internal class NativePaymentsAPIClient {
                 if (responseCode == HttpsURLConnection.HTTP_OK) {
                     val response = connection.inputStream.bufferedReader()
                         .use { it.readText() }
-                    continuation.resume(NativePaymentResponse.Success(response.toSessionModel()))
+                    continuation.resume(NativePaymentResponse.Success(response.toPaymentOutputModel()))
                 } else if ((500.until(600)).contains(responseCode)) {
                     // When we get a server error we want to retry the request
                     continuation.resume(NativePaymentResponse.Retry)
@@ -141,8 +141,8 @@ internal class NativePaymentsAPIClient {
      *
      * So if this request fails we need to call this again until it succeeds
      */
-    fun postFailedAttemptRequest(problem: Problem) {
-        problem.operation.href?.let {
+    fun postFailedAttemptRequest(problemDetailsWithOperation: ProblemDetailsWithOperation) {
+        problemDetailsWithOperation.operations.href?.let {
             val url = URL(it)
 
             val connection = url.openConnection() as HttpsURLConnection

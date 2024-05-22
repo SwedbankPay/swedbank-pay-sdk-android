@@ -5,11 +5,11 @@ import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
 
 @Keep
-internal data class Session(
+internal data class PaymentOutputModel(
     @SerializedName("operations")
-    val operations: List<Operation>,
+    val operations: List<OperationOutputModel>,
     @SerializedName("problem")
-    val problem: Problem?,
+    val problem: ProblemDetailsWithOperation?,
     @SerializedName("paymentSession")
-    val paymentSession: PaymentSession
+    val paymentSession: PaymentSessionModel
 )

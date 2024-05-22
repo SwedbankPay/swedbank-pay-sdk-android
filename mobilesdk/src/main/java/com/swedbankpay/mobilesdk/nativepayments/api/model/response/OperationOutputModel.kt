@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
 
 @Keep
-data class Operation(
+data class OperationOutputModel(
     @SerializedName("contentType")
     val contentType: String?,
     @SerializedName("expects")
@@ -17,12 +17,13 @@ data class Operation(
     @SerializedName("next")
     val next: Boolean?,
     @SerializedName("rel")
-    val rel: Rel?,
+    val rel: OperationRel?,
     @SerializedName("tasks")
-    val tasks: List<Task>? = listOf()
+    val tasks: List<IntegrationTask>? = listOf()
 )
 
-enum class Rel {
+@Keep
+enum class OperationRel {
     @SerializedName("prepare-payment")
     PREPARE_PAYMENT,
 
@@ -31,9 +32,6 @@ enum class Rel {
 
     @SerializedName("start-payment-attempt")
     START_PAYMENT_ATTEMPT,
-
-    @SerializedName("launch-client-app")
-    LAUNCH_CLIENT_APP,
 
     @SerializedName("get-payment")
     GET_PAYMENT,
@@ -48,6 +46,7 @@ enum class Rel {
     ABORT_PAYMENT,
 }
 
+@Keep
 enum class RequestMethod {
     @SerializedName("GET")
     GET,

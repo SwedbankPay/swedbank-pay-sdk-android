@@ -31,7 +31,7 @@ open class MethodBaseModel {
     val instrument: Instrument? = null
 
     @SerializedName("operations")
-    val operations: List<Operation> = listOf()
+    val operations: List<OperationOutputModel> = listOf()
 
     override fun toString(): String {
         return "amount=$amount, autoClick=$autoClick, instrument=$instrument, operations=$operations"
@@ -90,6 +90,7 @@ internal class GooglePayMethodModel : MethodBaseModel() {
     }
 }
 
+@Keep
 enum class Instrument {
     @SerializedName("Swish")
     SWISH,

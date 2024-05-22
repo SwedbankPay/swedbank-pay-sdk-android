@@ -9,17 +9,17 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Integration
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Service
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.SwishAttempt
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Rel
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Rel.*
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.*
 
 /**
- * [RequestUtil] will get request data for the different [Rel]:s
+ * [RequestUtil] will get request data for the different [OperationRel]:s
  */
 internal object RequestUtil {
 
     private val gson = GsonBuilder().serializeNulls().create()
 
-    fun Rel.getRequestDataIfAny(instrument: PaymentAttemptInstrument? = null) =
+    fun OperationRel.getRequestDataIfAny(instrument: PaymentAttemptInstrument? = null) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()
             START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(instrument)
