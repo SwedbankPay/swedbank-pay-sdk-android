@@ -10,13 +10,14 @@ import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
 import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTaskRel
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetailsWithOperation
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
-import com.swedbankpay.mobilesdk.nativepayments.util.NativePaymentState
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.NativePaymentProblem
 import com.swedbankpay.mobilesdk.nativepayments.util.UriCallbackUtil.addCallbackUrl
 import com.swedbankpay.mobilesdk.nativepayments.util.extension.safeLet
 import kotlinx.coroutines.CoroutineScope
@@ -81,32 +82,32 @@ class NativePayment(
         // So we don't launch multiple jobs when calling this method again
         scope.coroutineContext.cancelChildren()
         scope.launch {
-            var nextStep = operationStep
+            var stepToExecute = operationStep
 
-            while (nextStep.instructions.firstOrNull { it.waitForAction } == null) {
+            while (stepToExecute.instructions.firstOrNull { it.waitForAction } == null) {
                 // This is here for polling purposes
-                if (nextStep.delayRequestDuration > 0) {
-                    delay(nextStep.delayRequestDuration)
+                if (stepToExecute.delayRequestDuration > 0) {
+                    delay(stepToExecute.delayRequestDuration)
                     // When we poll we need to reset requestTimestamp so we don't end it to early
                     startRequestTimestamp = System.currentTimeMillis()
                 }
-                when (val nativePaymentResponse = client.executeNextRequest(nextStep)) {
-                    is NativePaymentResponse.PaymentError -> {
-                        withContext(Dispatchers.Main) {
-                            _nativePaymentState.value = NativePaymentState.Error(
-                                nativePaymentResponse.paymentError.detail ?: "Something went wrong"
-                            )
-                        }
-                        break
-                    }
-
+                when (val nativePaymentResponse = client.executeNextRequest(stepToExecute)) {
                     is NativePaymentResponse.Retry -> {
                         // If request timer has tried for more than twenty second. Send an error to merchant
                         // or wait one second then retry
                         if (System.currentTimeMillis() - startRequestTimestamp > RETRIES_TIME_LIMIT_IN_MS) {
                             withContext(Dispatchers.Main) {
                                 _nativePaymentState.value =
-                                    NativePaymentState.Error("Retries over time limit")
+                                    NativePaymentState.SdkProblemOccurred(
+                                        NativePaymentProblem.PaymentSessionAPIRequestFailed(
+                                            error = nativePaymentResponse.error,
+                                            retry = {
+                                                executeNextStepUntilFurtherInstructions(
+                                                    stepToExecute
+                                                )
+                                            }
+                                        )
+                                    )
                             }
                             break
                         } else {
@@ -114,10 +115,19 @@ class NativePayment(
                         }
                     }
 
-                    is NativePaymentResponse.UnknownError -> {
+                    is NativePaymentResponse.Error -> {
                         withContext(Dispatchers.Main) {
                             _nativePaymentState.value =
-                                NativePaymentState.Error(nativePaymentResponse.message)
+                                NativePaymentState.SdkProblemOccurred(
+                                    NativePaymentProblem.PaymentSessionAPIRequestFailed(
+                                        error = nativePaymentResponse.error,
+                                        retry = {
+                                            executeNextStepUntilFurtherInstructions(
+                                                stepToExecute
+                                            )
+                                        }
+                                    )
+                                )
                         }
                         break
                     }
@@ -128,25 +138,32 @@ class NativePayment(
                             paymentOutputModel = currentPaymentOutputModel,
                             instrument = paymentAttemptInstrument
                         ).let { step ->
-                            clearPaymentAttemptInstrument(nextStep.operationRel)
+                            clearPaymentAttemptInstrument(
+                                stepToExecute.operationRel,
+                                step.integrationRel
+                            )
 
-                            nextStep = step
+                            stepToExecute = step
                             if (step.instructions.isNotEmpty()
                             ) {
                                 val (instruction, problem) = step.instructions
 
                                 if (instruction is StepInstruction.ProblemOccurred) {
-                                    client.postFailedAttemptRequest(instruction.problemDetailsWithOperation)
+                                    client.postFailedAttemptRequest(instruction.problemDetails)
                                 }
 
                                 if (problem != null && problem is StepInstruction.ProblemOccurred) {
-                                    client.postFailedAttemptRequest(problem.problemDetailsWithOperation)
+                                    client.postFailedAttemptRequest(problem.problemDetails)
                                 }
 
                                 withContext(Dispatchers.Main) {
-                                    if (instruction?.errorMessage != null) {
+                                    if (instruction is StepInstruction.SessionNotFound
+                                        || instruction is StepInstruction.StepNotFound
+                                    ) {
                                         _nativePaymentState.value =
-                                            NativePaymentState.Error(instruction.errorMessage)
+                                            NativePaymentState.SdkProblemOccurred(
+                                                NativePaymentProblem.PaymentSessionEndReached
+                                            )
                                     } else {
                                         // In this case instruction shouldn't be null.
                                         // And if so we want to find out fast
@@ -164,13 +181,18 @@ class NativePayment(
     }
 
     /**
-     * If we have done a payment attempt. Clear chosen payment attempt instrument
+     * Clear payment instrument if step rel is [OperationRel.START_PAYMENT_ATTEMPT]
+     * and next step rel is not [IntegrationTaskRel.LAUNCH_CLIENT_APP]
+     * then we clear it later in the session
      */
-    private fun clearPaymentAttemptInstrument(rel: OperationRel?) {
-        rel?.let {
-            if (rel == OperationRel.START_PAYMENT_ATTEMPT) {
-                paymentAttemptInstrument = null
-            }
+    private fun clearPaymentAttemptInstrument(
+        operationRel: OperationRel?,
+        integrationTaskRel: IntegrationTaskRel?
+    ) {
+        if (operationRel == OperationRel.START_PAYMENT_ATTEMPT && integrationTaskRel
+            != IntegrationTaskRel.LAUNCH_CLIENT_APP
+        ) {
+            paymentAttemptInstrument = null
         }
     }
 
@@ -189,11 +211,12 @@ class NativePayment(
             }
 
             is StepInstruction.ProblemOccurred -> {
-                onProblemOccurred(instruction.problemDetailsWithOperation)
+                onProblemOccurred(instruction.problemDetails)
             }
 
             else -> {
-                _nativePaymentState.value = NativePaymentState.Error("Internal error")
+                _nativePaymentState.value =
+                    NativePaymentState.SdkProblemOccurred(NativePaymentProblem.PaymentSessionEndReached)
             }
         }
     }
@@ -258,19 +281,16 @@ class NativePayment(
             when (paymentInstrument) {
                 is PaymentAttemptInstrument.Swish -> {
                     launchSwish(uri, paymentInstrument.localStartContext)
+                    paymentAttemptInstrument = null
                 }
 
                 else -> {
-                    _nativePaymentState.value =
-                        NativePaymentState.Error("Payment instrument is not supported")
+                    // this case should never happen
                 }
             }
         } ?: kotlin.run {
-            _nativePaymentState.value = if (uriWithCallback == null) {
-                NativePaymentState.Error("No valid uri")
-            } else {
-                NativePaymentState.Error("Couldn't not find any payment instrument")
-            }
+            _nativePaymentState.value =
+                NativePaymentState.SdkProblemOccurred(NativePaymentProblem.ClientAppLaunchFailed)
 
         }
     }
@@ -281,7 +301,8 @@ class NativePayment(
         try {
             context?.startActivity(intent)
         } catch (e: Exception) {
-            // TODO Beacon logging that app was not able to launch
+            _nativePaymentState.value =
+                NativePaymentState.SdkProblemOccurred(NativePaymentProblem.ClientAppLaunchFailed)
         }
     }
 
@@ -291,28 +312,24 @@ class NativePayment(
 
         when (url) {
             orderInfo.completeUrl -> {
-                _nativePaymentState.value = NativePaymentState.PaymentSucceeded
+                _nativePaymentState.value = NativePaymentState.PaymentComplete
             }
 
             orderInfo.cancelUrl -> {
                 _nativePaymentState.value =
-                    NativePaymentState.Error("Payment failed")
+                    NativePaymentState.PaymentCanceled
             }
 
             else -> {
                 _nativePaymentState.value =
-                    NativePaymentState.Error("Something strange happened")
+                    NativePaymentState.SdkProblemOccurred(NativePaymentProblem.PaymentSessionEndReached)
             }
         }
 
     }
 
-    private fun onProblemOccurred(problemDetailsWithOperation: ProblemDetailsWithOperation) {
-        _nativePaymentState.value = NativePaymentState.PaymentFailed(
-            title = problemDetailsWithOperation.title ?: "Error",
-            status = problemDetailsWithOperation.status ?: -1,
-            detail = problemDetailsWithOperation.detail ?: "Something went wrong"
-        )
+    private fun onProblemOccurred(problemDetails: ProblemDetails) {
+        _nativePaymentState.value = NativePaymentState.SessionProblemOccurred(problemDetails)
     }
 
     /**

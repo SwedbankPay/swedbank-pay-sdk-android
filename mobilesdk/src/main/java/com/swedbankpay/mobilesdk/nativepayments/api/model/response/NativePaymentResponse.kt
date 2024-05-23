@@ -1,14 +1,14 @@
 package com.swedbankpay.mobilesdk.nativepayments.api.model.response
 
+import com.swedbankpay.mobilesdk.nativepayments.api.model.SwedbankPayAPIError
+
 internal sealed class NativePaymentResponse(
 ) {
     class Success(val paymentOutputModel: PaymentOutputModel) : NativePaymentResponse()
-    class PaymentError(val paymentError: NativePaymentError) :
-        NativePaymentResponse()
 
-    class UnknownError(val message: String) : NativePaymentResponse()
+    data class Error(val error: SwedbankPayAPIError) : NativePaymentResponse()
 
-    object Retry : NativePaymentResponse()
+    data class Retry(val error: SwedbankPayAPIError) : NativePaymentResponse()
 
 }
 

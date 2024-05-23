@@ -1,13 +1,13 @@
 package com.swedbankpay.mobilesdk.nativepayments.api
 
-import android.util.Log
 import com.swedbankpay.mobilesdk.nativepayments.OperationStep
+import com.swedbankpay.mobilesdk.nativepayments.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetailsWithOperation
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentErrorModel
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentOutputModel
 import java.io.OutputStreamWriter
+import java.net.MalformedURLException
 import java.net.SocketTimeoutException
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
@@ -28,7 +28,7 @@ internal class NativePaymentsAPIClient {
                 postRequest(operation.url, operation.data ?: "")
             }
 
-            else -> NativePaymentResponse.UnknownError("Something went wrong")
+            else -> NativePaymentResponse.Error(SwedbankPayAPIError.Unknown)
         }
 
         return suspendCoroutine {
@@ -62,28 +62,32 @@ internal class NativePaymentsAPIClient {
                     )
                 } else if ((500.until(600)).contains(responseCode)) {
                     // When we get a server error we want to retry the request
-                    continuation.resume(NativePaymentResponse.Retry)
-                } else {
-                    val errorResponse = connection.errorStream.bufferedReader()
-                        .use { it.readText() }
-
                     continuation.resume(
-                        NativePaymentResponse.PaymentError(
-                            paymentError = errorResponse.toPaymentErrorModel()
+                        NativePaymentResponse.Retry(
+                            SwedbankPayAPIError.Error(
+                                message = "Internal server error",
+                                responseCode = responseCode
+                            )
+                        )
+                    )
+                } else {
+                    continuation.resume(
+                        NativePaymentResponse.Error(
+                            SwedbankPayAPIError.Error(
+                                responseCode = responseCode
+                            )
                         )
                     )
                 }
             } catch (timeoutException: SocketTimeoutException) {
                 // When we get a time out we want to retry the request
-                continuation.resume(NativePaymentResponse.Retry)
+                continuation.resume(NativePaymentResponse.Retry(SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)))
             } catch (e: Exception) {
                 continuation.resume(
-                    NativePaymentResponse.UnknownError(
-                        e.message ?: "Unknown error"
-                    )
+                    NativePaymentResponse.Error(SwedbankPayAPIError.Error(message = e.localizedMessage))
                 )
             }
-        } ?: continuation.resume(NativePaymentResponse.UnknownError("Url not found"))
+        } ?: continuation.resume(NativePaymentResponse.Error(SwedbankPayAPIError.InvalidUrl))
 
     }
 
@@ -115,19 +119,32 @@ internal class NativePaymentsAPIClient {
                     continuation.resume(NativePaymentResponse.Success(response.toPaymentOutputModel()))
                 } else if ((500.until(600)).contains(responseCode)) {
                     // When we get a server error we want to retry the request
-                    continuation.resume(NativePaymentResponse.Retry)
+                    continuation.resume(
+                        NativePaymentResponse.Retry(
+                            SwedbankPayAPIError.Error(
+                                message = "Internal server error",
+                                responseCode = responseCode
+                            )
+                        )
+                    )
                 } else {
-                    val errorResponse = connection.errorStream.bufferedReader()
-                        .use { it.readText() }
-                    continuation.resume(NativePaymentResponse.PaymentError(errorResponse.toPaymentErrorModel()))
+                    continuation.resume(
+                        NativePaymentResponse.Error(
+                            SwedbankPayAPIError.Error(
+                                responseCode = responseCode
+                            )
+                        )
+                    )
                 }
             } catch (timeoutException: SocketTimeoutException) {
                 // When we get a time out we want to retry the request
-                continuation.resume(NativePaymentResponse.Retry)
+                continuation.resume(NativePaymentResponse.Retry(SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)))
             } catch (e: Exception) {
                 continuation.resume(
-                    NativePaymentResponse.UnknownError(
-                        e.message ?: "Unknown error"
+                    NativePaymentResponse.Error(
+                        SwedbankPayAPIError.Error(
+                            message = e.localizedMessage
+                        )
                     )
                 )
             }
@@ -141,28 +158,29 @@ internal class NativePaymentsAPIClient {
      *
      * So if this request fails we need to call this again until it succeeds
      */
-    fun postFailedAttemptRequest(problemDetailsWithOperation: ProblemDetailsWithOperation) {
+    fun postFailedAttemptRequest(problemDetailsWithOperation: ProblemDetails) {
         problemDetailsWithOperation.operations.href?.let {
-            val url = URL(it)
+            try {
+                val url = URL(it)
 
-            val connection = url.openConnection() as HttpsURLConnection
+                val connection = url.openConnection() as HttpsURLConnection
 
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("Accept", "application/json")
-            connection.doInput = true
-            connection.doOutput = true
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.setRequestProperty("Accept", "application/json")
+                connection.doInput = true
+                connection.doOutput = true
 
-            val responseCode = connection.responseCode
-            if (responseCode == HttpsURLConnection.HTTP_NO_CONTENT) {
-                try {
+                val responseCode = connection.responseCode
+                if (responseCode == HttpsURLConnection.HTTP_NO_CONTENT) {
                     // TODO Send failed ack och success ack to beacon logging?
-                    Log.d("session", "postFailedAttemptRequest: success")
-                } catch (e: Exception) {
-                    Log.d("session", "postFailedAttemptRequest: $e")
+                } else {
+
                 }
-            } else {
-                Log.d("session", "postFailedAttemptRequest: error")
+            } catch (e: MalformedURLException) {
+
+            } catch (e: Exception) {
+
             }
         }
     }

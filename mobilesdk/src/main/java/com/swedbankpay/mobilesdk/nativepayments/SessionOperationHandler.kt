@@ -8,7 +8,7 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Instrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTaskRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationOutputModel
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetailsWithOperation
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
@@ -32,7 +32,7 @@ internal object SessionOperationHandler {
     ): OperationStep {
         if (paymentOutputModel == null) {
             return OperationStep(
-                instructions = listOf(StepInstruction.SessionNotFound())
+                instructions = listOf(StepInstruction.SessionNotFound)
             )
         }
 
@@ -115,7 +115,8 @@ internal object SessionOperationHandler {
             alreadyUsedSwishUrls.add(launchClientApp.href)
             instructions.add(0, StepInstruction.LaunchClientAppStep(launchClientApp.href))
             return OperationStep(
-                instructions = instructions
+                instructions = instructions,
+                integrationRel = IntegrationTaskRel.LAUNCH_CLIENT_APP
             )
         }
 
@@ -171,7 +172,7 @@ internal object SessionOperationHandler {
             )
         }
 
-        instructions.add(0, StepInstruction.StepNotFound())
+        instructions.add(0, StepInstruction.StepNotFound)
         return OperationStep(
             instructions = instructions
         )
@@ -193,7 +194,7 @@ internal object SessionOperationHandler {
     ): OperationStep {
         if (paymentOutputModel == null) {
             return OperationStep(
-                instructions = listOf(StepInstruction.SessionNotFound())
+                instructions = listOf(StepInstruction.SessionNotFound)
             )
         }
 
@@ -214,7 +215,7 @@ internal object SessionOperationHandler {
             )
         } else {
             OperationStep(
-                instructions = listOf(StepInstruction.StepNotFound())
+                instructions = listOf(StepInstruction.StepNotFound)
             )
         }
     }
@@ -222,7 +223,7 @@ internal object SessionOperationHandler {
     fun getOperationStepForAbortPayment(paymentOutputModel: PaymentOutputModel?): OperationStep {
         if (paymentOutputModel == null) {
             return OperationStep(
-                instructions = listOf(StepInstruction.SessionNotFound())
+                instructions = listOf(StepInstruction.SessionNotFound)
             )
         }
 
@@ -238,7 +239,7 @@ internal object SessionOperationHandler {
             )
         } else {
             OperationStep(
-                instructions = listOf(StepInstruction.StepNotFound())
+                instructions = listOf(StepInstruction.StepNotFound)
             )
         }
     }
@@ -252,7 +253,6 @@ internal object SessionOperationHandler {
 
 internal sealed class StepInstruction(
     val waitForAction: Boolean = false,
-    val errorMessage: String? = null,
 ) {
     class AvailableInstrumentStep(val availableInstruments: List<AvailableInstrument>) :
         StepInstruction(true)
@@ -261,15 +261,15 @@ internal sealed class StepInstruction(
 
     class PaymentSessionCompleted(val url: String) : StepInstruction(true)
 
-    class StepNotFound(message: String = "Step not found") : StepInstruction(true, message)
+    object StepNotFound : StepInstruction(true)
 
-    class SessionNotFound(message: String = "Session not found") : StepInstruction(true, message)
+    object SessionNotFound : StepInstruction(true)
 
     class ProblemOccurred(
-        val problemDetailsWithOperation: ProblemDetailsWithOperation,
-        informMerchantApp: Boolean
+        val problemDetails: ProblemDetails,
+        waitForAction: Boolean
     ) :
-        StepInstruction(informMerchantApp)
+        StepInstruction(waitForAction)
 
 }
 
@@ -283,6 +283,7 @@ internal data class OperationStep(
     val requestMethod: RequestMethod? = RequestMethod.GET,
     val url: URL? = null,
     val operationRel: OperationRel? = null,
+    val integrationRel: IntegrationTaskRel? = null,
     val data: String? = null,
     val instructions: List<StepInstruction> = listOf(),
     val delayRequestDuration: Long = 0

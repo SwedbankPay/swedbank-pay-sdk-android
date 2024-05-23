@@ -3,7 +3,6 @@ package com.swedbankpay.mobilesdk.nativepayments.util
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.swedbankpay.mobilesdk.nativepayments.util.gson.PrefillBaseModelDeserializer
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentError
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PrefillBaseModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.methodBaseModelFactory
@@ -26,9 +25,5 @@ internal object JsonUtil {
             )
         )
     }
-
-    fun String.toPaymentErrorModel(): NativePaymentError =
-        gson.fromJson(this, NativePaymentError::class.java)
-
 
 }

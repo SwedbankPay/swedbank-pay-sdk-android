@@ -10,11 +10,10 @@ sealed class PaymentAttemptInstrument {
     data class Swish(
         val msisdn: String? = null,
         val localStartContext: Context? = null
-    ) :
-        PaymentAttemptInstrument()
+    ) : PaymentAttemptInstrument()
 
     @Keep
-    data class CreditCard(val paymentToken: String? = null) : PaymentAttemptInstrument()
+    internal data class CreditCard(val paymentToken: String? = null) : PaymentAttemptInstrument()
 
 }
 
