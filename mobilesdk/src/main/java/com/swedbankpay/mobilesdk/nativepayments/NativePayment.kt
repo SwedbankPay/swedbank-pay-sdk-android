@@ -218,6 +218,7 @@ class NativePayment(
             is StepInstruction.AvailableInstrumentStep -> {
                 _nativePaymentState.value =
                     NativePaymentState.AvailableInstrumentsFetched(instruction.availableInstruments)
+                setStateToIdle()
 
                 BeaconService.logEvent(
                     eventAction = EventAction.SDKCallbackInvoked(
@@ -387,6 +388,7 @@ class NativePayment(
         when (url) {
             orderInfo.completeUrl -> {
                 _nativePaymentState.value = NativePaymentState.PaymentComplete
+                setStateToIdle()
                 BeaconService.logEvent(
                     eventAction = EventAction.SDKCallbackInvoked(
                         method = MethodModel(
@@ -396,12 +398,12 @@ class NativePayment(
                         )
                     )
                 )
-                _nativePaymentState.value = NativePaymentState.Idle
+
             }
 
             orderInfo.cancelUrl -> {
-                _nativePaymentState.value =
-                    NativePaymentState.PaymentCanceled
+                _nativePaymentState.value = NativePaymentState.PaymentCanceled
+                setStateToIdle()
 
                 BeaconService.logEvent(
                     eventAction = EventAction.SDKCallbackInvoked(
@@ -412,6 +414,7 @@ class NativePayment(
                         )
                     )
                 )
+
             }
 
             else -> {
@@ -424,6 +427,7 @@ class NativePayment(
 
     private fun onSdkProblemOccurred(nativePaymentProblem: NativePaymentProblem) {
         _nativePaymentState.value = NativePaymentState.SdkProblemOccurred(nativePaymentProblem)
+        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
@@ -439,6 +443,7 @@ class NativePayment(
 
     private fun onSessionProblemOccurred(problemDetails: ProblemDetails) {
         _nativePaymentState.value = NativePaymentState.SessionProblemOccurred(problemDetails)
+        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
@@ -450,7 +455,10 @@ class NativePayment(
                 extensions = problemDetails.toExtensionsModel()
             )
         )
+    }
 
+    private fun setStateToIdle() {
+        _nativePaymentState.value = NativePaymentState.Idle
     }
 
     /**

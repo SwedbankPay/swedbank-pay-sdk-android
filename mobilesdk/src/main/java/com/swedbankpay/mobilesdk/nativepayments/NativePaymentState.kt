@@ -18,8 +18,14 @@ sealed class NativePaymentState {
     class AvailableInstrumentsFetched(val availableInstruments: List<AvailableInstrument>) :
         NativePaymentState()
 
+    /**
+     * Called when payment is complete
+     */
     object PaymentComplete : NativePaymentState()
 
+    /**
+     * Called when payment is canceled
+     */
     object PaymentCanceled : NativePaymentState()
 
     /**
