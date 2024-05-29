@@ -244,6 +244,11 @@ internal object SessionOperationHandler {
         }
     }
 
+    fun getBeaconUrl(paymentOutputModel: PaymentOutputModel?): String? =
+        paymentOutputModel?.operations?.firstOrNull {
+            it.rel == OperationRel.EVENT_LOGGING
+        }?.href
+
     fun clearUsedUrls() {
         alreadyUsedSwishUrls.clear()
         alreadyUsedProblemUrls.clear()

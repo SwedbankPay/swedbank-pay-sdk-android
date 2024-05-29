@@ -37,12 +37,8 @@ internal object RequestUtil {
                 timeZoneOffset = RequestDataUtil.getTimeZoneOffset(),
                 javascriptEnabled = true
             ),
-            client = getClient(),
-            service = Service(
-                name = "SwedbankPaySDK-Android",
-                version = RequestDataUtil.getVersion()
-
-            ),
+            client = RequestDataUtil.getClient(),
+            service = RequestDataUtil.getService(),
         ).toJsonString()
     }
 
@@ -61,21 +57,13 @@ internal object RequestUtil {
         return when (instrument) {
             is PaymentAttemptInstrument.Swish -> SwishAttempt(
                 culture = "sv-SE",
-                client = getClient(),
+                client = RequestDataUtil.getClient(),
                 msisdn = instrument.msisdn
             ).toJsonString()
 
             else -> ""
         }
     }
-
-    private fun getClient() = Client(
-        userAgent = "SwedbankPaySDK-Android/${BuildConfig.SDK_VERSION}",
-        ipAddress = RequestDataUtil.getIPAddress(false) ?: "",
-        screenHeight = RequestDataUtil.getPhoneSize().heightPixels.toString(),
-        screenWidth = RequestDataUtil.getPhoneSize().widthPixels.toString(),
-        screenColorDepth = 24,
-    )
 
     private inline fun <reified T : Any> T.toJsonString(): String = gson.toJson(this, T::class.java)
 }

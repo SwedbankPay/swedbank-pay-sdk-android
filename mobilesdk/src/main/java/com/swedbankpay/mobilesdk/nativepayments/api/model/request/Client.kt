@@ -10,9 +10,9 @@ internal data class Client(
     @SerializedName("ipAddress")
     val ipAddress: String,
     @SerializedName("screenHeight")
-    val screenHeight: String?,
+    val screenHeight: Int?,
     @SerializedName("screenWidth")
-    val screenWidth: String?,
+    val screenWidth: Int?,
     @SerializedName("screenColorDepth")
     val screenColorDepth: Int?,
 )

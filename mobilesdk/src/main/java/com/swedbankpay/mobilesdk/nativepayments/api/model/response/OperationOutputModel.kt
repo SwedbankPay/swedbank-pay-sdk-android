@@ -44,6 +44,9 @@ enum class OperationRel {
 
     @SerializedName("abort-payment")
     ABORT_PAYMENT,
+
+    @SerializedName("event-logging")
+    EVENT_LOGGING
 }
 
 @Keep

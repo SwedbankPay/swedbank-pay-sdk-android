@@ -9,6 +9,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
 import com.swedbankpay.mobilesdk.internal.CallbackActivity
+import com.swedbankpay.mobilesdk.logging.BeaconService
+import com.swedbankpay.mobilesdk.logging.model.EventAction
+import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTaskRel
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
@@ -19,7 +22,10 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.NativePaymentProblem
 import com.swedbankpay.mobilesdk.nativepayments.util.UriCallbackUtil.addCallbackUrl
+import com.swedbankpay.mobilesdk.nativepayments.util.clientAppCallbackExtensionsModel
+import com.swedbankpay.mobilesdk.nativepayments.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.nativepayments.util.extension.safeLet
+import com.swedbankpay.mobilesdk.nativepayments.util.toExtensionsModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,13 +33,15 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 import java.net.URL
 
 class NativePayment(
     private val orderInfo: ViewPaymentOrderInfo
 ) {
     companion object {
-        private var _nativePaymentState: MutableLiveData<NativePaymentState> = MutableLiveData()
+        private var _nativePaymentState: MutableLiveData<NativePaymentState> =
+            MutableLiveData(NativePaymentState.Idle)
         val nativePaymentState: LiveData<NativePaymentState> = _nativePaymentState
 
         private const val RETRIES_TIME_LIMIT_IN_MS = 20 * 1000
@@ -67,6 +75,13 @@ class NativePayment(
     private fun checkCallbacks() {
         val callbackUrl = orderInfo.paymentUrl
         if (callbackUrl != null && CallbackActivity.consumeCallbackUrl(callbackUrl)) {
+            BeaconService.logEvent(
+                EventAction.ClientAppCallback(
+                    extensions = clientAppCallbackExtensionsModel(
+                        callbackUrl
+                    )
+                )
+            )
             getPaymentSession()
         }
     }
@@ -97,8 +112,7 @@ class NativePayment(
                         // or wait one second then retry
                         if (System.currentTimeMillis() - startRequestTimestamp > RETRIES_TIME_LIMIT_IN_MS) {
                             withContext(Dispatchers.Main) {
-                                _nativePaymentState.value =
-                                    NativePaymentState.SdkProblemOccurred(
+                                onSdkProblemOccurred((
                                         NativePaymentProblem.PaymentSessionAPIRequestFailed(
                                             error = nativePaymentResponse.error,
                                             retry = {
@@ -107,7 +121,7 @@ class NativePayment(
                                                 )
                                             }
                                         )
-                                    )
+                                        ))
                             }
                             break
                         } else {
@@ -117,8 +131,7 @@ class NativePayment(
 
                     is NativePaymentResponse.Error -> {
                         withContext(Dispatchers.Main) {
-                            _nativePaymentState.value =
-                                NativePaymentState.SdkProblemOccurred(
+                            onSdkProblemOccurred((
                                     NativePaymentProblem.PaymentSessionAPIRequestFailed(
                                         error = nativePaymentResponse.error,
                                         retry = {
@@ -127,13 +140,18 @@ class NativePayment(
                                             )
                                         }
                                     )
-                                )
+                                    ))
                         }
                         break
                     }
 
                     is NativePaymentResponse.Success -> {
                         currentPaymentOutputModel = nativePaymentResponse.paymentOutputModel
+                        BeaconService.setBeaconUrl(
+                            SessionOperationHandler.getBeaconUrl(
+                                currentPaymentOutputModel
+                            )
+                        )
                         SessionOperationHandler.getNextStep(
                             paymentOutputModel = currentPaymentOutputModel,
                             instrument = paymentAttemptInstrument
@@ -160,10 +178,9 @@ class NativePayment(
                                     if (instruction is StepInstruction.SessionNotFound
                                         || instruction is StepInstruction.StepNotFound
                                     ) {
-                                        _nativePaymentState.value =
-                                            NativePaymentState.SdkProblemOccurred(
-                                                NativePaymentProblem.PaymentSessionEndReached
-                                            )
+                                        onSdkProblemOccurred(
+                                            NativePaymentProblem.PaymentSessionEndReached
+                                        )
                                     } else {
                                         // In this case instruction shouldn't be null.
                                         // And if so we want to find out fast
@@ -198,9 +215,21 @@ class NativePayment(
 
     private fun checkWhatTodo(instruction: StepInstruction) {
         when (instruction) {
-            is StepInstruction.AvailableInstrumentStep ->
+            is StepInstruction.AvailableInstrumentStep -> {
                 _nativePaymentState.value =
                     NativePaymentState.AvailableInstrumentsFetched(instruction.availableInstruments)
+
+                BeaconService.logEvent(
+                    eventAction = EventAction.SDKCallbackInvoked(
+                        method = MethodModel(
+                            name = "availableInstrumentsFetched",
+                            sdk = true,
+                            succeeded = true
+                        ),
+                        extensions = instruction.availableInstruments.toExtensionsModel()
+                    )
+                )
+            }
 
             is StepInstruction.LaunchClientAppStep -> {
                 launchClientApp(instruction.href)
@@ -211,12 +240,11 @@ class NativePayment(
             }
 
             is StepInstruction.ProblemOccurred -> {
-                onProblemOccurred(instruction.problemDetails)
+                onSessionProblemOccurred(instruction.problemDetails)
             }
 
             else -> {
-                _nativePaymentState.value =
-                    NativePaymentState.SdkProblemOccurred(NativePaymentProblem.PaymentSessionEndReached)
+                onSdkProblemOccurred(NativePaymentProblem.PaymentSessionEndReached)
             }
         }
     }
@@ -233,6 +261,17 @@ class NativePayment(
         paymentAttemptInstrument = null
         currentPaymentOutputModel = null
         SessionOperationHandler.clearUsedUrls()
+        BeaconService.clearQueue()
+
+        BeaconService.logEvent(
+            eventAction = EventAction.SDKMethodInvoked(
+                method = MethodModel(
+                    name = "startPaymentSession",
+                    sdk = true,
+                    succeeded = true
+                )
+            )
+        )
 
         paymentSessionUrl = URL(url)
         getPaymentSession()
@@ -253,6 +292,16 @@ class NativePayment(
     fun makePaymentAttempt(
         with: PaymentAttemptInstrument,
     ) {
+        BeaconService.logEvent(
+            eventAction = EventAction.SDKMethodInvoked(
+                method = MethodModel(
+                    name = "makePaymentAttempt",
+                    sdk = true,
+                    succeeded = true
+                ),
+                extensions = with.toExtensionsModel()
+            )
+        )
         paymentAttemptInstrument = with
         executeNextStepUntilFurtherInstructions(
             operationStep = SessionOperationHandler.getOperationStepForPaymentAttempt(
@@ -267,6 +316,15 @@ class NativePayment(
      * After this a new call to [startPaymentSession] must be done to make a new payment attempt
      */
     fun abortPaymentSession() {
+        BeaconService.logEvent(
+            eventAction = EventAction.SDKMethodInvoked(
+                method = MethodModel(
+                    name = "abortPaymentSession",
+                    sdk = true,
+                    succeeded = true
+                )
+            )
+        )
         executeNextStepUntilFurtherInstructions(
             operationStep = SessionOperationHandler.getOperationStepForAbortPayment(
                 currentPaymentOutputModel
@@ -289,8 +347,7 @@ class NativePayment(
                 }
             }
         } ?: kotlin.run {
-            _nativePaymentState.value =
-                NativePaymentState.SdkProblemOccurred(NativePaymentProblem.ClientAppLaunchFailed)
+            onSdkProblemOccurred(NativePaymentProblem.ClientAppLaunchFailed)
 
         }
     }
@@ -300,9 +357,26 @@ class NativePayment(
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
             context?.startActivity(intent)
+            BeaconService.logEvent(
+                eventAction = EventAction.LaunchClientApp(
+                    extensions = launchClientAppExtensionsModel(
+                        paymentUrl = orderInfo.paymentUrl,
+                        launchUrl = uri.toString(),
+                        succeeded = true
+                    )
+                )
+            )
         } catch (e: Exception) {
-            _nativePaymentState.value =
-                NativePaymentState.SdkProblemOccurred(NativePaymentProblem.ClientAppLaunchFailed)
+            onSdkProblemOccurred(NativePaymentProblem.ClientAppLaunchFailed)
+            BeaconService.logEvent(
+                eventAction = EventAction.LaunchClientApp(
+                    extensions = launchClientAppExtensionsModel(
+                        paymentUrl = orderInfo.paymentUrl,
+                        launchUrl = uri.toString(),
+                        succeeded = false
+                    )
+                )
+            )
         }
     }
 
@@ -313,23 +387,70 @@ class NativePayment(
         when (url) {
             orderInfo.completeUrl -> {
                 _nativePaymentState.value = NativePaymentState.PaymentComplete
+                BeaconService.logEvent(
+                    eventAction = EventAction.SDKCallbackInvoked(
+                        method = MethodModel(
+                            name = "paymentComplete",
+                            sdk = true,
+                            succeeded = true
+                        )
+                    )
+                )
+                _nativePaymentState.value = NativePaymentState.Idle
             }
 
             orderInfo.cancelUrl -> {
                 _nativePaymentState.value =
                     NativePaymentState.PaymentCanceled
+
+                BeaconService.logEvent(
+                    eventAction = EventAction.SDKCallbackInvoked(
+                        method = MethodModel(
+                            name = "paymentCanceled",
+                            sdk = true,
+                            succeeded = true
+                        )
+                    )
+                )
             }
 
             else -> {
-                _nativePaymentState.value =
-                    NativePaymentState.SdkProblemOccurred(NativePaymentProblem.PaymentSessionEndReached)
+                onSdkProblemOccurred(NativePaymentProblem.PaymentSessionEndReached)
             }
         }
 
     }
 
-    private fun onProblemOccurred(problemDetails: ProblemDetails) {
+
+    private fun onSdkProblemOccurred(nativePaymentProblem: NativePaymentProblem) {
+        _nativePaymentState.value = NativePaymentState.SdkProblemOccurred(nativePaymentProblem)
+
+        BeaconService.logEvent(
+            eventAction = EventAction.SDKCallbackInvoked(
+                method = MethodModel(
+                    name = "sdkProblemOccurred",
+                    sdk = true,
+                    succeeded = true
+                ),
+                extensions = nativePaymentProblem.toExtensionsModel()
+            )
+        )
+    }
+
+    private fun onSessionProblemOccurred(problemDetails: ProblemDetails) {
         _nativePaymentState.value = NativePaymentState.SessionProblemOccurred(problemDetails)
+
+        BeaconService.logEvent(
+            eventAction = EventAction.SDKCallbackInvoked(
+                method = MethodModel(
+                    name = "sessionProblemOccurred",
+                    sdk = true,
+                    succeeded = true
+                ),
+                extensions = problemDetails.toExtensionsModel()
+            )
+        )
+
     }
 
     /**

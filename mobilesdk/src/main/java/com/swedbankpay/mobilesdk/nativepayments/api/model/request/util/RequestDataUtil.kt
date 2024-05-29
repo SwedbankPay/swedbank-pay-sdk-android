@@ -4,17 +4,34 @@ import android.content.res.Resources
 import android.util.DisplayMetrics
 import androidx.core.os.ConfigurationCompat
 import com.swedbankpay.mobilesdk.BuildConfig
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Client
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Service
 import java.net.NetworkInterface
+import java.text.SimpleDateFormat
 import java.util.*
 
 internal object RequestDataUtil {
+
+
+    fun getClient() = Client(
+        userAgent = "SwedbankPaySDK-Android/${getVersion()}",
+        ipAddress = getIPAddress(),
+        screenHeight = getPhoneSize().heightPixels,
+        screenWidth = getPhoneSize().widthPixels,
+        screenColorDepth = 24,
+    )
+
+    fun getService() = Service(
+        name = "SwedbankPaySDK-Android",
+        version = getVersion()
+    )
 
     /**
      * Get IP address from first non-localhost interface
      * @param useIPv4   true=return ipv4, false=return ipv6
      * @return  address or empty string
      */
-    fun getIPAddress(useIPv4: Boolean): String? {
+    private fun getIPAddress(): String {
         try {
             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
             for (intf in interfaces) {
@@ -22,21 +39,12 @@ internal object RequestDataUtil {
                 for (address in addresses) {
                     if (!address.isLoopbackAddress && !address.isLinkLocalAddress) {
                         val hostAddress = address.hostAddress;
-                        val isIPv4: Boolean = (hostAddress?.indexOf(':') ?: 0) < 0
-                        if (useIPv4) {
-                            if (isIPv4)
-                                return hostAddress;
-                        } else {
-                            if (!isIPv4) {
-                                val delimiter = hostAddress?.indexOf('%') //
-                                delimiter?.let {
-                                    return if (it < 0) {
-                                        hostAddress
-                                    } else {
-                                        hostAddress.substring(0, delimiter)
-                                    }
-                                }// drop ip6 zone suffix
-
+                        val delimiter = hostAddress?.indexOf('%') //
+                        delimiter?.let {
+                            return if (it < 0) {
+                                hostAddress
+                            } else {
+                                hostAddress.substring(0, delimiter)
                             }
                         }
                     }
@@ -48,21 +56,14 @@ internal object RequestDataUtil {
         return ""
     }
 
-    fun getTimeZoneOffset(): String {
-        val tz = TimeZone.getDefault()
-        val newOffset = tz.getOffset(System.currentTimeMillis())
+    fun getTimeZoneOffset(): String = SimpleDateFormat("Z", Locale.getDefault()).format(Date())
 
-        return String.format(
-            "%s%02d%02d",
-            if (newOffset >= 0) "+" else "-",
-            newOffset / 3600000,
-            newOffset / 60000 % 60
-        )
-    }
+    fun nowAsIsoString(): String =
+        SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.sss'Z'Z", Locale.getDefault()).format(Date())
 
-    fun getPhoneSize(): DisplayMetrics = Resources.getSystem().displayMetrics
+    private fun getPhoneSize(): DisplayMetrics = Resources.getSystem().displayMetrics
 
-    fun getVersion() = BuildConfig.SDK_VERSION.take(5)
+    private fun getVersion() = BuildConfig.SDK_VERSION.take(5)
 
     fun getLanguages() =
         ConfigurationCompat.getLocales(Resources.getSystem().configuration).toLanguageTags()

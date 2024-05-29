@@ -36,4 +36,9 @@ sealed class NativePaymentState {
      */
     class SdkProblemOccurred(val problem: NativePaymentProblem) : NativePaymentState()
 
+    /**
+     * Default state
+     */
+    object Idle : NativePaymentState()
+
 }

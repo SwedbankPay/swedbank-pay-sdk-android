@@ -1,11 +1,16 @@
 package com.swedbankpay.mobilesdk.nativepayments.api
 
+import android.util.Log
+import com.swedbankpay.mobilesdk.logging.BeaconService
+import com.swedbankpay.mobilesdk.logging.model.EventAction
+import com.swedbankpay.mobilesdk.logging.model.HttpModel
 import com.swedbankpay.mobilesdk.nativepayments.OperationStep
 import com.swedbankpay.mobilesdk.nativepayments.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentOutputModel
+import com.swedbankpay.mobilesdk.nativepayments.util.toExtensionsModel
 import java.io.OutputStreamWriter
 import java.net.MalformedURLException
 import java.net.SocketTimeoutException
@@ -39,6 +44,8 @@ internal class NativePaymentsAPIClient {
     private suspend fun getRequest(
         url: URL?
     ): NativePaymentResponse = suspendCoroutine { continuation ->
+        val start = System.currentTimeMillis()
+
         url?.let { requestUrl ->
             try {
                 val connection = requestUrl.openConnection() as HttpsURLConnection
@@ -53,14 +60,27 @@ internal class NativePaymentsAPIClient {
 
                 val responseCode = connection.responseCode
                 if (responseCode == HttpsURLConnection.HTTP_OK) {
-
                     val response = connection.inputStream.bufferedReader()
                         .use { it.readText() }
+
+                    logAPICall(
+                        url = requestUrl.toString(),
+                        method = "GET",
+                        duration = System.currentTimeMillis() - start,
+                        responseStatusCode = responseCode
+                    )
 
                     continuation.resume(
                         NativePaymentResponse.Success(paymentOutputModel = response.toPaymentOutputModel())
                     )
                 } else if ((500.until(600)).contains(responseCode)) {
+                    logAPICall(
+                        url = requestUrl.toString(),
+                        method = "GET",
+                        duration = System.currentTimeMillis() - start,
+                        responseStatusCode = responseCode,
+                    )
+
                     // When we get a server error we want to retry the request
                     continuation.resume(
                         NativePaymentResponse.Retry(
@@ -71,6 +91,13 @@ internal class NativePaymentsAPIClient {
                         )
                     )
                 } else {
+                    logAPICall(
+                        url = requestUrl.toString(),
+                        method = "GET",
+                        duration = System.currentTimeMillis() - start,
+                        responseStatusCode = responseCode,
+                    )
+
                     continuation.resume(
                         NativePaymentResponse.Error(
                             SwedbankPayAPIError.Error(
@@ -80,14 +107,39 @@ internal class NativePaymentsAPIClient {
                     )
                 }
             } catch (timeoutException: SocketTimeoutException) {
+                val error = SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)
+                logAPICall(
+                    url = url.toString(),
+                    method = "GET",
+                    duration = System.currentTimeMillis() - start,
+                    error = error
+                )
+
                 // When we get a time out we want to retry the request
-                continuation.resume(NativePaymentResponse.Retry(SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)))
+                continuation.resume(NativePaymentResponse.Retry(error))
             } catch (e: Exception) {
+                val error = SwedbankPayAPIError.Error(message = e.localizedMessage)
+                logAPICall(
+                    url = url.toString(),
+                    method = "GET",
+                    duration = System.currentTimeMillis() - start,
+                    error = error
+                )
+
                 continuation.resume(
-                    NativePaymentResponse.Error(SwedbankPayAPIError.Error(message = e.localizedMessage))
+                    NativePaymentResponse.Error(error)
                 )
             }
-        } ?: continuation.resume(NativePaymentResponse.Error(SwedbankPayAPIError.InvalidUrl))
+        } ?: kotlin.run {
+            val error = SwedbankPayAPIError.InvalidUrl
+            logAPICall(
+                url = "",
+                method = "GET",
+                duration = System.currentTimeMillis() - start,
+                error = error
+            )
+            continuation.resume(NativePaymentResponse.Error(error))
+        }
 
     }
 
@@ -95,9 +147,12 @@ internal class NativePaymentsAPIClient {
         url: URL?,
         data: String
     ): NativePaymentResponse = suspendCoroutine { continuation ->
+        val start = System.currentTimeMillis()
         url?.let { requestUrl ->
             try {
                 val connection = requestUrl.openConnection() as HttpsURLConnection
+
+                Log.d("hello", "postRequest: $data")
 
                 connection.connectTimeout = REQUEST_TIMEOUT_IN_MS
                 connection.readTimeout = REQUEST_TIMEOUT_IN_MS
@@ -116,8 +171,23 @@ internal class NativePaymentsAPIClient {
                 if (responseCode == HttpsURLConnection.HTTP_OK) {
                     val response = connection.inputStream.bufferedReader()
                         .use { it.readText() }
+
+                    logAPICall(
+                        url = requestUrl.toString(),
+                        method = "POST",
+                        duration = System.currentTimeMillis() - start,
+                        responseStatusCode = responseCode
+                    )
+
                     continuation.resume(NativePaymentResponse.Success(response.toPaymentOutputModel()))
                 } else if ((500.until(600)).contains(responseCode)) {
+                    logAPICall(
+                        url = requestUrl.toString(),
+                        method = "POST",
+                        duration = System.currentTimeMillis() - start,
+                        responseStatusCode = responseCode,
+                    )
+
                     // When we get a server error we want to retry the request
                     continuation.resume(
                         NativePaymentResponse.Retry(
@@ -128,6 +198,12 @@ internal class NativePaymentsAPIClient {
                         )
                     )
                 } else {
+                    logAPICall(
+                        url = requestUrl.toString(),
+                        method = "POST",
+                        duration = System.currentTimeMillis() - start,
+                        responseStatusCode = responseCode
+                    )
                     continuation.resume(
                         NativePaymentResponse.Error(
                             SwedbankPayAPIError.Error(
@@ -137,17 +213,38 @@ internal class NativePaymentsAPIClient {
                     )
                 }
             } catch (timeoutException: SocketTimeoutException) {
+                val error = SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)
+                logAPICall(
+                    url = url.toString(),
+                    method = "POST",
+                    duration = System.currentTimeMillis() - start,
+                    error = error
+                )
+
                 // When we get a time out we want to retry the request
-                continuation.resume(NativePaymentResponse.Retry(SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)))
+                continuation.resume(NativePaymentResponse.Retry(error))
             } catch (e: Exception) {
+                val error = SwedbankPayAPIError.Error(message = e.localizedMessage)
+                logAPICall(
+                    url = url.toString(),
+                    method = "POST",
+                    duration = System.currentTimeMillis() - start,
+                    error = error
+                )
+
                 continuation.resume(
-                    NativePaymentResponse.Error(
-                        SwedbankPayAPIError.Error(
-                            message = e.localizedMessage
-                        )
-                    )
+                    NativePaymentResponse.Error(error)
                 )
             }
+        } ?: kotlin.run {
+            val error = SwedbankPayAPIError.InvalidUrl
+            logAPICall(
+                url = "",
+                method = "POST",
+                duration = System.currentTimeMillis() - start,
+                error = error
+            )
+            continuation.resume(NativePaymentResponse.Error(error))
         }
 
     }
@@ -159,6 +256,7 @@ internal class NativePaymentsAPIClient {
      * So if this request fails we need to call this again until it succeeds
      */
     fun postFailedAttemptRequest(problemDetailsWithOperation: ProblemDetails) {
+        val start = System.currentTimeMillis()
         problemDetailsWithOperation.operations.href?.let {
             try {
                 val url = URL(it)
@@ -173,16 +271,56 @@ internal class NativePaymentsAPIClient {
 
                 val responseCode = connection.responseCode
                 if (responseCode == HttpsURLConnection.HTTP_NO_CONTENT) {
-                    // TODO Send failed ack och success ack to beacon logging?
+                    logAPICall(
+                        url = it,
+                        method = "POST",
+                        duration = System.currentTimeMillis() - start,
+                        responseStatusCode = responseCode,
+                    )
                 } else {
-
+                    logAPICall(
+                        url = it,
+                        method = "POST",
+                        duration = System.currentTimeMillis() - start,
+                        responseStatusCode = responseCode,
+                    )
                 }
             } catch (e: MalformedURLException) {
-
+                logAPICall(
+                    url = it,
+                    method = "POST",
+                    duration = System.currentTimeMillis() - start,
+                    error = SwedbankPayAPIError.Error(message = e.localizedMessage)
+                )
             } catch (e: Exception) {
-
+                logAPICall(
+                    url = it,
+                    method = "POST",
+                    duration = System.currentTimeMillis() - start,
+                    error = SwedbankPayAPIError.Error(message = e.localizedMessage)
+                )
             }
         }
+    }
+
+    private fun logAPICall(
+        url: String,
+        method: String,
+        duration: Long,
+        responseStatusCode: Int? = null,
+        error: SwedbankPayAPIError? = null
+    ) {
+        BeaconService.logEvent(
+            EventAction.HttpRequest(
+                http = HttpModel(
+                    requestUrl = url,
+                    method = method,
+                    responseStatusCode = responseStatusCode,
+                ),
+                duration = duration.toInt(),
+                extensions = error?.toExtensionsModel()
+            )
+        )
     }
 
     companion object {
