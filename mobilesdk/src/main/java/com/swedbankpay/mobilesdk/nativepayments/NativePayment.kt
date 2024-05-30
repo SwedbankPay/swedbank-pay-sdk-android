@@ -93,6 +93,15 @@ class NativePayment(
     private fun executeNextStepUntilFurtherInstructions(
         operationStep: OperationStep
     ) {
+        if (operationStep.instructions.contains(StepInstruction.SessionNotFound)
+            || operationStep.instructions.contains(StepInstruction.StepNotFound)
+        ) {
+            onSdkProblemOccurred(
+                NativePaymentProblem.PaymentSessionEndReached
+            )
+            return
+        }
+
         startRequestTimestamp = System.currentTimeMillis()
         // So we don't launch multiple jobs when calling this method again
         scope.coroutineContext.cancelChildren()
@@ -154,7 +163,7 @@ class NativePayment(
                         )
                         SessionOperationHandler.getNextStep(
                             paymentOutputModel = currentPaymentOutputModel,
-                            instrument = paymentAttemptInstrument
+                            paymentAttemptInstrument = paymentAttemptInstrument
                         ).let { step ->
                             clearPaymentAttemptInstrument(
                                 stepToExecute.operationRel,

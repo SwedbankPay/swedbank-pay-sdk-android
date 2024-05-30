@@ -25,11 +25,11 @@ internal object SessionOperationHandler {
      * This method will figure out what the next step in the payment session will be
      *
      * @param paymentOutputModel Current payment model
-     * @param instrument Chosen [Instrument] for the payment.
+     * @param paymentAttemptInstrument Chosen [PaymentAttemptInstrument] for the payment.
      */
     fun getNextStep(
         paymentOutputModel: PaymentOutputModel?,
-        instrument: PaymentAttemptInstrument? = null,
+        paymentAttemptInstrument: PaymentAttemptInstrument? = null,
     ): OperationStep {
         if (paymentOutputModel == null) {
             return OperationStep(
@@ -98,7 +98,7 @@ internal object SessionOperationHandler {
         // 2. Search for Rel.START_PAYMENT_ATTEMPT
         val startPaymentAttempt =
             paymentOutputModel.paymentSession.methods
-                ?.firstOrNull { it?.instrument == instrument?.toInstrument() }
+                ?.firstOrNull { it?.instrument == paymentAttemptInstrument?.toInstrument() }
                 ?.operations
                 ?.firstOrNull { it.rel == OperationRel.START_PAYMENT_ATTEMPT }
 
@@ -107,7 +107,7 @@ internal object SessionOperationHandler {
                 requestMethod = startPaymentAttempt.method,
                 url = URL(startPaymentAttempt.href),
                 operationRel = startPaymentAttempt.rel,
-                data = startPaymentAttempt.rel?.getRequestDataIfAny(instrument),
+                data = startPaymentAttempt.rel?.getRequestDataIfAny(paymentAttemptInstrument),
                 instructions = instructions
             )
         }
@@ -208,13 +208,13 @@ internal object SessionOperationHandler {
         paymentOutputModel: PaymentOutputModel?,
         paymentAttemptInstrument: PaymentAttemptInstrument
     ): OperationStep {
-        //if (paymentOutputModel == null) {
+        if (paymentOutputModel == null) {
             return OperationStep(
                 instructions = listOf(StepInstruction.SessionNotFound)
             )
-        //}
+        }
 
-        val op = paymentOutputModel?.paymentSession?.methods
+        val op = paymentOutputModel.paymentSession.methods
             ?.firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }
             ?.operations
             ?.firstOrNull {

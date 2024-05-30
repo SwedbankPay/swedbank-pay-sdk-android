@@ -1,6 +1,5 @@
 package com.swedbankpay.mobilesdk.nativepayments.api
 
-import android.util.Log
 import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.HttpModel
@@ -151,8 +150,6 @@ internal class NativePaymentsAPIClient {
         url?.let { requestUrl ->
             try {
                 val connection = requestUrl.openConnection() as HttpsURLConnection
-
-                Log.d("hello", "postRequest: $data")
 
                 connection.connectTimeout = REQUEST_TIMEOUT_IN_MS
                 connection.readTimeout = REQUEST_TIMEOUT_IN_MS
