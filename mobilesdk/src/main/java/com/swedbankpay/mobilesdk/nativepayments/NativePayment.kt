@@ -261,7 +261,7 @@ class NativePayment(
     ) {
         paymentAttemptInstrument = null
         currentPaymentOutputModel = null
-        SessionOperationHandler.clearUsedUrls()
+        SessionOperationHandler.clearState()
         BeaconService.clearQueue()
 
         BeaconService.logEvent(
