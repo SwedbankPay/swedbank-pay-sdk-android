@@ -36,10 +36,19 @@ import kotlinx.coroutines.withContext
 
 import java.net.URL
 
+
+/**
+ * Class that handles native payments
+ *
+ * @param orderInfo information that provides `NativePayment` with callback URLs.
+ */
 class NativePayment(
     private val orderInfo: ViewPaymentOrderInfo
 ) {
     companion object {
+        /**
+         * Contains the state of the native payment process
+         */
         private var _nativePaymentState: MutableLiveData<NativePaymentState> =
             MutableLiveData(NativePaymentState.Idle)
         val nativePaymentState: LiveData<NativePaymentState> = _nativePaymentState
@@ -93,15 +102,6 @@ class NativePayment(
     private fun executeNextStepUntilFurtherInstructions(
         operationStep: OperationStep
     ) {
-        if (operationStep.instructions.contains(StepInstruction.SessionNotFound)
-            || operationStep.instructions.contains(StepInstruction.StepNotFound)
-        ) {
-            onSdkProblemOccurred(
-                NativePaymentProblem.PaymentSessionEndReached
-            )
-            return
-        }
-
         startRequestTimestamp = System.currentTimeMillis()
         // So we don't launch multiple jobs when calling this method again
         scope.coroutineContext.cancelChildren()
@@ -184,17 +184,25 @@ class NativePayment(
                                 }
 
                                 withContext(Dispatchers.Main) {
-                                    if (instruction is StepInstruction.SessionNotFound
-                                        || instruction is StepInstruction.StepNotFound
-                                    ) {
-                                        onSdkProblemOccurred(
-                                            NativePaymentProblem.PaymentSessionEndReached
-                                        )
-                                    } else {
-                                        // In this case instruction shouldn't be null.
-                                        // And if so we want to find out fast
-                                        if (instruction?.waitForAction == true) {
-                                            checkWhatTodo(instruction)
+                                    when (instruction) {
+                                        is StepInstruction.SessionNotFound -> {
+                                            onSdkProblemOccurred(
+                                                NativePaymentProblem.InternalInconsistencyError
+                                            )
+                                        }
+
+                                        is StepInstruction.StepNotFound -> {
+                                            onSdkProblemOccurred(
+                                                NativePaymentProblem.PaymentSessionEndReached
+                                            )
+                                        }
+
+                                        else -> {
+                                            // In this case instruction shouldn't be null.
+                                            // And if so we want to find out fast
+                                            if (instruction?.waitForAction == true) {
+                                                checkWhatTodo(instruction)
+                                            }
                                         }
                                     }
                                 }
@@ -260,13 +268,13 @@ class NativePayment(
     }
 
     /**
-     * This method will start the native payment session
+     * Starts a new native payment session
      *
-     * @param url An url to start the payment session. Will be supplied by merchant
+     * @param sessionURL URL needed to start the native payment session
      *
      */
     fun startPaymentSession(
-        url: String,
+        sessionURL: String,
     ) {
         paymentAttemptInstrument = null
         currentPaymentOutputModel = null
@@ -283,7 +291,7 @@ class NativePayment(
             )
         )
 
-        paymentSessionUrl = URL(url)
+        paymentSessionUrl = URL(sessionURL)
         getPaymentSession()
     }
 
@@ -297,49 +305,66 @@ class NativePayment(
     }
 
     /**
-     * This method will start a native payment with the supplied payment method aka instrument
+     * Make a payment attempt with a specific instrument
+     *
+     * There needs to be an active payment session before a payment attempt can be made
+     *
+     * @param instrument [PaymentAttemptInstrument]
      */
     fun makePaymentAttempt(
-        with: PaymentAttemptInstrument,
+        instrument: PaymentAttemptInstrument,
     ) {
-        BeaconService.logEvent(
-            eventAction = EventAction.SDKMethodInvoked(
-                method = MethodModel(
-                    name = "makePaymentAttempt",
-                    sdk = true,
-                    succeeded = true
-                ),
-                extensions = with.toExtensionsModel()
+        currentPaymentOutputModel?.let {
+            paymentAttemptInstrument = instrument
+
+            val paymentAttemptOperation = SessionOperationHandler.getOperationStepForPaymentAttempt(
+                it,
+                instrument
             )
-        )
-        paymentAttemptInstrument = with
-        executeNextStepUntilFurtherInstructions(
-            operationStep = SessionOperationHandler.getOperationStepForPaymentAttempt(
-                currentPaymentOutputModel,
-                with
+
+            if (paymentAttemptOperation != null) {
+                executeNextStepUntilFurtherInstructions(paymentAttemptOperation)
+            }
+
+            BeaconService.logEvent(
+                eventAction = EventAction.SDKMethodInvoked(
+                    method = MethodModel(
+                        name = "makePaymentAttempt",
+                        sdk = true,
+                        succeeded = paymentAttemptOperation != null
+                    ),
+                    extensions = instrument.toExtensionsModel()
+                )
             )
-        )
+
+        } ?: onSdkProblemOccurred(NativePaymentProblem.InternalInconsistencyError)
+
+
     }
 
     /**
-     * This method aborts the payment completely
-     * After this a new call to [startPaymentSession] must be done to make a new payment attempt
+     * Abort an active payment session
      */
     fun abortPaymentSession() {
-        BeaconService.logEvent(
-            eventAction = EventAction.SDKMethodInvoked(
-                method = MethodModel(
-                    name = "abortPaymentSession",
-                    sdk = true,
-                    succeeded = true
+
+        currentPaymentOutputModel?.let {
+            val abortPaymentOperation =
+                SessionOperationHandler.getOperationStepForAbortPayment(it)
+
+            if (abortPaymentOperation != null) {
+                executeNextStepUntilFurtherInstructions(abortPaymentOperation)
+            }
+
+            BeaconService.logEvent(
+                eventAction = EventAction.SDKMethodInvoked(
+                    method = MethodModel(
+                        name = "abortPaymentSession",
+                        sdk = true,
+                        succeeded = abortPaymentOperation != null
+                    )
                 )
             )
-        )
-        executeNextStepUntilFurtherInstructions(
-            operationStep = SessionOperationHandler.getOperationStepForAbortPayment(
-                currentPaymentOutputModel
-            )
-        )
+        } ?: onSdkProblemOccurred(NativePaymentProblem.InternalInconsistencyError)
     }
 
     private fun launchClientApp(href: String) {
@@ -353,12 +378,11 @@ class NativePayment(
                 }
 
                 else -> {
-                    // this case should never happen
+                    onSdkProblemOccurred(NativePaymentProblem.InternalInconsistencyError)
                 }
             }
         } ?: kotlin.run {
-            onSdkProblemOccurred(NativePaymentProblem.ClientAppLaunchFailed)
-
+            onSdkProblemOccurred(NativePaymentProblem.InternalInconsistencyError)
         }
     }
 

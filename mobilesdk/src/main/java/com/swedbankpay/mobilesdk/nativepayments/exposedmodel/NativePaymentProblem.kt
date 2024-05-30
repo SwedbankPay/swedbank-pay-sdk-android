@@ -2,6 +2,9 @@ package com.swedbankpay.mobilesdk.nativepayments.exposedmodel
 
 import com.swedbankpay.mobilesdk.nativepayments.api.model.SwedbankPayAPIError
 
+/**
+ * Native payment problem returned with [SdkProblemOccurred]
+ */
 sealed class NativePaymentProblem {
     object PaymentSessionEndReached : NativePaymentProblem()
     data class PaymentSessionAPIRequestFailed(
@@ -11,4 +14,6 @@ sealed class NativePaymentProblem {
         NativePaymentProblem()
 
     object ClientAppLaunchFailed : NativePaymentProblem()
+
+    object InternalInconsistencyError: NativePaymentProblem()
 }

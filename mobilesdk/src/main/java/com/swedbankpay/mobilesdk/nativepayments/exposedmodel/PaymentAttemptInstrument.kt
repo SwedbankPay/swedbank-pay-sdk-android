@@ -4,6 +4,9 @@ import android.content.Context
 import androidx.annotation.Keep
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Instrument
 
+/**
+ * Instrument with needed values to make a payment attempt
+ */
 @Keep
 sealed class PaymentAttemptInstrument {
     @Keep

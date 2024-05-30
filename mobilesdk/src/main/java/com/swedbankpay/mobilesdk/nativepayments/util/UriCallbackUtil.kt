@@ -9,9 +9,11 @@ internal object UriCallbackUtil {
         var uri = Uri.parse(this)
 
         if (uri.scheme == "swish") {
-            val paymentUrl = orderInfo.paymentUrl ?: return null
 
-            uri = uri.addUriParameter("callbackurl", paymentUrl)
+            if (!uri.queryParameterNames.contains("callbackurl")) {
+                val paymentUrl = orderInfo.paymentUrl ?: return null
+                uri = uri.addUriParameter("callbackurl", paymentUrl)
+            }
 
             return uri
         }

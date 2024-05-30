@@ -91,6 +91,7 @@ internal fun NativePaymentProblem.toExtensionsModel(): ExtensionsModel {
         }
 
         NativePaymentProblem.PaymentSessionEndReached -> mutableMapOf("problem" to "paymentSessionEndReached")
+        NativePaymentProblem.InternalInconsistencyError -> mutableMapOf("problem" to "internalInconsistencyError")
     }
 
     return ExtensionsModel(

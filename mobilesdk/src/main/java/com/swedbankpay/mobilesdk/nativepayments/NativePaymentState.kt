@@ -13,32 +13,32 @@ sealed class NativePaymentState {
     /**
      * Called when an list of available instruments is known.
      *
-     * @param availableInstruments List of different instruments
+     * @param availableInstruments List of different [AvailableInstrument] that can be used fo the payment session
      */
     class AvailableInstrumentsFetched(val availableInstruments: List<AvailableInstrument>) :
         NativePaymentState()
 
     /**
-     * Called when payment is complete
+     * Called whenever the payment has been completed
      */
     object PaymentComplete : NativePaymentState()
 
     /**
-     * Called when payment is canceled
+     * Called whenever the payment has been canceled for any reason
      */
     object PaymentCanceled : NativePaymentState()
 
     /**
      *  Called if there is a session problem with performing the payment.
      *
-     *  @param problem The problem that cause the failure
+     *  @param problem [ProblemDetails] that cause the failure
      */
     class SessionProblemOccurred(val problem: ProblemDetails) : NativePaymentState()
 
     /**
      *  Called if there is a SDK problem with performing the payment.
      *
-     *  @param problem The problem that cause the failure
+     *  @param problem [NativePaymentProblem] that cause the failure
      */
     class SdkProblemOccurred(val problem: NativePaymentProblem) : NativePaymentState()
 

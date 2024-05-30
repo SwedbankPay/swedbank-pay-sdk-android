@@ -205,15 +205,9 @@ internal object SessionOperationHandler {
      * on that operation.
      */
     fun getOperationStepForPaymentAttempt(
-        paymentOutputModel: PaymentOutputModel?,
+        paymentOutputModel: PaymentOutputModel,
         paymentAttemptInstrument: PaymentAttemptInstrument
-    ): OperationStep {
-        if (paymentOutputModel == null) {
-            return OperationStep(
-                instructions = listOf(StepInstruction.SessionNotFound)
-            )
-        }
-
+    ): OperationStep? {
         val op = paymentOutputModel.paymentSession.methods
             ?.firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }
             ?.operations
@@ -231,19 +225,11 @@ internal object SessionOperationHandler {
                 data = op.rel?.getRequestDataIfAny(paymentAttemptInstrument)
             )
         } else {
-            OperationStep(
-                instructions = listOf(StepInstruction.StepNotFound)
-            )
+            return null
         }
     }
 
-    fun getOperationStepForAbortPayment(paymentOutputModel: PaymentOutputModel?): OperationStep {
-        if (paymentOutputModel == null) {
-            return OperationStep(
-                instructions = listOf(StepInstruction.SessionNotFound)
-            )
-        }
-
+    fun getOperationStepForAbortPayment(paymentOutputModel: PaymentOutputModel): OperationStep? {
         val abortPayment = paymentOutputModel.operations.firstOrNull {
             it.rel == OperationRel.ABORT_PAYMENT
         }
@@ -255,9 +241,7 @@ internal object SessionOperationHandler {
                 operationRel = abortPayment.rel
             )
         } else {
-            OperationStep(
-                instructions = listOf(StepInstruction.StepNotFound)
-            )
+            return null
         }
     }
 

@@ -4,6 +4,9 @@ package com.swedbankpay.mobilesdk.nativepayments.api.model.response
 import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
 
+/**
+ * Problem details returned with [SessionProblemOccurred]
+ */
 @Keep
 data class ProblemDetails(
     @SerializedName("title")
