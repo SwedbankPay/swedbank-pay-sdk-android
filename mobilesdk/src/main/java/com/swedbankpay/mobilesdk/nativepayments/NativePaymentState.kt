@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.nativepayments
 
+import androidx.annotation.Keep
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.NativePaymentProblem
@@ -8,6 +9,7 @@ import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.NativePaymentProble
  * This class is exposed to the merchant app through live data.
  * Will tell the state of the ongoing payment session
  */
+@Keep
 sealed class NativePaymentState {
 
     /**
