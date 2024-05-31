@@ -9,6 +9,8 @@ import androidx.annotation.Keep
  */
 @Keep
 data class ProblemDetails(
+    @SerializedName("type")
+    val type: String,
     @SerializedName("title")
     val title: String?,
     @SerializedName("status")

@@ -37,6 +37,7 @@ internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel = whe
 internal fun ProblemDetails.toExtensionsModel() =
     ExtensionsModel(
         values = mutableMapOf(
+            "problemType" to type,
             "problemTitle" to title,
             "problemStatus" to status,
             "problemDetail" to detail
