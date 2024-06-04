@@ -83,11 +83,12 @@ class NativePayment(
         CallbackActivity.onCallbackUrlInvoked.removeObserver(callbackUrlObserver)
     }
 
-    private fun clearState(clearBeaconQueue: Boolean = false) {
+    private fun clearState(isStartingSession: Boolean = false) {
         paymentAttemptInstrument = null
         currentPaymentOutputModel = null
         SessionOperationHandler.clearState()
-        if (clearBeaconQueue) {
+        stopObservingCallbacks()
+        if (isStartingSession) {
             BeaconService.clearQueue()
         }
     }
@@ -316,7 +317,6 @@ class NativePayment(
             )
         )
 
-
         executeNextStepUntilFurtherInstructions(
             operationStep = OperationStep(
                 requestMethod = RequestMethod.GET,
@@ -437,7 +437,6 @@ class NativePayment(
 
     private fun onPaymentComplete(url: String) {
         clearState()
-        stopObservingCallbacks()
 
         when (url) {
             orderInfo.completeUrl -> {
@@ -480,6 +479,14 @@ class NativePayment(
 
 
     private fun onSdkProblemOccurred(nativePaymentProblem: NativePaymentProblem) {
+
+        // We can't recover from these two problems and because of that we clear the state
+        if (nativePaymentProblem is NativePaymentProblem.PaymentSessionEndReached
+            || nativePaymentProblem is NativePaymentProblem.InternalInconsistencyError
+        ) {
+            clearState()
+        }
+
         _nativePaymentState.value = NativePaymentState.SdkProblemOccurred(nativePaymentProblem)
         setStateToIdle()
 
