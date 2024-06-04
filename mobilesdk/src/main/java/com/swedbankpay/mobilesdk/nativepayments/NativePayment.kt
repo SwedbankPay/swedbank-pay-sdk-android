@@ -69,16 +69,27 @@ class NativePayment(
 
     private var paymentAttemptInstrument: PaymentAttemptInstrument? = null
 
-    private var paymentSessionUrl: URL? = null
-
     private var startRequestTimestamp: Long = 0
 
     private val client: NativePaymentsAPIClient by lazy {
         NativePaymentsAPIClient()
     }
 
-    init {
+    private fun startObservingCallbacks() {
         CallbackActivity.onCallbackUrlInvoked.observeForever(callbackUrlObserver)
+    }
+
+    private fun stopObservingCallbacks() {
+        CallbackActivity.onCallbackUrlInvoked.removeObserver(callbackUrlObserver)
+    }
+
+    private fun clearState(clearBeaconQueue: Boolean = false) {
+        paymentAttemptInstrument = null
+        currentPaymentOutputModel = null
+        SessionOperationHandler.clearState()
+        if (clearBeaconQueue) {
+            BeaconService.clearQueue()
+        }
     }
 
     private fun checkCallbacks() {
@@ -91,7 +102,23 @@ class NativePayment(
                     )
                 )
             )
-            getPaymentSession()
+
+            val getPayment =
+                currentPaymentOutputModel
+                    ?.paymentSession
+                    ?.allMethodOperations
+                    ?.firstOrNull { it.rel == OperationRel.GET_PAYMENT }
+
+            if (getPayment != null) {
+                executeNextStepUntilFurtherInstructions(
+                    operationStep = OperationStep(
+                        requestMethod = RequestMethod.GET,
+                        url = URL(getPayment.href)
+                    )
+                )
+            } else {
+                onSdkProblemOccurred(NativePaymentProblem.PaymentSessionEndReached)
+            }
         }
     }
 
@@ -276,10 +303,8 @@ class NativePayment(
     fun startPaymentSession(
         sessionURL: String,
     ) {
-        paymentAttemptInstrument = null
-        currentPaymentOutputModel = null
-        SessionOperationHandler.clearState()
-        BeaconService.clearQueue()
+        clearState(true)
+        startObservingCallbacks()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKMethodInvoked(
@@ -291,15 +316,11 @@ class NativePayment(
             )
         )
 
-        paymentSessionUrl = URL(sessionURL)
-        getPaymentSession()
-    }
 
-    private fun getPaymentSession() {
         executeNextStepUntilFurtherInstructions(
             operationStep = OperationStep(
                 requestMethod = RequestMethod.GET,
-                url = paymentSessionUrl
+                url = URL(sessionURL)
             )
         )
     }
@@ -415,8 +436,8 @@ class NativePayment(
     }
 
     private fun onPaymentComplete(url: String) {
-        currentPaymentOutputModel = null
-        paymentAttemptInstrument = null
+        clearState()
+        stopObservingCallbacks()
 
         when (url) {
             orderInfo.completeUrl -> {

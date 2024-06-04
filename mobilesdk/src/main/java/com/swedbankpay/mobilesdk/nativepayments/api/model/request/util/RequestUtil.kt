@@ -1,13 +1,10 @@
 package com.swedbankpay.mobilesdk.nativepayments.api.model.request.util
 
 import com.google.gson.GsonBuilder
-import com.swedbankpay.mobilesdk.BuildConfig
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Browser
-import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Client
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Integration
-import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Service
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.SwishAttempt
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.*
@@ -19,10 +16,13 @@ internal object RequestUtil {
 
     private val gson = GsonBuilder().serializeNulls().create()
 
-    fun OperationRel.getRequestDataIfAny(instrument: PaymentAttemptInstrument? = null) =
+    fun OperationRel.getRequestDataIfAny(
+        instrument: PaymentAttemptInstrument? = null,
+        culture: String? = null
+    ) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()
-            START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(instrument)
+            START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(instrument, culture)
             EXPAND_METHOD -> getInstrumentViewsData(instrument)
             else -> null
         }
@@ -53,10 +53,13 @@ internal object RequestUtil {
 
     }
 
-    private fun getPaymentAttemptDataFor(instrument: PaymentAttemptInstrument?): String {
+    private fun getPaymentAttemptDataFor(
+        instrument: PaymentAttemptInstrument?,
+        culture: String?
+    ): String {
         return when (instrument) {
             is PaymentAttemptInstrument.Swish -> SwishAttempt(
-                culture = "sv-SE",
+                culture = culture,
                 client = RequestDataUtil.getClient(),
                 msisdn = instrument.msisdn
             ).toJsonString()

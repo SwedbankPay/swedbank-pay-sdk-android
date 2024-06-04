@@ -20,4 +20,7 @@ internal data class PaymentSessionModel(
     val payeeName: String?,
     @SerializedName("settings")
     val settings: Settings?
-)
+) {
+    val allMethodOperations: List<OperationOutputModel> =
+        methods?.flatMap { it?.operations ?: listOf() } ?: listOf()
+}

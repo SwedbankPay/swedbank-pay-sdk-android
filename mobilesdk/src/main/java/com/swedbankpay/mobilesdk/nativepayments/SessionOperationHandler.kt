@@ -4,7 +4,6 @@ import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.RequestUtil.getRequestDataIfAny
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Instrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTaskRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationOutputModel
@@ -107,7 +106,7 @@ internal object SessionOperationHandler {
                 requestMethod = startPaymentAttempt.method,
                 url = URL(startPaymentAttempt.href),
                 operationRel = startPaymentAttempt.rel,
-                data = startPaymentAttempt.rel?.getRequestDataIfAny(paymentAttemptInstrument),
+                data = startPaymentAttempt.rel?.getRequestDataIfAny(paymentAttemptInstrument, paymentOutputModel.paymentSession.culture),
                 instructions = instructions
             )
         }

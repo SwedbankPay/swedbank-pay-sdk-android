@@ -7,7 +7,7 @@ import androidx.annotation.Keep
 @Keep
 internal data class SwishAttempt(
     @SerializedName("culture")
-    val culture: String,
+    val culture: String? = null,
     @SerializedName("msisdn")
     val msisdn: String? = null,
     @SerializedName("client")
