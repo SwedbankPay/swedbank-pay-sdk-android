@@ -1,17 +1,17 @@
 package com.swedbankpay.mobilesdk.nativepayments
 
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.RequestUtil.getRequestDataIfAny
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTaskRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationOutputModel
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.mapper.toAvailableInstrument
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
 import java.net.URL
 
 internal object SessionOperationHandler {
@@ -89,7 +89,9 @@ internal object SessionOperationHandler {
                 requestMethod = preparePayment.method,
                 url = URL(preparePayment.href),
                 operationRel = preparePayment.rel,
-                data = preparePayment.rel?.getRequestDataIfAny(),
+                data = preparePayment.rel?.getRequestDataIfAny(
+                    culture = paymentOutputModel.paymentSession.culture
+                ),
                 instructions = instructions
             )
         }
@@ -106,7 +108,10 @@ internal object SessionOperationHandler {
                 requestMethod = startPaymentAttempt.method,
                 url = URL(startPaymentAttempt.href),
                 operationRel = startPaymentAttempt.rel,
-                data = startPaymentAttempt.rel?.getRequestDataIfAny(paymentAttemptInstrument, paymentOutputModel.paymentSession.culture),
+                data = startPaymentAttempt.rel?.getRequestDataIfAny(
+                    paymentAttemptInstrument,
+                    paymentOutputModel.paymentSession.culture
+                ),
                 instructions = instructions
             )
         }
@@ -181,7 +186,9 @@ internal object SessionOperationHandler {
                 requestMethod = getPayment.method,
                 url = URL(getPayment.href),
                 operationRel = getPayment.rel,
-                data = getPayment.rel?.getRequestDataIfAny(),
+                data = getPayment.rel?.getRequestDataIfAny(
+                    culture = paymentOutputModel.paymentSession.culture
+                ),
                 delayRequestDuration = 2000,
                 instructions = instructions
             )
@@ -221,7 +228,10 @@ internal object SessionOperationHandler {
                 requestMethod = op.method,
                 url = URL(op.href),
                 operationRel = op.rel,
-                data = op.rel?.getRequestDataIfAny(paymentAttemptInstrument)
+                data = op.rel?.getRequestDataIfAny(
+                    paymentAttemptInstrument,
+                    paymentOutputModel.paymentSession.culture
+                )
             )
         } else {
             return null

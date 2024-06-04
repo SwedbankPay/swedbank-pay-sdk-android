@@ -8,6 +8,7 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toApiError
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.util.toExtensionsModel
 import java.io.OutputStreamWriter
@@ -90,20 +91,43 @@ internal class NativePaymentsAPIClient {
                         )
                     )
                 } else {
-                    logAPICall(
-                        url = requestUrl.toString(),
-                        method = "GET",
-                        duration = System.currentTimeMillis() - start,
-                        responseStatusCode = responseCode,
-                    )
+                    val response = connection.errorStream.bufferedReader()
+                        .use { it.readText() }
 
-                    continuation.resume(
-                        NativePaymentResponse.Error(
-                            SwedbankPayAPIError.Error(
-                                responseCode = responseCode
+                    try {
+                        val apiError = response.toApiError()
+
+                        val error = SwedbankPayAPIError.Error(
+                            message = apiError.detail,
+                            responseCode = responseCode
+                        )
+
+                        logAPICall(
+                            url = requestUrl.toString(),
+                            method = "GET",
+                            duration = System.currentTimeMillis() - start,
+                            error = error
+                        )
+
+                        continuation.resume(
+                            NativePaymentResponse.Error(error)
+                        )
+                    } catch (e: Exception) {
+                        logAPICall(
+                            url = requestUrl.toString(),
+                            method = "GET",
+                            duration = System.currentTimeMillis() - start,
+                            responseStatusCode = responseCode
+                        )
+
+                        continuation.resume(
+                            NativePaymentResponse.Error(
+                                SwedbankPayAPIError.Error(
+                                    responseCode = responseCode
+                                )
                             )
                         )
-                    )
+                    }
                 }
             } catch (timeoutException: SocketTimeoutException) {
                 val error = SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)
@@ -195,19 +219,43 @@ internal class NativePaymentsAPIClient {
                         )
                     )
                 } else {
-                    logAPICall(
-                        url = requestUrl.toString(),
-                        method = "POST",
-                        duration = System.currentTimeMillis() - start,
-                        responseStatusCode = responseCode
-                    )
-                    continuation.resume(
-                        NativePaymentResponse.Error(
-                            SwedbankPayAPIError.Error(
-                                responseCode = responseCode
+                    val response = connection.errorStream.bufferedReader()
+                        .use { it.readText() }
+
+                    try {
+                        val apiError = response.toApiError()
+
+                        val error = SwedbankPayAPIError.Error(
+                            message = apiError.detail,
+                            responseCode = responseCode
+                        )
+
+                        logAPICall(
+                            url = requestUrl.toString(),
+                            method = "POST",
+                            duration = System.currentTimeMillis() - start,
+                            error = error
+                        )
+
+                        continuation.resume(
+                            NativePaymentResponse.Error(error)
+                        )
+                    } catch (e: Exception) {
+                        logAPICall(
+                            url = requestUrl.toString(),
+                            method = "POST",
+                            duration = System.currentTimeMillis() - start,
+                            responseStatusCode = responseCode
+                        )
+
+                        continuation.resume(
+                            NativePaymentResponse.Error(
+                                SwedbankPayAPIError.Error(
+                                    responseCode = responseCode
+                                )
                             )
                         )
-                    )
+                    }
                 }
             } catch (timeoutException: SocketTimeoutException) {
                 val error = SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)

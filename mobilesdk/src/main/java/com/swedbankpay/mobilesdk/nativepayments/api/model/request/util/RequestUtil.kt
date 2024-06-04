@@ -18,7 +18,7 @@ internal object RequestUtil {
 
     fun OperationRel.getRequestDataIfAny(
         instrument: PaymentAttemptInstrument? = null,
-        culture: String? = null
+        culture: String?
     ) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()

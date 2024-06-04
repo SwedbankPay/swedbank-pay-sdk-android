@@ -12,7 +12,6 @@ import java.util.*
 
 internal object RequestDataUtil {
 
-
     fun getClient() = Client(
         userAgent = "SwedbankPaySDK-Android/${getVersion()}",
         ipAddress = getIPAddress(),

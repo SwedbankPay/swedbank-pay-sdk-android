@@ -2,6 +2,7 @@ package com.swedbankpay.mobilesdk.nativepayments.util
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ApiError
 import com.swedbankpay.mobilesdk.nativepayments.util.gson.PrefillBaseModelDeserializer
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PrefillBaseModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
@@ -25,5 +26,8 @@ internal object JsonUtil {
             )
         )
     }
+
+    fun String.toApiError(): ApiError =
+        gson.fromJson(this, ApiError::class.java)
 
 }

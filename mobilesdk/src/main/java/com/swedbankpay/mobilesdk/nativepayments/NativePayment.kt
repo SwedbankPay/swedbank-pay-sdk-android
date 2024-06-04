@@ -367,7 +367,6 @@ class NativePayment(
      * Abort an active payment session
      */
     fun abortPaymentSession() {
-
         currentPaymentOutputModel?.let {
             val abortPaymentOperation =
                 SessionOperationHandler.getOperationStepForAbortPayment(it)
