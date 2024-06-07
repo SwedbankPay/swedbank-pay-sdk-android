@@ -13,18 +13,20 @@ import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.TimeOutUtil
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTaskRel
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.NativePaymentProblem
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.nativepayments.util.UriCallbackUtil.addCallbackUrl
 import com.swedbankpay.mobilesdk.nativepayments.util.clientAppCallbackExtensionsModel
-import com.swedbankpay.mobilesdk.nativepayments.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.nativepayments.util.extension.safeLet
+import com.swedbankpay.mobilesdk.nativepayments.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.nativepayments.util.toExtensionsModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +35,6 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 import java.net.URL
 
 
@@ -54,6 +55,7 @@ class NativePayment(
         val nativePaymentState: LiveData<NativePaymentState> = _nativePaymentState
 
         private const val RETRIES_TIME_LIMIT_IN_MS = 20 * 1000
+        private const val RETRIES_TIME_LIMIT_IN_MS_FOR_CREDIT_CARD = 30 * 1000
     }
 
     /**
@@ -143,11 +145,15 @@ class NativePayment(
                     // When we poll we need to reset requestTimestamp so we don't end it to early
                     startRequestTimestamp = System.currentTimeMillis()
                 }
-                when (val nativePaymentResponse = client.executeNextRequest(stepToExecute)) {
+                when (val nativePaymentResponse =
+                    client.executeNextRequest(stepToExecute, paymentAttemptInstrument)) {
                     is NativePaymentResponse.Retry -> {
-                        // If request timer has tried for more than twenty second. Send an error to merchant
-                        // or wait one second then retry
-                        if (System.currentTimeMillis() - startRequestTimestamp > RETRIES_TIME_LIMIT_IN_MS) {
+                        if (System.currentTimeMillis() - startRequestTimestamp >
+                            TimeOutUtil.getSessionTimeout(
+                                operationStep.operationRel,
+                                paymentAttemptInstrument?.toInstrument()
+                            )
+                        ) {
                             withContext(Dispatchers.Main) {
                                 onSdkProblemOccurred((
                                         NativePaymentProblem.PaymentSessionAPIRequestFailed(

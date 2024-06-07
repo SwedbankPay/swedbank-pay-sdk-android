@@ -12,6 +12,7 @@ internal object JsonUtil {
 
     private val gson: Gson =
         GsonBuilder()
+            .setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .registerTypeAdapterFactory(methodBaseModelFactory)
             .registerTypeAdapter(PrefillBaseModel::class.java, PrefillBaseModelDeserializer())
             .create()

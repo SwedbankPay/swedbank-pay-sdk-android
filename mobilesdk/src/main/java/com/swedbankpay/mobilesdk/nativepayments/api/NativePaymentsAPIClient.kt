@@ -5,9 +5,12 @@ import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.HttpModel
 import com.swedbankpay.mobilesdk.nativepayments.OperationStep
 import com.swedbankpay.mobilesdk.nativepayments.api.model.SwedbankPayAPIError
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.TimeOutUtil
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toApiError
 import com.swedbankpay.mobilesdk.nativepayments.util.JsonUtil.toPaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.util.toExtensionsModel
@@ -22,15 +25,29 @@ import kotlin.coroutines.suspendCoroutine
 internal class NativePaymentsAPIClient {
 
     suspend fun executeNextRequest(
-        operation: OperationStep
+        operation: OperationStep,
+        paymentAttemptInstrument: PaymentAttemptInstrument?
     ): NativePaymentResponse {
         val paymentResponse = when (operation.requestMethod) {
             RequestMethod.GET -> {
-                getRequest(operation.url)
+                getRequest(
+                    operation.url,
+                    timeout = TimeOutUtil.getRequestTimeout(
+                        operation.operationRel,
+                        paymentAttemptInstrument?.toInstrument()
+                    )
+                )
             }
 
             RequestMethod.POST -> {
-                postRequest(operation.url, operation.data ?: "")
+                postRequest(
+                    operation.url,
+                    operation.data ?: "",
+                    timeout = TimeOutUtil.getRequestTimeout(
+                        operation.operationRel,
+                        paymentAttemptInstrument?.toInstrument()
+                    )
+                )
             }
 
             else -> NativePaymentResponse.Error(SwedbankPayAPIError.Unknown)
@@ -42,7 +59,8 @@ internal class NativePaymentsAPIClient {
     }
 
     private suspend fun getRequest(
-        url: URL?
+        url: URL?,
+        timeout: Int
     ): NativePaymentResponse = suspendCoroutine { continuation ->
         val start = System.currentTimeMillis()
 
@@ -50,8 +68,8 @@ internal class NativePaymentsAPIClient {
             try {
                 val connection = requestUrl.openConnection() as HttpsURLConnection
 
-                connection.connectTimeout = REQUEST_TIMEOUT_IN_MS
-                connection.readTimeout = REQUEST_TIMEOUT_IN_MS
+                connection.connectTimeout = timeout
+                connection.readTimeout = timeout
 
                 connection.requestMethod = "GET"
                 connection.setRequestProperty("Accept", "application/json")
@@ -168,15 +186,16 @@ internal class NativePaymentsAPIClient {
 
     private suspend fun postRequest(
         url: URL?,
-        data: String
+        data: String,
+        timeout: Int
     ): NativePaymentResponse = suspendCoroutine { continuation ->
         val start = System.currentTimeMillis()
         url?.let { requestUrl ->
             try {
                 val connection = requestUrl.openConnection() as HttpsURLConnection
 
-                connection.connectTimeout = REQUEST_TIMEOUT_IN_MS
-                connection.readTimeout = REQUEST_TIMEOUT_IN_MS
+                connection.connectTimeout = timeout
+                connection.readTimeout = timeout
 
                 connection.requestMethod = "POST"
                 connection.setRequestProperty("Content-Type", "application/json")
@@ -367,10 +386,5 @@ internal class NativePaymentsAPIClient {
             )
         )
     }
-
-    companion object {
-        private const val REQUEST_TIMEOUT_IN_MS = 10 * 1000
-    }
-
 
 }

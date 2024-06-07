@@ -1,13 +1,17 @@
 package com.swedbankpay.mobilesdk.nativepayments.api.model.request.util
 
 import com.google.gson.GsonBuilder
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
-import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Browser
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.CreateAuthentication
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.CreditCardAttempt
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Integration
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.SwishAttempt
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.*
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.CREATE_AUTHENTICATION
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.EXPAND_METHOD
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.PREPARE_PAYMENT
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.START_PAYMENT_ATTEMPT
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 
 /**
  * [RequestUtil] will get request data for the different [OperationRel]:s
@@ -24,6 +28,7 @@ internal object RequestUtil {
             PREPARE_PAYMENT -> getIntegrationRequestData()
             START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(instrument, culture)
             EXPAND_METHOD -> getInstrumentViewsData(instrument)
+            CREATE_AUTHENTICATION -> getCreateAuthenticationData()
             else -> null
         }
 
@@ -31,12 +36,7 @@ internal object RequestUtil {
         return Integration(
             integration = "HostedView",
             deviceAcceptedWallets = "",
-            browser = Browser(
-                acceptHeader = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                languageHeader = RequestDataUtil.getLanguages(),
-                timeZoneOffset = RequestDataUtil.getTimeZoneOffset(),
-                javascriptEnabled = true
-            ),
+            browser = RequestDataUtil.getBrowser(),
             client = RequestDataUtil.getClient(),
             service = RequestDataUtil.getService(),
         ).toJsonString()
@@ -46,6 +46,10 @@ internal object RequestUtil {
         return when (instrument) {
             is PaymentAttemptInstrument.Swish -> InstrumentView(
                 instrumentName = "Swish"
+            ).toJsonString()
+
+            is PaymentAttemptInstrument.CreditCard -> InstrumentView(
+                instrumentName = "CreditCard"
             ).toJsonString()
 
             else -> ""
@@ -64,8 +68,27 @@ internal object RequestUtil {
                 msisdn = instrument.msisdn
             ).toJsonString()
 
+            is PaymentAttemptInstrument.CreditCard -> CreditCardAttempt(
+                culture = culture,
+                client = RequestDataUtil.getClient(),
+                paymentToken = instrument.prefill.paymentToken,
+                cardNumber = instrument.prefill.maskedPan,
+                cardExpiryMonth = instrument.prefill.expiryMonth,
+                cardExpiryYear = instrument.prefill.expiryYear
+            ).toJsonString()
+
             else -> ""
         }
+    }
+
+    private fun getCreateAuthenticationData(): String {
+        return CreateAuthentication(
+            methodCompletionIndicator = "Y",
+            notificationUrl = "https://fake.payex.com/notification",
+            requestWindowSize = "FULLSCREEN",
+            client = RequestDataUtil.getClient(),
+            browser = RequestDataUtil.getBrowser()
+        ).toJsonString()
     }
 
     private inline fun <reified T : Any> T.toJsonString(): String = gson.toJson(this, T::class.java)

@@ -1,13 +1,15 @@
 package com.swedbankpay.mobilesdk.nativepayments.exposedmodel.mapper
 
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.CreditCardPrefill
-import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.SwishPrefill
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.CreditCardMethodModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.CreditCardMethodPrefillModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.SwishMethodModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.SwishMethodPrefillModel
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.CreditCardPrefill
+import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.SwishPrefill
+import java.text.SimpleDateFormat
+import java.util.*
 
 fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument? = when (this) {
     is SwishMethodModel -> AvailableInstrument.Swish(
@@ -26,7 +28,10 @@ fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument? = when (this) 
                 paymentToken = model.paymentToken,
                 cardBrand = model.cardBrand,
                 maskedPan = model.maskedPan,
-                expiryDate = model.expiryDate
+                expiryDate = model.expiryDate,
+                expiryMonth = model.expiryDate?.month() ?: "",
+                expiryYear = model.expiryDate?.year() ?: "",
+                expiryString = model.expiryDate?.getExpiryString() ?: "",
             )
         }
     )
@@ -34,4 +39,16 @@ fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument? = when (this) 
     else -> {
         null
     }
+}
+
+fun Date.month(): String {
+    return SimpleDateFormat("MM", Locale.getDefault()).format(this)
+}
+
+fun Date.year(): String {
+    return SimpleDateFormat("yy", Locale.getDefault()).format(this)
+}
+
+fun Date.getExpiryString(): String {
+    return SimpleDateFormat("MM/yy", Locale.getDefault()).format(this)
 }

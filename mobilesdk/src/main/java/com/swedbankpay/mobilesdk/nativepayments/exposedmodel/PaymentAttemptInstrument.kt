@@ -16,7 +16,7 @@ sealed class PaymentAttemptInstrument {
     ) : PaymentAttemptInstrument()
 
     @Keep
-    internal data class CreditCard(val paymentToken: String? = null) : PaymentAttemptInstrument()
+    data class CreditCard(val prefill: CreditCardPrefill) : PaymentAttemptInstrument()
 
 }
 

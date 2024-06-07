@@ -1,6 +1,7 @@
 package com.swedbankpay.mobilesdk.nativepayments.exposedmodel
 
 import androidx.annotation.Keep
+import java.util.Date
 
 /**
  * Available instruments for native payments
@@ -42,5 +43,8 @@ data class CreditCardPrefill(
     val paymentToken: String?,
     val cardBrand: String?,
     val maskedPan: String?,
-    val expiryDate: String?
+    val expiryDate: Date?,
+    val expiryMonth: String,
+    val expiryYear: String,
+    val expiryString: String
 )

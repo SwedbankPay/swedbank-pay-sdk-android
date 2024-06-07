@@ -1,7 +1,7 @@
 package com.swedbankpay.mobilesdk.nativepayments.api.model.request
 
-import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
+import com.google.gson.annotations.SerializedName
 
 /**
  * A class which contains the data needed for 'prepare-payment' request call
@@ -18,18 +18,6 @@ internal data class Integration(
     val browser: Browser,
     @SerializedName("service")
     val service: Service,
-    )
-
-@Keep
-data class Browser(
-    @SerializedName("acceptHeader")
-    val acceptHeader: String?,
-    @SerializedName("languageHeader")
-    val languageHeader: String?,
-    @SerializedName("timeZoneOffset")
-    val timeZoneOffset: String?,
-    @SerializedName("javascriptEnabled")
-    val javascriptEnabled: Boolean?,
 )
 
 @Keep

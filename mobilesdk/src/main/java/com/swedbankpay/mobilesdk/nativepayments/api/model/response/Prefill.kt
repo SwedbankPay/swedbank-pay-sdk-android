@@ -2,6 +2,7 @@ package com.swedbankpay.mobilesdk.nativepayments.api.model.response
 
 import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
+import java.util.*
 
 @Keep
 internal open class PrefillBaseModel {
@@ -37,7 +38,7 @@ internal class CreditCardMethodPrefillModel : PrefillBaseModel() {
     val maskedPan: String? = null
 
     @SerializedName("expiryDate")
-    val expiryDate: String? = null
+    val expiryDate: Date? = null
     override fun toString(): String {
         return "CreditCardPrefillModel(paymentToken=$paymentToken, cardBrand=$cardBrand, maskedPan=$maskedPan, expiryDate=$expiryDate, ${super.toString()})"
     }

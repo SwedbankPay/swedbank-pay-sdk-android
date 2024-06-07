@@ -4,6 +4,7 @@ import android.content.res.Resources
 import android.util.DisplayMetrics
 import androidx.core.os.ConfigurationCompat
 import com.swedbankpay.mobilesdk.BuildConfig
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Browser
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Client
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Service
 import java.net.NetworkInterface
@@ -20,6 +21,13 @@ internal object RequestDataUtil {
         screenColorDepth = 24,
     )
 
+    fun getBrowser() = Browser(
+        acceptHeader = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        languageHeader = getLanguages(),
+        timeZoneOffset = getTimeZoneOffset(),
+        javascriptEnabled = true
+    )
+
     fun getService() = Service(
         name = "SwedbankPaySDK-Android",
         version = getVersion()
@@ -27,7 +35,6 @@ internal object RequestDataUtil {
 
     /**
      * Get IP address from first non-localhost interface
-     * @param useIPv4   true=return ipv4, false=return ipv6
      * @return  address or empty string
      */
     private fun getIPAddress(): String {

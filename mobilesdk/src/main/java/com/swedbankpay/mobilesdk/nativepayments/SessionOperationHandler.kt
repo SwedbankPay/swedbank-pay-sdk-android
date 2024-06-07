@@ -81,7 +81,7 @@ internal object SessionOperationHandler {
             operations = listOf(op)
         }
 
-        // 1. Search for Rel.PREPARE_PAYMENT
+        // 1. Search for OperationRel.PREPARE_PAYMENT
         val preparePayment =
             operations.firstOrNull { it.rel == OperationRel.PREPARE_PAYMENT }
         if (preparePayment != null) {
@@ -96,7 +96,7 @@ internal object SessionOperationHandler {
             )
         }
 
-        // 2. Search for Rel.START_PAYMENT_ATTEMPT
+        // 2. Search for OperationRel.START_PAYMENT_ATTEMPT
         val startPaymentAttempt =
             paymentOutputModel.paymentSession.methods
                 ?.firstOrNull { it?.instrument == paymentAttemptInstrument?.toInstrument() }
@@ -117,7 +117,7 @@ internal object SessionOperationHandler {
         }
 
 
-        // 3. Search for Rel.LAUNCH_CLIENT_APP
+        // 3. Search for IntegrationTaskRel.LAUNCH_CLIENT_APP
         // Only return this if swishUrl hasn't been used yet
         val launchClientApp = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task.rel == IntegrationTaskRel.LAUNCH_CLIENT_APP }
@@ -130,7 +130,22 @@ internal object SessionOperationHandler {
             )
         }
 
-        // 4. Search for Rel.REDIRECT_PAYER
+        // 4. Search for OperationRel.CREATE_AUTHENTICATION
+        val createAuthentication =
+            operations.firstOrNull { it.rel == OperationRel.CREATE_AUTHENTICATION }
+        if (createAuthentication != null) {
+            return OperationStep(
+                requestMethod = createAuthentication.method,
+                url = URL(createAuthentication.href),
+                operationRel = createAuthentication.rel,
+                data = createAuthentication.rel?.getRequestDataIfAny(
+                    culture = paymentOutputModel.paymentSession.culture
+                ),
+                instructions = instructions
+            )
+        }
+
+        // 5. Search for OperationRel.REDIRECT_PAYER
         val redirectPayer =
             operations.firstOrNull { it.rel == OperationRel.REDIRECT_PAYER }
         if (redirectPayer?.href != null) {
@@ -140,8 +155,8 @@ internal object SessionOperationHandler {
             )
         }
 
-        // 5. Search for Rel.EXPAND_METHOD or Rel.START_PAYMENT_ATTEMPT for instruments
-        // that doesn't need Rel.EXPAND_METHOD to work.
+        // 6. Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
+        // that doesn't need OperationRel.EXPAND_METHOD to work.
         if (!hasShownAvailableInstruments) {
             val expandMethod =
                 operations.firstOrNull {
@@ -177,8 +192,8 @@ internal object SessionOperationHandler {
         }
 
 
-        // 6. Search for Rel.GET_PAYMENT
-        // If we come here and find Rel.GET_PAYMENT we want to start polling for a result we can
+        // 7. Search for OperationRel.GET_PAYMENT
+        // If we come here and find OperationRel.GET_PAYMENT we want to start polling for a result we can
         // do something with
         val getPayment = operations.firstOrNull { it.rel == OperationRel.GET_PAYMENT }
         if (getPayment != null) {
