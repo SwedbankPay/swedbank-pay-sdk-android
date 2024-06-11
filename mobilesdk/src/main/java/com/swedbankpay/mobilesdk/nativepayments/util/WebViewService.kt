@@ -26,11 +26,6 @@ import kotlin.coroutines.suspendCoroutine
 
 internal object WebViewService {
 
-    private val successUrl = "https://webhook.consid.mobi/6886fc30-3ca9-4b20-a07a-3c5ccb40463d"
-    private val errorUrl = "https://webhook.consid.mobi/88bf2d0b-0e3e-46ba-92cf-09728828bb47"
-    private val timeoutUrl = "https://webhook.consid.mobi/000b4bb5-c189-4abd-ae94-348461745264"
-    private val testUrl = successUrl
-
     //region Load invisible webview
     /**
      * This method will load a sca-method-request in an invisible webview.
