@@ -143,7 +143,7 @@ internal object SessionOperationHandler {
 
             val result = WebViewService.load(
                 task = scaMethodRequest,
-                context = null
+                context = paymentAttemptInstrument?.context
             )
 
             result?.let { completionIndicator ->
