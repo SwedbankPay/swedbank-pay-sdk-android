@@ -4,6 +4,7 @@ import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.HttpModel
 import com.swedbankpay.mobilesdk.nativepayments.OperationStep
+import com.swedbankpay.mobilesdk.nativepayments.StepInstruction
 import com.swedbankpay.mobilesdk.nativepayments.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.TimeOutUtil
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
@@ -22,14 +23,21 @@ import javax.net.ssl.HttpsURLConnection
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-internal class NativePaymentsAPIClient {
+internal open class NativePaymentsAPIClient {
 
     suspend fun executeNextRequest(
         operation: OperationStep,
         paymentAttemptInstrument: PaymentAttemptInstrument?
     ): NativePaymentResponse {
-        val paymentResponse = when (operation.requestMethod) {
-            RequestMethod.GET -> {
+        val overrideApiCall =
+            operation.instructions.firstOrNull { it is StepInstruction.OverrideApiCall }
+
+        val paymentResponse = when {
+            overrideApiCall != null && overrideApiCall is StepInstruction.OverrideApiCall -> {
+                NativePaymentResponse.Success(overrideApiCall.paymentOutputModel)
+            }
+
+            operation.requestMethod == RequestMethod.GET -> {
                 getRequest(
                     operation.url,
                     timeout = TimeOutUtil.getRequestTimeout(
@@ -39,7 +47,7 @@ internal class NativePaymentsAPIClient {
                 )
             }
 
-            RequestMethod.POST -> {
+            operation.requestMethod == RequestMethod.POST -> {
                 postRequest(
                     operation.url,
                     operation.data ?: "",

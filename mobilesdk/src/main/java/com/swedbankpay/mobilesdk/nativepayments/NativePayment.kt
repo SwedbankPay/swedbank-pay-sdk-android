@@ -145,6 +145,7 @@ class NativePayment(
                     // When we poll we need to reset requestTimestamp so we don't end it to early
                     startRequestTimestamp = System.currentTimeMillis()
                 }
+
                 when (val nativePaymentResponse =
                     client.executeNextRequest(stepToExecute, paymentAttemptInstrument)) {
                     is NativePaymentResponse.Retry -> {
@@ -220,6 +221,12 @@ class NativePayment(
                                 withContext(Dispatchers.Main) {
                                     when (instruction) {
                                         is StepInstruction.SessionNotFound -> {
+                                            onSdkProblemOccurred(
+                                                NativePaymentProblem.InternalInconsistencyError
+                                            )
+                                        }
+
+                                        is StepInstruction.InternalError -> {
                                             onSdkProblemOccurred(
                                                 NativePaymentProblem.InternalInconsistencyError
                                             )

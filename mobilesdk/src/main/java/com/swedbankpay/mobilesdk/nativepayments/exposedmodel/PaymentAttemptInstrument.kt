@@ -8,15 +8,21 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.Instrument
  * Instrument with needed values to make a payment attempt
  */
 @Keep
-sealed class PaymentAttemptInstrument {
+sealed class PaymentAttemptInstrument(
+    internal val context: Context? = null,
+    internal val name: String
+) {
     @Keep
     data class Swish(
         val msisdn: String? = null,
         val localStartContext: Context? = null
-    ) : PaymentAttemptInstrument()
+    ) : PaymentAttemptInstrument(localStartContext, "Swish")
 
     @Keep
-    data class CreditCard(val prefill: CreditCardPrefill) : PaymentAttemptInstrument()
+    data class CreditCard(
+        val prefill: CreditCardPrefill,
+        val localStartContext: Context? = null
+    ) : PaymentAttemptInstrument(localStartContext, "CreditCard")
 
 }
 

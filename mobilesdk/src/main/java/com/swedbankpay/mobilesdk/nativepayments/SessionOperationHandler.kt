@@ -8,16 +8,19 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.threeDsMethodData
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
+import com.swedbankpay.mobilesdk.nativepayments.util.WebViewService
 import java.net.URL
 
 internal object SessionOperationHandler {
 
     private val alreadyUsedProblemUrls: MutableList<String> = mutableListOf()
     private val alreadyUsedSwishUrls: MutableList<String> = mutableListOf()
+    private val scaMethodRequestDataPerformed: MutableMap<String, String> = mutableMapOf()
     private var hasShownAvailableInstruments: Boolean = false
 
     /**
@@ -26,7 +29,7 @@ internal object SessionOperationHandler {
      * @param paymentOutputModel Current payment model
      * @param paymentAttemptInstrument Chosen [PaymentAttemptInstrument] for the payment.
      */
-    fun getNextStep(
+    suspend fun getNextStep(
         paymentOutputModel: PaymentOutputModel?,
         paymentAttemptInstrument: PaymentAttemptInstrument? = null,
     ): OperationStep {
@@ -40,9 +43,7 @@ internal object SessionOperationHandler {
 
         // Extract every operation we have on the session object
         var operations: List<OperationOutputModel> =
-            paymentOutputModel.operations + (paymentOutputModel.paymentSession.methods?.flatMap {
-                it?.operations ?: listOf()
-            } ?: listOf())
+            paymentOutputModel.operations + paymentOutputModel.paymentSession.allMethodOperations
 
         // If we find a problem that we haven't used return it. Otherwise just acknowledge it and
         // add it to the instructions without informing the merchant app
@@ -81,7 +82,7 @@ internal object SessionOperationHandler {
             operations = listOf(op)
         }
 
-        // 1. Search for OperationRel.PREPARE_PAYMENT
+        //region 1. Search for OperationRel.PREPARE_PAYMENT
         val preparePayment =
             operations.firstOrNull { it.rel == OperationRel.PREPARE_PAYMENT }
         if (preparePayment != null) {
@@ -95,8 +96,9 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
+        //endregion
 
-        // 2. Search for OperationRel.START_PAYMENT_ATTEMPT
+        //region 2. Search for OperationRel.START_PAYMENT_ATTEMPT
         val startPaymentAttempt =
             paymentOutputModel.paymentSession.methods
                 ?.firstOrNull { it?.instrument == paymentAttemptInstrument?.toInstrument() }
@@ -115,9 +117,9 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
+        //endregion
 
-
-        // 3. Search for IntegrationTaskRel.LAUNCH_CLIENT_APP
+        //region 3. Search for IntegrationTaskRel.LAUNCH_CLIENT_APP
         // Only return this if swishUrl hasn't been used yet
         val launchClientApp = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task.rel == IntegrationTaskRel.LAUNCH_CLIENT_APP }
@@ -129,23 +131,66 @@ internal object SessionOperationHandler {
                 integrationRel = IntegrationTaskRel.LAUNCH_CLIENT_APP
             )
         }
+        //endregion
 
-        // 4. Search for OperationRel.CREATE_AUTHENTICATION
+        //region 4. Search for IntegrationTaskRel.SCA_METHOD_REQUEST
+        val scaMethodRequest = operations.flatMap { it.tasks ?: listOf() }
+            .firstOrNull { task -> task.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
+
+        if (scaMethodRequest != null
+            && scaMethodRequest.expects?.any { it.value in scaMethodRequestDataPerformed.keys } == false
+        ) {
+
+            val result = WebViewService.load(
+                task = scaMethodRequest,
+                context = null
+            )
+
+            result?.let { completionIndicator ->
+                scaMethodRequestDataPerformed[scaMethodRequest.getExpectValuesFor(threeDsMethodData)?.value as String] =
+                    completionIndicator
+
+                instructions.add(0, StepInstruction.OverrideApiCall(paymentOutputModel))
+
+                return OperationStep(
+                    integrationRel = IntegrationTaskRel.SCA_METHOD_REQUEST,
+                    instructions = instructions
+                )
+            } ?: kotlin.run {
+                instructions.add(0, StepInstruction.InternalError)
+                return OperationStep(
+                    instructions = instructions
+                )
+            }
+        }
+        //endregion
+
+        //region 5. Search for OperationRel.CREATE_AUTHENTICATION
         val createAuthentication =
             operations.firstOrNull { it.rel == OperationRel.CREATE_AUTHENTICATION }
-        if (createAuthentication != null) {
+
+        val expectationModel = createAuthentication?.tasks
+            ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
+            ?.getExpectValuesFor(threeDsMethodData)
+
+        val allowedToExecute = expectationModel?.value in scaMethodRequestDataPerformed.keys
+
+        if (createAuthentication != null && expectationModel != null && allowedToExecute) {
             return OperationStep(
                 requestMethod = createAuthentication.method,
                 url = URL(createAuthentication.href),
                 operationRel = createAuthentication.rel,
                 data = createAuthentication.rel?.getRequestDataIfAny(
-                    culture = paymentOutputModel.paymentSession.culture
+                    culture = paymentOutputModel.paymentSession.culture,
+                    completionIndicator = scaMethodRequestDataPerformed[expectationModel.value]
+                        ?: "N"
                 ),
                 instructions = instructions
             )
         }
+        //endregion
 
-        // 5. Search for OperationRel.REDIRECT_PAYER
+        //region 6. Search for OperationRel.REDIRECT_PAYER
         val redirectPayer =
             operations.firstOrNull { it.rel == OperationRel.REDIRECT_PAYER }
         if (redirectPayer?.href != null) {
@@ -154,8 +199,9 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
+        //endregion
 
-        // 6. Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
+        //region 7. Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
         // that doesn't need OperationRel.EXPAND_METHOD to work.
         if (!hasShownAvailableInstruments) {
             val expandMethod =
@@ -190,9 +236,9 @@ internal object SessionOperationHandler {
                 )
             }
         }
+        //endregion
 
-
-        // 7. Search for OperationRel.GET_PAYMENT
+        //region 8. Search for OperationRel.GET_PAYMENT
         // If we come here and find OperationRel.GET_PAYMENT we want to start polling for a result we can
         // do something with
         val getPayment = operations.firstOrNull { it.rel == OperationRel.GET_PAYMENT }
@@ -208,6 +254,7 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
+        //endregion
 
         instructions.add(0, StepInstruction.StepNotFound)
         return OperationStep(
@@ -278,6 +325,7 @@ internal object SessionOperationHandler {
         alreadyUsedSwishUrls.clear()
         alreadyUsedProblemUrls.clear()
         hasShownAvailableInstruments = false
+        scaMethodRequestDataPerformed.clear()
     }
 }
 
@@ -296,11 +344,17 @@ internal sealed class StepInstruction(
 
     object SessionNotFound : StepInstruction(true)
 
+    object InternalError : StepInstruction(true)
+
     class ProblemOccurred(
         val problemDetails: ProblemDetails,
         waitForAction: Boolean
     ) :
         StepInstruction(waitForAction)
+
+    class OverrideApiCall(
+        val paymentOutputModel: PaymentOutputModel
+    ) : StepInstruction(false)
 
 }
 
@@ -317,5 +371,5 @@ internal data class OperationStep(
     val integrationRel: IntegrationTaskRel? = null,
     val data: String? = null,
     val instructions: List<StepInstruction> = listOf(),
-    val delayRequestDuration: Long = 0
+    val delayRequestDuration: Long = 0,
 )

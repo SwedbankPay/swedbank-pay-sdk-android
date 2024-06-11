@@ -16,7 +16,13 @@ data class IntegrationTask(
     val method: RequestMethod?,
     @SerializedName("rel")
     val rel: IntegrationTaskRel?
-)
+) {
+    fun getExpectValuesFor(name: String): ExpectationModel? {
+        return expects?.firstOrNull { it.name == name }
+    }
+}
+
+internal const val threeDsMethodData = "ThreeDsMethodData"
 
 @Keep
 data class ExpectationModel(
@@ -25,7 +31,7 @@ data class ExpectationModel(
     @SerializedName("type")
     val type: String?,
     @SerializedName("value")
-    val value: String?
+    val value: Any?
 )
 
 @Keep
@@ -39,3 +45,5 @@ enum class IntegrationTaskRel {
     @SerializedName("sca-redirect")
     SCA_REDIRECT,
 }
+
+

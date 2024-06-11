@@ -22,13 +22,14 @@ internal object RequestUtil {
 
     fun OperationRel.getRequestDataIfAny(
         instrument: PaymentAttemptInstrument? = null,
-        culture: String?
+        culture: String?,
+        completionIndicator: String = "N"
     ) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()
             START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(instrument, culture)
             EXPAND_METHOD -> getInstrumentViewsData(instrument)
-            CREATE_AUTHENTICATION -> getCreateAuthenticationData()
+            CREATE_AUTHENTICATION -> getCreateAuthenticationData(completionIndicator)
             else -> null
         }
 
@@ -43,17 +44,9 @@ internal object RequestUtil {
     }
 
     private fun getInstrumentViewsData(instrument: PaymentAttemptInstrument?): String {
-        return when (instrument) {
-            is PaymentAttemptInstrument.Swish -> InstrumentView(
-                instrumentName = "Swish"
-            ).toJsonString()
-
-            is PaymentAttemptInstrument.CreditCard -> InstrumentView(
-                instrumentName = "CreditCard"
-            ).toJsonString()
-
-            else -> ""
-        }
+        return InstrumentView(
+            instrumentName = instrument?.name ?: ""
+        ).toJsonString()
 
     }
 
@@ -81,9 +74,9 @@ internal object RequestUtil {
         }
     }
 
-    private fun getCreateAuthenticationData(): String {
+    private fun getCreateAuthenticationData(completionIndicator: String): String {
         return CreateAuthentication(
-            methodCompletionIndicator = "Y",
+            methodCompletionIndicator = completionIndicator,
             notificationUrl = "https://fake.payex.com/notification",
             requestWindowSize = "FULLSCREEN",
             client = RequestDataUtil.getClient(),
