@@ -23,6 +23,7 @@ data class IntegrationTask(
 }
 
 internal const val threeDsMethodData = "ThreeDsMethodData"
+internal const val cReq = "CReq"
 
 @Keep
 data class ExpectationModel(

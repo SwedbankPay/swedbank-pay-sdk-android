@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.nativepayments
 
+import android.webkit.WebView
 import androidx.annotation.Keep
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
@@ -19,6 +20,13 @@ sealed class NativePaymentState {
      */
     class AvailableInstrumentsFetched(val availableInstruments: List<AvailableInstrument>) :
         NativePaymentState()
+
+    /**
+     * Called when a webview need to be shown to the user. For example 3d-secure
+     */
+    class LaunchWebView(val webView: WebView) : NativePaymentState()
+
+    object CloseWebView : NativePaymentState()
 
     /**
      * Called whenever the payment has been completed

@@ -14,6 +14,7 @@ import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.TimeOutUtil
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTaskRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
@@ -24,6 +25,7 @@ import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.NativePaymentProble
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.nativepayments.util.UriCallbackUtil.addCallbackUrl
+import com.swedbankpay.mobilesdk.nativepayments.util.WebViewService
 import com.swedbankpay.mobilesdk.nativepayments.util.clientAppCallbackExtensionsModel
 import com.swedbankpay.mobilesdk.nativepayments.util.extension.safeLet
 import com.swedbankpay.mobilesdk.nativepayments.util.launchClientAppExtensionsModel
@@ -239,8 +241,6 @@ class NativePayment(
                                         }
 
                                         else -> {
-                                            // In this case instruction shouldn't be null.
-                                            // And if so we want to find out fast
                                             if (instruction?.waitForAction == true) {
                                                 checkWhatTodo(instruction)
                                             }
@@ -256,15 +256,16 @@ class NativePayment(
     }
 
     /**
-     * Clear payment instrument if step rel is [OperationRel.START_PAYMENT_ATTEMPT]
-     * and next step rel is not [IntegrationTaskRel.LAUNCH_CLIENT_APP]
-     * then we clear it later in the session
+     *  We only clear [PaymentAttemptInstrument] in this part of the session when
+     *  we start polling for result for swish opened on another device.
+     *  Otherwise [PaymentAttemptInstrument] will be cleared later
      */
     private fun clearPaymentAttemptInstrument(
         operationRel: OperationRel?,
         integrationTaskRel: IntegrationTaskRel?
     ) {
-        if (operationRel == OperationRel.START_PAYMENT_ATTEMPT && integrationTaskRel
+        if (paymentAttemptInstrument is PaymentAttemptInstrument.Swish &&
+            operationRel == OperationRel.START_PAYMENT_ATTEMPT && integrationTaskRel
             != IntegrationTaskRel.LAUNCH_CLIENT_APP
         ) {
             paymentAttemptInstrument = null
@@ -288,6 +289,10 @@ class NativePayment(
                         extensions = instruction.availableInstruments.toExtensionsModel()
                     )
                 )
+            }
+
+            is StepInstruction.ScaRedirectStep -> {
+                launchWebView(instruction.task)
             }
 
             is StepInstruction.LaunchClientAppStep -> {
@@ -398,6 +403,23 @@ class NativePayment(
                 )
             )
         } ?: onSdkProblemOccurred(NativePaymentProblem.InternalInconsistencyError)
+    }
+
+    private fun launchWebView(task: IntegrationTask) {
+        val webView = WebViewService.getWebView(task, paymentAttemptInstrument?.context) {
+            _nativePaymentState.value = NativePaymentState.CloseWebView
+            _nativePaymentState.value = NativePaymentState.Idle
+        }
+
+        paymentAttemptInstrument = null
+
+        if (webView != null) {
+            _nativePaymentState.value = NativePaymentState.LaunchWebView(webView)
+            _nativePaymentState.value = NativePaymentState.Idle
+        } else {
+            onSdkProblemOccurred(NativePaymentProblem.InternalInconsistencyError)
+        }
+
     }
 
     private fun launchClientApp(href: String) {

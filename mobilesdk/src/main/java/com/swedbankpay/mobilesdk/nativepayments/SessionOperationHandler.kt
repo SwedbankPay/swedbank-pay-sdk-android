@@ -1,6 +1,7 @@
 package com.swedbankpay.mobilesdk.nativepayments
 
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.RequestUtil.getRequestDataIfAny
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTaskRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationOutputModel
@@ -8,6 +9,7 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.cReq
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.threeDsMethodData
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
@@ -21,6 +23,7 @@ internal object SessionOperationHandler {
     private val alreadyUsedProblemUrls: MutableList<String> = mutableListOf()
     private val alreadyUsedSwishUrls: MutableList<String> = mutableListOf()
     private val scaMethodRequestDataPerformed: MutableMap<String, String> = mutableMapOf()
+    private val scaRedirectDataPerformed: MutableMap<String, String> = mutableMapOf()
     private var hasShownAvailableInstruments: Boolean = false
 
     /**
@@ -143,7 +146,7 @@ internal object SessionOperationHandler {
 
             val result = WebViewService.load(
                 task = scaMethodRequest,
-                context = paymentAttemptInstrument?.context
+                localStartContext = paymentAttemptInstrument?.context
             )
 
             result?.let { completionIndicator ->
@@ -166,23 +169,24 @@ internal object SessionOperationHandler {
         //endregion
 
         //region 5. Search for OperationRel.CREATE_AUTHENTICATION
-        val createAuthentication =
+        val createAuth =
             operations.firstOrNull { it.rel == OperationRel.CREATE_AUTHENTICATION }
 
-        val expectationModel = createAuthentication?.tasks
+        val createAuthExpectationModel = createAuth?.tasks
             ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
             ?.getExpectValuesFor(threeDsMethodData)
 
-        val allowedToExecute = expectationModel?.value in scaMethodRequestDataPerformed.keys
+        val allowedToExecuteCreateAuth =
+            createAuthExpectationModel?.value in scaMethodRequestDataPerformed.keys
 
-        if (createAuthentication != null && expectationModel != null && allowedToExecute) {
+        if (createAuth != null && createAuthExpectationModel != null && allowedToExecuteCreateAuth) {
             return OperationStep(
-                requestMethod = createAuthentication.method,
-                url = URL(createAuthentication.href),
-                operationRel = createAuthentication.rel,
-                data = createAuthentication.rel?.getRequestDataIfAny(
+                requestMethod = createAuth.method,
+                url = URL(createAuth.href),
+                operationRel = createAuth.rel,
+                data = createAuth.rel?.getRequestDataIfAny(
                     culture = paymentOutputModel.paymentSession.culture,
-                    completionIndicator = scaMethodRequestDataPerformed[expectationModel.value]
+                    completionIndicator = scaMethodRequestDataPerformed[createAuthExpectationModel.value]
                         ?: "N"
                 ),
                 instructions = instructions
@@ -190,7 +194,45 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 6. Search for OperationRel.REDIRECT_PAYER
+        //region 6. Search for IntegrationTaskRel.SCA_REDIRECT
+        val scaRedirect = operations.flatMap { it.tasks ?: listOf() }
+            .firstOrNull { task -> task.rel == IntegrationTaskRel.SCA_REDIRECT }
+
+        if (scaRedirect != null
+            && scaRedirect.expects?.any { it.value in scaRedirectDataPerformed.values } == false
+        ) {
+            instructions.add(0, StepInstruction.ScaRedirectStep(scaRedirect))
+            return OperationStep(
+                instructions = instructions
+            )
+        }
+        //endregion
+
+
+        //region 7 Search for OperationRel.COMPLETE_AUTHENTICATION
+        val completeAuth =
+            operations.firstOrNull { it.rel == OperationRel.COMPLETE_AUTHENTICATION }
+
+        val completeAuthExpectationModel = createAuth?.tasks
+            ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_REDIRECT }
+            ?.getExpectValuesFor(cReq)
+
+        val allowedToExecuteCompleteAuth = completeAuthExpectationModel?.value in scaRedirectDataPerformed.keys
+
+        if (completeAuth != null && completeAuthExpectationModel != null && allowedToExecuteCompleteAuth) {
+            return OperationStep(
+                requestMethod = completeAuth.method,
+                url = URL(completeAuth.href),
+                operationRel = completeAuth.rel,
+                data = completeAuth.rel?.getRequestDataIfAny(
+                    culture = paymentOutputModel.paymentSession.culture,
+                ),
+                instructions = instructions
+            )
+        }
+        //endregion
+
+        //region 8. Search for OperationRel.REDIRECT_PAYER
         val redirectPayer =
             operations.firstOrNull { it.rel == OperationRel.REDIRECT_PAYER }
         if (redirectPayer?.href != null) {
@@ -201,7 +243,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 7. Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
+        //region 9. Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
         // that doesn't need OperationRel.EXPAND_METHOD to work.
         if (!hasShownAvailableInstruments) {
             val expandMethod =
@@ -238,7 +280,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 8. Search for OperationRel.GET_PAYMENT
+        //region 10. Search for OperationRel.GET_PAYMENT
         // If we come here and find OperationRel.GET_PAYMENT we want to start polling for a result we can
         // do something with
         val getPayment = operations.firstOrNull { it.rel == OperationRel.GET_PAYMENT }
@@ -326,6 +368,7 @@ internal object SessionOperationHandler {
         alreadyUsedProblemUrls.clear()
         hasShownAvailableInstruments = false
         scaMethodRequestDataPerformed.clear()
+        scaRedirectDataPerformed.clear()
     }
 }
 
@@ -337,6 +380,8 @@ internal sealed class StepInstruction(
         StepInstruction(true)
 
     class LaunchClientAppStep(val href: String) : StepInstruction(true)
+
+    class ScaRedirectStep(val task: IntegrationTask) : StepInstruction(true)
 
     class PaymentSessionCompleted(val url: String) : StepInstruction(true)
 

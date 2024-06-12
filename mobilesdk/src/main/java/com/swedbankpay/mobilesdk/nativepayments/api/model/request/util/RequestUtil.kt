@@ -1,12 +1,14 @@
 package com.swedbankpay.mobilesdk.nativepayments.api.model.request.util
 
 import com.google.gson.GsonBuilder
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.CompleteAuthentication
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.CreateAuthentication
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.CreditCardAttempt
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Integration
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.SwishAttempt
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.COMPLETE_AUTHENTICATION
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.CREATE_AUTHENTICATION
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.EXPAND_METHOD
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel.PREPARE_PAYMENT
@@ -23,13 +25,15 @@ internal object RequestUtil {
     fun OperationRel.getRequestDataIfAny(
         instrument: PaymentAttemptInstrument? = null,
         culture: String?,
-        completionIndicator: String = "N"
+        completionIndicator: String = "N",
+        cRes: String = ""
     ) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()
             START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(instrument, culture)
             EXPAND_METHOD -> getInstrumentViewsData(instrument)
             CREATE_AUTHENTICATION -> getCreateAuthenticationData(completionIndicator)
+            COMPLETE_AUTHENTICATION -> getCompleteAuthenticationData(cRes)
             else -> null
         }
 
@@ -81,6 +85,13 @@ internal object RequestUtil {
             requestWindowSize = "FULLSCREEN",
             client = RequestDataUtil.getClient(),
             browser = RequestDataUtil.getBrowser()
+        ).toJsonString()
+    }
+
+    private fun getCompleteAuthenticationData(cRes: String): String {
+        return CompleteAuthentication(
+            cRes = cRes,
+            client = RequestDataUtil.getClient()
         ).toJsonString()
     }
 

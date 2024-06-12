@@ -50,6 +50,9 @@ enum class OperationRel {
 
     @SerializedName("create-authentication")
     CREATE_AUTHENTICATION,
+
+    @SerializedName("complete-authentication")
+    COMPLETE_AUTHENTICATION,
 }
 
 @Keep
