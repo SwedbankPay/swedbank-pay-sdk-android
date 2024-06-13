@@ -13,7 +13,7 @@ internal object TimeOutUtil {
 
     fun getRequestTimeout(operationRel: OperationRel?, instrument: Instrument?) =
         if ((operationRel == OperationRel.START_PAYMENT_ATTEMPT && instrument == Instrument.CREDIT_CARD)
-            || operationRel == OperationRel.CREATE_AUTHENTICATION
+            || operationRel == OperationRel.CREATE_AUTHENTICATION || operationRel == OperationRel.COMPLETE_AUTHENTICATION
         ) {
             REQUEST_TIME_OUT_IN_MS_FOR_CREDIT_CARD
         } else {
@@ -22,7 +22,7 @@ internal object TimeOutUtil {
 
     fun getSessionTimeout(operationRel: OperationRel?, instrument: Instrument?) =
         if ((operationRel == OperationRel.START_PAYMENT_ATTEMPT && instrument == Instrument.CREDIT_CARD)
-            || operationRel == OperationRel.CREATE_AUTHENTICATION
+            || operationRel == OperationRel.CREATE_AUTHENTICATION || operationRel == OperationRel.COMPLETE_AUTHENTICATION
         ) {
             SESSION_TIME_OUT_IN_MS_FOR_CREDIT_CARD
         } else {

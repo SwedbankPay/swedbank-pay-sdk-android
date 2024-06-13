@@ -217,7 +217,8 @@ internal object SessionOperationHandler {
             ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_REDIRECT }
             ?.getExpectValuesFor(cReq)
 
-        val allowedToExecuteCompleteAuth = completeAuthExpectationModel?.value in scaRedirectDataPerformed.keys
+        val allowedToExecuteCompleteAuth =
+            completeAuthExpectationModel?.value in scaRedirectDataPerformed.keys
 
         if (completeAuth != null && completeAuthExpectationModel != null && allowedToExecuteCompleteAuth) {
             return OperationStep(
@@ -362,6 +363,10 @@ internal object SessionOperationHandler {
         paymentOutputModel?.operations?.firstOrNull {
             it.rel == OperationRel.EVENT_LOGGING
         }?.href
+
+    fun scaRedirectComplete(cReq: String, cRes: String) {
+        scaRedirectDataPerformed[cReq] = cRes
+    }
 
     fun clearState() {
         alreadyUsedSwishUrls.clear()

@@ -15,7 +15,6 @@ import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.nativepayments.api.NativePaymentsAPIClient
 import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.TimeOutUtil
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTask
-import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTaskRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.NativePaymentResponse
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
@@ -55,9 +54,6 @@ class NativePayment(
         private var _nativePaymentState: MutableLiveData<NativePaymentState> =
             MutableLiveData(NativePaymentState.Idle)
         val nativePaymentState: LiveData<NativePaymentState> = _nativePaymentState
-
-        private const val RETRIES_TIME_LIMIT_IN_MS = 20 * 1000
-        private const val RETRIES_TIME_LIMIT_IN_MS_FOR_CREDIT_CARD = 30 * 1000
     }
 
     /**
@@ -88,7 +84,7 @@ class NativePayment(
     }
 
     private fun clearState(isStartingSession: Boolean = false) {
-        paymentAttemptInstrument = null
+        clearPaymentAttemptInstrument()
         currentPaymentOutputModel = null
         SessionOperationHandler.clearState()
         stopObservingCallbacks()
@@ -100,6 +96,7 @@ class NativePayment(
     private fun checkCallbacks() {
         val callbackUrl = orderInfo.paymentUrl
         if (callbackUrl != null && CallbackActivity.consumeCallbackUrl(callbackUrl)) {
+            clearPaymentAttemptInstrument()
             BeaconService.logEvent(
                 EventAction.ClientAppCallback(
                     extensions = clientAppCallbackExtensionsModel(
@@ -202,10 +199,10 @@ class NativePayment(
                             paymentOutputModel = currentPaymentOutputModel,
                             paymentAttemptInstrument = paymentAttemptInstrument
                         ).let { step ->
-                            clearPaymentAttemptInstrument(
-                                stepToExecute.operationRel,
-                                step.integrationRel
-                            )
+
+                            if (operationStep.operationRel == OperationRel.REDIRECT_PAYER) {
+                                clearPaymentAttemptInstrument()
+                            }
 
                             stepToExecute = step
                             if (step.instructions.isNotEmpty()
@@ -256,20 +253,12 @@ class NativePayment(
     }
 
     /**
-     *  We only clear [PaymentAttemptInstrument] in this part of the session when
-     *  we start polling for result for swish opened on another device.
-     *  Otherwise [PaymentAttemptInstrument] will be cleared later
+     * Clearing of [PaymentAttemptInstrument] will be done in different places
+     * during the payment process depending on [PaymentAttemptInstrument] used
      */
     private fun clearPaymentAttemptInstrument(
-        operationRel: OperationRel?,
-        integrationTaskRel: IntegrationTaskRel?
     ) {
-        if (paymentAttemptInstrument is PaymentAttemptInstrument.Swish &&
-            operationRel == OperationRel.START_PAYMENT_ATTEMPT && integrationTaskRel
-            != IntegrationTaskRel.LAUNCH_CLIENT_APP
-        ) {
-            paymentAttemptInstrument = null
-        }
+        paymentAttemptInstrument = null
     }
 
     private fun checkWhatTodo(instruction: StepInstruction) {
@@ -377,8 +366,6 @@ class NativePayment(
             )
 
         } ?: onSdkProblemOccurred(NativePaymentProblem.InternalInconsistencyError)
-
-
     }
 
     /**
@@ -411,7 +398,7 @@ class NativePayment(
             _nativePaymentState.value = NativePaymentState.Idle
         }
 
-        paymentAttemptInstrument = null
+        clearPaymentAttemptInstrument()
 
         if (webView != null) {
             _nativePaymentState.value = NativePaymentState.LaunchWebView(webView)
@@ -429,7 +416,7 @@ class NativePayment(
             when (paymentInstrument) {
                 is PaymentAttemptInstrument.Swish -> {
                     launchSwish(uri, paymentInstrument.localStartContext)
-                    paymentAttemptInstrument = null
+                    clearPaymentAttemptInstrument()
                 }
 
                 else -> {
