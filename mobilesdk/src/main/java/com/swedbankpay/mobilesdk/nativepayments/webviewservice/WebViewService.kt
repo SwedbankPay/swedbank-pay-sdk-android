@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk.nativepayments.util
+package com.swedbankpay.mobilesdk.nativepayments.webviewservice
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -8,10 +8,13 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.RequestUtil
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ExpectationModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.util.extension.safeLet
+import com.swedbankpay.mobilesdk.nativepayments.webviewservice.client.RequestInspectorWebViewClient
+import com.swedbankpay.mobilesdk.nativepayments.webviewservice.client.WebViewRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.DataOutputStream
@@ -76,8 +79,12 @@ internal object WebViewService {
 
                             if (request != null && request.url.toString() == initialUrl) {
                                 val (webResourceRequest, completionIndicator) = postWebViewRequest(
-                                    request = request,
-                                    method = method,
+                                    url = request.url.toString(),
+                                    method = when (method) {
+                                        RequestMethod.GET -> "GET"
+                                        RequestMethod.POST -> "POST"
+                                    },
+                                    requestHeaders = request.requestHeaders,
                                     contentType = contentType,
                                     expects = expects
                                 )
@@ -105,23 +112,21 @@ internal object WebViewService {
     //endregion
 
     private fun postWebViewRequest(
-        request: WebResourceRequest,
-        method: RequestMethod,
+        url: String,
+        method: String,
+        requestHeaders: Map<String, String>,
         contentType: String,
         expects: List<ExpectationModel>,
     ): Pair<WebResourceResponse?, String> {
         try {
-            val connection = URL(request.url.toString()).openConnection() as HttpsURLConnection
+            val connection = URL(url).openConnection() as HttpsURLConnection
 
             connection.readTimeout = 5000
             connection.connectTimeout = 5000
 
-            connection.requestMethod = when (method) {
-                RequestMethod.GET -> "GET"
-                RequestMethod.POST -> "POST"
-            }
+            connection.requestMethod = method
 
-            for ((key, value) in request.requestHeaders) {
+            for ((key, value) in requestHeaders) {
                 connection.setRequestProperty(key, value)
             }
             connection.setRequestProperty("Content-Type", contentType)
@@ -135,7 +140,9 @@ internal object WebViewService {
             outputStreamWriter.write(postData)
             outputStreamWriter.flush()
 
-            return if (200.until(400).contains(connection.responseCode)) {
+            val responseCode = connection.responseCode
+
+            return if (200.until(400).contains(responseCode)) {
                 Pair(
                     WebResourceResponse(
                         connection.contentType.substringBefore(";"),
@@ -143,7 +150,9 @@ internal object WebViewService {
                         connection.inputStream
                     ), ""
                 )
-            } else Pair(null, "N")
+            } else {
+                Pair(null, "N")
+            }
         } catch (timeoutException: SocketTimeoutException) {
             return Pair(null, "U")
         } catch (e: Exception) {
@@ -154,7 +163,7 @@ internal object WebViewService {
     fun getWebView(
         task: IntegrationTask,
         localStartContext: Context?,
-        completionHandler: () -> Unit
+        completionHandler: (String?) -> Unit
     ): WebView? {
         safeLet(
             task.href,
@@ -163,7 +172,7 @@ internal object WebViewService {
             task.expects,
             localStartContext
         ) { initialUrl, method, contentType, expects, context ->
-            return WebView(context).apply {
+            val webView = WebView(context).apply {
                 settings.apply {
                     // JavaScript is required for our use case.
                     // The SDK will only use remote content through links
@@ -181,48 +190,59 @@ internal object WebViewService {
                     displayZoomControls = false
                 }
 
-                webViewClient = object : WebViewClient() {
-                    override fun shouldInterceptRequest(
-                        view: WebView?,
-                        request: WebResourceRequest?
-                    ): WebResourceResponse? {
+                loadUrl("https://firebasestorage.googleapis.com/v0/b/consid-beta.appspot.com/o/fake-3ds.html?alt=media")
+            }
 
-                        if (request?.url.toString() == "https://fake.payex.com/notification") {
-                            Handler(Looper.getMainLooper()).post {
-                                completionHandler.invoke()
+            webView.webViewClient = object : RequestInspectorWebViewClient(webView) {
+                override fun shouldInterceptRequest(
+                    view: WebView,
+                    webViewRequest: WebViewRequest
+                ): WebResourceResponse? {
+                        if (webViewRequest.url == RequestUtil.NOTIFICATION_URL) {
+                            val cRes = webViewRequest.formParameters["CRes"]
+                            val handler = Handler(Looper.getMainLooper())
+                            handler.post {
+                                webView.stopLoading()
+                                completionHandler.invoke(cRes)
                             }
                         }
 
-                        if (request != null && request.url.toString() == "https://firebasestorage.googleapis.com/v0/b/consid-beta.appspot.com/o/fake-3ds.html?alt=media") {
+                        /*if (webViewRequest.url == "https://firebasestorage.googleapis.com/v0/b/consid-beta.appspot.com/o/fake-3ds.html?alt=media") {
                             val (webResourceRequest, _) = postWebViewRequest(
-                                request = request,
-                                method = method,
+                                url = webViewRequest.url,
+                                requestHeaders = webViewRequest.headers,
+                                method = "POST",
                                 contentType = contentType,
                                 expects = expects
                             )
 
                             if (webResourceRequest == null) {
-
+                                val handler = Handler(Looper.getMainLooper())
+                                handler.post {
+                                    webView.stopLoading()
+                                    completionHandler.invoke(null)
+                                }
                             } else {
                                 return webResourceRequest
                             }
-                        }
+                        }*/
 
-                        return super.shouldInterceptRequest(view, request)
-                    }
+                        return super.shouldInterceptRequest(view, webViewRequest)
 
-                    override fun shouldOverrideUrlLoading(
-                        view: WebView?,
-                        request: WebResourceRequest?
-                    ): Boolean {
-                        return super.shouldOverrideUrlLoading(view, request)
-                    }
                 }
 
-                loadUrl("https://firebasestorage.googleapis.com/v0/b/consid-beta.appspot.com/o/fake-3ds.html?alt=media")
-
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    return super.shouldOverrideUrlLoading(view, request)
+                }
             }
+
+            return webView
+
         } ?: return null
+
     }
 
     private fun getDataString(expects: List<ExpectationModel>): String {

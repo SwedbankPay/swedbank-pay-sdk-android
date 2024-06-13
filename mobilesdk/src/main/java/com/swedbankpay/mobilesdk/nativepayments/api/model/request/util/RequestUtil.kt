@@ -22,6 +22,8 @@ internal object RequestUtil {
 
     private val gson = GsonBuilder().serializeNulls().create()
 
+    const val NOTIFICATION_URL = "https://fake.payex.com/notification"
+
     fun OperationRel.getRequestDataIfAny(
         instrument: PaymentAttemptInstrument? = null,
         culture: String?,
@@ -81,7 +83,7 @@ internal object RequestUtil {
     private fun getCreateAuthenticationData(completionIndicator: String): String {
         return CreateAuthentication(
             methodCompletionIndicator = completionIndicator,
-            notificationUrl = "https://fake.payex.com/notification",
+            notificationUrl = NOTIFICATION_URL,
             requestWindowSize = "FULLSCREEN",
             client = RequestDataUtil.getClient(),
             browser = RequestDataUtil.getBrowser()

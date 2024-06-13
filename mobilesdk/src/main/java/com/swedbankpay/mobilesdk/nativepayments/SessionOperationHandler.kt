@@ -15,7 +15,7 @@ import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
-import com.swedbankpay.mobilesdk.nativepayments.util.WebViewService
+import com.swedbankpay.mobilesdk.nativepayments.webviewservice.WebViewService
 import java.net.URL
 
 internal object SessionOperationHandler {
@@ -199,7 +199,7 @@ internal object SessionOperationHandler {
             .firstOrNull { task -> task.rel == IntegrationTaskRel.SCA_REDIRECT }
 
         if (scaRedirect != null
-            && scaRedirect.expects?.any { it.value in scaRedirectDataPerformed.values } == false
+            && scaRedirect.expects?.any { it.value in scaRedirectDataPerformed.keys } == false
         ) {
             instructions.add(0, StepInstruction.ScaRedirectStep(scaRedirect))
             return OperationStep(
@@ -208,12 +208,11 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-
         //region 7 Search for OperationRel.COMPLETE_AUTHENTICATION
         val completeAuth =
             operations.firstOrNull { it.rel == OperationRel.COMPLETE_AUTHENTICATION }
 
-        val completeAuthExpectationModel = createAuth?.tasks
+        val completeAuthExpectationModel = completeAuth?.tasks
             ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_REDIRECT }
             ?.getExpectValuesFor(cReq)
 
@@ -227,6 +226,7 @@ internal object SessionOperationHandler {
                 operationRel = completeAuth.rel,
                 data = completeAuth.rel?.getRequestDataIfAny(
                     culture = paymentOutputModel.paymentSession.culture,
+                    cRes = scaRedirectDataPerformed[completeAuthExpectationModel.value] ?: ""
                 ),
                 instructions = instructions
             )

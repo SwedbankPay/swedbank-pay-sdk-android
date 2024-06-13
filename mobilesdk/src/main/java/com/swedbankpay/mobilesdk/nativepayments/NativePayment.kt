@@ -20,15 +20,16 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.nativepayments.api.model.response.cReq
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.NativePaymentProblem
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.nativepayments.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.nativepayments.util.UriCallbackUtil.addCallbackUrl
-import com.swedbankpay.mobilesdk.nativepayments.util.WebViewService
 import com.swedbankpay.mobilesdk.nativepayments.util.clientAppCallbackExtensionsModel
 import com.swedbankpay.mobilesdk.nativepayments.util.extension.safeLet
 import com.swedbankpay.mobilesdk.nativepayments.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.nativepayments.util.toExtensionsModel
+import com.swedbankpay.mobilesdk.nativepayments.webviewservice.WebViewService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -393,16 +394,28 @@ class NativePayment(
     }
 
     private fun launchWebView(task: IntegrationTask) {
-        val webView = WebViewService.getWebView(task, paymentAttemptInstrument?.context) {
-            _nativePaymentState.value = NativePaymentState.CloseWebView
-            _nativePaymentState.value = NativePaymentState.Idle
-        }
+        val webView =
+            WebViewService.getWebView(task, paymentAttemptInstrument?.context) { response ->
+                safeLet(response, currentPaymentOutputModel) { cRes, session ->
+                    SessionOperationHandler.scaRedirectComplete(
+                        task.getExpectValuesFor(cReq)?.value as String,
+                        cRes
+                    )
+                    executeNextStepUntilFurtherInstructions(
+                        operationStep = OperationStep(
+                            instructions = listOf(StepInstruction.OverrideApiCall(session))
+                        )
+                    )
+                    _nativePaymentState.value = NativePaymentState.CloseWebView
+                    setStateToIdle()
+                } ?: onSdkProblemOccurred(NativePaymentProblem.InternalInconsistencyError)
+            }
 
         clearPaymentAttemptInstrument()
 
         if (webView != null) {
             _nativePaymentState.value = NativePaymentState.LaunchWebView(webView)
-            _nativePaymentState.value = NativePaymentState.Idle
+            setStateToIdle()
         } else {
             onSdkProblemOccurred(NativePaymentProblem.InternalInconsistencyError)
         }
