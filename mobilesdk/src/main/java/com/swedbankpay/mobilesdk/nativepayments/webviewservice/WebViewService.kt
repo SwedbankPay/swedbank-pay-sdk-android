@@ -15,6 +15,7 @@ import com.swedbankpay.mobilesdk.nativepayments.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.nativepayments.util.extension.safeLet
 import com.swedbankpay.mobilesdk.nativepayments.webviewservice.client.RequestInspectorWebViewClient
 import com.swedbankpay.mobilesdk.nativepayments.webviewservice.client.WebViewRequest
+import com.swedbankpay.mobilesdk.nativepayments.webviewservice.util.UriUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.DataOutputStream
@@ -198,36 +199,36 @@ internal object WebViewService {
                     view: WebView,
                     webViewRequest: WebViewRequest
                 ): WebResourceResponse? {
-                        if (webViewRequest.url == RequestUtil.NOTIFICATION_URL) {
-                            val cRes = webViewRequest.formParameters["CRes"]
+                    if (webViewRequest.url == RequestUtil.NOTIFICATION_URL) {
+                        val cRes = webViewRequest.formParameters["CRes"]
+                        val handler = Handler(Looper.getMainLooper())
+                        handler.post {
+                            webView.stopLoading()
+                            completionHandler.invoke(cRes)
+                        }
+                    }
+
+                    /*if (webViewRequest.url == "https://firebasestorage.googleapis.com/v0/b/consid-beta.appspot.com/o/fake-3ds.html?alt=media") {
+                        val (webResourceRequest, _) = postWebViewRequest(
+                            url = webViewRequest.url,
+                            requestHeaders = webViewRequest.headers,
+                            method = "POST",
+                            contentType = contentType,
+                            expects = expects
+                        )
+
+                        if (webResourceRequest == null) {
                             val handler = Handler(Looper.getMainLooper())
                             handler.post {
                                 webView.stopLoading()
-                                completionHandler.invoke(cRes)
+                                completionHandler.invoke(null)
                             }
+                        } else {
+                            return webResourceRequest
                         }
+                    }*/
 
-                        /*if (webViewRequest.url == "https://firebasestorage.googleapis.com/v0/b/consid-beta.appspot.com/o/fake-3ds.html?alt=media") {
-                            val (webResourceRequest, _) = postWebViewRequest(
-                                url = webViewRequest.url,
-                                requestHeaders = webViewRequest.headers,
-                                method = "POST",
-                                contentType = contentType,
-                                expects = expects
-                            )
-
-                            if (webResourceRequest == null) {
-                                val handler = Handler(Looper.getMainLooper())
-                                handler.post {
-                                    webView.stopLoading()
-                                    completionHandler.invoke(null)
-                                }
-                            } else {
-                                return webResourceRequest
-                            }
-                        }*/
-
-                        return super.shouldInterceptRequest(view, webViewRequest)
+                    return super.shouldInterceptRequest(view, webViewRequest)
 
                 }
 
@@ -235,7 +236,13 @@ internal object WebViewService {
                     view: WebView?,
                     request: WebResourceRequest?
                 ): Boolean {
-                    return super.shouldOverrideUrlLoading(view, request)
+                    val handled = request?.url != null && (
+                            UriUtil.attemptHandleByExternalApp(
+                                request.url.toString(),
+                                context
+                            ))
+
+                    return handled || !UriUtil.webViewCanOpen(request?.url)
                 }
             }
 
