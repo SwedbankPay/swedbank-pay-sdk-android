@@ -33,7 +33,7 @@ data class ViewPaymentOrderInfo(
     /**
      * The `view-paymentorder` link from Swedbank Pay (v2), or the `view-checkout` link (v3).
      */
-    val viewPaymentLink: String? = null,
+    val viewPaymentLink: String,
 
     /**
      * If CheckoutV3 is used

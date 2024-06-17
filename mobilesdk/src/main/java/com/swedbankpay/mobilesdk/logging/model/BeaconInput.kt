@@ -2,8 +2,8 @@ package com.swedbankpay.mobilesdk.logging.model
 
 import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
-import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Client
-import com.swedbankpay.mobilesdk.nativepayments.api.model.request.Service
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Service
 
 
 @Keep

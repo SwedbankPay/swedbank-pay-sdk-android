@@ -5,7 +5,7 @@ import com.swedbankpay.mobilesdk.logging.model.BeaconInput
 import com.swedbankpay.mobilesdk.logging.model.BeaconType
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.EventModel
-import com.swedbankpay.mobilesdk.nativepayments.api.model.request.util.RequestDataUtil
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestDataUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
