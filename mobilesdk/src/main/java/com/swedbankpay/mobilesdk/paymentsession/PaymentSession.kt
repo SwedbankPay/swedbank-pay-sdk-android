@@ -15,12 +15,11 @@ import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIClient
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.TimeOutUtil
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentSessionResponse
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutputModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentSessionResponse
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.UrlsModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.cReq
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
@@ -88,11 +87,12 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun clearState(isStartingSession: Boolean = false) {
         clearPaymentAttemptInstrument()
         currentPaymentOutputModel = null
-        orderInfo = null
         SessionOperationHandler.clearState()
         stopObservingCallbacks()
         if (isStartingSession) {
             BeaconService.clearQueue()
+        } else {
+            orderInfo = null
         }
     }
 
@@ -193,7 +193,16 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
                     is PaymentSessionResponse.Success -> {
                         currentPaymentOutputModel = paymentSessionResponse.paymentOutputModel
-                        createOrderInfo(currentPaymentOutputModel?.paymentSession?.urls)
+
+                        val paymentSessionProblem = createOrderInfo()
+
+                        if(paymentSessionProblem != null) {
+                            withContext(Dispatchers.Main) {
+                                onSdkProblemOccurred(paymentSessionProblem)
+                            }
+                            break
+                        }
+
                         BeaconService.setBeaconUrl(
                             SessionOperationHandler.getBeaconUrl(
                                 currentPaymentOutputModel
@@ -256,27 +265,34 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
     }
 
-    private fun createOrderInfo(urls: UrlsModel?) {
+    private fun createOrderInfo(): PaymentSessionProblem? {
         if (orderInfo == null) {
-            val viewCheckout = currentPaymentOutputModel?.operations?.firstOrNull {
-                it.rel == OperationRel.VIEW_CHECKOUT
-            }
-            safeLet(
-                viewCheckout?.href,
-                urls?.paymentUrl,
-                urls?.completeUrl,
-                urls?.cancelUrl
-            ) { viewPaymentLink, paymentUrl, completeUrl, cancelUrl ->
-                orderInfo = ViewPaymentOrderInfo(
-                    viewPaymentLink = viewPaymentLink,
-                    webViewBaseUrl = urls?.hostUrls?.getOrNull(0),
-                    completeUrl = completeUrl,
-                    cancelUrl = cancelUrl,
-                    paymentUrl = paymentUrl,
-                    isV3 = true
-                )
-            } ?: onSdkProblemOccurred(PaymentSessionProblem.AutomaticConfigurationFailed)
+            currentPaymentOutputModel?.let { paymentOutputModel ->
+                val viewPayment = paymentOutputModel.operations.firstOrNull {
+                    it.rel == OperationRel.VIEW_PAYMENT
+                }
+
+                val urls = paymentOutputModel.paymentSession.urls
+
+                safeLet(
+                    viewPayment?.href,
+                    urls?.paymentUrl,
+                    urls?.completeUrl,
+                    urls?.cancelUrl
+                ) { viewPaymentLink, paymentUrl, completeUrl, cancelUrl ->
+                    orderInfo = ViewPaymentOrderInfo(
+                        viewPaymentLink = viewPaymentLink,
+                        webViewBaseUrl = urls?.hostUrls?.getOrNull(0),
+                        completeUrl = completeUrl,
+                        cancelUrl = cancelUrl,
+                        paymentUrl = paymentUrl,
+                        isV3 = true
+                    )
+                } ?: return PaymentSessionProblem.AutomaticConfigurationFailed
+            } ?: return PaymentSessionProblem.PaymentSessionEndReached
         }
+
+        return null
     }
 
     /**
@@ -432,7 +448,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                             instructions = listOf(StepInstruction.OverrideApiCall(session))
                         )
                     )
-                    _paymentSessionState.value = PaymentSessionState.CloseWebView
+                    _paymentSessionState.value = PaymentSessionState.Dismiss3dSecure
                     setStateToIdle()
                 } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
             }
@@ -440,7 +456,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         clearPaymentAttemptInstrument()
 
         if (webView != null) {
-            _paymentSessionState.value = PaymentSessionState.LaunchWebView(webView)
+            _paymentSessionState.value = PaymentSessionState.Show3dSecure(webView)
             setStateToIdle()
         } else {
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
@@ -498,7 +514,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun onPaymentComplete(url: String) {
         when (url) {
             orderInfo?.completeUrl -> {
-                _paymentSessionState.value = PaymentSessionState.PaymentSessionComplete
+                _paymentSessionState.value = PaymentSessionState.PaymentComplete
                 setStateToIdle()
                 BeaconService.logEvent(
                     eventAction = EventAction.SDKCallbackInvoked(
@@ -513,7 +529,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             }
 
             orderInfo?.cancelUrl -> {
-                _paymentSessionState.value = PaymentSessionState.PaymentSessionCanceled
+                _paymentSessionState.value = PaymentSessionState.PaymentCanceled
                 setStateToIdle()
 
                 BeaconService.logEvent(

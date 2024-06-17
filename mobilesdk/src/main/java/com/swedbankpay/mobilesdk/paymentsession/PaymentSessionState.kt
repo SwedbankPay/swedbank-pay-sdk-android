@@ -22,21 +22,24 @@ sealed class PaymentSessionState {
         PaymentSessionState()
 
     /**
-     * Called when a webview need to be shown to the user. For example 3d-secure
+     * Called when 3d-secure should be shown
      */
-    class LaunchWebView(val webView: WebView) : PaymentSessionState()
+    class Show3dSecure(val webView: WebView) : PaymentSessionState()
 
-    object CloseWebView : PaymentSessionState()
+    /**
+     * Called when 3d-secure can be dismissed
+     */
+    object Dismiss3dSecure : PaymentSessionState()
 
     /**
      * Called whenever the payment has been completed
      */
-    object PaymentSessionComplete : PaymentSessionState()
+    object PaymentComplete : PaymentSessionState()
 
     /**
      * Called whenever the payment has been canceled for any reason
      */
-    object PaymentSessionCanceled : PaymentSessionState()
+    object PaymentCanceled : PaymentSessionState()
 
     /**
      *  Called if there is a session problem with performing the payment.
