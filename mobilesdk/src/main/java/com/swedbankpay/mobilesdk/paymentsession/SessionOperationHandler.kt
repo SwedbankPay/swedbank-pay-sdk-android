@@ -9,8 +9,8 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.cReq
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.threeDsMethodData
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.creq
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.threeDSMethodData
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
@@ -144,13 +144,13 @@ internal object SessionOperationHandler {
             && scaMethodRequest.expects?.any { it.value in scaMethodRequestDataPerformed.keys } == false
         ) {
 
+
             val result = WebViewService.load(
                 task = scaMethodRequest,
                 localStartContext = paymentAttemptInstrument?.context
             )
-
             result?.let { completionIndicator ->
-                scaMethodRequestDataPerformed[scaMethodRequest.getExpectValuesFor(threeDsMethodData)?.value as String] =
+                scaMethodRequestDataPerformed[scaMethodRequest.getExpectValuesFor(threeDSMethodData)?.value as String] =
                     completionIndicator
 
                 instructions.add(0, StepInstruction.OverrideApiCall(paymentOutputModel))
@@ -174,7 +174,7 @@ internal object SessionOperationHandler {
 
         val createAuthExpectationModel = createAuth?.tasks
             ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
-            ?.getExpectValuesFor(threeDsMethodData)
+            ?.getExpectValuesFor(threeDSMethodData)
 
         val allowedToExecuteCreateAuth =
             createAuthExpectationModel?.value in scaMethodRequestDataPerformed.keys
@@ -214,7 +214,7 @@ internal object SessionOperationHandler {
 
         val completeAuthExpectationModel = completeAuth?.tasks
             ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_REDIRECT }
-            ?.getExpectValuesFor(cReq)
+            ?.getExpectValuesFor(creq)
 
         val allowedToExecuteCompleteAuth =
             completeAuthExpectationModel?.value in scaRedirectDataPerformed.keys

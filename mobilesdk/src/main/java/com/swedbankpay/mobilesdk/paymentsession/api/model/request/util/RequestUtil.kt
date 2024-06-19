@@ -23,6 +23,7 @@ internal object RequestUtil {
     private val gson = GsonBuilder().serializeNulls().create()
 
     const val NOTIFICATION_URL = "https://fake.payex.com/notification"
+    const val TEST_URL = "https://europe-west1-consid-beta.cloudfunctions.net/swpScaTrampoline"
 
     fun OperationRel.getRequestDataIfAny(
         instrument: PaymentAttemptInstrument? = null,
@@ -83,7 +84,7 @@ internal object RequestUtil {
     private fun getCreateAuthenticationData(completionIndicator: String): String {
         return CreateAuthentication(
             methodCompletionIndicator = completionIndicator,
-            notificationUrl = NOTIFICATION_URL,
+            notificationUrl = TEST_URL,
             requestWindowSize = "FULLSCREEN",
             client = RequestDataUtil.getClient(),
             browser = RequestDataUtil.getBrowser()

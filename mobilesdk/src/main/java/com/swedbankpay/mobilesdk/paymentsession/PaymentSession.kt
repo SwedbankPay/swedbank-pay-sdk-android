@@ -20,7 +20,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutput
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentSessionResponse
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.cReq
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.creq
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
@@ -196,7 +196,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
                         val paymentSessionProblem = createOrderInfo()
 
-                        if(paymentSessionProblem != null) {
+                        if (paymentSessionProblem != null) {
                             withContext(Dispatchers.Main) {
                                 onSdkProblemOccurred(paymentSessionProblem)
                             }
@@ -440,7 +440,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             WebViewService.getWebView(task, paymentAttemptInstrument?.context) { response ->
                 safeLet(response, currentPaymentOutputModel) { cRes, session ->
                     SessionOperationHandler.scaRedirectComplete(
-                        task.getExpectValuesFor(cReq)?.value as String,
+                        task.getExpectValuesFor(creq)?.value as String,
                         cRes
                     )
                     executeNextStepUntilFurtherInstructions(

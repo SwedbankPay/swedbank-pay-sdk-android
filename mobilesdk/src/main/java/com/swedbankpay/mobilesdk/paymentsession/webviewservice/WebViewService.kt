@@ -1,34 +1,41 @@
 package com.swedbankpay.mobilesdk.paymentsession.webviewservice
 
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
 import android.content.Context
+import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.RequiresApi
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestUtil
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ExpectationModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
-import com.swedbankpay.mobilesdk.paymentsession.webviewservice.client.RequestInspectorWebViewClient
-import com.swedbankpay.mobilesdk.paymentsession.webviewservice.client.WebViewRequest
 import com.swedbankpay.mobilesdk.paymentsession.webviewservice.util.UriUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.DataOutputStream
-import java.net.SocketTimeoutException
-import java.net.URL
 import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import javax.net.ssl.HttpsURLConnection
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 
 internal object WebViewService {
+
+    data class WebViewError(
+        val uri: Uri,
+        val statusCode: Int,
+        val description: String?
+    )
+
+    var webViewError: WebViewError? = null
+
+    var timeoutHandler: Handler = Handler(Looper.getMainLooper())
 
     //region Load invisible webview
     /**
@@ -44,11 +51,9 @@ internal object WebViewService {
         suspendCoroutine { continuation ->
             safeLet(
                 task.href,
-                task.method,
-                task.contentType,
                 task.expects,
                 localStartContext
-            ) { initialUrl, method, contentType, expects, context ->
+            ) { initialUrl, expects, context ->
                 WebView(context).apply {
                     settings.apply {
                         // JavaScript is required for our use case.
@@ -70,96 +75,83 @@ internal object WebViewService {
 
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
-                            continuation.resume("Y")
-                        }
+                            timeoutHandler.removeCallbacksAndMessages(null)
 
-                        override fun shouldInterceptRequest(
-                            view: WebView?,
-                            request: WebResourceRequest?
-                        ): WebResourceResponse? {
-
-                            if (request != null && request.url.toString() == initialUrl) {
-                                val (webResourceRequest, completionIndicator) = postWebViewRequest(
-                                    url = request.url.toString(),
-                                    method = when (method) {
-                                        RequestMethod.GET -> "GET"
-                                        RequestMethod.POST -> "POST"
-                                    },
-                                    requestHeaders = request.requestHeaders,
-                                    contentType = contentType,
-                                    expects = expects
-                                )
-
-                                if (webResourceRequest == null) {
-                                    continuation.resume(completionIndicator)
-                                    val handler = Handler(Looper.getMainLooper())
-                                    handler.post {
-                                        view?.destroy()
-                                    }
-                                } else {
-                                    return webResourceRequest
-                                }
+                            if (webViewError != null) {
+                                continuation.resume("N")
+                            } else {
+                                continuation.resume("Y")
                             }
 
-                            return super.shouldInterceptRequest(view, request)
+                            webViewError = null
+                        }
+
+                        @Deprecated("Deprecated in Java")
+                        override fun onReceivedError(
+                            view: WebView?,
+                            errorCode: Int,
+                            description: String?,
+                            failingUrl: String
+                        ) {
+                            onWebViewError(
+                                Uri.parse(failingUrl),
+                                errorCode,
+                                description
+                            )
+                        }
+
+                        @RequiresApi(Build.VERSION_CODES.M)
+                        override fun onReceivedError(
+                            view: WebView?,
+                            request: WebResourceRequest,
+                            error: WebResourceError
+                        ) {
+                            if (request.isForMainFrame) {
+                                onWebViewError(
+                                    request.url,
+                                    error.errorCode,
+                                    error.description.toString()
+                                )
+                            }
+                        }
+
+                        override fun onReceivedHttpError(
+                            view: WebView?,
+                            request: WebResourceRequest,
+                            errorResponse: WebResourceResponse
+                        ) {
+                            if (request.isForMainFrame) {
+                                onWebViewError(
+                                    request.url,
+                                    errorResponse.statusCode,
+                                    errorResponse.reasonPhrase
+                                )
+                            }
+                        }
+
+                        private fun onWebViewError(
+                            uri: Uri,
+                            statusCode: Int,
+                            description: String?
+                        ) {
+                            webViewError = WebViewError(
+                                uri = uri,
+                                statusCode = statusCode,
+                                description = description
+                            )
                         }
                     }
 
-                    loadUrl(initialUrl)
+                    timeoutHandler.postDelayed({
+                        continuation.resume("U")
+                    }, 5000)
+
+                    postUrl(initialUrl, getDataString(expects).toByteArray())
                 }
             } ?: continuation.resume(null)
         }
     }
     //endregion
-
-    private fun postWebViewRequest(
-        url: String,
-        method: String,
-        requestHeaders: Map<String, String>,
-        contentType: String,
-        expects: List<ExpectationModel>,
-    ): Pair<WebResourceResponse?, String> {
-        try {
-            val connection = URL(url).openConnection() as HttpsURLConnection
-
-            connection.readTimeout = 5000
-            connection.connectTimeout = 5000
-
-            connection.requestMethod = method
-
-            for ((key, value) in requestHeaders) {
-                connection.setRequestProperty(key, value)
-            }
-            connection.setRequestProperty("Content-Type", contentType)
-
-            connection.doInput = true
-            connection.doOutput = true
-
-            val postData = getDataString(expects).toByteArray(StandardCharsets.UTF_8)
-
-            val outputStreamWriter = DataOutputStream(connection.outputStream)
-            outputStreamWriter.write(postData)
-            outputStreamWriter.flush()
-
-            val responseCode = connection.responseCode
-
-            return if (200.until(400).contains(responseCode)) {
-                Pair(
-                    WebResourceResponse(
-                        connection.contentType.substringBefore(";"),
-                        "utf-8",
-                        connection.inputStream
-                    ), ""
-                )
-            } else {
-                Pair(null, "N")
-            }
-        } catch (timeoutException: SocketTimeoutException) {
-            return Pair(null, "U")
-        } catch (e: Exception) {
-            return Pair(null, "N")
-        }
-    }
 
     fun getWebView(
         task: IntegrationTask,
@@ -168,17 +160,11 @@ internal object WebViewService {
     ): WebView? {
         safeLet(
             task.href,
-            task.method,
-            task.contentType,
             task.expects,
             localStartContext
-        ) { initialUrl, method, contentType, expects, context ->
+        ) { initialUrl, expects, context ->
             val webView = WebView(context).apply {
                 settings.apply {
-                    // JavaScript is required for our use case.
-                    // The SDK will only use remote content through links
-                    // retrieved from the backend. The backend must be careful
-                    // not to send compromised links.
                     @SuppressLint("SetJavaScriptEnabled")
                     javaScriptEnabled = true
                     setSupportMultipleWindows(true)
@@ -191,58 +177,110 @@ internal object WebViewService {
                     displayZoomControls = false
                 }
 
-                loadUrl("https://firebasestorage.googleapis.com/v0/b/consid-beta.appspot.com/o/fake-3ds.html?alt=media")
+                timeoutHandler.postDelayed({
+                    completionHandler.invoke(null)
+                }, 5000)
+
+                postUrl(initialUrl, getDataString(expects).toByteArray())
             }
 
-            webView.webViewClient = object : RequestInspectorWebViewClient(webView) {
-                override fun shouldInterceptRequest(
-                    view: WebView,
-                    webViewRequest: WebViewRequest
-                ): WebResourceResponse? {
-                    if (webViewRequest.url == RequestUtil.NOTIFICATION_URL) {
-                        val cRes = webViewRequest.formParameters["CRes"]
-                        val handler = Handler(Looper.getMainLooper())
-                        handler.post {
-                            webView.stopLoading()
-                            completionHandler.invoke(cRes)
-                        }
-                    }
+            webView.webViewClient = object : WebViewClient() {
 
-                    /*if (webViewRequest.url == "https://firebasestorage.googleapis.com/v0/b/consid-beta.appspot.com/o/fake-3ds.html?alt=media") {
-                        val (webResourceRequest, _) = postWebViewRequest(
-                            url = webViewRequest.url,
-                            requestHeaders = webViewRequest.headers,
-                            method = "POST",
-                            contentType = contentType,
-                            expects = expects
-                        )
-
-                        if (webResourceRequest == null) {
-                            val handler = Handler(Looper.getMainLooper())
-                            handler.post {
-                                webView.stopLoading()
-                                completionHandler.invoke(null)
-                            }
-                        } else {
-                            return webResourceRequest
-                        }
-                    }*/
-
-                    return super.shouldInterceptRequest(view, webViewRequest)
-
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    timeoutHandler.removeCallbacksAndMessages(null)
                 }
 
+                @Deprecated("Deprecated in Java")
+                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                    return shouldOverrideUrlLoading(url?.let(Uri::parse))
+                }
+
+                @TargetApi(Build.VERSION_CODES.N)
                 override fun shouldOverrideUrlLoading(
                     view: WebView?,
                     request: WebResourceRequest?
                 ): Boolean {
-                    val handled = request?.url != null && (
+                    return shouldOverrideUrlLoading(request?.url)
+                }
+
+                private fun shouldOverrideUrlLoading(
+                    uri: Uri?
+                ): Boolean {
+                    if (uri.toString().startsWith(RequestUtil.NOTIFICATION_URL)) {
+                        val handler = Handler(Looper.getMainLooper())
+
+                        handler.post {
+                            completionHandler.invoke(uri?.getQueryParameter("cres"))
+                        }
+                        webView.stopLoading()
+                        return true
+                    }
+
+                    val handled = uri != null && (
                             UriUtil.attemptHandleByExternalApp(
-                                request.url.toString(),
+                                uri.toString(),
                                 context
                             ))
 
-                    return handled || !UriUtil.webViewCanOpen(request?.url)
+                    return handled || !UriUtil.webViewCanOpen(uri)
+                }
+
+                @Deprecated("Deprecated in Java")
+                override fun onReceivedError(
+                    view: WebView?,
+                    errorCode: Int,
+                    description: String?,
+                    failingUrl: String
+                ) {
+                    onWebViewError(
+                        Uri.parse(failingUrl),
+                        errorCode,
+                        description
+                    )
+                }
+
+                @RequiresApi(Build.VERSION_CODES.M)
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest,
+                    error: WebResourceError
+                ) {
+                    if (request.isForMainFrame) {
+                        onWebViewError(
+                            request.url,
+                            error.errorCode,
+                            error.description.toString()
+                        )
+                    }
+                }
+
+                override fun onReceivedHttpError(
+                    view: WebView?,
+                    request: WebResourceRequest,
+                    errorResponse: WebResourceResponse
+                ) {
+                    if (request.isForMainFrame) {
+                        onWebViewError(
+                            request.url,
+                            errorResponse.statusCode,
+                            errorResponse.reasonPhrase
+                        )
+                    }
+                }
+
+                private fun onWebViewError(
+                    uri: Uri,
+                    statusCode: Int,
+                    description: String?
+                ) {
+                    webViewError = WebViewError(
+                        uri = uri,
+                        statusCode = statusCode,
+                        description = description
+                    )
+
+                    completionHandler.invoke(null)
                 }
             }
 
