@@ -13,7 +13,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
-import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestUtil
+import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ExpectationModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
@@ -47,7 +47,7 @@ internal object WebViewService {
     suspend fun loadScaMethodRequest(
         task: IntegrationTask,
         localStartContext: Context?
-    ): String? = withContext(Dispatchers.Main) {
+    ): String = withContext(Dispatchers.Main) {
         suspendCoroutine { continuation ->
             safeLet(
                 task.href,
@@ -148,7 +148,7 @@ internal object WebViewService {
 
                     postUrl(initialUrl, getDataString(expects).toByteArray())
                 }
-            } ?: continuation.resume(null)
+            } ?: continuation.resume("N")
         }
     }
     //endregion
@@ -216,11 +216,15 @@ internal object WebViewService {
                 private fun shouldOverrideUrlLoading(
                     uri: Uri?
                 ): Boolean {
-                    if (uri.toString().startsWith(RequestUtil.NOTIFICATION_URL)) {
+                    if (uri.toString().startsWith(PaymentSessionAPIConstants.NOTIFICATION_URL)) {
                         val handler = Handler(Looper.getMainLooper())
 
                         handler.post {
-                            completionHandler.invoke(uri?.getQueryParameter("cres"))
+                            completionHandler.invoke(
+                                uri?.getQueryParameter(
+                                    PaymentSessionAPIConstants.CRES
+                                )
+                            )
                         }
                         webView.stopLoading()
                         return true

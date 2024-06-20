@@ -22,9 +22,6 @@ data class IntegrationTask(
     }
 }
 
-internal const val threeDSMethodData = "threeDSMethodData"
-internal const val creq = "creq"
-
 @Keep
 data class ExpectationModel(
     @SerializedName("name")

@@ -78,9 +78,12 @@ internal open class PaymentSessionAPIClient {
 
                 connection.connectTimeout = timeout
                 connection.readTimeout = timeout
-
                 connection.requestMethod = "GET"
-                connection.setRequestProperty("Accept", "application/json")
+
+                PaymentSessionAPIConstants.commonHeaders.forEach {
+                    connection.setRequestProperty(it.key, it.value)
+                }
+
                 connection.doInput = true
                 connection.doOutput = false
 
@@ -204,10 +207,12 @@ internal open class PaymentSessionAPIClient {
 
                 connection.connectTimeout = timeout
                 connection.readTimeout = timeout
-
                 connection.requestMethod = "POST"
-                connection.setRequestProperty("Content-Type", "application/json")
-                connection.setRequestProperty("Accept", "application/json")
+
+                PaymentSessionAPIConstants.commonHeaders.forEach {
+                    connection.setRequestProperty(it.key, it.value)
+                }
+
                 connection.doInput = true
                 connection.doOutput = true
 

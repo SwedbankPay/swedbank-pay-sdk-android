@@ -22,20 +22,22 @@ internal object RequestUtil {
 
     private val gson = GsonBuilder().serializeNulls().create()
 
-    const val NOTIFICATION_URL = "https://fake.payex.com/notification"
-    const val TEST_URL = "https://europe-west1-consid-beta.cloudfunctions.net/swpScaTrampoline"
-
     fun OperationRel.getRequestDataIfAny(
         instrument: PaymentAttemptInstrument? = null,
         culture: String?,
         completionIndicator: String = "N",
+        notificationUrl: String = "",
         cRes: String = ""
     ) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()
             START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(instrument, culture)
             EXPAND_METHOD -> getInstrumentViewsData(instrument)
-            CREATE_AUTHENTICATION -> getCreateAuthenticationData(completionIndicator)
+            CREATE_AUTHENTICATION -> getCreateAuthenticationData(
+                completionIndicator,
+                notificationUrl
+            )
+
             COMPLETE_AUTHENTICATION -> getCompleteAuthenticationData(cRes)
             else -> null
         }
@@ -81,10 +83,13 @@ internal object RequestUtil {
         }
     }
 
-    private fun getCreateAuthenticationData(completionIndicator: String): String {
+    private fun getCreateAuthenticationData(
+        completionIndicator: String,
+        notificationUrl: String
+    ): String {
         return CreateAuthentication(
             methodCompletionIndicator = completionIndicator,
-            notificationUrl = TEST_URL,
+            notificationUrl = notificationUrl,
             requestWindowSize = "FULLSCREEN",
             client = RequestDataUtil.getClient(),
             browser = RequestDataUtil.getBrowser()

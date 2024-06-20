@@ -1,15 +1,13 @@
 package com.swedbankpay.mobilesdk.paymentsession.api.model.request.util
 
+import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants.REQUEST_TIME_OUT_IN_MS
+import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants.REQUEST_TIME_OUT_IN_MS_FOR_CREDIT_CARD
+import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants.SESSION_TIME_OUT_IN_MS
+import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants.SESSION_TIME_OUT_IN_MS_FOR_CREDIT_CARD
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.Instrument
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
 
 internal object TimeOutUtil {
-
-    private const val REQUEST_TIME_OUT_IN_MS = 10 * 1000
-    private const val REQUEST_TIME_OUT_IN_MS_FOR_CREDIT_CARD = 30 * 1000
-
-    private const val SESSION_TIME_OUT_IN_MS = 20 * 1000
-    private const val SESSION_TIME_OUT_IN_MS_FOR_CREDIT_CARD = 30 * 1000
 
     fun getRequestTimeout(operationRel: OperationRel?, instrument: Instrument?) =
         if ((operationRel == OperationRel.START_PAYMENT_ATTEMPT && instrument == Instrument.CREDIT_CARD)

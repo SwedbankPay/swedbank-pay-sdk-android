@@ -9,7 +9,7 @@ data class OperationOutputModel(
     @SerializedName("contentType")
     val contentType: String?,
     @SerializedName("expects")
-    val expects: List<Any>? = listOf(),
+    val expects: List<ExpectationModel>? = listOf(),
     @SerializedName("href")
     val href: String?,
     @SerializedName("method")

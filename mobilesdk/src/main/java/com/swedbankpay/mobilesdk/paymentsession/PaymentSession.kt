@@ -13,6 +13,7 @@ import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIClient
+import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.TimeOutUtil
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
@@ -20,7 +21,6 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutput
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentSessionResponse
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.creq
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
@@ -440,7 +440,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             WebViewService.get3DSecureView(task, paymentAttemptInstrument?.context) { response ->
                 safeLet(response, currentPaymentOutputModel) { cRes, session ->
                     SessionOperationHandler.scaRedirectComplete(
-                        task.getExpectValuesFor(creq)?.value as String,
+                        task.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)?.value as String,
                         cRes
                     )
                     executeNextStepUntilFurtherInstructions(

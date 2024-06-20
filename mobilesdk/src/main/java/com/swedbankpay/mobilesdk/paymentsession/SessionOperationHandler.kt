@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.paymentsession
 
+import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestUtil.getRequestDataIfAny
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTaskRel
@@ -9,8 +10,6 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.creq
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.threeDSMethodData
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
@@ -144,27 +143,23 @@ internal object SessionOperationHandler {
             && scaMethodRequest.expects?.any { it.value in scaMethodRequestDataPerformed.keys } == false
         ) {
 
-
-            val result = WebViewService.loadScaMethodRequest(
+            val completionIndicator = WebViewService.loadScaMethodRequest(
                 task = scaMethodRequest,
                 localStartContext = paymentAttemptInstrument?.context
             )
-            result?.let { completionIndicator ->
-                scaMethodRequestDataPerformed[scaMethodRequest.getExpectValuesFor(threeDSMethodData)?.value as String] =
-                    completionIndicator
 
-                instructions.add(0, StepInstruction.OverrideApiCall(paymentOutputModel))
+            scaMethodRequestDataPerformed[scaMethodRequest.getExpectValuesFor(
+                PaymentSessionAPIConstants.THREE_DS_METHOD_DATA
+            )?.value as String] =
+                completionIndicator
 
-                return OperationStep(
-                    integrationRel = IntegrationTaskRel.SCA_METHOD_REQUEST,
-                    instructions = instructions
-                )
-            } ?: kotlin.run {
-                instructions.add(0, StepInstruction.InternalError)
-                return OperationStep(
-                    instructions = instructions
-                )
-            }
+            instructions.add(0, StepInstruction.OverrideApiCall(paymentOutputModel))
+
+            return OperationStep(
+                integrationRel = IntegrationTaskRel.SCA_METHOD_REQUEST,
+                instructions = instructions
+            )
+
         }
         //endregion
 
@@ -174,23 +169,35 @@ internal object SessionOperationHandler {
 
         val createAuthExpectationModel = createAuth?.tasks
             ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
-            ?.getExpectValuesFor(threeDSMethodData)
+            ?.getExpectValuesFor(PaymentSessionAPIConstants.THREE_DS_METHOD_DATA)
 
         val allowedToExecuteCreateAuth =
             createAuthExpectationModel?.value in scaMethodRequestDataPerformed.keys
 
         if (createAuth != null && createAuthExpectationModel != null && allowedToExecuteCreateAuth) {
-            return OperationStep(
-                requestMethod = createAuth.method,
-                url = URL(createAuth.href),
-                operationRel = createAuth.rel,
-                data = createAuth.rel?.getRequestDataIfAny(
-                    culture = paymentOutputModel.paymentSession.culture,
-                    completionIndicator = scaMethodRequestDataPerformed[createAuthExpectationModel.value]
-                        ?: "N"
-                ),
-                instructions = instructions
-            )
+
+            (createAuth.expects?.firstOrNull
+            { it.name == PaymentSessionAPIConstants.TRAMPOLINE_NOTIFICATION_URL }
+                ?.value as String?)?.let { notificationUrl ->
+                return OperationStep(
+                    requestMethod = createAuth.method,
+                    url = URL(createAuth.href),
+                    operationRel = createAuth.rel,
+                    data = createAuth.rel?.getRequestDataIfAny(
+                        culture = paymentOutputModel.paymentSession.culture,
+                        completionIndicator = scaMethodRequestDataPerformed[createAuthExpectationModel.value]
+                            ?: "N",
+                        notificationUrl = notificationUrl
+                    ),
+                    instructions = instructions
+                )
+            } ?: kotlin.run {
+                instructions.add(0, StepInstruction.InternalError)
+                return OperationStep(
+                    instructions = instructions
+                )
+            }
+
         }
         //endregion
 
@@ -214,7 +221,7 @@ internal object SessionOperationHandler {
 
         val completeAuthExpectationModel = completeAuth?.tasks
             ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_REDIRECT }
-            ?.getExpectValuesFor(creq)
+            ?.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)
 
         val allowedToExecuteCompleteAuth =
             completeAuthExpectationModel?.value in scaRedirectDataPerformed.keys
