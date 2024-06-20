@@ -437,7 +437,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private fun launchWebView(task: IntegrationTask) {
         val webView =
-            WebViewService.getWebView(task, paymentAttemptInstrument?.context) { response ->
+            WebViewService.get3DSecureView(task, paymentAttemptInstrument?.context) { response ->
                 safeLet(response, currentPaymentOutputModel) { cRes, session ->
                     SessionOperationHandler.scaRedirectComplete(
                         task.getExpectValuesFor(creq)?.value as String,

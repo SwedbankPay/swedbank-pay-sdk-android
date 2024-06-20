@@ -16,13 +16,13 @@ sealed class PaymentAttemptInstrument(
     data class Swish(
         val msisdn: String? = null,
         val localStartContext: Context? = null
-    ) : PaymentAttemptInstrument(localStartContext, "Swish")
+    ) : PaymentAttemptInstrument(localStartContext, Instrument.SWISH.rawValue)
 
     @Keep
     data class CreditCard(
         val prefill: CreditCardPrefill,
         val localStartContext: Context? = null
-    ) : PaymentAttemptInstrument(localStartContext, "CreditCard")
+    ) : PaymentAttemptInstrument(localStartContext, Instrument.CREDIT_CARD.rawValue)
 
 }
 

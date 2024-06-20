@@ -20,14 +20,18 @@ internal class PrefillBaseModelDeserializer : JsonDeserializer<PrefillBaseModel>
         val swishPrefill = jsonObject?.get("msisdn")
         val creditCardPrefill = jsonObject?.get("paymentToken")
 
-        if (swishPrefill != null) {
-            return context?.deserialize(jsonObject, SwishMethodPrefillModel::class.java)
-        }
+        return when {
+            swishPrefill != null -> context?.deserialize(
+                jsonObject,
+                SwishMethodPrefillModel::class.java
+            )
 
-        if (creditCardPrefill != null) {
-            return context?.deserialize(jsonObject, CreditCardMethodPrefillModel::class.java)
-        }
+            creditCardPrefill != null -> context?.deserialize(
+                jsonObject,
+                CreditCardMethodPrefillModel::class.java
+            )
 
-        return null
+            else -> null
+        }
     }
 }

@@ -1,23 +1,8 @@
 package com.swedbankpay.mobilesdk.paymentsession.api.model.response
 
 
-import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
-import com.swedbankpay.mobilesdk.paymentsession.util.gson.PrefillBaseModelDeserializer
-import com.swedbankpay.mobilesdk.paymentsession.util.gson.RuntimeTypeAdapterFactory
-
-/**
- * Type factory is used to be able to parse the different method models
- * If the method is not present in the registerSubtype it will
- * not be in the list with available payment methods for the merchant.
- *
- * If a new subtype is registered add new prefill model to [PrefillBaseModelDeserializer]
- * */
-internal val methodBaseModelFactory: RuntimeTypeAdapterFactory<MethodBaseModel>? =
-    RuntimeTypeAdapterFactory
-        .of(MethodBaseModel::class.java, "instrument", true)
-        .registerSubtype(SwishMethodModel::class.java, "Swish")
-        .registerSubtype(CreditCardMethodModel::class.java, "CreditCard")
+import com.google.gson.annotations.SerializedName
 
 @Keep
 open class MethodBaseModel {
@@ -93,9 +78,17 @@ internal class GooglePayMethodModel : MethodBaseModel() {
 @Keep
 enum class Instrument {
     @SerializedName("Swish")
-    SWISH,
+    SWISH {
+        override val rawValue: String
+            get() = "Swish"
+    },
 
     @SerializedName("CreditCard")
-    CREDIT_CARD,
+    CREDIT_CARD {
+        override val rawValue: String
+            get() = "CreditCard"
+    };
+
+    abstract val rawValue: String
 }
 

@@ -39,12 +39,12 @@ internal object WebViewService {
 
     //region Load invisible webview
     /**
-     * This method will load a sca-method-request in an invisible webview.
+     * This method will load a sca-method-request in an "invisible" webview.
      * If the view succeeds to load we will return Y
-     * If we get response code 4xx/5xx we will return N
+     * If an error occurs we will return N
      * If we get a timeout we will return U
      */
-    suspend fun load(
+    suspend fun loadScaMethodRequest(
         task: IntegrationTask,
         localStartContext: Context?
     ): String? = withContext(Dispatchers.Main) {
@@ -153,7 +153,16 @@ internal object WebViewService {
     }
     //endregion
 
-    fun getWebView(
+    /**
+     * This method creates a webview for 3d secure and configure it to
+     * intercept urls to know when 3d secure is done
+     *
+     *  @param task A task that holds the data that is required for 3d secure
+     *  @param localStartContext Context for the webview creation
+     *  @param completionHandler Invoked when 3d secure is done or some error occurs
+     *
+     */
+    fun get3DSecureView(
         task: IntegrationTask,
         localStartContext: Context?,
         completionHandler: (String?) -> Unit

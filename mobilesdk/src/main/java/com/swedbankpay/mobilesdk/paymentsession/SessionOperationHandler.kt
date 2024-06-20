@@ -145,7 +145,7 @@ internal object SessionOperationHandler {
         ) {
 
 
-            val result = WebViewService.load(
+            val result = WebViewService.loadScaMethodRequest(
                 task = scaMethodRequest,
                 localStartContext = paymentAttemptInstrument?.context
             )
