@@ -13,10 +13,15 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
+import com.swedbankpay.mobilesdk.logging.BeaconService
+import com.swedbankpay.mobilesdk.logging.model.EventAction
+import com.swedbankpay.mobilesdk.logging.model.HttpModel
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ExpectationModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
+import com.swedbankpay.mobilesdk.paymentsession.util.scaMethodRequestExtensionModel
+import com.swedbankpay.mobilesdk.paymentsession.util.scaRedirectResultExtensionModel
 import com.swedbankpay.mobilesdk.paymentsession.webviewservice.util.UriUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -49,6 +54,7 @@ internal object WebViewService {
         localStartContext: Context?
     ): String = withContext(Dispatchers.Main) {
         suspendCoroutine { continuation ->
+            val start = System.currentTimeMillis()
             safeLet(
                 task.href,
                 task.expects,
@@ -80,6 +86,17 @@ internal object WebViewService {
                             if (webViewError != null) {
                                 continuation.resume("N")
                             } else {
+                                BeaconService.logEvent(
+                                    EventAction.SCAMethodRequest(
+                                        http = HttpModel(
+                                            requestUrl = initialUrl,
+                                            method = "POST",
+                                        ),
+                                        duration = (System.currentTimeMillis() - start).toInt(),
+                                        extensions = scaMethodRequestExtensionModel("Y")
+                                    )
+                                )
+
                                 continuation.resume("Y")
                             }
 
@@ -139,6 +156,18 @@ internal object WebViewService {
                                 statusCode = statusCode,
                                 description = description
                             )
+
+                            BeaconService.logEvent(
+                                EventAction.SCAMethodRequest(
+                                    http = HttpModel(
+                                        requestUrl = initialUrl,
+                                        method = "POST",
+                                        responseStatusCode = statusCode
+                                    ),
+                                    duration = (System.currentTimeMillis() - start).toInt(),
+                                    extensions = scaMethodRequestExtensionModel("N", webViewError)
+                                )
+                            )
                         }
                     }
 
@@ -165,8 +194,10 @@ internal object WebViewService {
     fun get3DSecureView(
         task: IntegrationTask,
         localStartContext: Context?,
-        completionHandler: (String?) -> Unit
+        completionHandler: (String?, WebViewError?) -> Unit
     ): WebView? {
+        val start = System.currentTimeMillis()
+
         safeLet(
             task.href,
             task.expects,
@@ -187,7 +218,6 @@ internal object WebViewService {
                 }
 
                 timeoutHandler.postDelayed({
-                    completionHandler.invoke(null)
                 }, 5000)
 
                 postUrl(initialUrl, getDataString(expects).toByteArray())
@@ -217,13 +247,26 @@ internal object WebViewService {
                     uri: Uri?
                 ): Boolean {
                     if (uri.toString().startsWith(PaymentSessionAPIConstants.NOTIFICATION_URL)) {
-                        val handler = Handler(Looper.getMainLooper())
+                        val cres = uri?.getQueryParameter(
+                            PaymentSessionAPIConstants.CRES
+                        )
 
+                        BeaconService.logEvent(
+                            EventAction.SCARedirectResult(
+                                http = HttpModel(
+                                    requestUrl = initialUrl,
+                                    method = "POST",
+                                ),
+                                duration = (System.currentTimeMillis() - start).toInt(),
+                                extensions = scaRedirectResultExtensionModel(cres != null)
+                            )
+                        )
+
+                        val handler = Handler(Looper.getMainLooper())
                         handler.post {
                             completionHandler.invoke(
-                                uri?.getQueryParameter(
-                                    PaymentSessionAPIConstants.CRES
-                                )
+                                cres,
+                                null
                             )
                         }
                         webView.stopLoading()
@@ -293,7 +336,18 @@ internal object WebViewService {
                         description = description
                     )
 
-                    completionHandler.invoke(null)
+                    BeaconService.logEvent(
+                        EventAction.SCARedirectResult(
+                            http = HttpModel(
+                                requestUrl = initialUrl,
+                                method = "POST",
+                            ),
+                            duration = (System.currentTimeMillis() - start).toInt(),
+                            extensions = scaRedirectResultExtensionModel(false, webViewError)
+                        )
+                    )
+
+                    completionHandler.invoke(null, webViewError)
                 }
             }
 

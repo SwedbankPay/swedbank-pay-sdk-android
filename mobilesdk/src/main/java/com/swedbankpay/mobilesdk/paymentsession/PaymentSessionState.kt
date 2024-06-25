@@ -44,14 +44,14 @@ sealed class PaymentSessionState {
     /**
      *  Called if there is a session problem with performing the payment.
      *
-     *  @param problem [ProblemDetails] that cause the failure
+     *  @param problem [ProblemDetails] that caused the failure
      */
     class SessionProblemOccurred(val problem: ProblemDetails) : PaymentSessionState()
 
     /**
      *  Called if there is a SDK problem with performing the payment.
      *
-     *  @param problem [PaymentSessionProblem] that cause the failure
+     *  @param problem [PaymentSessionProblem] that caused the failure
      */
     class SdkProblemOccurred(val problem: PaymentSessionProblem) : PaymentSessionState()
 

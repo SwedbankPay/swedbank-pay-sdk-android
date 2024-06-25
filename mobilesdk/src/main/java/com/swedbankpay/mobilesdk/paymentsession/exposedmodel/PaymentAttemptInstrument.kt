@@ -16,13 +16,21 @@ sealed class PaymentAttemptInstrument(
     data class Swish(
         val msisdn: String? = null,
         val localStartContext: Context? = null
-    ) : PaymentAttemptInstrument(localStartContext, Instrument.SWISH.rawValue)
+    ) : PaymentAttemptInstrument(localStartContext, Instrument.SWISH.rawValue) {
+        override val rawValue: String
+            get() = "Swish"
+    }
 
     @Keep
     data class CreditCard(
         val prefill: CreditCardPrefill,
-        val localStartContext: Context? = null
-    ) : PaymentAttemptInstrument(localStartContext, Instrument.CREDIT_CARD.rawValue)
+        val localStartContext: Context
+    ) : PaymentAttemptInstrument(localStartContext, Instrument.CREDIT_CARD.rawValue) {
+        override val rawValue: String
+            get() = "CreditCard"
+    }
+
+    abstract val rawValue: String
 
 }
 

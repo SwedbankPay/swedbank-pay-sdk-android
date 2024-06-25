@@ -24,4 +24,16 @@ sealed class EventAction(val action: String, val extensions: ExtensionsModel? = 
     class ClientAppCallback(
         extensions: ExtensionsModel?
     ) : EventAction("ClientAppCallback", extensions)
+
+    class SCAMethodRequest(
+        val http: HttpModel?,
+        val duration: Int?,
+        extensions: ExtensionsModel?
+    ) : EventAction("SCAMethodRequest", extensions)
+
+    class SCARedirectResult(
+        val http: HttpModel?,
+        val duration: Int?,
+        extensions: ExtensionsModel?
+    ) : EventAction("SCARedirectResult", extensions)
 }

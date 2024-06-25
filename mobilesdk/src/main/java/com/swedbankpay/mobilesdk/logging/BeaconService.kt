@@ -11,10 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.io.OutputStreamWriter
-import java.lang.Exception
 import java.net.URL
-import java.util.LinkedList
-import java.util.Queue
+import java.util.*
 import javax.net.ssl.HttpsURLConnection
 
 internal object BeaconService {
@@ -38,6 +36,8 @@ internal object BeaconService {
                 action = eventAction.action,
                 duration = when (eventAction) {
                     is EventAction.HttpRequest -> eventAction.duration
+                    is EventAction.SCAMethodRequest -> eventAction.duration
+                    is EventAction.SCARedirectResult -> eventAction.duration
                     else -> null
                 }
             ),
@@ -46,6 +46,14 @@ internal object BeaconService {
 
         when (eventAction) {
             is EventAction.HttpRequest -> {
+                beaconInput = beaconInput.copy(http = eventAction.http)
+            }
+
+            is EventAction.SCAMethodRequest -> {
+                beaconInput = beaconInput.copy(http = eventAction.http)
+            }
+
+            is EventAction.SCARedirectResult -> {
                 beaconInput = beaconInput.copy(http = eventAction.http)
             }
 
@@ -59,7 +67,6 @@ internal object BeaconService {
 
             else -> {
                 // Event actions that doesn't need additional data models
-                // EventAction.LaunchClientApp
             }
         }
 

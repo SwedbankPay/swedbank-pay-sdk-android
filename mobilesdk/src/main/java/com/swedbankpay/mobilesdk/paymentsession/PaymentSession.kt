@@ -324,7 +324,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             }
 
             is StepInstruction.ScaRedirectStep -> {
-                launchWebView(instruction.task)
+                launch3DSecure(instruction.task)
             }
 
             is StepInstruction.LaunchClientAppStep -> {
@@ -435,29 +435,62 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
     }
 
-    private fun launchWebView(task: IntegrationTask) {
+    private fun launch3DSecure(task: IntegrationTask) {
         val webView =
-            WebViewService.get3DSecureView(task, paymentAttemptInstrument?.context) { response ->
-                safeLet(response, currentPaymentOutputModel) { cRes, session ->
-                    SessionOperationHandler.scaRedirectComplete(
-                        task.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)?.value as String,
-                        cRes
-                    )
-                    executeNextStepUntilFurtherInstructions(
-                        operationStep = OperationStep(
-                            instructions = listOf(StepInstruction.OverrideApiCall(session))
-                        )
-                    )
-                    _paymentSessionState.value = PaymentSessionState.Dismiss3dSecure
-                    setStateToIdle()
+            WebViewService.get3DSecureView(
+                task,
+                paymentAttemptInstrument?.context
+            ) { cRes, webViewError ->
+                currentPaymentOutputModel?.let { session ->
+                    when {
+                        cRes != null -> {
+                            clearPaymentAttemptInstrument()
+
+                            SessionOperationHandler.scaRedirectComplete(
+                                task.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)?.value as String,
+                                cRes
+                            )
+                            executeNextStepUntilFurtherInstructions(
+                                operationStep = OperationStep(
+                                    instructions = listOf(StepInstruction.OverrideApiCall(session))
+                                )
+                            )
+                            _paymentSessionState.value = PaymentSessionState.Dismiss3dSecure
+                            setStateToIdle()
+
+
+                            BeaconService.logEvent(
+                                eventAction = EventAction.SDKCallbackInvoked(
+                                    method = MethodModel(
+                                        name = "dismiss3DSecure",
+                                        sdk = true,
+                                        succeeded = true
+                                    )
+                                )
+                            )
+                        }
+
+                        webViewError != null -> {
+                            onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+                        }
+                    }
                 } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
             }
 
-        clearPaymentAttemptInstrument()
 
         if (webView != null) {
             _paymentSessionState.value = PaymentSessionState.Show3dSecure(webView)
             setStateToIdle()
+
+            BeaconService.logEvent(
+                eventAction = EventAction.SDKCallbackInvoked(
+                    method = MethodModel(
+                        name = "show3DSecure",
+                        sdk = true,
+                        succeeded = true
+                    )
+                )
+            )
         } else {
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }

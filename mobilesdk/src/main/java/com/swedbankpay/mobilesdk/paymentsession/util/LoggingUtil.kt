@@ -5,8 +5,9 @@ import com.swedbankpay.mobilesdk.logging.model.ExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
-import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
+import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
+import com.swedbankpay.mobilesdk.paymentsession.webviewservice.WebViewService
 
 /**
  * This files holds various functions for logging purposes
@@ -23,14 +24,36 @@ internal fun <T : AvailableInstrument> List<T>.toExtensionsModel() =
     )
 
 @Keep
-internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel = when (this) {
-    is PaymentAttemptInstrument.CreditCard -> ExtensionsModel()
-    is PaymentAttemptInstrument.Swish -> ExtensionsModel(
-        values = mutableMapOf(
-            "instrument" to "Swish",
-            "msisdn" to msisdn
-        )
+internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel {
+    val values: MutableMap<String, Any?> = mutableMapOf(
+        "instrument" to this.rawValue
     )
+
+    return when (this) {
+        is PaymentAttemptInstrument.CreditCard -> {
+            val usedCard = this.prefill
+
+            val creditCardValues = mapOf(
+                "paymentToken" to usedCard.paymentToken,
+                "cardNumber" to usedCard.maskedPan,
+                "cardExpiryMonth" to usedCard.expiryMonth,
+                "cardExpiryYear" to usedCard.expiryYear
+            )
+
+            values.putAll(creditCardValues)
+
+            ExtensionsModel(
+                values = values
+            )
+        }
+
+        is PaymentAttemptInstrument.Swish -> {
+            values["msisdn"] = msisdn
+            ExtensionsModel(
+                values = values
+            )
+        }
+    }
 }
 
 @Keep
@@ -65,6 +88,43 @@ internal fun clientAppCallbackExtensionsModel(
         "callbackUrl" to callbackUrl
     )
 )
+
+@Keep
+internal fun scaMethodRequestExtensionModel(
+    completionIndicator: String,
+    webViewError: WebViewService.WebViewError? = null
+) = ExtensionsModel(
+    values = if (webViewError != null) {
+        mutableMapOf(
+            "methodCompletionIndicator" to completionIndicator,
+            "errorMessage" to webViewError.description,
+            "responseCode" to webViewError.statusCode
+        )
+    } else {
+        mutableMapOf(
+            "methodCompletionIndicator" to completionIndicator
+        )
+    }
+)
+
+@Keep
+internal fun scaRedirectResultExtensionModel(
+    cresReceived: Boolean,
+    webViewError: WebViewService.WebViewError? = null
+) = ExtensionsModel(
+    values = if (webViewError != null) {
+        mutableMapOf(
+            "cresRecieved" to cresReceived,
+            "errorMessage" to webViewError.description,
+            "responseCode" to webViewError.statusCode
+        )
+    } else {
+        mutableMapOf(
+            "cresRecieved" to cresReceived
+        )
+    }
+)
+
 
 @Keep
 internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
