@@ -1,6 +1,6 @@
 package com.swedbankpay.mobilesdk.paymentsession
 
-import android.webkit.WebView
+import android.view.View
 import androidx.annotation.Keep
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
@@ -24,7 +24,7 @@ sealed class PaymentSessionState {
     /**
      * Called when 3d-secure should be shown
      */
-    class Show3dSecure(val webView: WebView) : PaymentSessionState()
+    class Show3dSecure(val view: View) : PaymentSessionState()
 
     /**
      * Called when 3d-secure can be dismissed
