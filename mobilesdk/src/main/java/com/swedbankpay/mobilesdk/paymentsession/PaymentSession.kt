@@ -346,12 +346,12 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     /**
-     * Starts a new payment session
+     * Fetches a new payment session
      *
-     * @param sessionURL URL needed to start the payment session
+     * @param sessionURL URL needed to fetch the payment session
      *
      */
-    fun startPaymentSession(
+    fun fetchPaymentSession(
         sessionURL: String,
     ) {
         clearState(true)
@@ -360,7 +360,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         BeaconService.logEvent(
             eventAction = EventAction.SDKMethodInvoked(
                 method = MethodModel(
-                    name = "startPaymentSession",
+                    name = "fetchPaymentSession",
                     sdk = true,
                     succeeded = true
                 )
@@ -455,7 +455,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                 instructions = listOf(StepInstruction.OverrideApiCall(session))
                             )
                         )
-                        _paymentSessionState.value = PaymentSessionState.Dismiss3dSecure
+                        _paymentSessionState.value = PaymentSessionState.Dismiss3dSecureFragment
                         setStateToIdle()
 
 
@@ -473,7 +473,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
 
-        _paymentSessionState.value = PaymentSessionState.Show3dSecure(scaRedirectFragment)
+        _paymentSessionState.value = PaymentSessionState.Show3dSecureFragment(scaRedirectFragment)
         setStateToIdle()
 
         BeaconService.logEvent(
