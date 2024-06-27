@@ -1,4 +1,4 @@
-package com.swedbankpay.mobilesdk.paymentsession.webviewservice.util
+package com.swedbankpay.mobilesdk.paymentsession.sca.util
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -9,7 +9,7 @@ import android.net.Uri
 import android.os.Build
 import java.net.URISyntaxException
 
-object UriUtil {
+object ScaRedirectUtil {
 
     private val INTENT_URI_FLAGS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
         Intent.URI_ANDROID_APP_SCHEME or Intent.URI_INTENT_SCHEME

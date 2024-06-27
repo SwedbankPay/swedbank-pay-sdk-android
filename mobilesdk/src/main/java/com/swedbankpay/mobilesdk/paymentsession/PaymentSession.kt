@@ -24,12 +24,12 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
+import com.swedbankpay.mobilesdk.paymentsession.sca.ScaRedirectFragment
 import com.swedbankpay.mobilesdk.paymentsession.util.UriCallbackUtil.addCallbackUrl
 import com.swedbankpay.mobilesdk.paymentsession.util.clientAppCallbackExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import com.swedbankpay.mobilesdk.paymentsession.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionsModel
-import com.swedbankpay.mobilesdk.paymentsession.webviewservice.WebViewService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -436,65 +436,55 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     private fun launch3DSecure(task: IntegrationTask) {
-        val webView =
-            WebViewService.get3DSecureView(
-                task,
-                paymentAttemptInstrument?.context
-            ) { cRes, webViewError ->
-                currentPaymentOutputModel?.let { session ->
-                    when {
-                        cRes != null -> {
-                            clearPaymentAttemptInstrument()
 
-                            SessionOperationHandler.scaRedirectComplete(
-                                task.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)?.value as String,
-                                cRes
+        val scaRedirectFragment = ScaRedirectFragment(
+            task,
+            errorHandler = ::onSdkProblemOccurred
+        ) { cRes ->
+            currentPaymentOutputModel?.let { session ->
+                when {
+                    cRes != null -> {
+                        clearPaymentAttemptInstrument()
+
+                        SessionOperationHandler.scaRedirectComplete(
+                            task.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)?.value as String,
+                            cRes
+                        )
+                        executeNextStepUntilFurtherInstructions(
+                            operationStep = OperationStep(
+                                instructions = listOf(StepInstruction.OverrideApiCall(session))
                             )
-                            executeNextStepUntilFurtherInstructions(
-                                operationStep = OperationStep(
-                                    instructions = listOf(StepInstruction.OverrideApiCall(session))
+                        )
+                        _paymentSessionState.value = PaymentSessionState.Dismiss3dSecure
+                        setStateToIdle()
+
+
+                        BeaconService.logEvent(
+                            eventAction = EventAction.SDKCallbackInvoked(
+                                method = MethodModel(
+                                    name = "dismiss3DSecure",
+                                    sdk = true,
+                                    succeeded = true
                                 )
                             )
-                            _paymentSessionState.value = PaymentSessionState.Dismiss3dSecure
-                            setStateToIdle()
-
-
-                            BeaconService.logEvent(
-                                eventAction = EventAction.SDKCallbackInvoked(
-                                    method = MethodModel(
-                                        name = "dismiss3DSecure",
-                                        sdk = true,
-                                        succeeded = true
-                                    )
-                                )
-                            )
-                        }
-
-                        webViewError != null -> {
-                            onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
-                        }
+                        )
                     }
-                } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
-            }
-
-
-        if (webView != null) {
-            _paymentSessionState.value = PaymentSessionState.Show3dSecure(webView)
-            setStateToIdle()
-
-            BeaconService.logEvent(
-                eventAction = EventAction.SDKCallbackInvoked(
-                    method = MethodModel(
-                        name = "show3DSecure",
-                        sdk = true,
-                        succeeded = true
-                    )
-                )
-            )
-        } else {
-            onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+                }
+            } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
 
+        _paymentSessionState.value = PaymentSessionState.Show3dSecure(scaRedirectFragment)
+        setStateToIdle()
+
+        BeaconService.logEvent(
+            eventAction = EventAction.SDKCallbackInvoked(
+                method = MethodModel(
+                    name = "show3DSecure",
+                    sdk = true,
+                    succeeded = true
+                )
+            )
+        )
     }
 
     private fun launchClientApp(href: String) {

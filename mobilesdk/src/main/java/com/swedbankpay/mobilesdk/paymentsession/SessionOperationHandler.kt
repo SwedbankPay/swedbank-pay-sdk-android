@@ -14,7 +14,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
-import com.swedbankpay.mobilesdk.paymentsession.webviewservice.WebViewService
+import com.swedbankpay.mobilesdk.paymentsession.sca.ScaMethodService
 import java.net.URL
 
 internal object SessionOperationHandler {
@@ -143,7 +143,7 @@ internal object SessionOperationHandler {
             && scaMethodRequest.expects?.any { it.value in scaMethodRequestDataPerformed.keys } == false
         ) {
 
-            val completionIndicator = WebViewService.loadScaMethodRequest(
+            val completionIndicator = ScaMethodService.loadScaMethodRequest(
                 task = scaMethodRequest,
                 localStartContext = paymentAttemptInstrument?.context
             )

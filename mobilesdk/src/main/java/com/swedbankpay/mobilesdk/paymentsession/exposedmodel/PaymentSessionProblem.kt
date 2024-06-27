@@ -10,12 +10,16 @@ sealed class PaymentSessionProblem {
     data class PaymentSessionAPIRequestFailed(
         val error: SwedbankPayAPIError,
         val retry: () -> Unit
-    ) :
-        PaymentSessionProblem()
+    ) : PaymentSessionProblem()
+
+    data class PaymentSession3DSecureFragmentLoadFailed(
+        val error: SwedbankPayAPIError.Error,
+        val retry: () -> Unit
+    ) : PaymentSessionProblem()
 
     object ClientAppLaunchFailed : PaymentSessionProblem()
 
-    object InternalInconsistencyError: PaymentSessionProblem()
+    object InternalInconsistencyError : PaymentSessionProblem()
 
     object AutomaticConfigurationFailed : PaymentSessionProblem()
 }

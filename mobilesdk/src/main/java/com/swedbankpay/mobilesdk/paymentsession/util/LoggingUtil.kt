@@ -7,7 +7,6 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetail
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
-import com.swedbankpay.mobilesdk.paymentsession.webviewservice.WebViewService
 
 /**
  * This files holds various functions for logging purposes
@@ -92,13 +91,14 @@ internal fun clientAppCallbackExtensionsModel(
 @Keep
 internal fun scaMethodRequestExtensionModel(
     completionIndicator: String,
-    webViewError: WebViewService.WebViewError? = null
+    errorMessage: String? = null,
+    responseCode: Int? = null
 ) = ExtensionsModel(
-    values = if (webViewError != null) {
+    values = if (errorMessage != null) {
         mutableMapOf(
             "methodCompletionIndicator" to completionIndicator,
-            "errorMessage" to webViewError.description,
-            "responseCode" to webViewError.statusCode
+            "errorMessage" to errorMessage,
+            "responseCode" to responseCode
         )
     } else {
         mutableMapOf(
@@ -110,13 +110,14 @@ internal fun scaMethodRequestExtensionModel(
 @Keep
 internal fun scaRedirectResultExtensionModel(
     cresReceived: Boolean,
-    webViewError: WebViewService.WebViewError? = null
+    errorMessage: String? = null,
+    responseCode: Int? = null
 ) = ExtensionsModel(
-    values = if (webViewError != null) {
+    values = if (errorMessage != null) {
         mutableMapOf(
             "cresRecieved" to cresReceived,
-            "errorMessage" to webViewError.description,
-            "responseCode" to webViewError.statusCode
+            "errorMessage" to errorMessage,
+            "responseCode" to responseCode
         )
     } else {
         mutableMapOf(
@@ -154,6 +155,11 @@ internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
         PaymentSessionProblem.PaymentSessionEndReached -> mutableMapOf("problem" to "paymentSessionEndReached")
         PaymentSessionProblem.InternalInconsistencyError -> mutableMapOf("problem" to "internalInconsistencyError")
         PaymentSessionProblem.AutomaticConfigurationFailed -> mutableMapOf("problem" to "automaticConfigurationFailed")
+        is PaymentSessionProblem.PaymentSession3DSecureFragmentLoadFailed -> mutableMapOf(
+            "problem" to "paymentSession3DSecureFragmentLoadFailed",
+            "errorMessage" to error.message,
+            "responseCode" to error.responseCode
+        )
     }
 
     return ExtensionsModel(
