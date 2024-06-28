@@ -32,6 +32,11 @@ sealed class PaymentSessionState {
     object Dismiss3dSecureFragment : PaymentSessionState()
 
     /**
+     * Called when payment fragment is created and can be shown
+     */
+    class PaymentFragmentCreated(val fragment: Fragment) : PaymentSessionState()
+
+    /**
      * Called whenever the payment has been completed
      */
     object PaymentComplete : PaymentSessionState()

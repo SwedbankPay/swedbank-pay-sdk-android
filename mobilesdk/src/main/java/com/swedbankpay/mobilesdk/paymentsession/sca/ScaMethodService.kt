@@ -160,8 +160,9 @@ internal object ScaMethodService {
                     }
 
                     timeoutHandler.postDelayed({
+                        this.stopLoading()
                         continuation.resume("U")
-                    }, 5000)
+                    }, 10000)
 
                     postUrl(initialUrl, expects.toByteArray())
                 }

@@ -10,12 +10,33 @@ class CallbackActivity : Activity() {
         val onCallbackUrlInvoked = MutableLiveData<Unit>()
         private val invokedCallbackUrls = HashSet<String>()
 
+        val onNativeCallbackUrlInvoked = MutableLiveData<Unit>()
+        private val invokedNativeCallbacksUrls = HashSet<String>()
+
         private fun onCallbackUrl(refreshCallbackUrl: String) {
             invokedCallbackUrls.add(refreshCallbackUrl)
             onCallbackUrlInvoked.value = Unit
+
+            invokedNativeCallbacksUrls.add(refreshCallbackUrl)
+            onNativeCallbackUrlInvoked.value = Unit
         }
+
         fun consumeCallbackUrl(refreshCallbackUrl: String): Boolean {
-            return invokedCallbackUrls.remove(refreshCallbackUrl)
+            val callBackUrl =
+                invokedCallbackUrls.firstOrNull { it.trimEnd('/') == refreshCallbackUrl.trimEnd('/') }
+
+            return invokedCallbackUrls.remove(callBackUrl)
+        }
+
+        fun consumeNativeCallbackUrl(refreshCallbackUrl: String): Boolean {
+            val callBackUrl =
+                invokedNativeCallbacksUrls.firstOrNull {
+                    it.trimEnd('/') == refreshCallbackUrl.trimEnd(
+                        '/'
+                    )
+                }
+
+            return invokedNativeCallbacksUrls.remove(callBackUrl)
         }
     }
 

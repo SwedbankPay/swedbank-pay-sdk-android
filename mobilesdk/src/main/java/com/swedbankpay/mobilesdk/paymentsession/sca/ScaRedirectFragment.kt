@@ -91,7 +91,21 @@ internal class ScaRedirectFragment(
                     }
 
                     timeoutHandler.postDelayed({
-                    }, 5000)
+                        this.stopLoading()
+                        val error = PaymentSessionProblem.PaymentSession3DSecureFragmentLoadFailed(
+                            error = SwedbankPayAPIError.Error(
+                                message = "Timeout"
+                            ),
+                            retry = {
+                                safeLet(task.href, task.expects) { href, expects ->
+                                    this.postUrl(href, expects.toByteArray())
+                                }
+                                    ?: errorHandler.invoke(PaymentSessionProblem.InternalInconsistencyError)
+                            }
+                        )
+
+                        errorHandler.invoke(error)
+                    }, 10000)
 
                     postUrl(initialUrl, expects.toByteArray())
                 }

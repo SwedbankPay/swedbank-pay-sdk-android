@@ -7,6 +7,7 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import com.swedbankpay.mobilesdk.PaymentFragment
 import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
 import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.logging.BeaconService
@@ -27,6 +28,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaRedirectFragment
 import com.swedbankpay.mobilesdk.paymentsession.util.UriCallbackUtil.addCallbackUrl
 import com.swedbankpay.mobilesdk.paymentsession.util.clientAppCallbackExtensionsModel
+import com.swedbankpay.mobilesdk.paymentsession.util.configuration.AutomaticConfiguration
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import com.swedbankpay.mobilesdk.paymentsession.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionsModel
@@ -77,11 +79,11 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     private fun startObservingCallbacks() {
-        CallbackActivity.onCallbackUrlInvoked.observeForever(callbackUrlObserver)
+        CallbackActivity.onNativeCallbackUrlInvoked.observeForever(callbackUrlObserver)
     }
 
     private fun stopObservingCallbacks() {
-        CallbackActivity.onCallbackUrlInvoked.removeObserver(callbackUrlObserver)
+        CallbackActivity.onNativeCallbackUrlInvoked.removeObserver(callbackUrlObserver)
     }
 
     private fun clearState(isStartingSession: Boolean = false) {
@@ -98,7 +100,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private fun checkCallbacks() {
         val callbackUrl = orderInfo?.paymentUrl
-        if (callbackUrl != null && CallbackActivity.consumeCallbackUrl(callbackUrl)) {
+        if (callbackUrl != null && CallbackActivity.consumeNativeCallbackUrl(callbackUrl)) {
             clearPaymentAttemptInstrument()
             BeaconService.logEvent(
                 EventAction.ClientAppCallback(
@@ -411,6 +413,22 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
     }
 
+    fun createPaymentFragment() {
+        orderInfo?.let {
+            val paymentFragment = PaymentFragment()
+            PaymentFragment.defaultConfiguration = AutomaticConfiguration(it)
+
+            paymentFragment.arguments = PaymentFragment.ArgumentsBuilder()
+                .checkoutV3(true)
+                .useBrowser(false)
+                .build()
+
+            _paymentSessionState.value = PaymentSessionState.PaymentFragmentCreated(paymentFragment)
+            setStateToIdle()
+
+        } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+    }
+
     /**
      * Abort an active payment session
      */
@@ -576,7 +594,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
 
     private fun onSdkProblemOccurred(paymentSessionProblem: PaymentSessionProblem) {
-
         // We can't recover from these two problems and because of that we clear the state
         if (paymentSessionProblem is PaymentSessionProblem.PaymentSessionEndReached
             || paymentSessionProblem is PaymentSessionProblem.InternalInconsistencyError
