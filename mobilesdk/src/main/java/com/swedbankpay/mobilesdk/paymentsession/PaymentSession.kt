@@ -413,6 +413,9 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
     }
 
+    /**
+     * Creates a payment fragment
+     */
     fun createPaymentFragment() {
         orderInfo?.let {
             val paymentFragment = PaymentFragment()
