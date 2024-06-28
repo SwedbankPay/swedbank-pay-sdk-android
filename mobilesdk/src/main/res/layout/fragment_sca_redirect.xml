@@ -14,7 +14,7 @@
         android:layout_gravity="center"
         android:indeterminate="true"
         android:visibility="gone"
-        app:indicatorColor="#3ff23f"
+        app:indicatorColor="#C9C9C9"
         app:indicatorSize="60dp" />
 
     <WebView
