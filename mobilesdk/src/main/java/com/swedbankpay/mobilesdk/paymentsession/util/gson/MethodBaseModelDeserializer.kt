@@ -5,9 +5,9 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.swedbankpay.mobilesdk.internal.asStringOrNull
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.CreditCardMethodModel
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.Instrument
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.SwishMethodModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.WebBasedMethodModel
 import java.lang.reflect.Type
 
 
@@ -23,17 +23,17 @@ internal class MethodBaseModelDeserializer : JsonDeserializer<MethodBaseModel> {
         val instrument = jsonObject?.get("instrument")
 
         return when (instrument?.asStringOrNull) {
-            Instrument.SWISH.rawValue -> context?.deserialize(
+            "Swish" -> context?.deserialize(
                 jsonObject,
                 SwishMethodModel::class.java
             )
 
-            Instrument.CREDIT_CARD.rawValue -> context?.deserialize(
+            "CreditCard" -> context?.deserialize(
                 jsonObject,
                 CreditCardMethodModel::class.java
             )
 
-            else -> null
+            else -> context?.deserialize(jsonObject, WebBasedMethodModel::class.java)
         }
     }
 }

@@ -11,8 +11,9 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.SwishPrefill
 import java.text.SimpleDateFormat
 import java.util.*
 
-fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument? = when (this) {
+fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument = when (this) {
     is SwishMethodModel -> AvailableInstrument.Swish(
+        identifier = this.instrument?.identifier ?: "Swish",
         prefills = this.prefills.map { model ->
             SwishPrefill(
                 rank = (model as SwishMethodPrefillModel).rank,
@@ -22,6 +23,7 @@ fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument? = when (this) 
     )
 
     is CreditCardMethodModel -> AvailableInstrument.CreditCard(
+        identifier = this.instrument?.identifier ?: "CreditCard",
         prefills = this.prefills.map { model ->
             CreditCardPrefill(
                 rank = (model as CreditCardMethodPrefillModel).rank,
@@ -36,9 +38,7 @@ fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument? = when (this) 
         }
     )
 
-    else -> {
-        null
-    }
+    else -> AvailableInstrument.WebBased(identifier = this.instrument?.identifier ?: "WebBased")
 }
 
 fun Date.month(): String {

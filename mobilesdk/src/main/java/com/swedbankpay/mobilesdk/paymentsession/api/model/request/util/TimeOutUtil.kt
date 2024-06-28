@@ -10,7 +10,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
 internal object TimeOutUtil {
 
     fun getRequestTimeout(operationRel: OperationRel?, instrument: Instrument?) =
-        if ((operationRel == OperationRel.START_PAYMENT_ATTEMPT && instrument == Instrument.CREDIT_CARD)
+        if ((operationRel == OperationRel.START_PAYMENT_ATTEMPT && instrument is Instrument.CreditCard)
             || operationRel == OperationRel.CREATE_AUTHENTICATION || operationRel == OperationRel.COMPLETE_AUTHENTICATION
         ) {
             REQUEST_TIME_OUT_IN_MS_FOR_CREDIT_CARD
@@ -19,7 +19,7 @@ internal object TimeOutUtil {
         }
 
     fun getSessionTimeout(operationRel: OperationRel?, instrument: Instrument?) =
-        if ((operationRel == OperationRel.START_PAYMENT_ATTEMPT && instrument == Instrument.CREDIT_CARD)
+        if ((operationRel == OperationRel.START_PAYMENT_ATTEMPT && instrument is Instrument.CreditCard)
             || operationRel == OperationRel.CREATE_AUTHENTICATION || operationRel == OperationRel.COMPLETE_AUTHENTICATION
         ) {
             SESSION_TIME_OUT_IN_MS_FOR_CREDIT_CARD

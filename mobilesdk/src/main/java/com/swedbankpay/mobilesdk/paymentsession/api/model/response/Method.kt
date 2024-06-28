@@ -49,6 +49,13 @@ internal class CreditCardMethodModel : MethodBaseModel() {
 }
 
 @Keep
+internal class WebBasedMethodModel : MethodBaseModel() {
+    override fun toString(): String {
+        return "WebBasedMethodModel(${super.toString()})"
+    }
+}
+
+@Keep
 internal class GooglePayMethodModel : MethodBaseModel() {
     @SerializedName("usFormattedAmount")
     val usFormattedAmount: String? = null
@@ -76,19 +83,19 @@ internal class GooglePayMethodModel : MethodBaseModel() {
 }
 
 @Keep
-enum class Instrument {
-    @SerializedName("Swish")
-    SWISH {
-        override val rawValue: String
-            get() = "Swish"
-    },
+sealed class Instrument {
+    abstract val identifier: String
 
-    @SerializedName("CreditCard")
-    CREDIT_CARD {
-        override val rawValue: String
-            get() = "CreditCard"
-    };
+    data class Swish(
+        override val identifier: String
+    ) : Instrument()
 
-    abstract val rawValue: String
+    data class CreditCard(
+        override val identifier: String
+    ) : Instrument()
+
+    data class WebBased(
+        override val identifier: String
+    ) : Instrument()
 }
 

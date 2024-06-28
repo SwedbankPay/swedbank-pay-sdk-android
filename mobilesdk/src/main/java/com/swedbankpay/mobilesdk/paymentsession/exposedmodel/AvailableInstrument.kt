@@ -1,7 +1,7 @@
 package com.swedbankpay.mobilesdk.paymentsession.exposedmodel
 
 import androidx.annotation.Keep
-import java.util.Date
+import java.util.*
 
 /**
  * Available instruments for native payments
@@ -13,14 +13,23 @@ sealed class AvailableInstrument {
      * Swish native payment with a list of prefills
      */
     data class Swish(
-        val prefills: List<SwishPrefill> = listOf()
+        val identifier: String,
+        val prefills: List<SwishPrefill> = listOf(),
     ) : AvailableInstrument()
 
     /**
      * Credit card native payment with a list of prefills
      */
     data class CreditCard(
+        val identifier: String,
         val prefills: List<CreditCardPrefill> = listOf()
+    ) : AvailableInstrument()
+
+    /**
+     * Instruments that can be used for web based payments
+     */
+    data class WebBased(
+        val identifier: String
     ) : AvailableInstrument()
 
 }

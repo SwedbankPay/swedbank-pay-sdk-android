@@ -45,7 +45,7 @@ internal object RequestUtil {
     private fun getIntegrationRequestData(): String {
         return Integration(
             integration = "HostedView",
-            deviceAcceptedWallets = "",
+            deviceAcceptedWallets = "GooglePay",
             browser = RequestDataUtil.getBrowser(),
             client = RequestDataUtil.getClient(),
             service = RequestDataUtil.getService(),
@@ -54,7 +54,7 @@ internal object RequestUtil {
 
     private fun getInstrumentViewsData(instrument: PaymentAttemptInstrument?): String {
         return InstrumentView(
-            instrumentName = instrument?.name ?: ""
+            instrumentName = instrument?.identifier ?: ""
         ).toJsonString()
 
     }

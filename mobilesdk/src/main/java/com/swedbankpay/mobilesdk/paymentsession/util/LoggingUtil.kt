@@ -25,7 +25,7 @@ internal fun <T : AvailableInstrument> List<T>.toExtensionsModel() =
 @Keep
 internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel {
     val values: MutableMap<String, Any?> = mutableMapOf(
-        "instrument" to this.rawValue
+        "instrument" to this.identifier
     )
 
     return when (this) {

@@ -260,20 +260,20 @@ internal object SessionOperationHandler {
                             || it.rel == OperationRel.START_PAYMENT_ATTEMPT
                 }
             if (expandMethod != null) {
-                val availableInstruments = arrayListOf<MethodBaseModel>()
+                val availableMethods = arrayListOf<MethodBaseModel>()
 
                 paymentOutputModel.paymentSession.methods?.forEach { method ->
                     if (method?.operations?.firstOrNull { op ->
                             op.rel == OperationRel.EXPAND_METHOD ||
                                     op.rel == OperationRel.START_PAYMENT_ATTEMPT
                         } != null) {
-                        availableInstruments.add(method)
+                        availableMethods.add(method)
                     }
                 }
 
                 instructions.add(
                     0, StepInstruction
-                        .AvailableInstrumentStep(availableInstruments = availableInstruments.mapNotNull { it.toAvailableInstrument() })
+                        .AvailableInstrumentStep(availableInstruments = availableMethods.map { it.toAvailableInstrument() })
                 )
 
                 hasShownAvailableInstruments = true

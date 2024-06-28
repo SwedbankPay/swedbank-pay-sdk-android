@@ -10,32 +10,25 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.Instrument
 @Keep
 sealed class PaymentAttemptInstrument(
     internal val context: Context? = null,
-    internal val name: String
+    internal val identifier: String
 ) {
     @Keep
     data class Swish(
         val msisdn: String? = null,
         val localStartContext: Context? = null
-    ) : PaymentAttemptInstrument(localStartContext, Instrument.SWISH.rawValue) {
-        override val rawValue: String
-            get() = "Swish"
-    }
+    ) : PaymentAttemptInstrument(localStartContext, Swish::class.java.simpleName)
 
     @Keep
     data class CreditCard(
         val prefill: CreditCardPrefill,
         val localStartContext: Context
-    ) : PaymentAttemptInstrument(localStartContext, Instrument.CREDIT_CARD.rawValue) {
-        override val rawValue: String
-            get() = "CreditCard"
-    }
+    ) : PaymentAttemptInstrument(localStartContext, CreditCard::class.java.simpleName)
 
-    abstract val rawValue: String
 
 }
 
 @Keep
 fun PaymentAttemptInstrument.toInstrument(): Instrument = when (this) {
-    is PaymentAttemptInstrument.CreditCard -> Instrument.CREDIT_CARD
-    is PaymentAttemptInstrument.Swish -> Instrument.SWISH
+    is PaymentAttemptInstrument.CreditCard -> Instrument.CreditCard(this.identifier)
+    is PaymentAttemptInstrument.Swish -> Instrument.Swish(this.identifier)
 }
