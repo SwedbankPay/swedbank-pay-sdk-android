@@ -378,13 +378,13 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     /**
-     * Make a payment attempt with a specific instrument
+     * Make a native payment attempt with a specific instrument
      *
      * There needs to be an active payment session before a payment attempt can be made
      *
      * @param instrument [PaymentAttemptInstrument]
      */
-    fun makePaymentAttempt(
+    fun makeNativePaymentAttempt(
         instrument: PaymentAttemptInstrument,
     ) {
         currentPaymentOutputModel?.let {
@@ -402,7 +402,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             BeaconService.logEvent(
                 eventAction = EventAction.SDKMethodInvoked(
                     method = MethodModel(
-                        name = "makePaymentAttempt",
+                        name = "makeNativePaymentAttempt",
                         sdk = true,
                         succeeded = paymentAttemptOperation != null
                     ),
@@ -558,7 +558,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun onPaymentComplete(url: String) {
         when (url) {
             orderInfo?.completeUrl -> {
-                _paymentSessionState.value = PaymentSessionState.PaymentComplete
+                _paymentSessionState.value = PaymentSessionState.PaymentSessionComplete
                 setStateToIdle()
                 BeaconService.logEvent(
                     eventAction = EventAction.SDKCallbackInvoked(
@@ -573,7 +573,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             }
 
             orderInfo?.cancelUrl -> {
-                _paymentSessionState.value = PaymentSessionState.PaymentCanceled
+                _paymentSessionState.value = PaymentSessionState.PaymentSessionCanceled
                 setStateToIdle()
 
                 BeaconService.logEvent(
