@@ -22,12 +22,14 @@ sealed class PaymentSessionState {
         PaymentSessionState()
 
     /**
-     * Called when 3d-secure should be shown
+     * Called when a 3D secure view needs to be presented.
+     *
+     * @param fragment Fragment with 3D secure view.
      */
     class Show3dSecureFragment(val fragment: Fragment) : PaymentSessionState()
 
     /**
-     * Called when 3d-secure can be dismissed
+     * Called whenever the 3D secure view can be dismissed.
      */
     object Dismiss3dSecureFragment : PaymentSessionState()
 

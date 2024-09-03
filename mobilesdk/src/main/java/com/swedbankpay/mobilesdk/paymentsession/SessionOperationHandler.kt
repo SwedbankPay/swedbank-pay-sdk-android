@@ -21,7 +21,7 @@ internal object SessionOperationHandler {
 
     private val alreadyUsedProblemUrls: MutableList<String> = mutableListOf()
     private val alreadyUsedSwishUrls: MutableList<String> = mutableListOf()
-    private val scaMethodRequestDataPerformed: MutableMap<String, String> = mutableMapOf()
+    private val scaMethodRequestDataPerformed: MutableMap<String?, String> = mutableMapOf()
     private val scaRedirectDataPerformed: MutableMap<String, String> = mutableMapOf()
     private var hasShownAvailableInstruments: Boolean = false
 
@@ -150,7 +150,7 @@ internal object SessionOperationHandler {
 
             scaMethodRequestDataPerformed[scaMethodRequest.getExpectValuesFor(
                 PaymentSessionAPIConstants.THREE_DS_METHOD_DATA
-            )?.value as String] =
+            )?.value as String?] =
                 completionIndicator
 
             instructions.add(0, StepInstruction.OverrideApiCall(paymentOutputModel))

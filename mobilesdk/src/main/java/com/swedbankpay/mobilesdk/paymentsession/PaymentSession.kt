@@ -53,7 +53,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         /**
          * Contains the state of the payment process
          */
-
         private var _paymentSessionState: MutableLiveData<PaymentSessionState> =
             MutableLiveData(PaymentSessionState.Idle)
         val paymentSessionState: LiveData<PaymentSessionState> = _paymentSessionState
@@ -326,7 +325,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             }
 
             is StepInstruction.ScaRedirectStep -> {
-                launch3DSecure(instruction.task)
+                show3DSecure(instruction.task)
             }
 
             is StepInstruction.LaunchClientAppStep -> {
@@ -426,6 +425,16 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 .useBrowser(false)
                 .build()
 
+            BeaconService.logEvent(
+                eventAction = EventAction.SDKMethodInvoked(
+                    method = MethodModel(
+                        name = "createPaymentFragment",
+                        sdk = true,
+                        succeeded = true
+                    )
+                )
+            )
+
             _paymentSessionState.value = PaymentSessionState.PaymentFragmentCreated(paymentFragment)
             setStateToIdle()
 
@@ -456,7 +465,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
     }
 
-    private fun launch3DSecure(task: IntegrationTask) {
+    private fun show3DSecure(task: IntegrationTask) {
 
         val scaRedirectFragment = ScaRedirectFragment(
             task,
@@ -479,11 +488,10 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         _paymentSessionState.value = PaymentSessionState.Dismiss3dSecureFragment
                         setStateToIdle()
 
-
                         BeaconService.logEvent(
                             eventAction = EventAction.SDKCallbackInvoked(
                                 method = MethodModel(
-                                    name = "dismiss3DSecure",
+                                    name = "dismiss3DSecureFragment",
                                     sdk = true,
                                     succeeded = true
                                 )
@@ -500,7 +508,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
                 method = MethodModel(
-                    name = "show3DSecure",
+                    name = "show3DSecureFragment",
                     sdk = true,
                     succeeded = true
                 )

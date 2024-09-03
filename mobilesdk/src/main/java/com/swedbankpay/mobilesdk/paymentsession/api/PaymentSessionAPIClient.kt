@@ -152,6 +152,7 @@ internal open class PaymentSessionAPIClient {
                         continuation.resume(
                             PaymentSessionResponse.Error(
                                 SwedbankPayAPIError.Error(
+                                    message = connection.responseMessage,
                                     responseCode = responseCode
                                 )
                             )
@@ -283,6 +284,7 @@ internal open class PaymentSessionAPIClient {
                         continuation.resume(
                             PaymentSessionResponse.Error(
                                 SwedbankPayAPIError.Error(
+                                    message = connection.responseMessage,
                                     responseCode = responseCode
                                 )
                             )
