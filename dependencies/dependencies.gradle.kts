@@ -35,6 +35,8 @@ extra["libs"] = mapOf(
    "play-services-basement" to "com.google.android.gms:play-services-basement:18.2.0",
    "gson" to "com.google.code.gson:gson:2.10.1",
 
+   "googlepay" to "com.google.android.gms:play-services-wallet:19.4.0",
+
    "junit" to "junit:junit:4.13.2",
 
    "joda-time" to "joda-time:joda-time:2.12.5",

@@ -57,28 +57,11 @@ internal class WebBasedMethodModel : MethodBaseModel() {
 
 @Keep
 internal class GooglePayMethodModel : MethodBaseModel() {
-    @SerializedName("usFormattedAmount")
-    val usFormattedAmount: String? = null
-
-    @SerializedName("requestDeliveryInfo")
-    val requestDeliveryInfo: Boolean = false
-
     @SerializedName("cardBrands")
     val cardBrands: List<String> = listOf()
 
-    @SerializedName("gateway")
-    val gateWay: String? = null
-
-    @SerializedName("gatewayMerchantId")
-    val gatewayMerchantId: String? = null
-
-    @SerializedName("merchantId")
-    val merchantId: String? = null
-
-    @SerializedName("countryCode")
-    val countryCode: String? = null
     override fun toString(): String {
-        return "GooglePayMethodModel(usFormattedAmount=$usFormattedAmount, requestDeliveryInfo=$requestDeliveryInfo, cardBrands=$cardBrands, gateWay=$gateWay, gatewayMerchantId=$gatewayMerchantId, merchantId=$merchantId, countryCode=$countryCode, ${super.toString()})"
+        return "GooglePayMethodModel(cardBrands=$cardBrands, ${super.toString()})"
     }
 }
 
@@ -91,6 +74,10 @@ sealed class Instrument {
     ) : Instrument()
 
     data class CreditCard(
+        override val identifier: String
+    ) : Instrument()
+
+    data class GooglePay(
         override val identifier: String
     ) : Instrument()
 

@@ -37,6 +37,8 @@ class Dependencies(map: Map<String, String>) {
     val `play-services-basement` by map
     val gson by map
 
+    val googlepay by map
+
     val junit by map
 
     val `joda-time` by map

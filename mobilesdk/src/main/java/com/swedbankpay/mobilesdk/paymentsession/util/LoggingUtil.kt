@@ -47,6 +47,12 @@ internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel {
                 values = values
             )
         }
+
+        is PaymentAttemptInstrument.GooglePay -> {
+            ExtensionsModel(
+                values = values
+            )
+        }
     }
 }
 

@@ -46,6 +46,9 @@ enum class IntegrationTaskRel {
 
     @SerializedName("sca-redirect")
     SCA_REDIRECT,
+
+    @SerializedName("wallet-sdk")
+    WALLET_SDK
 }
 
 

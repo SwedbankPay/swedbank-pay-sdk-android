@@ -4,6 +4,7 @@ package com.swedbankpay.mobilesdk.paymentsession
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.PaymentFragment
@@ -27,6 +28,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayService
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaRedirectFragment
 import com.swedbankpay.mobilesdk.paymentsession.util.UriCallbackUtil.addCallbackUrl
 import com.swedbankpay.mobilesdk.paymentsession.util.clientAppCallbackExtensionsModel
@@ -359,6 +361,10 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 show3DSecure(instruction.task)
             }
 
+            is StepInstruction.GooglePayStep -> {
+                launchGooglePay(instruction.task)
+            }
+
             is StepInstruction.LaunchClientAppStep -> {
                 launchClientApp(instruction.href)
             }
@@ -600,6 +606,21 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 )
             )
         }
+    }
+
+    private fun launchGooglePay(task: IntegrationTask) {
+        safeLet(paymentAttemptInstrument, task.expects) { paymentInstrument, _ ->
+            GooglePayService.launchGooglePay(
+                task,
+                (paymentInstrument as PaymentAttemptInstrument.GooglePay).activity,
+                errorHandler = ::onSdkProblemOccurred
+            ) {
+                Log.d("GooglePayResult", "$it")
+            }
+        } ?: kotlin.run {
+            onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+        }
+
     }
 
     private fun onPaymentComplete(url: String) {

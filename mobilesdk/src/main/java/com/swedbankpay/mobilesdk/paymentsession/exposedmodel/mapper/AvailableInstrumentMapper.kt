@@ -2,6 +2,7 @@ package com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper
 
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.CreditCardMethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.CreditCardMethodPrefillModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.GooglePayMethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.SwishMethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.SwishMethodPrefillModel
@@ -43,6 +44,10 @@ fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument = when (this) {
                 expiryString = model.expiryDate?.getExpiryString() ?: "",
             )
         }
+    )
+
+    is GooglePayMethodModel -> AvailableInstrument.GooglePay(
+        identifier = this.instrument?.identifier ?: "GooglePay"
     )
 
     else -> AvailableInstrument.WebBased(identifier = this.instrument?.identifier ?: "WebBased")

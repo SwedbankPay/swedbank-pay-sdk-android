@@ -27,6 +27,10 @@ sealed class AvailableInstrument {
         val prefills: List<CreditCardPrefill> = listOf()
     ) : AvailableInstrument()
 
+    data class GooglePay(
+        override val identifier: String
+    ) : AvailableInstrument()
+
     /**
      * Instrument telling merchants that new credit card can be used
      */

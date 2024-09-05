@@ -72,6 +72,8 @@ dependencies {
 
     implementation(libs.gson)
 
+    implementation(libs.googlepay)
+
     compileOnly(libs.`joda-time`)
     compileOnly(libs.threetenbp)
 

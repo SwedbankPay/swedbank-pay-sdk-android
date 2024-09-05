@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.paymentsession.exposedmodel
 
+import android.app.Activity
 import android.content.Context
 import androidx.annotation.Keep
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.Instrument
@@ -29,11 +30,16 @@ sealed class PaymentAttemptInstrument(
         val enabledPaymentDetailsConsentCheckbox: Boolean
     ) : PaymentAttemptInstrument(null, "NewCreditCard")
 
+    @Keep
+    class GooglePay(internal val activity: Activity) :
+        PaymentAttemptInstrument(identifier = GooglePay::class.java.simpleName)
 }
 
 @Keep
 fun PaymentAttemptInstrument.toInstrument(): Instrument = when (this) {
     is PaymentAttemptInstrument.CreditCard -> Instrument.CreditCard(this.identifier)
     is PaymentAttemptInstrument.Swish -> Instrument.Swish(this.identifier)
+    is PaymentAttemptInstrument.GooglePay -> Instrument.GooglePay(this.identifier)
     else -> Instrument.WebBased(this.identifier)
+
 }

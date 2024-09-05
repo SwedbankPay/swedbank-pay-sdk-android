@@ -308,6 +308,18 @@ internal object SessionOperationHandler {
         }
         //endregion
 
+        // region GooglePay Search for IntegrationTaskRel.WALLET_SDK
+        val walletSdk = operations.flatMap { it.tasks ?: listOf() }
+            .firstOrNull { task -> task?.rel == IntegrationTaskRel.WALLET_SDK }
+
+        if (walletSdk != null) {
+            instructions.add(0, StepInstruction.GooglePayStep(walletSdk))
+            return OperationStep(
+                instructions = instructions
+            )
+        }
+        // endregion
+
         //region Search for OperationRel.REDIRECT_PAYER
         val redirectPayer =
             operations.firstOrNull { it.rel == OperationRel.REDIRECT_PAYER }
@@ -483,6 +495,8 @@ internal sealed class StepInstruction(
     object CreatePaymentFragmentStep : StepInstruction(true)
 
     class ScaRedirectStep(val task: IntegrationTask) : StepInstruction(true)
+
+    class GooglePayStep(val task: IntegrationTask) : StepInstruction(true)
 
     class PaymentSessionCompleted(val url: String) : StepInstruction(true)
 

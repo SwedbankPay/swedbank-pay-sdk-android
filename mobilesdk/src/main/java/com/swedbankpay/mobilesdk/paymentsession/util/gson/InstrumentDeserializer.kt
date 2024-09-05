@@ -12,9 +12,10 @@ class InstrumentDeserializer : JsonDeserializer<Instrument> {
         typeOfT: Type?,
         context: JsonDeserializationContext?
     ): Instrument {
-        return when(val jsonString = json?.asString) {
+        return when (val jsonString = json?.asString) {
             "Swish" -> Instrument.Swish(jsonString)
             "CreditCard" -> Instrument.CreditCard(jsonString)
+            "GooglePay" -> Instrument.GooglePay(jsonString)
             else -> Instrument.WebBased(jsonString ?: "WebBased")
         }
     }

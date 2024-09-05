@@ -5,6 +5,7 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.swedbankpay.mobilesdk.internal.asStringOrNull
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.CreditCardMethodModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.GooglePayMethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.MethodBaseModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.SwishMethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.WebBasedMethodModel
@@ -31,6 +32,11 @@ internal class MethodBaseModelDeserializer : JsonDeserializer<MethodBaseModel> {
             "CreditCard" -> context?.deserialize(
                 jsonObject,
                 CreditCardMethodModel::class.java
+            )
+
+            "GooglePay" -> context?.deserialize(
+                jsonObject,
+                GooglePayMethodModel::class.java
             )
 
             else -> context?.deserialize(jsonObject, WebBasedMethodModel::class.java)

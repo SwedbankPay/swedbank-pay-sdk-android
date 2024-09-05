@@ -5,6 +5,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CompleteAuthen
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreateAuthentication
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreditCardAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CustomizePayment
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.GooglePayAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Integration
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.SwishAttempt
@@ -81,6 +82,11 @@ internal object RequestUtil {
                 cardNumber = instrument.prefill.maskedPan,
                 cardExpiryMonth = instrument.prefill.expiryMonth,
                 cardExpiryYear = instrument.prefill.expiryYear
+            ).toJsonString()
+
+            is PaymentAttemptInstrument.GooglePay -> GooglePayAttempt(
+                culture = culture,
+                client = RequestDataUtil.getClient()
             ).toJsonString()
 
             else -> ""
