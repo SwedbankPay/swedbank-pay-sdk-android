@@ -17,6 +17,8 @@ data class ProblemDetails(
     val status: Int?,
     @SerializedName("detail")
     val detail: String?,
+    @SerializedName("originalDetail")
+    val originalDetail: String?,
     @SerializedName("operation")
     internal val operations: OperationOutputModel
 )
