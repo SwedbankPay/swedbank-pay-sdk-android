@@ -10,7 +10,7 @@ data class Browser(
     @SerializedName("languageHeader")
     val languageHeader: String?,
     @SerializedName("timeZoneOffset")
-    val timeZoneOffset: String?,
+    val timeZoneOffset: Int?,
     @SerializedName("javascriptEnabled")
     val javascriptEnabled: Boolean?,
 )

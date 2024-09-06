@@ -10,6 +10,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Service
 import java.net.NetworkInterface
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 internal object RequestDataUtil {
 
@@ -62,7 +63,17 @@ internal object RequestDataUtil {
         return ""
     }
 
-    fun getTimeZoneOffset(): String = SimpleDateFormat("Z", Locale.getDefault()).format(Date())
+    private fun getTimeZoneOffset(): Int {
+        val mCalendar: Calendar = GregorianCalendar()
+        val mTimeZone: TimeZone = mCalendar.timeZone
+
+        // Get the timezone offset with the function getRawOffset and add the daylight savings
+        val mGMTOffset: Int =
+            mTimeZone.rawOffset + (if (mTimeZone.inDaylightTime(Date())) mTimeZone.dstSavings else 0)
+
+        // Return the converted offset to minutes
+        return TimeUnit.MINUTES.convert(mGMTOffset.toLong(), TimeUnit.MILLISECONDS).toInt()
+    }
 
     fun nowAsIsoString(): String =
         SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.sss'Z'Z", Locale.getDefault()).format(Date())
@@ -71,6 +82,6 @@ internal object RequestDataUtil {
 
     private fun getVersion() = BuildConfig.SDK_VERSION.take(5)
 
-    fun getLanguages() =
+    private fun getLanguages() =
         ConfigurationCompat.getLocales(Resources.getSystem().configuration).toLanguageTags()
 }
