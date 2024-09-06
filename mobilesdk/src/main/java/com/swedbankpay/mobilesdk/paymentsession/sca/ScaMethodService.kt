@@ -166,7 +166,7 @@ internal object ScaMethodService {
 
                     postUrl(initialUrl, expects.toByteArray())
                 }
-            } ?: continuation.resume("N")
+            } ?: continuation.resume("U")
         }
     }
 }

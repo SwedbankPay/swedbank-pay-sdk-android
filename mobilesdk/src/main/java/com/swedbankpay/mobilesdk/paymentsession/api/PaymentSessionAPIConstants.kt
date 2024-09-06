@@ -13,6 +13,7 @@ internal object PaymentSessionAPIConstants {
     const val THREE_DS_METHOD_DATA = "threeDSMethodData"
     const val CREQ = "creq"
     const val TRAMPOLINE_NOTIFICATION_URL = "NotificationUrl"
+    const val METHOD_COMPLETION_INDICATOR = "methodCompletionIndicator"
 
     // Query parameters name constants
     const val CRES = "cres"

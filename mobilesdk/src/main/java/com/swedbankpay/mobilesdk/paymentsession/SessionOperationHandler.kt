@@ -10,11 +10,13 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getValueFor
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaMethodService
+import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import java.net.URL
 
 internal object SessionOperationHandler {
@@ -171,14 +173,16 @@ internal object SessionOperationHandler {
             ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
             ?.getExpectValuesFor(PaymentSessionAPIConstants.THREE_DS_METHOD_DATA)
 
-        val allowedToExecuteCreateAuth =
+        val allowedToExecuteCreateAuthWithSCA =
             createAuthExpectationModel?.value in scaMethodRequestDataPerformed.keys
 
-        if (createAuth != null && createAuthExpectationModel != null && allowedToExecuteCreateAuth) {
-
-            (createAuth.expects?.firstOrNull
-            { it.name == PaymentSessionAPIConstants.TRAMPOLINE_NOTIFICATION_URL }
-                ?.value as String?)?.let { notificationUrl ->
+        if (createAuth != null
+            && !createAuth.expects.isNullOrEmpty()
+            && createAuthExpectationModel != null
+            && allowedToExecuteCreateAuthWithSCA
+        ) {
+            (createAuth.expects.getValueFor(PaymentSessionAPIConstants.TRAMPOLINE_NOTIFICATION_URL)
+                    as String?)?.let { notificationUrl ->
                 return OperationStep(
                     requestMethod = createAuth.method,
                     url = URL(createAuth.href),
@@ -186,7 +190,7 @@ internal object SessionOperationHandler {
                     data = createAuth.rel?.getRequestDataIfAny(
                         culture = paymentOutputModel.paymentSession.culture,
                         completionIndicator = scaMethodRequestDataPerformed[createAuthExpectationModel.value]
-                            ?: "N",
+                            ?: "U",
                         notificationUrl = notificationUrl
                     ),
                     instructions = instructions
@@ -197,7 +201,35 @@ internal object SessionOperationHandler {
                     instructions = instructions
                 )
             }
+        } else if (createAuth != null
+            && !createAuth.expects.isNullOrEmpty()
+        ) {
+            val trampolineNotificationUrl =
+                createAuth.expects.getValueFor(PaymentSessionAPIConstants.TRAMPOLINE_NOTIFICATION_URL) as String?
+            val methodCompletionIndicator =
+                createAuth.expects.getValueFor(PaymentSessionAPIConstants.METHOD_COMPLETION_INDICATOR) as String?
 
+            safeLet(
+                trampolineNotificationUrl,
+                methodCompletionIndicator
+            ) { notificationUrl, completionIndicator ->
+                return OperationStep(
+                    requestMethod = createAuth.method,
+                    url = URL(createAuth.href),
+                    operationRel = createAuth.rel,
+                    data = createAuth.rel?.getRequestDataIfAny(
+                        culture = paymentOutputModel.paymentSession.culture,
+                        completionIndicator = completionIndicator,
+                        notificationUrl = notificationUrl
+                    ),
+                    instructions = instructions
+                )
+            } ?: kotlin.run {
+                instructions.add(0, StepInstruction.InternalError)
+                return OperationStep(
+                    instructions = instructions
+                )
+            }
         }
         //endregion
 
@@ -226,7 +258,10 @@ internal object SessionOperationHandler {
         val allowedToExecuteCompleteAuth =
             completeAuthExpectationModel?.value in scaRedirectDataPerformed.keys
 
-        if (completeAuth != null && completeAuthExpectationModel != null && allowedToExecuteCompleteAuth) {
+        if (completeAuth != null
+            && completeAuthExpectationModel != null
+            && allowedToExecuteCompleteAuth
+        ) {
             return OperationStep(
                 requestMethod = completeAuth.method,
                 url = URL(completeAuth.href),

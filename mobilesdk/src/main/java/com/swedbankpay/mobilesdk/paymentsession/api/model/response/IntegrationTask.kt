@@ -1,8 +1,8 @@
 package com.swedbankpay.mobilesdk.paymentsession.api.model.response
 
 
-import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
+import com.google.gson.annotations.SerializedName
 
 @Keep
 data class IntegrationTask(
@@ -31,6 +31,10 @@ data class ExpectationModel(
     @SerializedName("value")
     val value: Any?
 )
+
+internal fun List<ExpectationModel>.getValueFor(name: String): Any? {
+    return this.firstOrNull { it.name == name }?.value
+}
 
 @Keep
 enum class IntegrationTaskRel {
