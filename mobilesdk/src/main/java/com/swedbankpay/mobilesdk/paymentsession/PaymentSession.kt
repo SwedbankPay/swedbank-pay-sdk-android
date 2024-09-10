@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.PaymentFragment
 import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
@@ -31,6 +30,7 @@ import com.swedbankpay.mobilesdk.paymentsession.util.clientAppCallbackExtensions
 import com.swedbankpay.mobilesdk.paymentsession.util.configuration.AutomaticConfiguration
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import com.swedbankpay.mobilesdk.paymentsession.util.launchClientAppExtensionsModel
+import com.swedbankpay.mobilesdk.paymentsession.util.livedata.QueuedMutableLiveData
 import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionsModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,8 +53,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         /**
          * Contains the state of the payment process
          */
-        private var _paymentSessionState: MutableLiveData<PaymentSessionState> =
-            MutableLiveData(PaymentSessionState.Idle)
+        private var _paymentSessionState: QueuedMutableLiveData<PaymentSessionState> =
+            QueuedMutableLiveData(PaymentSessionState.Idle)
         val paymentSessionState: LiveData<PaymentSessionState> = _paymentSessionState
     }
 
@@ -145,6 +145,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 // This is here for polling purposes
                 if (stepToExecute.delayRequestDuration > 0) {
                     delay(stepToExecute.delayRequestDuration)
+
                     // When we poll we need to reset requestTimestamp so we don't end it to early
                     startRequestTimestamp = System.currentTimeMillis()
                 }
@@ -308,8 +309,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun checkWhatTodo(instruction: StepInstruction) {
         when (instruction) {
             is StepInstruction.AvailableInstrumentStep -> {
-                _paymentSessionState.value =
-                    PaymentSessionState.PaymentSessionFetched(instruction.availableInstruments)
+                _paymentSessionState.setValue(PaymentSessionState.PaymentSessionFetched(instruction.availableInstruments))
                 setStateToIdle()
 
                 BeaconService.logEvent(
@@ -435,7 +435,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 )
             )
 
-            _paymentSessionState.value = PaymentSessionState.PaymentFragmentCreated(paymentFragment)
+            _paymentSessionState.setValue(PaymentSessionState.PaymentFragmentCreated(paymentFragment))
             setStateToIdle()
 
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
@@ -485,7 +485,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                 instructions = listOf(StepInstruction.OverrideApiCall(session))
                             )
                         )
-                        _paymentSessionState.value = PaymentSessionState.Dismiss3dSecureFragment
+                        _paymentSessionState.setValue(PaymentSessionState.Dismiss3dSecureFragment)
                         setStateToIdle()
 
                         BeaconService.logEvent(
@@ -502,7 +502,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
 
-        _paymentSessionState.value = PaymentSessionState.Show3dSecureFragment(scaRedirectFragment)
+        _paymentSessionState.setValue(PaymentSessionState.Show3dSecureFragment(scaRedirectFragment))
         setStateToIdle()
 
         BeaconService.logEvent(
@@ -566,7 +566,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun onPaymentComplete(url: String) {
         when (url) {
             orderInfo?.completeUrl -> {
-                _paymentSessionState.value = PaymentSessionState.PaymentSessionComplete
+                _paymentSessionState.setValue(PaymentSessionState.PaymentSessionComplete)
                 setStateToIdle()
                 BeaconService.logEvent(
                     eventAction = EventAction.SDKCallbackInvoked(
@@ -581,7 +581,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             }
 
             orderInfo?.cancelUrl -> {
-                _paymentSessionState.value = PaymentSessionState.PaymentSessionCanceled
+                _paymentSessionState.setValue(PaymentSessionState.PaymentSessionCanceled)
                 setStateToIdle()
 
                 BeaconService.logEvent(
@@ -612,7 +612,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             clearState()
         }
 
-        _paymentSessionState.value = PaymentSessionState.SdkProblemOccurred(paymentSessionProblem)
+        _paymentSessionState.setValue(PaymentSessionState.SdkProblemOccurred(paymentSessionProblem))
         setStateToIdle()
 
         BeaconService.logEvent(
@@ -628,7 +628,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     private fun onSessionProblemOccurred(problemDetails: ProblemDetails) {
-        _paymentSessionState.value = PaymentSessionState.SessionProblemOccurred(problemDetails)
+        _paymentSessionState.setValue(PaymentSessionState.SessionProblemOccurred(problemDetails))
         setStateToIdle()
 
         BeaconService.logEvent(
@@ -644,7 +644,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     private fun setStateToIdle() {
-        _paymentSessionState.value = PaymentSessionState.Idle
+        _paymentSessionState.setValue(PaymentSessionState.Idle)
     }
 
     /**
