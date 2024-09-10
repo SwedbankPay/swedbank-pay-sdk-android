@@ -85,7 +85,6 @@ internal object SessionOperationHandler {
         val op = operations.firstOrNull { it.next ?: false }
         if (op != null) {
             operations = listOf(op)
-            operations[0].tasks = listOf(null)
         }
 
         //region 1. Search for OperationRel.PREPARE_PAYMENT
