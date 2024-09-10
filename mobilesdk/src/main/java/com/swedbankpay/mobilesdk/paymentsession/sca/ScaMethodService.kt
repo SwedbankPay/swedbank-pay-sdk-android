@@ -70,25 +70,26 @@ internal object ScaMethodService {
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
                             timeoutHandler.removeCallbacksAndMessages(null)
-
-                            if (hasError) {
-                                continuation.resume("N")
-                            } else {
-                                BeaconService.logEvent(
-                                    EventAction.SCAMethodRequest(
-                                        http = HttpModel(
-                                            requestUrl = initialUrl,
-                                            method = "POST",
-                                        ),
-                                        duration = (System.currentTimeMillis() - start).toInt(),
-                                        extensions = scaMethodRequestExtensionModel("Y")
+                            if (url == initialUrl) {
+                                if (hasError) {
+                                    continuation.resume("N")
+                                } else {
+                                    BeaconService.logEvent(
+                                        EventAction.SCAMethodRequest(
+                                            http = HttpModel(
+                                                requestUrl = initialUrl,
+                                                method = "POST",
+                                            ),
+                                            duration = (System.currentTimeMillis() - start).toInt(),
+                                            extensions = scaMethodRequestExtensionModel("Y")
+                                        )
                                     )
-                                )
 
-                                continuation.resume("Y")
+                                    continuation.resume("Y")
+                                }
+
+                                hasError = false
                             }
-
-                            hasError = false
                         }
 
                         @Deprecated("Deprecated in Java")
