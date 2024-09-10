@@ -23,6 +23,6 @@ internal data class PaymentSessionModel(
     @SerializedName("urls")
     val urls: UrlsModel?
 ) {
-    val allMethodOperations: List<OperationOutputModel> =
+    val allMethodOperations: List<OperationOutputModel?> =
         methods?.flatMap { it?.operations ?: listOf() } ?: listOf()
 }

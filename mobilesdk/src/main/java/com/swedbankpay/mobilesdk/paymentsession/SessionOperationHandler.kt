@@ -47,7 +47,8 @@ internal object SessionOperationHandler {
 
         // Extract every operation we have on the session object
         var operations: List<OperationOutputModel> =
-            paymentOutputModel.operations + paymentOutputModel.paymentSession.allMethodOperations
+            paymentOutputModel.operations.filterNotNull() +
+                    paymentOutputModel.paymentSession.allMethodOperations.filterNotNull()
 
         // If we find a problem that we haven't used return it. Otherwise just acknowledge it and
         // add it to the instructions without informing the merchant app
@@ -84,6 +85,7 @@ internal object SessionOperationHandler {
         val op = operations.firstOrNull { it.next ?: false }
         if (op != null) {
             operations = listOf(op)
+            operations[0].tasks = listOf(null)
         }
 
         //region 1. Search for OperationRel.PREPARE_PAYMENT
@@ -107,7 +109,7 @@ internal object SessionOperationHandler {
             paymentOutputModel.paymentSession.methods
                 ?.firstOrNull { it?.instrument == paymentAttemptInstrument?.toInstrument() }
                 ?.operations
-                ?.firstOrNull { it.rel == OperationRel.START_PAYMENT_ATTEMPT }
+                ?.firstOrNull { it?.rel == OperationRel.START_PAYMENT_ATTEMPT }
 
         if (startPaymentAttempt != null) {
             return OperationStep(
@@ -126,7 +128,8 @@ internal object SessionOperationHandler {
         //region 3. Search for IntegrationTaskRel.LAUNCH_CLIENT_APP
         // Only return this if swishUrl hasn't been used yet
         val launchClientApp = operations.flatMap { it.tasks ?: listOf() }
-            .firstOrNull { task -> task.rel == IntegrationTaskRel.LAUNCH_CLIENT_APP }
+            .firstOrNull { task -> task?.rel == IntegrationTaskRel.LAUNCH_CLIENT_APP }
+
         if (launchClientApp != null && !alreadyUsedSwishUrls.contains(launchClientApp.href) && launchClientApp.href != null) {
             alreadyUsedSwishUrls.add(launchClientApp.href)
             instructions.add(0, StepInstruction.LaunchClientAppStep(launchClientApp.href))
@@ -139,10 +142,10 @@ internal object SessionOperationHandler {
 
         //region 4. Search for IntegrationTaskRel.SCA_METHOD_REQUEST
         val scaMethodRequest = operations.flatMap { it.tasks ?: listOf() }
-            .firstOrNull { task -> task.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
+            .firstOrNull { task -> task?.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
 
         if (scaMethodRequest != null
-            && scaMethodRequest.expects?.any { it.value in scaMethodRequestDataPerformed.keys } == false
+            && scaMethodRequest.expects?.any { it?.value in scaMethodRequestDataPerformed.keys } == false
         ) {
 
             val completionIndicator = ScaMethodService.loadScaMethodRequest(
@@ -170,7 +173,7 @@ internal object SessionOperationHandler {
             operations.firstOrNull { it.rel == OperationRel.CREATE_AUTHENTICATION }
 
         val createAuthExpectationModel = createAuth?.tasks
-            ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
+            ?.firstOrNull { it?.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
             ?.getExpectValuesFor(PaymentSessionAPIConstants.THREE_DS_METHOD_DATA)
 
         val allowedToExecuteCreateAuthWithSCA =
@@ -235,10 +238,10 @@ internal object SessionOperationHandler {
 
         //region 6. Search for IntegrationTaskRel.SCA_REDIRECT
         val scaRedirect = operations.flatMap { it.tasks ?: listOf() }
-            .firstOrNull { task -> task.rel == IntegrationTaskRel.SCA_REDIRECT }
+            .firstOrNull { task -> task?.rel == IntegrationTaskRel.SCA_REDIRECT }
 
         if (scaRedirect != null
-            && scaRedirect.expects?.any { it.value in scaRedirectDataPerformed.keys } == false
+            && scaRedirect.expects?.any { it?.value in scaRedirectDataPerformed.keys } == false
         ) {
             instructions.add(0, StepInstruction.ScaRedirectStep(scaRedirect))
             return OperationStep(
@@ -252,7 +255,7 @@ internal object SessionOperationHandler {
             operations.firstOrNull { it.rel == OperationRel.COMPLETE_AUTHENTICATION }
 
         val completeAuthExpectationModel = completeAuth?.tasks
-            ?.firstOrNull { it.rel == IntegrationTaskRel.SCA_REDIRECT }
+            ?.firstOrNull { it?.rel == IntegrationTaskRel.SCA_REDIRECT }
             ?.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)
 
         val allowedToExecuteCompleteAuth =
@@ -299,8 +302,8 @@ internal object SessionOperationHandler {
 
                 paymentOutputModel.paymentSession.methods?.forEach { method ->
                     if (method?.operations?.firstOrNull { op ->
-                            op.rel == OperationRel.EXPAND_METHOD ||
-                                    op.rel == OperationRel.START_PAYMENT_ATTEMPT
+                            op?.rel == OperationRel.EXPAND_METHOD ||
+                                    op?.rel == OperationRel.START_PAYMENT_ATTEMPT
                         } != null) {
                         availableMethods.add(method)
                     }
@@ -365,9 +368,9 @@ internal object SessionOperationHandler {
             ?.firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }
             ?.operations
             ?.firstOrNull {
-                it.rel == OperationRel.EXPAND_METHOD
-                        || it.rel == OperationRel.START_PAYMENT_ATTEMPT
-                        || it.rel == OperationRel.GET_PAYMENT
+                it?.rel == OperationRel.EXPAND_METHOD
+                        || it?.rel == OperationRel.START_PAYMENT_ATTEMPT
+                        || it?.rel == OperationRel.GET_PAYMENT
             }
 
         return if (op != null) {
@@ -387,7 +390,7 @@ internal object SessionOperationHandler {
 
     fun getOperationStepForAbortPayment(paymentOutputModel: PaymentOutputModel): OperationStep? {
         val abortPayment = paymentOutputModel.operations.firstOrNull {
-            it.rel == OperationRel.ABORT_PAYMENT
+            it?.rel == OperationRel.ABORT_PAYMENT
         }
 
         return if (abortPayment != null) {
@@ -403,7 +406,7 @@ internal object SessionOperationHandler {
 
     fun getBeaconUrl(paymentOutputModel: PaymentOutputModel?): String? =
         paymentOutputModel?.operations?.firstOrNull {
-            it.rel == OperationRel.EVENT_LOGGING
+            it?.rel == OperationRel.EVENT_LOGGING
         }?.href
 
     fun scaRedirectComplete(cReq: String, cRes: String) {

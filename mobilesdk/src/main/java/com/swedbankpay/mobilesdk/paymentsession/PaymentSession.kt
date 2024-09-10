@@ -113,7 +113,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 currentPaymentOutputModel
                     ?.paymentSession
                     ?.allMethodOperations
-                    ?.firstOrNull { it.rel == OperationRel.GET_PAYMENT }
+                    ?.firstOrNull { it?.rel == OperationRel.GET_PAYMENT }
 
             if (getPayment != null) {
                 executeNextStepUntilFurtherInstructions(
@@ -270,7 +270,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         if (orderInfo == null) {
             currentPaymentOutputModel?.let { paymentOutputModel ->
                 val viewPayment = paymentOutputModel.operations.firstOrNull {
-                    it.rel == OperationRel.VIEW_PAYMENT
+                    it?.rel == OperationRel.VIEW_PAYMENT
                 }
 
                 val urls = paymentOutputModel.paymentSession.urls

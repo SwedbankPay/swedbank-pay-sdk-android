@@ -9,7 +9,7 @@ data class IntegrationTask(
     @SerializedName("contentType")
     val contentType: String?,
     @SerializedName("expects")
-    val expects: List<ExpectationModel>?,
+    val expects: List<ExpectationModel?>?,
     @SerializedName("href")
     val href: String?,
     @SerializedName("method")
@@ -18,7 +18,7 @@ data class IntegrationTask(
     val rel: IntegrationTaskRel?
 ) {
     fun getExpectValuesFor(name: String): ExpectationModel? {
-        return expects?.firstOrNull { it.name == name }
+        return expects?.firstOrNull { it?.name == name }
     }
 }
 

@@ -1,8 +1,8 @@
 package com.swedbankpay.mobilesdk.paymentsession.api.model.response
 
 
-import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
+import com.google.gson.annotations.SerializedName
 
 @Keep
 data class OperationOutputModel(
@@ -19,7 +19,7 @@ data class OperationOutputModel(
     @SerializedName("rel")
     val rel: OperationRel?,
     @SerializedName("tasks")
-    val tasks: List<IntegrationTask>? = listOf()
+    var tasks: List<IntegrationTask?>? = listOf()
 )
 
 @Keep

@@ -16,7 +16,7 @@ open class MethodBaseModel {
     val instrument: Instrument? = null
 
     @SerializedName("operations")
-    val operations: List<OperationOutputModel> = listOf()
+    val operations: List<OperationOutputModel?> = listOf()
 
     override fun toString(): String {
         return "amount=$amount, autoClick=$autoClick, instrument=$instrument, operations=$operations"
