@@ -9,7 +9,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Service
 @Keep
 internal data class BeaconInput(
     @SerializedName("type")
-    val type: Int,
+    val type: String,
     @SerializedName("service")
     val service: Service,
     @SerializedName("client")
@@ -25,15 +25,15 @@ internal data class BeaconInput(
 )
 
 @Keep
-enum class BeaconType(val identifier: Int) {
+enum class BeaconType(val identifier: String) {
     @SerializedName("ClientEvent")
-    CLIENT_EVENT(0),
+    CLIENT_EVENT("ClientEvent"),
 
     @SerializedName("ClientSla")
-    CLIENT_SLA(1),
+    CLIENT_SLA("ClientSla"),
 
     @SerializedName("RemoteSla")
-    REMOTE_SLA(2),
+    REMOTE_SLA("RemoteSla"),
 }
 
 @Keep

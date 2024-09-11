@@ -603,7 +603,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     }
 
-
     private fun onSdkProblemOccurred(paymentSessionProblem: PaymentSessionProblem) {
         // We can't recover from these two problems and because of that we clear the state
         if (paymentSessionProblem is PaymentSessionProblem.PaymentSessionEndReached
