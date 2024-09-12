@@ -462,6 +462,24 @@ internal object SessionOperationHandler {
         }
     }
 
+    fun getOperationStepForGooglePay(paymentOutputModel: PaymentOutputModel): OperationStep? {
+        return null
+        // TODO When google payment operation exist fix it here
+        /* val abortPayment = paymentOutputModel.operations.firstOrNull {
+             it.rel == OperationRel.ABORT_PAYMENT
+         }
+
+         return if (abortPayment != null) {
+             OperationStep(
+                 requestMethod = abortPayment.method,
+                 url = URL(abortPayment.href),
+                 operationRel = abortPayment.rel
+             )
+         } else {
+             return null
+         }*/
+    }
+
     fun getBeaconUrl(paymentOutputModel: PaymentOutputModel?): String? =
         paymentOutputModel?.operations?.firstOrNull {
             it?.rel == OperationRel.EVENT_LOGGING

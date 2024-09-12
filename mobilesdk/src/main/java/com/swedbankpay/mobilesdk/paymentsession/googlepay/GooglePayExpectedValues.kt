@@ -1,6 +1,14 @@
 package com.swedbankpay.mobilesdk.paymentsession.googlepay
 
 internal object GooglePayExpectedValues {
+
+
+    // Types
+    const val TYPE_PAYMENT_GATEWAY = "PAYMENT_GATEWAY"
+    const val TYPE_CARD = "CARD"
+
+    // Expected parameters
+    const val ENVIRONMENT = "Environment"
     const val GATEWAY = "Gateway"
     const val GATEWAY_MERCHANT_ID = "GatewayMerchantId"
     const val ALLOWED_CARD_NETWORKS = "AllowedCardNetworks"

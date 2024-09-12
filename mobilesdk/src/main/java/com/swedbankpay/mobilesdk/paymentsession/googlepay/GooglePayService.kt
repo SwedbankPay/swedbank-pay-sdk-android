@@ -10,7 +10,10 @@ import com.google.android.gms.wallet.Wallet
 import com.google.android.gms.wallet.WalletConstants
 import com.google.android.gms.wallet.contract.TaskResultContracts
 import com.google.gson.Gson
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ExpectationModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getBooleanValueFor
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringArrayValueFor
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValueFor
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 import org.json.JSONArray
 import org.json.JSONObject
@@ -19,7 +22,7 @@ import se.vettefors.googlepaytest.model.GooglePayResult
 internal object GooglePayService {
 
     fun launchGooglePay(
-        task: IntegrationTask,
+        expects: List<ExpectationModel>,
         activity: Activity,
         errorHandler: (PaymentSessionProblem) -> Unit,
         onGooglePayResult: (GooglePayResult) -> Unit
@@ -48,85 +51,71 @@ internal object GooglePayService {
             }
         }
 
-        val allowedCardAuthMethodsExpectationsModel =
-            task.getExpectValuesFor(GooglePayExpectedValues.ALLOWED_CARD_AUTH_METHODS)
-
-        val allowedCardNetworksExpectationsModel =
-            task.getExpectValuesFor(GooglePayExpectedValues.ALLOWED_CARD_NETWORKS)
-
-        if (allowedCardAuthMethodsExpectationsModel?.type != "string[]"
-            || allowedCardNetworksExpectationsModel?.type != "string[]"
-        ) {
-            errorHandler.invoke(PaymentSessionProblem.InternalInconsistencyError)
-        }
-
-        @Suppress("UNCHECKED_CAST")
         val allowedCardAuthMethods = JSONArray(
-            allowedCardAuthMethodsExpectationsModel?.value as List<String>
+            expects.getStringArrayValueFor(GooglePayExpectedValues.ALLOWED_CARD_AUTH_METHODS)
         )
 
-        @Suppress("UNCHECKED_CAST")
         val allowedCardNetworks = JSONArray(
-            allowedCardNetworksExpectationsModel?.value as List<String>
+            expects.getStringArrayValueFor(GooglePayExpectedValues.ALLOWED_CARD_NETWORKS)
         )
-
 
         val gatewayTokenizationSpecification = JSONObject()
-            .put("type", "PAYMENT_GATEWAY")
+            .put("type", GooglePayExpectedValues.TYPE_PAYMENT_GATEWAY)
             .put(
                 "parameters", JSONObject()
-                    .put("gateway", task.getExpectValuesFor(GooglePayExpectedValues.GATEWAY)?.value)
+                    .put("gateway", expects.getStringValueFor(GooglePayExpectedValues.GATEWAY))
                     .put(
                         "gatewayMerchantId",
-                        task.getExpectValuesFor(GooglePayExpectedValues.GATEWAY_MERCHANT_ID)?.value
+                        expects.getStringValueFor(GooglePayExpectedValues.GATEWAY_MERCHANT_ID)
                     )
             )
 
         val baseCardPaymentMethod = JSONObject()
-            .put("type", "CARD")
+            .put("type", GooglePayExpectedValues.TYPE_CARD)
             .put(
                 "parameters", JSONObject()
                     .put("allowedAuthMethods", allowedCardAuthMethods)
                     .put("allowedCardNetworks", allowedCardNetworks)
                     .put(
                         "billingAddressRequired",
-                        task.getExpectValuesFor(GooglePayExpectedValues.BILLING_ADDRESS_REQUIRED)?.value
+                        expects.getBooleanValueFor(GooglePayExpectedValues.BILLING_ADDRESS_REQUIRED)
                     )
-                    .put(
-                        "billingAddressParameters", JSONObject()
-                            .put("format", "FULL")
-                    )
+//                    .put(
+//                        "billingAddressParameters", JSONObject()
+//                            .put("format", "FULL")
+//                    )
             )
             .put("tokenizationSpecification", gatewayTokenizationSpecification)
 
         val transactionInfo = JSONObject()
-            .put("totalPrice", task.getExpectValuesFor(GooglePayExpectedValues.TOTAL_PRICE)?.value)
+            .put("totalPrice", expects.getStringValueFor(GooglePayExpectedValues.TOTAL_PRICE))
             .put(
                 "totalPriceStatus",
-                task.getExpectValuesFor(GooglePayExpectedValues.TOTAL_PRICE_STATUS)?.value
+                expects.getStringValueFor(GooglePayExpectedValues.TOTAL_PRICE_STATUS)
             )
             .put(
                 "totalPriceLabel",
-                task.getExpectValuesFor(GooglePayExpectedValues.TOTAL_PRICE_LABEL)?.value
+                expects.getStringValueFor(GooglePayExpectedValues.TOTAL_PRICE_LABEL)
             )
             .put(
                 "countryCode",
-                task.getExpectValuesFor(GooglePayExpectedValues.COUNTRY_CODE)?.value
+                expects.getStringValueFor(GooglePayExpectedValues.COUNTRY_CODE)
             )
             .put(
                 "currencyCode",
-                task.getExpectValuesFor(GooglePayExpectedValues.CURRENCY_CODE)?.value
+                expects.getStringValueFor(GooglePayExpectedValues.CURRENCY_CODE)
             )
             .put(
                 "transactionId",
-                task.getExpectValuesFor(GooglePayExpectedValues.TRANSACTION_ID)?.value
+                expects.getStringValueFor(GooglePayExpectedValues.TRANSACTION_ID)
             )
 
         val merchantInfo = JSONObject()
             .put(
                 "merchantName",
-                task.getExpectValuesFor(GooglePayExpectedValues.MERCHANT_NAME)?.value
+                expects.getStringValueFor(GooglePayExpectedValues.MERCHANT_NAME)
             )
+            .put("merchantId", expects.getStringValueFor(GooglePayExpectedValues.MERCHANT_ID))
 
         val baseRequest = JSONObject()
             .put("apiVersion", 2)
@@ -135,19 +124,19 @@ internal object GooglePayService {
             .put("merchantInfo", merchantInfo)
             .put(
                 "shippingAddressRequired",
-                task.getExpectValuesFor(GooglePayExpectedValues.SHIPPING_ADDRESS_REQUIRED)?.value
+                expects.getBooleanValueFor(GooglePayExpectedValues.SHIPPING_ADDRESS_REQUIRED)
             )
-            .put(
-                "shippingAddressParameters", JSONObject()
-                    .put("phoneNumberRequired", false)
-                    .put(
-                        "allowedCountryCodes", JSONArray(
-                            listOf(
-                                "SE"
-                            )
-                        )
-                    )
-            )
+//            .put(
+//                "shippingAddressParameters", JSONObject()
+//                    .put("phoneNumberRequired", false)
+//                    .put(
+//                        "allowedCountryCodes", JSONArray(
+//                            listOf(
+//                                "SE"
+//                            )
+//                        )
+//                    )
+//            )
             .put(
                 "allowedPaymentMethods", JSONArray(
                     listOf(
@@ -156,12 +145,18 @@ internal object GooglePayService {
                 )
             )
 
+        val environment = when (
+            expects.getStringValueFor(GooglePayExpectedValues.ENVIRONMENT)
+        ) {
+            "TEST" -> WalletConstants.ENVIRONMENT_TEST
+            "PRODUCTION" -> WalletConstants.ENVIRONMENT_PRODUCTION
+            else -> WalletConstants.ENVIRONMENT_TEST
+        }
+
         val walletOptions = Wallet.WalletOptions.Builder()
-            .setEnvironment(WalletConstants.ENVIRONMENT_TEST)
+            .setEnvironment(environment)
             .build()
         val paymentsClient = Wallet.getPaymentsClient(activity, walletOptions)
-
-        Log.d("googlepay", "launchGooglePay: $baseRequest ")
 
         val request = PaymentDataRequest.fromJson(baseRequest.toString())
         val googlePayTask = paymentsClient.loadPaymentData(request)

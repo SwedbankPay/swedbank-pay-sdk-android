@@ -1,6 +1,5 @@
 package com.swedbankpay.mobilesdk.paymentsession.util
 
-import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ApiError
@@ -23,7 +22,6 @@ internal object JsonUtil {
             .create()
 
     fun String.toPaymentOutputModel(): PaymentOutputModel {
-        v("helloproblem", this)
         val paymentOutputModel = gson.fromJson(this, PaymentOutputModel::class.java)
         // Remove nulls from operations
         // This is done because of how GSON serialize things
@@ -36,25 +34,5 @@ internal object JsonUtil {
 
     fun String.toApiError(): ApiError =
         gson.fromJson(this, ApiError::class.java)
-
-    var _charLimit = 1000
-
-    @JvmStatic
-    fun v(tag: String?, message: String): Int {
-        // If the message is less than the limit just show
-        if (message.length < _charLimit) {
-            return Log.v(tag, message)
-        }
-        val sections = message.length / _charLimit
-        for (i in 0..sections) {
-            val max = _charLimit * (i + 1)
-            if (max >= message.length) {
-                Log.v(tag, message.substring(_charLimit * i))
-            } else {
-                Log.v(tag, message.substring(_charLimit * i, max))
-            }
-        }
-        return 1
-    }
 
 }

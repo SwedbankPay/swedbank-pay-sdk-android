@@ -4,7 +4,6 @@ package com.swedbankpay.mobilesdk.paymentsession
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.PaymentFragment
@@ -609,17 +608,37 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     private fun launchGooglePay(task: IntegrationTask) {
-        safeLet(paymentAttemptInstrument, task.expects) { paymentInstrument, _ ->
+        safeLet(paymentAttemptInstrument, task.expects) { paymentInstrument, expectsModels ->
             GooglePayService.launchGooglePay(
-                task,
+                expectsModels,
                 (paymentInstrument as PaymentAttemptInstrument.GooglePay).activity,
                 errorHandler = ::onSdkProblemOccurred
             ) {
-                Log.d("GooglePayResult", "$it")
+                currentPaymentOutputModel?.let {
+                    val googlePayOperation =
+                        SessionOperationHandler.getOperationStepForGooglePay(it)
+
+                    googlePayOperation?.let {
+                        executeNextStepUntilFurtherInstructions(googlePayOperation)
+                    } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+
+                } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+
             }
+            clearPaymentAttemptInstrument()
         } ?: kotlin.run {
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
+
+        BeaconService.logEvent(
+            eventAction = EventAction.SDKMethodInvoked(
+                method = MethodModel(
+                    name = "launchGooglePay",
+                    sdk = true,
+                    succeeded = true
+                )
+            )
+        )
 
     }
 
