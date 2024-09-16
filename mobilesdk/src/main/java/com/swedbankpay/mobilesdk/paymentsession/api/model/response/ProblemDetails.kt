@@ -1,8 +1,8 @@
 package com.swedbankpay.mobilesdk.paymentsession.api.model.response
 
 
-import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
+import com.google.gson.annotations.SerializedName
 
 /**
  * Problem details returned with [SessionProblemOccurred]
@@ -20,5 +20,5 @@ data class ProblemDetails(
     @SerializedName("originalDetail")
     val originalDetail: String?,
     @SerializedName("operation")
-    internal val operations: OperationOutputModel
+    internal val operation: OperationOutputModel?
 )

@@ -336,7 +336,7 @@ internal open class PaymentSessionAPIClient {
      */
     fun postFailedAttemptRequest(problemDetailsWithOperation: ProblemDetails) {
         val start = System.currentTimeMillis()
-        problemDetailsWithOperation.operations.href?.let {
+        problemDetailsWithOperation.operation?.href?.let {
             try {
                 val url = URL(it)
 

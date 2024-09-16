@@ -610,9 +610,9 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun launchGooglePay(task: IntegrationTask) {
         safeLet(paymentAttemptInstrument, task.expects) { paymentInstrument, expectsModels ->
             GooglePayService.launchGooglePay(
-                expectsModels,
+                expectsModels.filterNotNull(),
                 (paymentInstrument as PaymentAttemptInstrument.GooglePay).activity,
-                errorHandler = ::onSdkProblemOccurred
+                errorHandler = ::onSessionProblemOccurred
             ) {
                 currentPaymentOutputModel?.let {
                     val googlePayOperation =

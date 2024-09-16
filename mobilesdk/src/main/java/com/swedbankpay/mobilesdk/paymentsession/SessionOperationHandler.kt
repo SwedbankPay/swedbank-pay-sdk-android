@@ -54,8 +54,8 @@ internal object SessionOperationHandler {
         // If we find a problem that we haven't used return it. Otherwise just acknowledge it and
         // add it to the instructions without informing the merchant app
         if (paymentOutputModel.problem != null) {
-            val problemOperation = paymentOutputModel.problem.operations
-            if (problemOperation.rel == OperationRel.ACKNOWLEDGE_FAILED_ATTEMPT) {
+            val problemOperation = paymentOutputModel.problem.operation
+            if (problemOperation?.rel == OperationRel.ACKNOWLEDGE_FAILED_ATTEMPT) {
                 if (problemOperation.href != null) {
                     if (alreadyUsedProblemUrls.contains(problemOperation.href)) {
                         instructions.add(

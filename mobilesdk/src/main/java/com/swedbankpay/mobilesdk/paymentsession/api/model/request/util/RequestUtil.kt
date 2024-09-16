@@ -1,11 +1,13 @@
 package com.swedbankpay.mobilesdk.paymentsession.api.model.request.util
 
+import android.util.Base64
 import com.google.gson.GsonBuilder
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CompleteAuthentication
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreateAuthentication
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreditCardAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CustomizePayment
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.GooglePayAttempt
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.GooglePayload
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Integration
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.SwishAttempt
@@ -17,6 +19,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.PREPARE_PAYMENT
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.START_PAYMENT_ATTEMPT
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
+import se.vettefors.googlepaytest.model.GooglePayResult
 
 /**
  * [RequestUtil] will get request data for the different [OperationRel]:s
@@ -125,6 +128,18 @@ internal object RequestUtil {
             restrictToPaymentMethods = instrumentFilter
         ).toJsonString()
     }
+
+    private fun getGooglePayPayLoadData(googlePayResult: GooglePayResult): String {
+        return GooglePayload(
+            instrument = "GooglePay",
+            cardNetwork = googlePayResult.paymentMethodData?.info?.cardNetwork,
+            payLoad = googlePayResult.paymentMethodData?.tokenizationData?.token?.toBase64(),
+            cardDetails = googlePayResult.paymentMethodData?.info?.cardDetails,
+            shippingAddress = googlePayResult.shippingAddress
+        ).toJsonString()
+    }
+
+    private fun String.toBase64() = Base64.encodeToString(this.toByteArray(), Base64.DEFAULT)
 
     private inline fun <reified T : Any> T.toJsonString(): String = gson.toJson(this, T::class.java)
 }

@@ -1,7 +1,10 @@
-package com.swedbankpay.mobilesdk.paymentsession.googlepay
+package com.swedbankpay.mobilesdk.paymentsession.googlepay.util
 
-internal object GooglePayExpectedValues {
+internal object GooglePayConstants {
 
+    // Api Version
+    const val GOOGLE_PAY_API_VERSION = 2
+    const val GOOGLE_PAY_API_VERSION_MINOR = 0
 
     // Types
     const val TYPE_PAYMENT_GATEWAY = "PAYMENT_GATEWAY"

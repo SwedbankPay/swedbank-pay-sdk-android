@@ -1,7 +1,6 @@
 package com.swedbankpay.mobilesdk.paymentsession.googlepay
 
 import android.app.Activity
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.common.api.CommonStatusCodes
@@ -11,10 +10,12 @@ import com.google.android.gms.wallet.WalletConstants
 import com.google.android.gms.wallet.contract.TaskResultContracts
 import com.google.gson.Gson
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ExpectationModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getBooleanValueFor
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringArrayValueFor
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValueFor
-import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayConstants
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayErrorUtil
 import org.json.JSONArray
 import org.json.JSONObject
 import se.vettefors.googlepaytest.model.GooglePayResult
@@ -24,7 +25,7 @@ internal object GooglePayService {
     fun launchGooglePay(
         expects: List<ExpectationModel>,
         activity: Activity,
-        errorHandler: (PaymentSessionProblem) -> Unit,
+        errorHandler: (ProblemDetails) -> Unit,
         onGooglePayResult: (GooglePayResult) -> Unit
     ) {
         val activityResultRegistry = when (activity) {
@@ -40,45 +41,47 @@ internal object GooglePayService {
             when (taskResult.status.statusCode) {
                 CommonStatusCodes.SUCCESS -> {
                     taskResult.result?.let {
-                        Log.d("google", "${it.toJson()} ")
                         val result = Gson().fromJson(it.toJson(), GooglePayResult::class.java)
                         onGooglePayResult(result)
                     }
                 }
-                //CommonStatusCodes.CANCELED -> The user canceled
+
+                CommonStatusCodes.CANCELED -> {
+                    errorHandler.invoke(GooglePayErrorUtil.cancelGooglePayProblem)
+                }
                 //AutoResolveHelper.RESULT_ERROR -> The API returned an error (it.status: Status)
                 //CommonStatusCodes.INTERNAL_ERROR -> Handle other unexpected errors
             }
         }
 
         val allowedCardAuthMethods = JSONArray(
-            expects.getStringArrayValueFor(GooglePayExpectedValues.ALLOWED_CARD_AUTH_METHODS)
+            expects.getStringArrayValueFor(GooglePayConstants.ALLOWED_CARD_AUTH_METHODS)
         )
 
         val allowedCardNetworks = JSONArray(
-            expects.getStringArrayValueFor(GooglePayExpectedValues.ALLOWED_CARD_NETWORKS)
+            expects.getStringArrayValueFor(GooglePayConstants.ALLOWED_CARD_NETWORKS)
         )
 
         val gatewayTokenizationSpecification = JSONObject()
-            .put("type", GooglePayExpectedValues.TYPE_PAYMENT_GATEWAY)
+            .put("type", GooglePayConstants.TYPE_PAYMENT_GATEWAY)
             .put(
                 "parameters", JSONObject()
-                    .put("gateway", expects.getStringValueFor(GooglePayExpectedValues.GATEWAY))
+                    .put("gateway", expects.getStringValueFor(GooglePayConstants.GATEWAY))
                     .put(
                         "gatewayMerchantId",
-                        expects.getStringValueFor(GooglePayExpectedValues.GATEWAY_MERCHANT_ID)
+                        expects.getStringValueFor(GooglePayConstants.GATEWAY_MERCHANT_ID)
                     )
             )
 
         val baseCardPaymentMethod = JSONObject()
-            .put("type", GooglePayExpectedValues.TYPE_CARD)
+            .put("type", GooglePayConstants.TYPE_CARD)
             .put(
                 "parameters", JSONObject()
                     .put("allowedAuthMethods", allowedCardAuthMethods)
                     .put("allowedCardNetworks", allowedCardNetworks)
                     .put(
                         "billingAddressRequired",
-                        expects.getBooleanValueFor(GooglePayExpectedValues.BILLING_ADDRESS_REQUIRED)
+                        expects.getBooleanValueFor(GooglePayConstants.BILLING_ADDRESS_REQUIRED)
                     )
 //                    .put(
 //                        "billingAddressParameters", JSONObject()
@@ -88,43 +91,43 @@ internal object GooglePayService {
             .put("tokenizationSpecification", gatewayTokenizationSpecification)
 
         val transactionInfo = JSONObject()
-            .put("totalPrice", expects.getStringValueFor(GooglePayExpectedValues.TOTAL_PRICE))
+            .put("totalPrice", expects.getStringValueFor(GooglePayConstants.TOTAL_PRICE))
             .put(
                 "totalPriceStatus",
-                expects.getStringValueFor(GooglePayExpectedValues.TOTAL_PRICE_STATUS)
+                expects.getStringValueFor(GooglePayConstants.TOTAL_PRICE_STATUS)
             )
             .put(
                 "totalPriceLabel",
-                expects.getStringValueFor(GooglePayExpectedValues.TOTAL_PRICE_LABEL)
+                expects.getStringValueFor(GooglePayConstants.TOTAL_PRICE_LABEL)
             )
             .put(
                 "countryCode",
-                expects.getStringValueFor(GooglePayExpectedValues.COUNTRY_CODE)
+                expects.getStringValueFor(GooglePayConstants.COUNTRY_CODE)
             )
             .put(
                 "currencyCode",
-                expects.getStringValueFor(GooglePayExpectedValues.CURRENCY_CODE)
+                expects.getStringValueFor(GooglePayConstants.CURRENCY_CODE)
             )
             .put(
                 "transactionId",
-                expects.getStringValueFor(GooglePayExpectedValues.TRANSACTION_ID)
+                expects.getStringValueFor(GooglePayConstants.TRANSACTION_ID)
             )
 
         val merchantInfo = JSONObject()
             .put(
                 "merchantName",
-                expects.getStringValueFor(GooglePayExpectedValues.MERCHANT_NAME)
+                expects.getStringValueFor(GooglePayConstants.MERCHANT_NAME)
             )
-            .put("merchantId", expects.getStringValueFor(GooglePayExpectedValues.MERCHANT_ID))
+            .put("merchantId", expects.getStringValueFor(GooglePayConstants.MERCHANT_ID))
 
         val baseRequest = JSONObject()
-            .put("apiVersion", 2)
-            .put("apiVersionMinor", 0)
+            .put("apiVersion", GooglePayConstants.GOOGLE_PAY_API_VERSION)
+            .put("apiVersionMinor", GooglePayConstants.GOOGLE_PAY_API_VERSION_MINOR)
             .put("transactionInfo", transactionInfo)
             .put("merchantInfo", merchantInfo)
             .put(
                 "shippingAddressRequired",
-                expects.getBooleanValueFor(GooglePayExpectedValues.SHIPPING_ADDRESS_REQUIRED)
+                expects.getBooleanValueFor(GooglePayConstants.SHIPPING_ADDRESS_REQUIRED)
             )
 //            .put(
 //                "shippingAddressParameters", JSONObject()
@@ -146,7 +149,7 @@ internal object GooglePayService {
             )
 
         val environment = when (
-            expects.getStringValueFor(GooglePayExpectedValues.ENVIRONMENT)
+            expects.getStringValueFor(GooglePayConstants.ENVIRONMENT)
         ) {
             "TEST" -> WalletConstants.ENVIRONMENT_TEST
             "PRODUCTION" -> WalletConstants.ENVIRONMENT_PRODUCTION

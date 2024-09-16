@@ -1,53 +1,90 @@
 package se.vettefors.googlepaytest.model
 
 
-import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
+import com.google.gson.annotations.SerializedName
 
 @Keep
-internal data class GooglePayResult(
+data class GooglePayResult(
     @SerializedName("apiVersion")
-    val apiVersion: Int,
+    val apiVersion: Int?,
     @SerializedName("apiVersionMinor")
-    val apiVersionMinor: Int,
+    val apiVersionMinor: Int?,
     @SerializedName("paymentMethodData")
-    val paymentMethodData: PaymentMethodData
+    val paymentMethodData: PaymentMethodData?,
+    @SerializedName("shippingAddress")
+    val shippingAddress: ShippingAddress?
 )
 
 @Keep
-internal data class PaymentMethodData(
+data class PaymentMethodData(
     @SerializedName("description")
-    val description: String,
+    val description: String?,
     @SerializedName("info")
-    val info: Info,
+    val info: Info?,
     @SerializedName("tokenizationData")
-    val tokenizationData: TokenizationData,
+    val tokenizationData: TokenizationData?,
     @SerializedName("type")
-    val type: String
+    val type: String?
 )
 
 @Keep
-internal data class Info(
+data class Info(
     @SerializedName("assuranceDetails")
-    val assuranceDetails: AssuranceDetails,
+    val assuranceDetails: AssuranceDetails?,
+    @SerializedName("billingAddress")
+    val billingAddress: BillingAddress?,
     @SerializedName("cardDetails")
-    val cardDetails: String,
+    val cardDetails: String?,
     @SerializedName("cardNetwork")
-    val cardNetwork: String
+    val cardNetwork: String?
 )
 
 @Keep
-internal data class AssuranceDetails(
+data class AssuranceDetails(
     @SerializedName("accountVerified")
-    val accountVerified: Boolean,
+    val accountVerified: Boolean?,
     @SerializedName("cardHolderAuthenticated")
-    val cardHolderAuthenticated: Boolean
+    val cardHolderAuthenticated: Boolean?
 )
 
 @Keep
-internal data class TokenizationData(
+data class BillingAddress(
+    @SerializedName("countryCode")
+    val countryCode: String?,
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("postalCode")
+    val postalCode: String?
+)
+
+
+@Keep
+data class TokenizationData(
     @SerializedName("token")
-    val token: String,
+    val token: String?,
     @SerializedName("type")
-    val type: String
+    val type: String?
+)
+
+@Keep
+data class ShippingAddress(
+    @SerializedName("address1")
+    val address1: String?,
+    @SerializedName("address2")
+    val address2: String?,
+    @SerializedName("address3")
+    val address3: String?,
+    @SerializedName("administrativeArea")
+    val administrativeArea: String?,
+    @SerializedName("countryCode")
+    val countryCode: String?,
+    @SerializedName("locality")
+    val locality: String?,
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("postalCode")
+    val postalCode: String?,
+    @SerializedName("sortingCode")
+    val sortingCode: String?
 )
