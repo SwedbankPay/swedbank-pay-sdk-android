@@ -7,8 +7,10 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.PaymentFragment
+import com.swedbankpay.mobilesdk.PaymentViewModel
 import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
 import com.swedbankpay.mobilesdk.internal.CallbackActivity
+import com.swedbankpay.mobilesdk.internal.PaymentFragmentStateBridge
 import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.MethodModel
@@ -65,6 +67,21 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         checkCallbacks()
     }
 
+    /**
+     * Observing payment fragment state
+     */
+    private val paymentFragmentObserver = Observer<PaymentViewModel.State> {
+        when (it) {
+            PaymentViewModel.State.COMPLETE,
+            PaymentViewModel.State.CANCELED,
+            PaymentViewModel.State.FAILURE -> {
+                clearState()
+            }
+
+            else -> {}
+        }
+    }
+
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private var currentPaymentOutputModel: PaymentOutputModel? = null
@@ -90,6 +107,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         currentPaymentOutputModel = null
         SessionOperationHandler.clearState()
         stopObservingCallbacks()
+        stopObservingPaymentFragmentPaymentProcess()
+        setStateToIdle()
         if (isStartingSession) {
             BeaconService.clearQueue()
         } else {
@@ -122,8 +141,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         url = URL(getPayment.href)
                     )
                 )
-            } else {
-                onSdkProblemOccurred(PaymentSessionProblem.PaymentSessionEndReached)
             }
         }
     }
@@ -310,7 +327,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         when (instruction) {
             is StepInstruction.AvailableInstrumentStep -> {
                 _paymentSessionState.setValue(PaymentSessionState.PaymentSessionFetched(instruction.availableInstruments))
-                setStateToIdle()
 
                 BeaconService.logEvent(
                     eventAction = EventAction.SDKCallbackInvoked(
@@ -435,10 +451,19 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 )
             )
 
+            startObservingPaymentFragmentPaymentProcess()
+
             _paymentSessionState.setValue(PaymentSessionState.PaymentFragmentCreated(paymentFragment))
-            setStateToIdle()
 
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+    }
+
+    private fun startObservingPaymentFragmentPaymentProcess() {
+        PaymentFragmentStateBridge.paymentMenuState.observeForever(paymentFragmentObserver)
+    }
+
+    private fun stopObservingPaymentFragmentPaymentProcess() {
+        PaymentFragmentStateBridge.paymentMenuState.removeObserver(paymentFragmentObserver)
     }
 
     /**
@@ -486,7 +511,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                             )
                         )
                         _paymentSessionState.setValue(PaymentSessionState.Dismiss3dSecureFragment)
-                        setStateToIdle()
 
                         BeaconService.logEvent(
                             eventAction = EventAction.SDKCallbackInvoked(
@@ -503,7 +527,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
 
         _paymentSessionState.setValue(PaymentSessionState.Show3dSecureFragment(scaRedirectFragment))
-        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
@@ -567,7 +590,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         when (url) {
             orderInfo?.completeUrl -> {
                 _paymentSessionState.setValue(PaymentSessionState.PaymentSessionComplete)
-                setStateToIdle()
                 BeaconService.logEvent(
                     eventAction = EventAction.SDKCallbackInvoked(
                         method = MethodModel(
@@ -582,8 +604,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
             orderInfo?.cancelUrl -> {
                 _paymentSessionState.setValue(PaymentSessionState.PaymentSessionCanceled)
-                setStateToIdle()
-
                 BeaconService.logEvent(
                     eventAction = EventAction.SDKCallbackInvoked(
                         method = MethodModel(
@@ -612,7 +632,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
 
         _paymentSessionState.setValue(PaymentSessionState.SdkProblemOccurred(paymentSessionProblem))
-        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
@@ -628,7 +647,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private fun onSessionProblemOccurred(problemDetails: ProblemDetails) {
         _paymentSessionState.setValue(PaymentSessionState.SessionProblemOccurred(problemDetails))
-        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
@@ -641,6 +659,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             )
         )
     }
+
 
     private fun setStateToIdle() {
         _paymentSessionState.setValue(PaymentSessionState.Idle)

@@ -13,8 +13,21 @@ import android.webkit.WebResourceResponse
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
-import androidx.lifecycle.*
-import com.swedbankpay.mobilesdk.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
+import com.swedbankpay.mobilesdk.Configuration
+import com.swedbankpay.mobilesdk.Consumer
+import com.swedbankpay.mobilesdk.PaymentFragment
+import com.swedbankpay.mobilesdk.PaymentOrder
+import com.swedbankpay.mobilesdk.PaymentViewModel
+import com.swedbankpay.mobilesdk.R
+import com.swedbankpay.mobilesdk.TerminalFailure
+import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
+import com.swedbankpay.mobilesdk.toStyleJs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -32,9 +45,14 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         checkCallbacks()
     }
 
+    private val stateBridgeObserver = Observer<UIState?>
+    {
+        PaymentFragmentStateBridge.paymentProcessUiState.value = it
+    }
+
     private val processState = MutableLiveData<ProcessState?>()
     private val moveToNextStateJob = MutableLiveData<Job?>()
-    
+
     val webViewShowingRootPage = MutableLiveData(false)
 
     var reloadRequested = false
@@ -102,7 +120,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     init {
         CallbackActivity.onCallbackUrlInvoked.observeForever(callbackUrlObserver)
     }
-    
+
     var useExternalBrowser: Boolean = false
         private set
 
@@ -111,6 +129,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     override fun onCleared() {
         super.onCleared()
         CallbackActivity.onCallbackUrlInvoked.removeObserver(callbackUrlObserver)
+        uiState.removeObserver(stateBridgeObserver)
         javascriptInterface.vm = null
         configuration = null
         publicVm = null
@@ -159,7 +178,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 )
                 moveToNextStateJob.value = null
                 setProcessState(nextState)
-            } catch (_: CancellationException) {}
+            } catch (_: CancellationException) {
+            }
         }
     }
 
@@ -186,6 +206,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             }
             setProcessState(state)
         }
+
+        // To be able to observe ui state from payment fragment in payment sessions
+        uiState.observeForever(stateBridgeObserver)
     }
 
     fun saveState(bundle: Bundle) {
@@ -217,13 +240,13 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     fun onError(terminalFailure: TerminalFailure?) {
         setFailureState(FailureReason.SwedbankPayError(terminalFailure))
     }
-    
+
     fun onPaid(message: String) {
         //setFailureState(FailureReason.SwedbankPayError(terminalFailure))
         Log.d(LOG_TAG, "onPaid: $message")
         setProcessState(ProcessState.Complete)
     }
-    
+
     fun onGeneralEvent(message: String) {
         Log.d(LOG_TAG, "onGeneralEvent: $message")
         publicVm?.run {
@@ -253,22 +276,28 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     }
 
     fun onRedirectError(errorCode: Int, description: String?, failingUrl: String) {
-        setFailureState(FailureReason.RedirectError(
-            Uri.parse(failingUrl), errorCode, description
-        ))
+        setFailureState(
+            FailureReason.RedirectError(
+                Uri.parse(failingUrl), errorCode, description
+            )
+        )
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     fun onRedirectError(request: WebResourceRequest, error: WebResourceError) {
-        setFailureState(FailureReason.RedirectError(
-            request.url, error.errorCode, error.description?.toString()
-        ))
+        setFailureState(
+            FailureReason.RedirectError(
+                request.url, error.errorCode, error.description?.toString()
+            )
+        )
     }
 
     fun onRedirectHttpError(request: WebResourceRequest, errorResponse: WebResourceResponse) {
-        setFailureState(FailureReason.RedirectHttpError(
-            request.url, errorResponse.statusCode, errorResponse.reasonPhrase
-        ))
+        setFailureState(
+            FailureReason.RedirectHttpError(
+                request.url, errorResponse.statusCode, errorResponse.reasonPhrase
+            )
+        )
     }
 
     private fun setFailureState(reason: FailureReason) {
@@ -298,16 +327,17 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 )
             }
         }
+
         class ViewPaymentOrder(
             val viewPaymentOrderInfo: ViewPaymentOrderInfo,
             private val style: Bundle?,
             val updateException: Exception?
-        ): UIState(), HtmlContent {
+        ) : UIState(), HtmlContent {
             override val asHtmlContent get() = this
             override val baseUrl get() = viewPaymentOrderInfo.webViewBaseUrl
-            
+
             override fun getWebViewPage(context: Context): String {
-                
+
                 if (viewPaymentOrderInfo.isV3) {
                     return context.getString(
                         R.string.swedbankpaysdk_view_checkout_template,
@@ -356,8 +386,12 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
         open val shouldProceedAutomatically get() = false
         open val isRetryableErrorState get() = false
-        open suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration) = this
-        open fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState? = null
+        open suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration) =
+            this
+
+        open fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState? =
+            null
+
         open fun getStateForUpdatingPaymentOrder(updateInfo: Any?): ProcessState? = null
 
         @Parcelize
@@ -370,7 +404,10 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override val uiState get() = UIState.Loading
 
             override val shouldProceedAutomatically get() = true
-            override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
+            override suspend fun getNextState(
+                vm: InternalPaymentViewModel,
+                configuration: Configuration
+            ): ProcessState {
                 return try {
                     val viewConsumerIdentificationInfo = configuration
                         .postConsumers(vm.getApplication(), consumer, userData)
@@ -407,7 +444,10 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 }
 
             override val isRetryableErrorState get() = true
-            override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
+            override suspend fun getNextState(
+                vm: InternalPaymentViewModel,
+                configuration: Configuration
+            ): ProcessState {
                 return InitializingConsumerSession(consumer, paymentOrder, userData, style)
             }
         }
@@ -420,11 +460,12 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             private val userData: @RawValue Any?,
             private val style: Bundle?
         ) : ProcessState() {
-            override val uiState get() = UIState.ViewConsumerIdentification(
-                baseUrl,
-                viewConsumerIdentification,
-                style
-            )
+            override val uiState
+                get() = UIState.ViewConsumerIdentification(
+                    baseUrl,
+                    viewConsumerIdentification,
+                    style
+                )
 
             override fun getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef: String): ProcessState {
                 return CreatingPaymentOrder(consumerProfileRef, paymentOrder, userData, style)
@@ -441,9 +482,17 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override val uiState get() = UIState.Loading
 
             override val shouldProceedAutomatically get() = true
-            override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
+            override suspend fun getNextState(
+                vm: InternalPaymentViewModel,
+                configuration: Configuration
+            ): ProcessState {
                 return try {
-                    val viewPaymentOrderInfo = configuration.postPaymentorders(vm.getApplication(), paymentOrder, userData, consumerProfileRef)
+                    val viewPaymentOrderInfo = configuration.postPaymentorders(
+                        vm.getApplication(),
+                        paymentOrder,
+                        userData,
+                        consumerProfileRef
+                    )
                     Paying(paymentOrder, userData, style, viewPaymentOrderInfo, null)
                 } catch (e: Exception) {
                     val retryable = configuration.shouldRetryAfterPostPaymentordersException(e)
@@ -471,7 +520,10 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                 }
 
             override val isRetryableErrorState get() = true
-            override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
+            override suspend fun getNextState(
+                vm: InternalPaymentViewModel,
+                configuration: Configuration
+            ): ProcessState {
                 return CreatingPaymentOrder(consumerProfileRef, paymentOrder, userData, style)
             }
         }
@@ -505,12 +557,19 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             override val uiState get() = UIState.UpdatingPaymentOrder
 
             override val shouldProceedAutomatically get() = true
-            override suspend fun getNextState(vm: InternalPaymentViewModel, configuration: Configuration): ProcessState {
+            override suspend fun getNextState(
+                vm: InternalPaymentViewModel,
+                configuration: Configuration
+            ): ProcessState {
                 var exception: Exception? = null
                 val viewPaymentOrderInfo = try {
                     delay(1000)
                     configuration.updatePaymentOrder(
-                        vm.getApplication(), paymentOrder, userData, viewPaymentOrderInfo, updateInfo
+                        vm.getApplication(),
+                        paymentOrder,
+                        userData,
+                        viewPaymentOrderInfo,
+                        updateInfo
                     )
                 } catch (e: Exception) {
                     exception = e
