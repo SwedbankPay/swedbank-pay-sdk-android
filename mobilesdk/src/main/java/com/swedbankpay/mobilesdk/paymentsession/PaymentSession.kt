@@ -72,10 +72,14 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      */
     private val paymentFragmentObserver = Observer<PaymentViewModel.State> {
         when (it) {
-            PaymentViewModel.State.COMPLETE,
+            PaymentViewModel.State.COMPLETE -> {
+                clearState()
+            }
             PaymentViewModel.State.CANCELED,
             PaymentViewModel.State.FAILURE -> {
-                clearState()
+                stopObservingPaymentFragmentPaymentProcess()
+                isPaymentFragmentActive = false
+                setStateToIdle()
             }
 
             else -> {}
@@ -89,6 +93,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private var paymentAttemptInstrument: PaymentAttemptInstrument? = null
 
     private var startRequestTimestamp: Long = 0
+
+    private var isPaymentFragmentActive = false
 
     private val client: PaymentSessionAPIClient by lazy {
         PaymentSessionAPIClient()
@@ -108,7 +114,9 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         SessionOperationHandler.clearState()
         stopObservingCallbacks()
         stopObservingPaymentFragmentPaymentProcess()
+        isPaymentFragmentActive = false
         setStateToIdle()
+
         if (isStartingSession) {
             BeaconService.clearQueue()
         } else {
@@ -119,28 +127,32 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun checkCallbacks() {
         val callbackUrl = orderInfo?.paymentUrl
         if (callbackUrl != null && CallbackActivity.consumeNativeCallbackUrl(callbackUrl)) {
-            clearPaymentAttemptInstrument()
-            BeaconService.logEvent(
-                EventAction.ClientAppCallback(
-                    extensions = clientAppCallbackExtensionsModel(
-                        callbackUrl
+            if (!isPaymentFragmentActive) {
+                clearPaymentAttemptInstrument()
+                BeaconService.logEvent(
+                    EventAction.ClientAppCallback(
+                        extensions = clientAppCallbackExtensionsModel(
+                            callbackUrl
+                        )
                     )
                 )
-            )
 
-            val getPayment =
-                currentPaymentOutputModel
-                    ?.paymentSession
-                    ?.allMethodOperations
-                    ?.firstOrNull { it?.rel == OperationRel.GET_PAYMENT }
+                val getPayment =
+                    currentPaymentOutputModel
+                        ?.paymentSession
+                        ?.allMethodOperations
+                        ?.firstOrNull { it?.rel == OperationRel.GET_PAYMENT }
 
-            if (getPayment != null) {
-                executeNextStepUntilFurtherInstructions(
-                    operationStep = OperationStep(
-                        requestMethod = RequestMethod.GET,
-                        url = URL(getPayment.href)
+                if (getPayment != null) {
+                    executeNextStepUntilFurtherInstructions(
+                        operationStep = OperationStep(
+                            requestMethod = RequestMethod.GET,
+                            url = URL(getPayment.href)
+                        )
                     )
-                )
+                } else {
+                    onSdkProblemOccurred(PaymentSessionProblem.PaymentSessionEndReached)
+                }
             }
         }
     }
@@ -452,6 +464,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             )
 
             startObservingPaymentFragmentPaymentProcess()
+            isPaymentFragmentActive = true
 
             _paymentSessionState.setValue(PaymentSessionState.PaymentFragmentCreated(paymentFragment))
 
