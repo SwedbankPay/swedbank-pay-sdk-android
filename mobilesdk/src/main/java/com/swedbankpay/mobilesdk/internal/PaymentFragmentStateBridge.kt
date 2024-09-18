@@ -12,8 +12,8 @@ import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel.UIState
  */
 internal object PaymentFragmentStateBridge {
 
-    val paymentProcessUiState: MutableLiveData<UIState?> = MutableLiveData()
-    val paymentMenuState: LiveData<State> = paymentProcessUiState.map {
+    val paymentProcessState: MutableLiveData<UIState?> = MutableLiveData()
+    val paymentFragmentState: LiveData<State> = paymentProcessState.map {
         when (it) {
             null -> State.IDLE
             UIState.Loading -> State.IN_PROGRESS

@@ -472,11 +472,11 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     private fun startObservingPaymentFragmentPaymentProcess() {
-        PaymentFragmentStateBridge.paymentMenuState.observeForever(paymentFragmentObserver)
+        PaymentFragmentStateBridge.paymentFragmentState.observeForever(paymentFragmentObserver)
     }
 
     private fun stopObservingPaymentFragmentPaymentProcess() {
-        PaymentFragmentStateBridge.paymentMenuState.removeObserver(paymentFragmentObserver)
+        PaymentFragmentStateBridge.paymentFragmentState.removeObserver(paymentFragmentObserver)
     }
 
     /**

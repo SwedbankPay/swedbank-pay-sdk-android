@@ -47,7 +47,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
     private val stateBridgeObserver = Observer<UIState?>
     {
-        PaymentFragmentStateBridge.paymentProcessUiState.value = it
+        PaymentFragmentStateBridge.paymentProcessState.value = it
     }
 
     private val processState = MutableLiveData<ProcessState?>()
