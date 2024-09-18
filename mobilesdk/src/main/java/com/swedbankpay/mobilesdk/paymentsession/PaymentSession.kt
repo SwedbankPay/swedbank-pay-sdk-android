@@ -414,6 +414,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     fun makeNativePaymentAttempt(
         instrument: PaymentAttemptInstrument,
     ) {
+        isPaymentFragmentActive = false
         currentPaymentOutputModel?.let {
             paymentAttemptInstrument = instrument
 
