@@ -55,7 +55,10 @@ enum class OperationRel {
     COMPLETE_AUTHENTICATION,
 
     @SerializedName("view-payment")
-    VIEW_PAYMENT
+    VIEW_PAYMENT,
+
+    @SerializedName("customize-payment")
+    CUSTOMIZE_PAYMENT
 }
 
 @Keep

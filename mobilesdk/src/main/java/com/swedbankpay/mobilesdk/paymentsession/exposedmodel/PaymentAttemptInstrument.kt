@@ -24,6 +24,10 @@ sealed class PaymentAttemptInstrument(
         val localStartContext: Context
     ) : PaymentAttemptInstrument(localStartContext, CreditCard::class.java.simpleName)
 
+    @Keep
+    data class NewCreditCard(
+        val showConsentAffirmation: Boolean
+    ) : PaymentAttemptInstrument(null, "CreditCard")
 
 }
 
@@ -31,4 +35,5 @@ sealed class PaymentAttemptInstrument(
 fun PaymentAttemptInstrument.toInstrument(): Instrument = when (this) {
     is PaymentAttemptInstrument.CreditCard -> Instrument.CreditCard(this.identifier)
     is PaymentAttemptInstrument.Swish -> Instrument.Swish(this.identifier)
+    else -> Instrument.WebBased(this.identifier)
 }

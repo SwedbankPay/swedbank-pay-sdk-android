@@ -103,6 +103,37 @@ internal object SessionOperationHandler {
         }
         //endregion
 
+        //region 2. New credit card
+        val customizePayment =
+            operations.firstOrNull { it.rel == OperationRel.CUSTOMIZE_PAYMENT }
+
+        if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard
+            && customizePayment != null
+        ) {
+            // TODO check which mode payment menu is in. If it is in credit card mode create payment fragment
+            /*if (paymentOutputModel.instrumentModeMethod != null && paymentOutputModel.instrumentModeMethod == "CreditCard") {
+                instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
+                return OperationStep(
+                    instructions = instructions
+                )
+            } else {*/
+            return OperationStep(
+                requestMethod = customizePayment.method,
+                url = URL(customizePayment.href),
+                operationRel = customizePayment.rel,
+                data = customizePayment.rel?.getRequestDataIfAny(
+                    paymentAttemptInstrument,
+                    paymentOutputModel.paymentSession.culture,
+                    showConsentAffirmation = paymentAttemptInstrument.showConsentAffirmation
+                ),
+                instructions = instructions
+            )
+            // }
+
+
+        }
+        //endregion
+
         //region 2. Search for OperationRel.START_PAYMENT_ATTEMPT
         val startPaymentAttempt =
             paymentOutputModel.paymentSession.methods
@@ -308,9 +339,16 @@ internal object SessionOperationHandler {
                     }
                 }
 
+                val availableInstruments: MutableList<AvailableInstrument> =
+                    availableMethods.map { it.toAvailableInstrument() }.toMutableList()
+
+                if (availableInstruments.any { it is AvailableInstrument.CreditCard }) {
+                    availableInstruments.add(AvailableInstrument.NewCreditCard("NewCreditCard"))
+                }
+
                 instructions.add(
                     0, StepInstruction
-                        .AvailableInstrumentStep(availableInstruments = availableMethods.map { it.toAvailableInstrument() })
+                        .AvailableInstrumentStep(availableInstruments = availableInstruments)
                 )
 
                 hasShownAvailableInstruments = true
@@ -363,6 +401,13 @@ internal object SessionOperationHandler {
         paymentOutputModel: PaymentOutputModel,
         paymentAttemptInstrument: PaymentAttemptInstrument
     ): OperationStep? {
+
+        if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard) {
+            return OperationStep(
+                instructions = listOf(StepInstruction.OverrideApiCall(paymentOutputModel))
+            )
+        }
+
         val op = paymentOutputModel.paymentSession.methods
             ?.firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }
             ?.operations
@@ -429,6 +474,8 @@ internal sealed class StepInstruction(
         StepInstruction(true)
 
     class LaunchClientAppStep(val href: String) : StepInstruction(true)
+
+    object CreatePaymentFragmentStep : StepInstruction(true)
 
     class ScaRedirectStep(val task: IntegrationTask) : StepInstruction(true)
 

@@ -75,6 +75,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             PaymentViewModel.State.COMPLETE -> {
                 clearState()
             }
+
             PaymentViewModel.State.CANCELED,
             PaymentViewModel.State.FAILURE -> {
                 stopObservingPaymentFragmentPaymentProcess()
@@ -360,6 +361,10 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 launchClientApp(instruction.href)
             }
 
+            is StepInstruction.CreatePaymentFragmentStep -> {
+                createPaymentFragment()
+            }
+
             is StepInstruction.PaymentSessionCompleted -> {
                 onPaymentComplete(instruction.url)
             }
@@ -445,6 +450,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      * Creates a payment fragment
      */
     fun createPaymentFragment() {
+        clearPaymentAttemptInstrument()
         orderInfo?.let {
             val paymentFragment = PaymentFragment()
             PaymentFragment.defaultConfiguration = AutomaticConfiguration(it)

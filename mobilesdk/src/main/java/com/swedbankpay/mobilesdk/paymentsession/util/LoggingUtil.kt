@@ -52,6 +52,12 @@ internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel {
                 values = values
             )
         }
+
+        is PaymentAttemptInstrument.NewCreditCard -> {
+            ExtensionsModel(
+                values = values
+            )
+        }
     }
 }
 

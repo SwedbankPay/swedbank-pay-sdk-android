@@ -28,6 +28,13 @@ sealed class AvailableInstrument {
     ) : AvailableInstrument()
 
     /**
+     * Instrument telling merchants that new credit card can be used
+     */
+    data class NewCreditCard(
+        override val identifier: String
+    ) : AvailableInstrument()
+
+    /**
      * Instruments that can be used for web based payments
      */
     data class WebBased(
