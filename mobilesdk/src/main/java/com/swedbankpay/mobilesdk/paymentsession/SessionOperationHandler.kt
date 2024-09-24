@@ -87,7 +87,7 @@ internal object SessionOperationHandler {
             operations = listOf(op)
         }
 
-        //region 1. Search for OperationRel.PREPARE_PAYMENT
+        //region Search for OperationRel.PREPARE_PAYMENT
         val preparePayment =
             operations.firstOrNull { it.rel == OperationRel.PREPARE_PAYMENT }
         if (preparePayment != null) {
@@ -103,20 +103,22 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 2. New credit card
+        //region New credit card
+        if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard
+            && paymentOutputModel.paymentSession.instrumentModePaymentMethod == "CreditCard"
+        ) {
+            instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
+            return OperationStep(
+                instructions = instructions
+            )
+        }
+
         val customizePayment =
             operations.firstOrNull { it.rel == OperationRel.CUSTOMIZE_PAYMENT }
 
         if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard
             && customizePayment != null
         ) {
-            // TODO check which mode payment menu is in. If it is in credit card mode create payment fragment
-            /*if (paymentOutputModel.instrumentModeMethod != null && paymentOutputModel.instrumentModeMethod == "CreditCard") {
-                instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
-                return OperationStep(
-                    instructions = instructions
-                )
-            } else {*/
             return OperationStep(
                 requestMethod = customizePayment.method,
                 url = URL(customizePayment.href),
@@ -128,13 +130,10 @@ internal object SessionOperationHandler {
                 ),
                 instructions = instructions
             )
-            // }
-
-
         }
         //endregion
 
-        //region 2. Search for OperationRel.START_PAYMENT_ATTEMPT
+        //region Search for OperationRel.START_PAYMENT_ATTEMPT
         val startPaymentAttempt =
             paymentOutputModel.paymentSession.methods
                 ?.firstOrNull { it?.instrument == paymentAttemptInstrument?.toInstrument() }
@@ -155,7 +154,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 3. Search for IntegrationTaskRel.LAUNCH_CLIENT_APP
+        //region Search for IntegrationTaskRel.LAUNCH_CLIENT_APP
         // Only return this if swishUrl hasn't been used yet
         val launchClientApp = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task?.rel == IntegrationTaskRel.LAUNCH_CLIENT_APP }
@@ -170,7 +169,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 4. Search for IntegrationTaskRel.SCA_METHOD_REQUEST
+        //region Search for IntegrationTaskRel.SCA_METHOD_REQUEST
         val scaMethodRequest = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task?.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
 
@@ -198,7 +197,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 5. Search for OperationRel.CREATE_AUTHENTICATION
+        //region Search for OperationRel.CREATE_AUTHENTICATION
         val createAuth =
             operations.firstOrNull { it.rel == OperationRel.CREATE_AUTHENTICATION }
 
@@ -266,7 +265,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 6. Search for IntegrationTaskRel.SCA_REDIRECT
+        //region Search for IntegrationTaskRel.SCA_REDIRECT
         val scaRedirect = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task?.rel == IntegrationTaskRel.SCA_REDIRECT }
 
@@ -280,7 +279,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 7 Search for OperationRel.COMPLETE_AUTHENTICATION
+        //region Search for OperationRel.COMPLETE_AUTHENTICATION
         val completeAuth =
             operations.firstOrNull { it.rel == OperationRel.COMPLETE_AUTHENTICATION }
 
@@ -308,7 +307,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 8. Search for OperationRel.REDIRECT_PAYER
+        //region Search for OperationRel.REDIRECT_PAYER
         val redirectPayer =
             operations.firstOrNull { it.rel == OperationRel.REDIRECT_PAYER }
         if (redirectPayer?.href != null) {
@@ -319,7 +318,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 9. Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
+        //region Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
         // that doesn't need OperationRel.EXPAND_METHOD to work.
         if (!hasShownAvailableInstruments) {
             val expandMethod =
@@ -363,7 +362,7 @@ internal object SessionOperationHandler {
         }
         //endregion
 
-        //region 10. Search for OperationRel.GET_PAYMENT
+        //region Search for OperationRel.GET_PAYMENT
         // If we come here and find OperationRel.GET_PAYMENT we want to start polling for a result we can
         // do something with
         val getPayment = operations.firstOrNull { it.rel == OperationRel.GET_PAYMENT }
@@ -401,7 +400,6 @@ internal object SessionOperationHandler {
         paymentOutputModel: PaymentOutputModel,
         paymentAttemptInstrument: PaymentAttemptInstrument
     ): OperationStep? {
-
         if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard) {
             return OperationStep(
                 instructions = listOf(StepInstruction.OverrideApiCall(paymentOutputModel))
