@@ -108,14 +108,15 @@ internal object RequestUtil {
     }
 
     private fun getCustomizePaymentData(
-        instrument: PaymentAttemptInstrument?,
-        showConsentAffirmation: Boolean
+        instrument: PaymentAttemptInstrument? = null,
+        showConsentAffirmation: Boolean? = null,
+        instrumentFilter: List<String>? = null
     ): String {
         return CustomizePayment(
-            paymentMethod = instrument?.identifier,
-            hideStoredPaymentOptions = true,
+            paymentMethod = instrument?.identifier ?: "Menu",
+            hideStoredPaymentOptions = if (instrument != null) true else null,
             showConsentAffirmation = showConsentAffirmation,
-            restrictToPaymentMethods = null
+            restrictToPaymentMethods = instrumentFilter
         ).toJsonString()
     }
 
