@@ -62,7 +62,7 @@ data class MethodModel(
     @SerializedName("name")
     val name: String,
     @SerializedName("sdk")
-    val sdk: String? = RequestDataUtil.getService().name,
+    val sdk: String? = RequestDataUtil.SDK_NAME,
     @SerializedName("succeeded")
     val succeeded: Boolean? = null,
 )

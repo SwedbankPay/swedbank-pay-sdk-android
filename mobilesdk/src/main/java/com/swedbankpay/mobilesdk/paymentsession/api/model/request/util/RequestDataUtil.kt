@@ -11,12 +11,13 @@ import org.threeten.bp.ZonedDateTime
 import org.threeten.bp.format.DateTimeFormatter
 import java.net.NetworkInterface
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 internal object RequestDataUtil {
 
+    const val SDK_NAME = "SwedbankPaySDK-Android"
+
     fun getClient() = Client(
-        userAgent = "SwedbankPaySDK-Android/${getVersion()}",
+        userAgent = "${SDK_NAME}/${getVersion()}",
         ipAddress = getIPAddress(),
         screenHeight = getPhoneSize().heightPixels,
         screenWidth = getPhoneSize().widthPixels,
@@ -26,12 +27,12 @@ internal object RequestDataUtil {
     fun getBrowser() = Browser(
         acceptHeader = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         languageHeader = getLanguages(),
-        timeZoneOffset = getTimeZoneOffset(),
+        timeZoneOffset = getTimeZoneOffsetInMinutes(),
         javascriptEnabled = true
     )
 
     fun getService() = Service(
-        name = "SwedbankPaySDK-Android",
+        name = SDK_NAME,
         version = getVersion()
     )
 
@@ -64,17 +65,7 @@ internal object RequestDataUtil {
         return ""
     }
 
-    private fun getTimeZoneOffset(): Int {
-        val mCalendar: Calendar = GregorianCalendar()
-        val mTimeZone: TimeZone = mCalendar.timeZone
-
-        // Get the timezone offset with the function getRawOffset and add the daylight savings
-        val mGMTOffset: Int =
-            mTimeZone.rawOffset + (if (mTimeZone.inDaylightTime(Date())) mTimeZone.dstSavings else 0)
-
-        // Return the converted offset to minutes
-        return TimeUnit.MINUTES.convert(mGMTOffset.toLong(), TimeUnit.MILLISECONDS).toInt()
-    }
+    private fun getTimeZoneOffsetInMinutes(): Int = ZonedDateTime.now().offset.totalSeconds / 60
 
     // 2024-09-25T16:46:46.923+02:00
     fun nowAsIsoString(): String {
