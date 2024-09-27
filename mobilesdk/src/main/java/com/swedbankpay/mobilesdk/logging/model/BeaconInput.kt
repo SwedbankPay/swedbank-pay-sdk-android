@@ -4,6 +4,7 @@ import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Service
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestDataUtil
 
 
 @Keep
@@ -61,7 +62,7 @@ data class MethodModel(
     @SerializedName("name")
     val name: String,
     @SerializedName("sdk")
-    val sdk: Boolean? = null,
+    val sdk: String? = RequestDataUtil.getService().name,
     @SerializedName("succeeded")
     val succeeded: Boolean? = null,
 )

@@ -7,8 +7,9 @@ import com.swedbankpay.mobilesdk.BuildConfig
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Browser
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Service
+import org.threeten.bp.ZonedDateTime
+import org.threeten.bp.format.DateTimeFormatter
 import java.net.NetworkInterface
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -75,8 +76,13 @@ internal object RequestDataUtil {
         return TimeUnit.MINUTES.convert(mGMTOffset.toLong(), TimeUnit.MILLISECONDS).toInt()
     }
 
-    fun nowAsIsoString(): String =
-        SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.sss'Z'Z", Locale.getDefault()).format(Date())
+    // 2024-09-25T16:46:46.923+02:00
+    fun nowAsIsoString(): String {
+        val formatter: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss.SSSXXX")
+        return ZonedDateTime.now().format(formatter)
+    }
+
 
     private fun getPhoneSize(): DisplayMetrics = Resources.getSystem().displayMetrics
 

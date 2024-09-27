@@ -345,7 +345,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     eventAction = EventAction.SDKCallbackInvoked(
                         method = MethodModel(
                             name = "availableInstrumentsFetched",
-                            sdk = true,
                             succeeded = true
                         ),
                         extensions = instruction.availableInstruments.toExtensionsModel()
@@ -395,7 +394,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             eventAction = EventAction.SDKMethodInvoked(
                 method = MethodModel(
                     name = "fetchPaymentSession",
-                    sdk = true,
                     succeeded = true
                 )
             )
@@ -436,7 +434,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 eventAction = EventAction.SDKMethodInvoked(
                     method = MethodModel(
                         name = "makeNativePaymentAttempt",
-                        sdk = true,
                         succeeded = paymentAttemptOperation != null
                     ),
                     extensions = instrument.toExtensionsModel()
@@ -464,7 +461,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 eventAction = EventAction.SDKMethodInvoked(
                     method = MethodModel(
                         name = "createPaymentFragment",
-                        sdk = true,
                         succeeded = true
                     )
                 )
@@ -502,7 +498,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 eventAction = EventAction.SDKMethodInvoked(
                     method = MethodModel(
                         name = "abortPaymentSession",
-                        sdk = true,
                         succeeded = abortPaymentOperation != null
                     )
                 )
@@ -536,7 +531,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                             eventAction = EventAction.SDKCallbackInvoked(
                                 method = MethodModel(
                                     name = "dismiss3DSecureFragment",
-                                    sdk = true,
                                     succeeded = true
                                 )
                             )
@@ -552,7 +546,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             eventAction = EventAction.SDKCallbackInvoked(
                 method = MethodModel(
                     name = "show3DSecureFragment",
-                    sdk = true,
                     succeeded = true
                 )
             )
@@ -614,7 +607,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     eventAction = EventAction.SDKCallbackInvoked(
                         method = MethodModel(
                             name = "paymentComplete",
-                            sdk = true,
                             succeeded = true
                         )
                     )
@@ -628,7 +620,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     eventAction = EventAction.SDKCallbackInvoked(
                         method = MethodModel(
                             name = "paymentCanceled",
-                            sdk = true,
                             succeeded = true
                         )
                     )
@@ -657,7 +648,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             eventAction = EventAction.SDKCallbackInvoked(
                 method = MethodModel(
                     name = "sdkProblemOccurred",
-                    sdk = true,
                     succeeded = true
                 ),
                 extensions = paymentSessionProblem.toExtensionsModel()
@@ -672,7 +662,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             eventAction = EventAction.SDKCallbackInvoked(
                 method = MethodModel(
                     name = "sessionProblemOccurred",
-                    sdk = true,
                     succeeded = true
                 ),
                 extensions = problemDetails.toExtensionsModel()
