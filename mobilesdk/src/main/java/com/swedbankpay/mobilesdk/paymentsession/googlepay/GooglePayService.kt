@@ -83,10 +83,6 @@ internal object GooglePayService {
                         "billingAddressRequired",
                         expects.getBooleanValueFor(GooglePayConstants.BILLING_ADDRESS_REQUIRED)
                     )
-//                    .put(
-//                        "billingAddressParameters", JSONObject()
-//                            .put("format", "FULL")
-//                    )
             )
             .put("tokenizationSpecification", gatewayTokenizationSpecification)
 
@@ -128,19 +124,13 @@ internal object GooglePayService {
             .put(
                 "shippingAddressRequired",
                 expects.getBooleanValueFor(GooglePayConstants.SHIPPING_ADDRESS_REQUIRED)
-            )
-//            .put(
-//                "shippingAddressParameters", JSONObject()
-//                    .put("phoneNumberRequired", false)
-//                    .put(
-//                        "allowedCountryCodes", JSONArray(
-//                            listOf(
-//                                "SE"
-//                            )
-//                        )
-//                    )
-//            )
-            .put(
+            ).put(
+                "shippingAddressParameters", JSONObject()
+                    .put(
+                        "phoneNumberRequired",
+                        expects.getBooleanValueFor(GooglePayConstants.PHONE_NUMBER_REQUIRED)
+                    )
+            ).put(
                 "allowedPaymentMethods", JSONArray(
                     listOf(
                         baseCardPaymentMethod

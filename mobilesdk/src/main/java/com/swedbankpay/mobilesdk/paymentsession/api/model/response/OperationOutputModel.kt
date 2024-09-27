@@ -58,7 +58,10 @@ enum class OperationRel {
     VIEW_PAYMENT,
 
     @SerializedName("customize-payment")
-    CUSTOMIZE_PAYMENT
+    CUSTOMIZE_PAYMENT,
+
+    @SerializedName("attempt-payload")
+    ATTEMPT_PAYLOAD
 }
 
 @Keep

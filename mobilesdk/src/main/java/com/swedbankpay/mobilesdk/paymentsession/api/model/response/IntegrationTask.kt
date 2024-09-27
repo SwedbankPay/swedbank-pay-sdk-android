@@ -38,29 +38,43 @@ internal fun List<ExpectationModel>.getValueFor(name: String): Any? {
 
 internal fun List<ExpectationModel>.getStringValueFor(name: String): String? {
     val model = this.firstOrNull { it.name == name }
-    return model?.let {
-        if (it.type == "string") {
-            return it.value as String
-        } else return null
+    return try {
+        model?.let {
+            if (it.type == "string") {
+                it.value as String
+            } else null
+        }
+    } catch (e: Exception) {
+        null
     }
 }
 
 @Suppress("UNCHECKED_CAST")
 internal fun List<ExpectationModel>.getStringArrayValueFor(name: String): List<String> {
     val model = this.firstOrNull { it.name == name }
-    return model?.let {
-        if (it.type == "string[]") {
-            return it.value as List<String>
-        } else return listOf()
-    } ?: return listOf()
+    return try {
+        model?.let {
+            if (it.type == "string[]") {
+                return it.value as List<String>
+            } else listOf()
+        } ?: listOf()
+    } catch (e: Exception) {
+        listOf()
+    }
 }
 
 internal fun List<ExpectationModel>.getBooleanValueFor(name: String): Boolean? {
     val model = this.firstOrNull { it.name == name }
-    return model?.let {
-        if (it.type == "string") {
-            return (it.value as String).lowercase().toBooleanStrictOrNull()
-        } else return null
+    return try {
+        model?.let {
+            when (it.type) {
+                "bool" -> it.value as Boolean
+                "string" -> (it.value as String).lowercase().toBooleanStrictOrNull()
+                else -> null
+            }
+        }
+    } catch (e: Exception) {
+        null
     }
 }
 

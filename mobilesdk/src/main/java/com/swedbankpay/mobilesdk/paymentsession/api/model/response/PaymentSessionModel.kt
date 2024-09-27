@@ -27,6 +27,6 @@ internal data class PaymentSessionModel(
     @SerializedName("paymentMethod")
     val paymentMethod: String?
 ) {
-    val allMethodOperations: List<OperationOutputModel?> =
-        methods?.flatMap { it?.operations ?: listOf() } ?: listOf()
+    val allMethodOperations: List<OperationOutputModel> =
+        methods?.flatMap { it?.operations ?: listOf() }?.filterNotNull() ?: listOf()
 }

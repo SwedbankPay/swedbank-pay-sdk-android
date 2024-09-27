@@ -2,16 +2,17 @@ package com.swedbankpay.mobilesdk.paymentsession.api.model.request.util
 
 import android.util.Base64
 import com.google.gson.GsonBuilder
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.AttemptPayload
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CompleteAuthentication
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreateAuthentication
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreditCardAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CustomizePayment
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.GooglePayAttempt
-import com.swedbankpay.mobilesdk.paymentsession.api.model.request.GooglePayload
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Integration
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.SwishAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.ATTEMPT_PAYLOAD
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.COMPLETE_AUTHENTICATION
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.CREATE_AUTHENTICATION
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.CUSTOMIZE_PAYMENT
@@ -30,11 +31,12 @@ internal object RequestUtil {
 
     fun OperationRel.getRequestDataIfAny(
         instrument: PaymentAttemptInstrument? = null,
-        culture: String?,
+        culture: String? = null,
         completionIndicator: String = "N",
         notificationUrl: String = "",
         cRes: String = "",
-        showConsentAffirmation: Boolean = false
+        showConsentAffirmation: Boolean = false,
+        googlePayResult: GooglePayResult? = null
     ) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()
@@ -47,6 +49,7 @@ internal object RequestUtil {
 
             COMPLETE_AUTHENTICATION -> getCompleteAuthenticationData(cRes)
             CUSTOMIZE_PAYMENT -> getCustomizePaymentData(instrument, showConsentAffirmation)
+            ATTEMPT_PAYLOAD -> getAttemptPayloadData(googlePayResult)
             else -> null
         }
 
@@ -129,17 +132,14 @@ internal object RequestUtil {
         ).toJsonString()
     }
 
-    private fun getGooglePayPayLoadData(googlePayResult: GooglePayResult): String {
-        return GooglePayload(
+    private fun getAttemptPayloadData(googlePayResult: GooglePayResult?): String {
+        return AttemptPayload(
             instrument = "GooglePay",
-            cardNetwork = googlePayResult.paymentMethodData?.info?.cardNetwork,
-            payLoad = googlePayResult.paymentMethodData?.tokenizationData?.token?.toBase64(),
-            cardDetails = googlePayResult.paymentMethodData?.info?.cardDetails,
-            shippingAddress = googlePayResult.shippingAddress
+            paymentPayload = googlePayResult?.paymentMethodData?.tokenizationData?.token?.toBase64(),
         ).toJsonString()
     }
 
-    private fun String.toBase64() = Base64.encodeToString(this.toByteArray(), Base64.DEFAULT)
+    private fun String.toBase64() = Base64.encodeToString(this.toByteArray(), Base64.NO_WRAP)
 
     private inline fun <reified T : Any> T.toJsonString(): String = gson.toJson(this, T::class.java)
 }

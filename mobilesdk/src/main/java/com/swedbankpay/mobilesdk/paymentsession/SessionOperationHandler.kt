@@ -18,6 +18,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toSemiColonS
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaMethodService
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
+import se.vettefors.googlepaytest.model.GooglePayResult
 import java.net.URL
 
 internal object SessionOperationHandler {
@@ -49,7 +50,7 @@ internal object SessionOperationHandler {
         // Extract every operation we have on the session object
         var operations: List<OperationOutputModel> =
             paymentOutputModel.operations.filterNotNull() +
-                    paymentOutputModel.paymentSession.allMethodOperations.filterNotNull()
+                    paymentOutputModel.paymentSession.allMethodOperations
 
         // If we find a problem that we haven't used return it. Otherwise just acknowledge it and
         // add it to the instructions without informing the merchant app
@@ -462,22 +463,25 @@ internal object SessionOperationHandler {
         }
     }
 
-    fun getOperationStepForGooglePay(paymentOutputModel: PaymentOutputModel): OperationStep? {
-        return null
-        // TODO When google payment operation exist fix it here
-        /* val abortPayment = paymentOutputModel.operations.firstOrNull {
-             it.rel == OperationRel.ABORT_PAYMENT
-         }
+    fun getOperationStepForAttemptPayload(
+        paymentOutputModel: PaymentOutputModel,
+        googlePayResult: GooglePayResult
+    ): OperationStep? {
+        val attemptPayload =
+            paymentOutputModel.paymentSession.allMethodOperations.firstOrNull {
+                it.rel == OperationRel.ATTEMPT_PAYLOAD
+            }
 
-         return if (abortPayment != null) {
-             OperationStep(
-                 requestMethod = abortPayment.method,
-                 url = URL(abortPayment.href),
-                 operationRel = abortPayment.rel
-             )
-         } else {
-             return null
-         }*/
+        return if (attemptPayload != null) {
+            OperationStep(
+                requestMethod = attemptPayload.method,
+                url = URL(attemptPayload.href),
+                operationRel = attemptPayload.rel,
+                data = attemptPayload.rel?.getRequestDataIfAny(googlePayResult = googlePayResult)
+            )
+        } else {
+            return null
+        }
     }
 
     fun getBeaconUrl(paymentOutputModel: PaymentOutputModel?): String? =

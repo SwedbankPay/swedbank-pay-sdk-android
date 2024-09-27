@@ -2,10 +2,10 @@ package com.swedbankpay.mobilesdk.paymentsession.api
 
 internal object PaymentSessionAPIConstants {
     const val REQUEST_TIME_OUT_IN_MS = 10 * 1000
-    const val REQUEST_TIME_OUT_IN_MS_FOR_CREDIT_CARD = 30 * 1000
+    const val EXTENDED_REQUEST_TIME_OUT_IN_MS = 30 * 1000
 
     const val SESSION_TIME_OUT_IN_MS = 20 * 1000
-    const val SESSION_TIME_OUT_IN_MS_FOR_CREDIT_CARD = 30 * 1000
+    const val EXTENDED_SESSION_TIME_OUT_IN_MS = 30 * 1000
 
     const val NOTIFICATION_URL = "https://fake.payex.com/notification"
 

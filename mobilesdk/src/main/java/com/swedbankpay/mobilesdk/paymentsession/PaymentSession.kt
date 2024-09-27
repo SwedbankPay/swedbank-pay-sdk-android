@@ -142,7 +142,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     currentPaymentOutputModel
                         ?.paymentSession
                         ?.allMethodOperations
-                        ?.firstOrNull { it?.rel == OperationRel.GET_PAYMENT }
+                        ?.firstOrNull { it.rel == OperationRel.GET_PAYMENT }
 
                 if (getPayment != null) {
                     executeNextStepUntilFurtherInstructions(
@@ -613,10 +613,13 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 expectsModels.filterNotNull(),
                 (paymentInstrument as PaymentAttemptInstrument.GooglePay).activity,
                 errorHandler = ::onSessionProblemOccurred
-            ) {
-                currentPaymentOutputModel?.let {
+            ) { googlePayResult ->
+                currentPaymentOutputModel?.let { paymentOutputModel ->
                     val googlePayOperation =
-                        SessionOperationHandler.getOperationStepForGooglePay(it)
+                        SessionOperationHandler.getOperationStepForAttemptPayload(
+                            paymentOutputModel,
+                            googlePayResult
+                        )
 
                     googlePayOperation?.let {
                         executeNextStepUntilFurtherInstructions(googlePayOperation)
