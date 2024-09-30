@@ -74,14 +74,12 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private val paymentFragmentObserver = Observer<PaymentViewModel.State> {
         when (it) {
             PaymentViewModel.State.COMPLETE -> {
-                clearState()
+                onPaymentSessionComplete()
             }
 
             PaymentViewModel.State.CANCELED,
             PaymentViewModel.State.FAILURE -> {
-                stopObservingPaymentFragmentPaymentProcess()
-                isPaymentFragmentActive = false
-                setStateToIdle()
+                onPaymentSessionCanceled()
             }
 
             else -> {}
@@ -607,36 +605,43 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun onPaymentComplete(url: String) {
         when (url) {
             orderInfo?.completeUrl -> {
-                _paymentSessionState.setValue(PaymentSessionState.PaymentSessionComplete)
-                BeaconService.logEvent(
-                    eventAction = EventAction.SDKCallbackInvoked(
-                        method = MethodModel(
-                            name = "paymentComplete",
-                            succeeded = true
-                        )
-                    )
-                )
-                clearState()
+                onPaymentSessionComplete()
             }
 
             orderInfo?.cancelUrl -> {
-                _paymentSessionState.setValue(PaymentSessionState.PaymentSessionCanceled)
-                BeaconService.logEvent(
-                    eventAction = EventAction.SDKCallbackInvoked(
-                        method = MethodModel(
-                            name = "paymentCanceled",
-                            succeeded = true
-                        )
-                    )
-                )
-                clearState()
+                onPaymentSessionCanceled()
             }
 
             else -> {
                 onSdkProblemOccurred(PaymentSessionProblem.PaymentSessionEndReached)
             }
         }
+    }
 
+    private fun onPaymentSessionComplete() {
+        _paymentSessionState.setValue(PaymentSessionState.PaymentSessionComplete)
+        BeaconService.logEvent(
+            eventAction = EventAction.SDKCallbackInvoked(
+                method = MethodModel(
+                    name = "paymentComplete",
+                    succeeded = true
+                )
+            )
+        )
+        clearState()
+    }
+
+    private fun onPaymentSessionCanceled() {
+        _paymentSessionState.setValue(PaymentSessionState.PaymentSessionCanceled)
+        BeaconService.logEvent(
+            eventAction = EventAction.SDKCallbackInvoked(
+                method = MethodModel(
+                    name = "paymentCanceled",
+                    succeeded = true
+                )
+            )
+        )
+        clearState()
     }
 
     private fun onSdkProblemOccurred(paymentSessionProblem: PaymentSessionProblem) {

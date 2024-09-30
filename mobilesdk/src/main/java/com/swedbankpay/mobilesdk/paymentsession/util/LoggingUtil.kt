@@ -13,7 +13,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProbl
 
 @Keep
 internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel {
-    val values: MutableMap<String, Any?> = mutableMapOf(
+    val values: MutableMap<String, String?> = mutableMapOf(
         "instrument" to this.identifier
     )
 
@@ -56,7 +56,7 @@ internal fun ProblemDetails.toExtensionsModel() =
         values = mutableMapOf(
             "problemType" to type,
             "problemTitle" to title,
-            "problemStatus" to status,
+            "problemStatus" to status.toString(),
             "problemDetail" to detail
         )
     )
@@ -70,7 +70,7 @@ internal fun launchClientAppExtensionsModel(
     values = mutableMapOf(
         "callbackUrl" to paymentUrl,
         "clientAppLaunchUrl" to launchUrl,
-        "launchSucceeded" to succeeded
+        "launchSucceeded" to succeeded.toString()
     )
 )
 
@@ -93,7 +93,7 @@ internal fun scaMethodRequestExtensionModel(
         mutableMapOf(
             "methodCompletionIndicator" to completionIndicator,
             "errorMessage" to errorMessage,
-            "responseCode" to responseCode
+            "responseCode" to responseCode.toString()
         )
     } else {
         mutableMapOf(
@@ -110,13 +110,13 @@ internal fun scaRedirectResultExtensionModel(
 ) = ExtensionsModel(
     values = if (errorMessage != null) {
         mutableMapOf(
-            "cresRecieved" to cresReceived,
+            "cresRecieved" to cresReceived.toString(),
             "errorMessage" to errorMessage,
-            "responseCode" to responseCode
+            "responseCode" to responseCode.toString()
         )
     } else {
         mutableMapOf(
-            "cresRecieved" to cresReceived
+            "cresRecieved" to cresReceived.toString()
         )
     }
 )
@@ -124,14 +124,14 @@ internal fun scaRedirectResultExtensionModel(
 
 @Keep
 internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
-    val values: MutableMap<String, Any?> = when (this) {
+    val values: MutableMap<String, String?> = when (this) {
         PaymentSessionProblem.ClientAppLaunchFailed -> mutableMapOf("problem" to "clientAppLaunchFailed")
         is PaymentSessionProblem.PaymentSessionAPIRequestFailed -> {
-            val requestFailedValues: MutableMap<String, Any?> = when (error) {
+            val requestFailedValues: MutableMap<String, String?> = when (error) {
                 is SwedbankPayAPIError.Error -> mutableMapOf(
                     "problem" to "paymentSessionAPIRequestFailed",
                     "errorMessage" to error.message,
-                    "responseCode" to error.responseCode
+                    "responseCode" to error.responseCode.toString()
                 )
 
                 SwedbankPayAPIError.InvalidUrl -> mutableMapOf(
@@ -153,7 +153,7 @@ internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
         is PaymentSessionProblem.PaymentSession3DSecureFragmentLoadFailed -> mutableMapOf(
             "problem" to "paymentSession3DSecureFragmentLoadFailed",
             "errorMessage" to error.message,
-            "responseCode" to error.responseCode
+            "responseCode" to error.responseCode.toString()
         )
     }
 
@@ -164,7 +164,7 @@ internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
 
 @Keep
 internal fun SwedbankPayAPIError.toExtensionsModel(): ExtensionsModel {
-    val values: MutableMap<String, Any?> = mutableMapOf(
+    val values: MutableMap<String, String?> = mutableMapOf(
         "errorMessage" to when (this) {
             is SwedbankPayAPIError.Error -> message
             SwedbankPayAPIError.InvalidUrl -> "invalid url"

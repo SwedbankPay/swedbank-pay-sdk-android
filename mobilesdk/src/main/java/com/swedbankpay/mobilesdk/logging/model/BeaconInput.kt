@@ -72,6 +72,6 @@ data class ExtensionsModel(
     @SerializedName("details")
     val details: String? = null,
     @SerializedName("values")
-    val values: MutableMap<String, Any?>? = null,
+    val values: MutableMap<String, String?>? = null,
 )
 
