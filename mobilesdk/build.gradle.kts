@@ -30,6 +30,8 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
     }
@@ -42,6 +44,7 @@ dependencies {
     testImplementation(project(":testcommon"))
     androidTestImplementation(project(":testcommon"))
 
+    coreLibraryDesugaring(libs.`desugar-tools`)
     implementation(libs.`kotlinx-coroutines-core`)
     implementation(libs.`kotlinx-coroutines-android`)
 

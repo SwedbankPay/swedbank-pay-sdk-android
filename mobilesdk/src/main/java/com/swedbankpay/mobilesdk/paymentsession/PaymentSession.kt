@@ -13,6 +13,7 @@ import com.swedbankpay.mobilesdk.internal.CallbackActivity
 import com.swedbankpay.mobilesdk.internal.PaymentFragmentStateBridge
 import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
+import com.swedbankpay.mobilesdk.logging.model.ExtensionsModel
 import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIClient
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
@@ -347,7 +348,11 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                             name = "availableInstrumentsFetched",
                             succeeded = true
                         ),
-                        extensions = instruction.availableInstruments.toExtensionsModel()
+                        extensions = ExtensionsModel(
+                            values = mutableMapOf(
+                                "instruments" to instruction.availableInstrumentsForLogging
+                            )
+                        )
                     )
                 )
             }

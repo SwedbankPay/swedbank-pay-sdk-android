@@ -7,9 +7,9 @@ import com.swedbankpay.mobilesdk.BuildConfig
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Browser
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Service
-import org.threeten.bp.ZonedDateTime
-import org.threeten.bp.format.DateTimeFormatter
 import java.net.NetworkInterface
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 internal object RequestDataUtil {

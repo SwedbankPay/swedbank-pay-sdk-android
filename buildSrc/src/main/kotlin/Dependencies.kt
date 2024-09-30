@@ -8,6 +8,8 @@ val Project.libs get() = Dependencies(rootProject.extra["libs"] as Map<String, S
 class Dependencies(map: Map<String, String>) {
     val `android-gradle-plugin` by map
 
+    val `desugar-tools`by map
+
     val `kotlinx-coroutines-core` by map
     val `kotlinx-coroutines-android` by map
 

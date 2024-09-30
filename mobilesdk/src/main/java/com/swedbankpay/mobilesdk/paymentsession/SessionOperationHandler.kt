@@ -14,6 +14,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getValueFor
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
+import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toSemiColonSeparatedString
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaMethodService
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
@@ -347,7 +348,10 @@ internal object SessionOperationHandler {
 
                 instructions.add(
                     0, StepInstruction
-                        .AvailableInstrumentStep(availableInstruments = availableInstruments)
+                        .AvailableInstrumentStep(
+                            availableInstruments = availableInstruments,
+                            availableInstrumentsForLogging = availableMethods.toSemiColonSeparatedString()
+                        )
                 )
 
                 hasShownAvailableInstruments = true
@@ -468,7 +472,10 @@ internal object SessionOperationHandler {
 internal sealed class StepInstruction(
     val waitForAction: Boolean = false,
 ) {
-    class AvailableInstrumentStep(val availableInstruments: List<AvailableInstrument>) :
+    class AvailableInstrumentStep(
+        val availableInstruments: List<AvailableInstrument>,
+        val availableInstrumentsForLogging: String
+    ) :
         StepInstruction(true)
 
     class LaunchClientAppStep(val href: String) : StepInstruction(true)

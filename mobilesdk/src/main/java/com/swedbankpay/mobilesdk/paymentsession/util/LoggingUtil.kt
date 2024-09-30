@@ -4,23 +4,12 @@ import androidx.annotation.Keep
 import com.swedbankpay.mobilesdk.logging.model.ExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
-import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 
 /**
  * This files holds various functions for logging purposes
  */
-
-@Keep
-internal fun <T : AvailableInstrument> List<T>.toExtensionsModel() =
-    ExtensionsModel(
-        values = mutableMapOf(
-            "instruments" to this.joinToString(
-                separator = ";"
-            ) { it.javaClass.simpleName.toString() }
-        )
-    )
 
 @Keep
 internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel {

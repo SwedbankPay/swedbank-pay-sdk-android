@@ -11,6 +11,13 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.SwishPrefill
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * For logging purposes
+ */
+fun List<MethodBaseModel>.toSemiColonSeparatedString() = this.joinToString(separator = ";") {
+    it.instrument?.identifier ?: "Unknown"
+}
+
 fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument = when (this) {
     is SwishMethodModel -> AvailableInstrument.Swish(
         identifier = this.instrument?.identifier ?: "Swish",
