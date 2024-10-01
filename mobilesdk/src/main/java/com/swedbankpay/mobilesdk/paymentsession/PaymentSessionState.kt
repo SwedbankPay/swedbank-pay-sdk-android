@@ -26,17 +26,17 @@ sealed class PaymentSessionState {
      *
      * @param fragment Fragment with 3D secure view.
      */
-    class Show3dSecureFragment(val fragment: Fragment) : PaymentSessionState()
+    class Show3DSecureFragment(val fragment: Fragment) : PaymentSessionState()
 
     /**
      * Called whenever the 3D secure view can be dismissed.
      */
-    object Dismiss3dSecureFragment : PaymentSessionState()
+    object Dismiss3DSecureFragment : PaymentSessionState()
 
     /**
      * Called when payment fragment has been created and can be shown
      */
-    class PaymentFragmentCreated(val fragment: Fragment) : PaymentSessionState()
+    class ShowPaymentFragment(val fragment: Fragment) : PaymentSessionState()
 
     /**
      * Called whenever the payment session has been completed
