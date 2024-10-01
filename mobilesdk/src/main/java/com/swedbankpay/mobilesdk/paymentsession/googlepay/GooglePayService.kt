@@ -10,12 +10,10 @@ import com.google.android.gms.wallet.WalletConstants
 import com.google.android.gms.wallet.contract.TaskResultContracts
 import com.google.gson.Gson
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ExpectationModel
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getBooleanValueFor
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringArrayValueFor
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValueFor
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayConstants
-import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayErrorUtil
 import org.json.JSONArray
 import org.json.JSONObject
 import se.vettefors.googlepaytest.model.GooglePayResult
@@ -25,7 +23,6 @@ internal object GooglePayService {
     fun launchGooglePay(
         expects: List<ExpectationModel>,
         activity: Activity,
-        errorHandler: (ProblemDetails) -> Unit,
         onGooglePayResult: (GooglePayResult) -> Unit
     ) {
         val activityResultRegistry = when (activity) {
@@ -46,9 +43,7 @@ internal object GooglePayService {
                     }
                 }
 
-                CommonStatusCodes.CANCELED -> {
-                    errorHandler.invoke(GooglePayErrorUtil.cancelGooglePayProblem)
-                }
+                //CommonStatusCodes.CANCELED -> { }
                 //AutoResolveHelper.RESULT_ERROR -> The API returned an error (it.status: Status)
                 //CommonStatusCodes.INTERNAL_ERROR -> Handle other unexpected errors
             }

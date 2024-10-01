@@ -32,6 +32,21 @@ data class ExpectationModel(
     val value: Any?
 )
 
+@Keep
+enum class IntegrationTaskRel {
+    @SerializedName("launch-client-app")
+    LAUNCH_CLIENT_APP,
+
+    @SerializedName("sca-method-request")
+    SCA_METHOD_REQUEST,
+
+    @SerializedName("sca-redirect")
+    SCA_REDIRECT,
+
+    @SerializedName("wallet-sdk")
+    WALLET_SDK
+}
+
 internal fun List<ExpectationModel>.getValueFor(name: String): Any? {
     return this.firstOrNull { it.name == name }?.value
 }
@@ -76,21 +91,6 @@ internal fun List<ExpectationModel>.getBooleanValueFor(name: String): Boolean? {
     } catch (e: Exception) {
         null
     }
-}
-
-@Keep
-enum class IntegrationTaskRel {
-    @SerializedName("launch-client-app")
-    LAUNCH_CLIENT_APP,
-
-    @SerializedName("sca-method-request")
-    SCA_METHOD_REQUEST,
-
-    @SerializedName("sca-redirect")
-    SCA_REDIRECT,
-
-    @SerializedName("wallet-sdk")
-    WALLET_SDK
 }
 
 

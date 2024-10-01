@@ -612,7 +612,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             GooglePayService.launchGooglePay(
                 expectsModels.filterNotNull(),
                 (paymentInstrument as PaymentAttemptInstrument.GooglePay).activity,
-                errorHandler = ::onSessionProblemOccurred
             ) { googlePayResult ->
                 currentPaymentOutputModel?.let { paymentOutputModel ->
                     val googlePayOperation =
