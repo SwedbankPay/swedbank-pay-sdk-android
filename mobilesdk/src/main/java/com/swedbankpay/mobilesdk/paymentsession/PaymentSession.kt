@@ -636,7 +636,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             eventAction = EventAction.SDKMethodInvoked(
                 method = MethodModel(
                     name = "launchGooglePay",
-                    sdk = true,
                     succeeded = true
                 )
             )
