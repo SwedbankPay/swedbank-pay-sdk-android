@@ -127,7 +127,7 @@ internal object SessionOperationHandler {
                 data = customizePayment.rel?.getRequestDataIfAny(
                     paymentAttemptInstrument,
                     paymentOutputModel.paymentSession.culture,
-                    showConsentAffirmation = paymentAttemptInstrument.showConsentAffirmation
+                    showConsentAffirmation = paymentAttemptInstrument.enabledPaymentDetailsConsentCheckbox
                 ),
                 instructions = instructions
             )
