@@ -8,9 +8,10 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Browser
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Service
 import java.net.NetworkInterface
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.text.FieldPosition
+import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 internal object RequestDataUtil {
 
@@ -65,13 +66,32 @@ internal object RequestDataUtil {
         return ""
     }
 
-    private fun getTimeZoneOffsetInMinutes(): Int = ZonedDateTime.now().offset.totalSeconds / 60
+    private fun getTimeZoneOffsetInMinutes(): Int {
+        val mCalendar: Calendar = GregorianCalendar()
+        val mTimeZone: TimeZone = mCalendar.timeZone
+
+        // Get the timezone offset with the function getRawOffset and add the daylight savings
+        val mGMTOffset: Int =
+            mTimeZone.rawOffset + (if (mTimeZone.inDaylightTime(Date())) mTimeZone.dstSavings else 0)
+
+        // Return the converted offset to minutes
+        return TimeUnit.MINUTES.convert(mGMTOffset.toLong(), TimeUnit.MILLISECONDS).toInt()
+    }
 
     // 2024-09-25T16:46:46.923+02:00
     fun nowAsIsoString(): String {
-        val formatter: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss.SSSXXX")
-        return ZonedDateTime.now().format(formatter)
+        val formatter: SimpleDateFormat =
+            object : SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.sssZ", Locale.getDefault()) {
+                override fun format(
+                    date: Date,
+                    toAppendTo: StringBuffer,
+                    pos: FieldPosition
+                ): StringBuffer {
+                    val toFix = super.format(date, toAppendTo, pos)
+                    return toFix.insert(toFix.length - 2, ':')
+                }
+            }
+        return formatter.format(Date())
     }
 
 

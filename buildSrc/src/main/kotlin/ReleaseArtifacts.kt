@@ -6,6 +6,7 @@ import org.gradle.kotlin.dsl.task
 import org.gradle.kotlin.dsl.the
 
 fun Project.sourcesJar() = task<Jar>("sourcesJar") {
+    dependsOn("generateMetadataFileForReleasePublication")
     from(project.the<LibraryExtension>().sourceSets["main"].java.srcDirs)
     archiveClassifier.set("sources")
 }

@@ -1,24 +1,30 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.swedbankpay.mobilesdk">
-    <uses-permission android:name="android.permission.INTERNET"/>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
     <application>
-        <activity android:name=".internal.CallbackActivity"
+        <activity
+            android:name=".internal.CallbackActivity"
             android:exported="true">
             <intent-filter android:priority="-100">
                 <!--  Priority is negative on purpose. This way you can
                  easily override this intent filter in your app. -->
                 <action android:name="com.swedbankpay.mobilesdk.VIEW_PAYMENTORDER" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
                 <data android:scheme="https" />
                 <data android:scheme="http" />
+                <data android:host="*" />
             </intent-filter>
             <intent-filter android:priority="-100">
                 <!--  Priority is negative on purpose. This way you can
                  easily override this intent filter in your app. -->
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
                 <data android:scheme="${swedbankPaymentUrlScheme}" />
             </intent-filter>
         </activity>

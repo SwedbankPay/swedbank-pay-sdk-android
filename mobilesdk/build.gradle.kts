@@ -13,13 +13,13 @@ apply {
     plugin("kotlin-android")
 }
 
-val javaVersion = JavaVersion.VERSION_11
+val javaVersion = JavaVersion.VERSION_17
 android {
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 21 // Required by okhttp (from version 3.13 onwards)
-        targetSdk = 33
+        namespace = "com.swedbankpay.mobilesdk"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("proguard-rules.pro")
@@ -30,21 +30,24 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
     compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
     }
+
     kotlinOptions {
         jvmTarget = javaVersion.toString()
     }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
 }
 
 dependencies {
     testImplementation(project(":testcommon"))
     androidTestImplementation(project(":testcommon"))
 
-    coreLibraryDesugaring(libs.`desugar-tools`)
     implementation(libs.`kotlinx-coroutines-core`)
     implementation(libs.`kotlinx-coroutines-android`)
 

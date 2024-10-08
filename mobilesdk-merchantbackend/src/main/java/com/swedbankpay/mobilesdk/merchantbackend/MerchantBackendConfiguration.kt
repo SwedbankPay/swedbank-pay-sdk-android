@@ -1,7 +1,14 @@
 package com.swedbankpay.mobilesdk.merchantbackend
 
 import android.content.Context
-import com.swedbankpay.mobilesdk.*
+import com.swedbankpay.mobilesdk.Configuration
+import com.swedbankpay.mobilesdk.Consumer
+import com.swedbankpay.mobilesdk.PaymentOrder
+import com.swedbankpay.mobilesdk.PaymentOrderPayer
+import com.swedbankpay.mobilesdk.Problem
+import com.swedbankpay.mobilesdk.ViewConsumerIdentificationInfo
+import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
+import com.swedbankpay.mobilesdk.find
 import com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration.Builder
 import com.swedbankpay.mobilesdk.merchantbackend.internal.remote.CacheableResult
 import com.swedbankpay.mobilesdk.merchantbackend.internal.remote.WhitelistedDomain
@@ -112,8 +119,8 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             val currentInstrument = paymentOrder.instrument
             if (currentInstrument != null && availableInstruments != null) {    //why was this part of the clause? && availableInstruments.contains(currentInstrument)
                 instrument = currentInstrument
-            } 
-            
+            }
+
         } else {
             setInstrument = paymentOrderIn.mobileSDK?.setInstrument
             availableInstruments = setInstrument?.let { _ ->
@@ -123,7 +130,7 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
                 paymentOrderIn.paymentOrder?.instrument
             }
         }
-        
+
         return ViewPaymentOrderInfo(
             id = paymentId,
             webViewBaseUrl = backendUrl,
@@ -160,7 +167,7 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
         val instrument = requireNotNull(updateInfo as? String) {
             "Unexpected updateInfo $updateInfo (expected String)"
         }
-        
+
         if (!viewPaymentOrderInfo.isV3) {
             return updateInstrumentV2(context, viewPaymentOrderInfo, instrument)
         }
@@ -188,11 +195,12 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
 
         return viewPaymentOrderInfo.copy(
             viewPaymentLink = viewPaymentLink ?: viewPaymentOrderInfo.viewPaymentLink,
-            availableInstruments = availableInstruments ?: viewPaymentOrderInfo.availableInstruments,
+            availableInstruments = availableInstruments
+                ?: viewPaymentOrderInfo.availableInstruments,
             instrument = instrumentIn ?: instrument
         )
     }
-    
+
     private suspend fun updateInstrumentV2(
         context: Context,
         viewPaymentOrderInfo: ViewPaymentOrderInfo,
@@ -204,7 +212,7 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             "Payment order is not in instrument mode"
         }
         val link = Link.PaymentOrderSetInstrument(linkHref.toHttpUrl())
-        
+
         val paymentOrderIn = try {
             link.patch(context, this, instrument)
         } catch (e: RequestProblemException) {
@@ -214,14 +222,15 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
             }
         }
 
-        val viewPaymentLink = paymentOrderIn.operations.find("view-paymentorder")?.href 
+        val viewPaymentLink = paymentOrderIn.operations.find("view-paymentorder")?.href
         val setInstrument = paymentOrderIn.mobileSDK?.setInstrument
         val availableInstruments = paymentOrderIn.paymentOrder?.availableInstruments
         val instrumentIn = paymentOrderIn.paymentOrder?.instrument
 
         return viewPaymentOrderInfo.copy(
             viewPaymentLink = viewPaymentLink ?: viewPaymentOrderInfo.viewPaymentLink,
-            availableInstruments = availableInstruments ?: viewPaymentOrderInfo.availableInstruments,
+            availableInstruments = availableInstruments
+                ?: viewPaymentOrderInfo.availableInstruments,
             instrument = instrumentIn ?: instrument,
             userData = setInstrument?.href?.toString() ?: linkHref
         )
@@ -236,7 +245,13 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
     ): T? {
 
         return BackendOperation.ExpandOperation(this)
-            .post(context = context, paymentId = paymentId, expand = expand, endpoint = endpoint, entityType = entityType)
+            .post(
+                context = context,
+                paymentId = paymentId,
+                expand = expand,
+                endpoint = endpoint,
+                entityType = entityType
+            )
     }
 
     private suspend fun getTopLevelResources(context: Context): TopLevelResources {
@@ -333,23 +348,24 @@ class MerchantBackendConfiguration private constructor(builder: Builder) : Confi
 
 private fun Context.getProblemErrorMessage(problem: Problem) = when (problem) {
     is MerchantBackendProblem -> getFriendlyDescription(problem)
-    else -> problem.title ?: problem.detail ?: getString(R.string.swedbankpaysdk_problem_unknown)
+    else -> problem.title ?: problem.detail
+    ?: getString(com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_unknown)
 }
 
 private fun Context.getFriendlyDescription(merchantBackendProblem: MerchantBackendProblem): String {
     val resId = when (merchantBackendProblem) {
-        is MerchantBackendProblem.Client.MobileSDK.Unauthorized -> R.string.swedbankpaysdk_problem_unauthorized
-        is MerchantBackendProblem.Client.MobileSDK.InvalidRequest -> R.string.swedbankpaysdk_problem_invalid_request
-        is MerchantBackendProblem.Client.SwedbankPay.InputError -> R.string.swedbankpaysdk_problem_input_error
-        is MerchantBackendProblem.Client.SwedbankPay.Forbidden -> R.string.swedbankpaysdk_problem_forbidden
-        is MerchantBackendProblem.Client.SwedbankPay.NotFound -> R.string.swedbankpaysdk_problem_not_found
-        is MerchantBackendProblem.Client.Unknown -> R.string.swedbankpaysdk_problem_unknown
-        is MerchantBackendProblem.Server.MobileSDK.BackendConnectionTimeout -> R.string.swedbankpaysdk_problem_backend_connection_timeout
-        is MerchantBackendProblem.Server.MobileSDK.BackendConnectionFailure -> R.string.swedbankpaysdk_problem_backend_connection_failure
-        is MerchantBackendProblem.Server.MobileSDK.InvalidBackendResponse -> R.string.swedbankpaysdk_problem_invalid_backend_response
-        is MerchantBackendProblem.Server.SwedbankPay.SystemError -> R.string.swedbankpaysdk_problem_system_error
-        is MerchantBackendProblem.Server.SwedbankPay.ConfigurationError -> R.string.swedbankpaysdk_problem_configuration_error
-        is MerchantBackendProblem.Server.Unknown -> R.string.swedbankpaysdk_problem_unknown
+        is MerchantBackendProblem.Client.MobileSDK.Unauthorized -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_unauthorized
+        is MerchantBackendProblem.Client.MobileSDK.InvalidRequest -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_invalid_request
+        is MerchantBackendProblem.Client.SwedbankPay.InputError -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_input_error
+        is MerchantBackendProblem.Client.SwedbankPay.Forbidden -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_forbidden
+        is MerchantBackendProblem.Client.SwedbankPay.NotFound -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_not_found
+        is MerchantBackendProblem.Client.Unknown -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_unknown
+        is MerchantBackendProblem.Server.MobileSDK.BackendConnectionTimeout -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_backend_connection_timeout
+        is MerchantBackendProblem.Server.MobileSDK.BackendConnectionFailure -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_backend_connection_failure
+        is MerchantBackendProblem.Server.MobileSDK.InvalidBackendResponse -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_invalid_backend_response
+        is MerchantBackendProblem.Server.SwedbankPay.SystemError -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_system_error
+        is MerchantBackendProblem.Server.SwedbankPay.ConfigurationError -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_configuration_error
+        is MerchantBackendProblem.Server.Unknown -> com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_problem_unknown
     }
     return getString(resId)
 }

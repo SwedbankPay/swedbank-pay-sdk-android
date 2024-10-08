@@ -2,9 +2,7 @@
 extra["kotlin_version"] = "1.8.10"
 
 extra["libs"] = mapOf(
-   "android-gradle-plugin" to "com.android.tools.build:gradle:7.4.2",   //7.1.3
-
-   "desugar-tools" to "com.android.tools:desugar_jdk_libs:2.1.2",
+   "android-gradle-plugin" to "com.android.tools.build:gradle:8.5.0",
 
    "jgit" to "org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r",
 

@@ -8,8 +8,6 @@ val Project.libs get() = Dependencies(rootProject.extra["libs"] as Map<String, S
 class Dependencies(map: Map<String, String>) {
     val `android-gradle-plugin` by map
 
-    val `desugar-tools`by map
-
     val `kotlinx-coroutines-core` by map
     val `kotlinx-coroutines-android` by map
 
@@ -48,6 +46,7 @@ class Dependencies(map: Map<String, String>) {
     val mockwebserver by map
 
     val robolectric by map
+
     //val `mockito-inline` by map
     val `mockito-kotlin` by map
     val `dexmaker-mockito-inline` by map

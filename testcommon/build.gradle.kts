@@ -9,18 +9,20 @@ apply {
     plugin("kotlin-android")
 }
 
-val javaVersion = JavaVersion.VERSION_11
+val javaVersion = JavaVersion.VERSION_17
 android {
-    compileSdk = 33
+    compileSdk = 34
     defaultConfig {
         minSdk = 21
-        targetSdk = 33
+
+        namespace = "com.swedbankpay.mobilesdk.testcommon"
     }
 
     compileOptions {
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
     }
+
     kotlinOptions {
         jvmTarget = javaVersion.toString()
     }
