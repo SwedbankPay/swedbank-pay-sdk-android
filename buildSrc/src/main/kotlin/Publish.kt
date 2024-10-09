@@ -14,7 +14,6 @@ fun Project.publishToMaven(description: String) {
 private fun Project.createReleasePublication(description: String): MavenPublication {
     return the<PublishingExtension>().publications.create<MavenPublication>("release") {
         from(components["release"])
-        artifact(sourcesJar())
         artifact(javadocJar())
 
         pom {
