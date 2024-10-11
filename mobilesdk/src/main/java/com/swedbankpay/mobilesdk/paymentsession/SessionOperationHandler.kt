@@ -16,9 +16,9 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstr
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toSemiColonSeparatedString
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaMethodService
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
-import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import java.net.URL
 
 internal object SessionOperationHandler {
@@ -114,26 +114,48 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
-
-        val customizePayment =
-            operations.firstOrNull { it.rel == OperationRel.CUSTOMIZE_PAYMENT }
-
-        if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard
-            && customizePayment != null
-        ) {
-            return OperationStep(
-                requestMethod = customizePayment.method,
-                url = URL(customizePayment.href),
-                operationRel = customizePayment.rel,
-                data = customizePayment.rel?.getRequestDataIfAny(
-                    paymentAttemptInstrument,
-                    paymentOutputModel.paymentSession.culture,
-                    showConsentAffirmation = paymentAttemptInstrument.enabledPaymentDetailsConsentCheckbox
-                ),
-                instructions = instructions
-            )
-        }
         //endregion
+
+
+        // region CUSTOMIZE_PAYMENT
+        val customizePayment =
+            paymentOutputModel.operations.filterNotNull()
+                .firstOrNull { it.rel == OperationRel.CUSTOMIZE_PAYMENT }
+
+        if (customizePayment != null) {
+            if (paymentOutputModel.paymentSession.instrumentModePaymentMethod != null
+                && paymentAttemptInstrument?.identifier != paymentOutputModel.paymentSession.instrumentModePaymentMethod
+            ) {
+                return OperationStep(
+                    requestMethod = customizePayment.method,
+                    url = URL(customizePayment.href),
+                    operationRel = customizePayment.rel,
+                    data = customizePayment.rel?.getRequestDataIfAny(
+                        paymentAttemptInstrument,
+                        paymentOutputModel.paymentSession.culture,
+                        resetPaymentMethod = true
+                    ),
+                    instructions = instructions
+                )
+            }
+
+            if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard
+            ) {
+                return OperationStep(
+                    requestMethod = customizePayment.method,
+                    url = URL(customizePayment.href),
+                    operationRel = customizePayment.rel,
+                    data = customizePayment.rel?.getRequestDataIfAny(
+                        paymentAttemptInstrument,
+                        paymentOutputModel.paymentSession.culture,
+                        showConsentAffirmation = paymentAttemptInstrument.enabledPaymentDetailsConsentCheckbox
+                    ),
+                    instructions = instructions
+                )
+            }
+        }
+        // endregion
+
 
         //region Search for OperationRel.START_PAYMENT_ATTEMPT
         val startPaymentAttempt =
@@ -379,6 +401,29 @@ internal object SessionOperationHandler {
         }
         //endregion
 
+        // If we have a paymentAttemptInstrument this far down in the logic. Check if we can do something with it
+        if (paymentAttemptInstrument != null) {
+            val paymentAttemptInstrumentOperation = paymentOutputModel.paymentSession.methods
+                ?.firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }
+                ?.operations
+                ?.firstOrNull {
+                    it?.rel == OperationRel.EXPAND_METHOD
+                            || it?.rel == OperationRel.START_PAYMENT_ATTEMPT
+                }
+
+            if (paymentAttemptInstrumentOperation != null) {
+                return OperationStep(
+                    requestMethod = paymentAttemptInstrumentOperation.method,
+                    url = URL(paymentAttemptInstrumentOperation.href),
+                    operationRel = paymentAttemptInstrumentOperation.rel,
+                    data = paymentAttemptInstrumentOperation.rel?.getRequestDataIfAny(
+                        paymentAttemptInstrument,
+                        paymentOutputModel.paymentSession.culture
+                    )
+                )
+            }
+        }
+
         //region Search for OperationRel.GET_PAYMENT
         // If we come here and find OperationRel.GET_PAYMENT we want to start polling for a result we can
         // do something with
@@ -401,50 +446,6 @@ internal object SessionOperationHandler {
         return OperationStep(
             instructions = instructions
         )
-    }
-
-    /**
-     * This method is used to get an operation to start the payment with chosen instrument.
-     *
-     * Payment session can be in different states when calling this method.
-     * First time calling this method will result in an operation containing [OperationRel.EXPAND_METHOD].
-     * If problem occurs and you call this method again with the same instrument you will have
-     * an operation containing [OperationRel.START_PAYMENT_ATTEMPT] or if a polling has occurred it will have [OperationRel.GET_PAYMENT].
-     * If you call it again after the problem with a different instrument you will again have [OperationRel.EXPAND_METHOD]
-     * on that operation.
-     */
-    fun getOperationStepForPaymentAttempt(
-        paymentOutputModel: PaymentOutputModel,
-        paymentAttemptInstrument: PaymentAttemptInstrument
-    ): OperationStep? {
-        if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard) {
-            return OperationStep(
-                instructions = listOf(StepInstruction.OverrideApiCall(paymentOutputModel))
-            )
-        }
-
-        val op = paymentOutputModel.paymentSession.methods
-            ?.firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }
-            ?.operations
-            ?.firstOrNull {
-                it?.rel == OperationRel.EXPAND_METHOD
-                        || it?.rel == OperationRel.START_PAYMENT_ATTEMPT
-                        || it?.rel == OperationRel.GET_PAYMENT
-            }
-
-        return if (op != null) {
-            OperationStep(
-                requestMethod = op.method,
-                url = URL(op.href),
-                operationRel = op.rel,
-                data = op.rel?.getRequestDataIfAny(
-                    paymentAttemptInstrument,
-                    paymentOutputModel.paymentSession.culture
-                )
-            )
-        } else {
-            return null
-        }
     }
 
     fun getOperationStepForAbortPayment(paymentOutputModel: PaymentOutputModel): OperationStep? {

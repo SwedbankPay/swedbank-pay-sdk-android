@@ -28,7 +28,7 @@ sealed class PaymentAttemptInstrument(
     @Keep
     data class NewCreditCard(
         val enabledPaymentDetailsConsentCheckbox: Boolean
-    ) : PaymentAttemptInstrument(null, "NewCreditCard")
+    ) : PaymentAttemptInstrument(null, "CreditCard")
 
     @Keep
     class GooglePay(internal val activity: Activity) :

@@ -1,7 +1,7 @@
 package com.swedbankpay.mobilesdk.paymentsession.api.model.request
 
-import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
+import com.google.gson.annotations.SerializedName
 
 @Keep
 internal data class CustomizePayment(
@@ -13,4 +13,10 @@ internal data class CustomizePayment(
     val showConsentAffirmation: Boolean?,
     @SerializedName("restrictToPaymentMethods")
     val restrictToPaymentMethods: List<String?>?
+)
+
+@Keep
+internal data class ResetCustomizePayment(
+    @SerializedName("paymentMethod")
+    val paymentMethod: String?
 )

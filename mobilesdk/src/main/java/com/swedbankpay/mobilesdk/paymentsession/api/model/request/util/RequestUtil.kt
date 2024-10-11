@@ -10,6 +10,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CustomizePayme
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.GooglePayAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Integration
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.ResetCustomizePayment
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.SwishAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.ATTEMPT_PAYLOAD
@@ -36,6 +37,7 @@ internal object RequestUtil {
         notificationUrl: String = "",
         cRes: String = "",
         showConsentAffirmation: Boolean = false,
+        resetPaymentMethod: Boolean = false,
         googlePayResult: GooglePayResult? = null
     ) =
         when (this) {
@@ -48,7 +50,12 @@ internal object RequestUtil {
             )
 
             COMPLETE_AUTHENTICATION -> getCompleteAuthenticationData(cRes)
-            CUSTOMIZE_PAYMENT -> getCustomizePaymentData(instrument, showConsentAffirmation)
+            CUSTOMIZE_PAYMENT -> getCustomizePaymentData(
+                instrument,
+                showConsentAffirmation,
+                resetPaymentMethod = resetPaymentMethod
+            )
+
             ATTEMPT_PAYLOAD -> getAttemptPayloadData(googlePayResult)
             else -> null
         }
@@ -122,14 +129,19 @@ internal object RequestUtil {
     private fun getCustomizePaymentData(
         instrument: PaymentAttemptInstrument? = null,
         showConsentAffirmation: Boolean? = null,
-        instrumentFilter: List<String>? = null
+        instrumentFilter: List<String>? = null,
+        resetPaymentMethod: Boolean = false
     ): String {
-        return CustomizePayment(
-            paymentMethod = instrument?.identifier ?: "Menu",
-            hideStoredPaymentOptions = if (instrument != null) true else null,
-            showConsentAffirmation = showConsentAffirmation,
-            restrictToPaymentMethods = instrumentFilter
-        ).toJsonString()
+        return if (resetPaymentMethod) {
+            ResetCustomizePayment(null).toJsonString()
+        } else {
+            CustomizePayment(
+                paymentMethod = instrument?.identifier ?: "Menu",
+                hideStoredPaymentOptions = if (instrument != null) true else null,
+                showConsentAffirmation = showConsentAffirmation,
+                restrictToPaymentMethods = instrumentFilter
+            ).toJsonString()
+        }
     }
 
     private fun getAttemptPayloadData(googlePayResult: GooglePayResult?): String {

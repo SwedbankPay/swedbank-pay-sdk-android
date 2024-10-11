@@ -429,20 +429,17 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         currentPaymentOutputModel?.let {
             paymentAttemptInstrument = instrument
 
-            val paymentAttemptOperation = SessionOperationHandler.getOperationStepForPaymentAttempt(
-                it,
-                instrument
+            executeNextStepUntilFurtherInstructions(
+                OperationStep(
+                    instructions = listOf(StepInstruction.OverrideApiCall(it))
+                )
             )
-
-            if (paymentAttemptOperation != null) {
-                executeNextStepUntilFurtherInstructions(paymentAttemptOperation)
-            }
 
             BeaconService.logEvent(
                 eventAction = EventAction.SDKMethodInvoked(
                     method = MethodModel(
                         name = "makeNativePaymentAttempt",
-                        succeeded = paymentAttemptOperation != null
+                        succeeded = true
                     ),
                     extensions = instrument.toExtensionsModel()
                 )
