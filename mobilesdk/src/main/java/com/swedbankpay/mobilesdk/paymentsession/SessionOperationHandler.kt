@@ -18,7 +18,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toSemiColonS
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaMethodService
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
-import se.vettefors.googlepaytest.model.GooglePayResult
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import java.net.URL
 
 internal object SessionOperationHandler {

@@ -20,7 +20,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.PREPARE_PAYMENT
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.START_PAYMENT_ATTEMPT
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
-import se.vettefors.googlepaytest.model.GooglePayResult
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 
 /**
  * [RequestUtil] will get request data for the different [OperationRel]:s

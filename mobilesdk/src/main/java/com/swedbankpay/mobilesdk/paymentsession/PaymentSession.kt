@@ -627,7 +627,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
 
             }
-            clearPaymentAttemptInstrument()
         } ?: kotlin.run {
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }

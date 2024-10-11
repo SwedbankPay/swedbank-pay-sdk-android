@@ -32,7 +32,7 @@ sealed class PaymentAttemptInstrument(
 
     @Keep
     class GooglePay(internal val activity: Activity) :
-        PaymentAttemptInstrument(identifier = GooglePay::class.java.simpleName)
+        PaymentAttemptInstrument(context = activity, identifier = GooglePay::class.java.simpleName)
 }
 
 @Keep

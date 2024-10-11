@@ -16,7 +16,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValu
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayConstants
 import org.json.JSONArray
 import org.json.JSONObject
-import se.vettefors.googlepaytest.model.GooglePayResult
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 
 internal object GooglePayService {
 

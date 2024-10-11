@@ -1,4 +1,4 @@
-package se.vettefors.googlepaytest.model
+package com.swedbankpay.mobilesdk.paymentsession.googlepay.model
 
 
 import androidx.annotation.Keep
