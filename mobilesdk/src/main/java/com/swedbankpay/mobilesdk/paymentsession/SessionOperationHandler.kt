@@ -89,7 +89,7 @@ internal object SessionOperationHandler {
             operations = listOf(op)
         }
 
-        //region Search for OperationRel.PREPARE_PAYMENT
+        // Search for OperationRel.PREPARE_PAYMENT
         val preparePayment =
             operations.firstOrNull { it.rel == OperationRel.PREPARE_PAYMENT }
         if (preparePayment != null) {
@@ -103,9 +103,8 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
-        //endregion
 
-        //region New credit card
+        // New credit card
         if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard
             && paymentOutputModel.paymentSession.instrumentModePaymentMethod == "CreditCard"
         ) {
@@ -114,10 +113,8 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
-        //endregion
 
-
-        // region CUSTOMIZE_PAYMENT
+        // CUSTOMIZE_PAYMENT
         val customizePayment =
             paymentOutputModel.operations.filterNotNull()
                 .firstOrNull { it.rel == OperationRel.CUSTOMIZE_PAYMENT }
@@ -154,10 +151,8 @@ internal object SessionOperationHandler {
                 )
             }
         }
-        // endregion
 
-
-        //region Search for OperationRel.START_PAYMENT_ATTEMPT
+        // Search for OperationRel.START_PAYMENT_ATTEMPT
         val startPaymentAttempt =
             paymentOutputModel.paymentSession.methods
                 ?.firstOrNull { it?.instrument == paymentAttemptInstrument?.toInstrument() }
@@ -176,9 +171,8 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
-        //endregion
 
-        //region Search for IntegrationTaskRel.LAUNCH_CLIENT_APP
+        // Search for IntegrationTaskRel.LAUNCH_CLIENT_APP
         // Only return this if swishUrl hasn't been used yet
         val launchClientApp = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task?.rel == IntegrationTaskRel.LAUNCH_CLIENT_APP }
@@ -191,9 +185,8 @@ internal object SessionOperationHandler {
                 integrationRel = IntegrationTaskRel.LAUNCH_CLIENT_APP
             )
         }
-        //endregion
 
-        //region Search for IntegrationTaskRel.SCA_METHOD_REQUEST
+        // Search for IntegrationTaskRel.SCA_METHOD_REQUEST
         val scaMethodRequest = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task?.rel == IntegrationTaskRel.SCA_METHOD_REQUEST }
 
@@ -219,9 +212,8 @@ internal object SessionOperationHandler {
             )
 
         }
-        //endregion
 
-        //region Search for OperationRel.CREATE_AUTHENTICATION
+        // Search for OperationRel.CREATE_AUTHENTICATION
         val createAuth =
             operations.firstOrNull { it.rel == OperationRel.CREATE_AUTHENTICATION }
 
@@ -287,9 +279,8 @@ internal object SessionOperationHandler {
                 )
             }
         }
-        //endregion
 
-        //region Search for IntegrationTaskRel.SCA_REDIRECT
+        // Search for IntegrationTaskRel.SCA_REDIRECT
         val scaRedirect = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task?.rel == IntegrationTaskRel.SCA_REDIRECT }
 
@@ -301,9 +292,8 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
-        //endregion
 
-        //region Search for OperationRel.COMPLETE_AUTHENTICATION
+        // Search for OperationRel.COMPLETE_AUTHENTICATION
         val completeAuth =
             operations.firstOrNull { it.rel == OperationRel.COMPLETE_AUTHENTICATION }
 
@@ -329,9 +319,9 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
-        //endregion
 
-        // region GooglePay Search for IntegrationTaskRel.WALLET_SDK
+
+        // GooglePay. Search for IntegrationTaskRel.WALLET_SDK
         val walletSdk = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task?.rel == IntegrationTaskRel.WALLET_SDK }
 
@@ -341,9 +331,8 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
-        // endregion
 
-        //region Search for OperationRel.REDIRECT_PAYER
+        // Search for OperationRel.REDIRECT_PAYER
         val redirectPayer =
             operations.firstOrNull { it.rel == OperationRel.REDIRECT_PAYER }
         if (redirectPayer?.href != null) {
@@ -352,9 +341,8 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
-        //endregion
 
-        //region Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
+        // Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
         // that doesn't need OperationRel.EXPAND_METHOD to work.
         if (!hasShownAvailableInstruments) {
             val expandMethod =
@@ -399,7 +387,6 @@ internal object SessionOperationHandler {
                 )
             }
         }
-        //endregion
 
         // If we have a paymentAttemptInstrument this far down in the logic. Check if we can do something with it
         if (paymentAttemptInstrument != null) {
@@ -424,7 +411,7 @@ internal object SessionOperationHandler {
             }
         }
 
-        //region Search for OperationRel.GET_PAYMENT
+        // Search for OperationRel.GET_PAYMENT
         // If we come here and find OperationRel.GET_PAYMENT we want to start polling for a result we can
         // do something with
         val getPayment = operations.firstOrNull { it.rel == OperationRel.GET_PAYMENT }
@@ -440,7 +427,6 @@ internal object SessionOperationHandler {
                 instructions = instructions
             )
         }
-        //endregion
 
         instructions.add(0, StepInstruction.StepNotFound)
         return OperationStep(
