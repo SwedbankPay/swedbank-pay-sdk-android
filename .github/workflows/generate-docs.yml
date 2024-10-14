@@ -11,5 +11,5 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: '11'
+          java-version: '17'
       - uses: ./.github/actions/generate-docs-action
