@@ -475,6 +475,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             isPaymentFragmentActive = true
 
             _paymentSessionState.setValue(PaymentSessionState.ShowPaymentFragment(paymentFragment))
+            setStateToIdle()
 
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
     }
@@ -531,6 +532,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                             )
                         )
                         _paymentSessionState.setValue(PaymentSessionState.Dismiss3DSecureFragment)
+                        setStateToIdle()
 
                         BeaconService.logEvent(
                             eventAction = EventAction.SDKCallbackInvoked(
@@ -546,6 +548,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
 
         _paymentSessionState.setValue(PaymentSessionState.Show3DSecureFragment(scaRedirectFragment))
+        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
@@ -690,6 +693,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
 
         _paymentSessionState.setValue(PaymentSessionState.SdkProblemOccurred(paymentSessionProblem))
+        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
@@ -704,6 +708,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private fun onSessionProblemOccurred(problemDetails: ProblemDetails) {
         _paymentSessionState.setValue(PaymentSessionState.SessionProblemOccurred(problemDetails))
+        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
