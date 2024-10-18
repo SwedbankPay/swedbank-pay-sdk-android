@@ -41,5 +41,8 @@ fun PaymentAttemptInstrument.toInstrument(): Instrument = when (this) {
     is PaymentAttemptInstrument.Swish -> Instrument.Swish(this.identifier)
     is PaymentAttemptInstrument.GooglePay -> Instrument.GooglePay(this.identifier)
     else -> Instrument.WebBased(this.identifier)
-
 }
+
+@Keep
+fun PaymentAttemptInstrument.isSwishLocalDevice() =
+    this is PaymentAttemptInstrument.Swish && this.msisdn == null

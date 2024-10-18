@@ -26,6 +26,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetail
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
+import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.isSwishLocalDevice
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayService
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaRedirectFragment
@@ -101,8 +102,13 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         PaymentSessionAPIClient()
     }
 
+    /**
+     * Observe callbacks from CallbackActivity only if Swish on local device is used
+     */
     private fun startObservingCallbacks() {
-        CallbackActivity.onNativeCallbackUrlInvoked.observeForever(callbackUrlObserver)
+        if (paymentAttemptInstrument?.isSwishLocalDevice() == true) {
+            CallbackActivity.onNativeCallbackUrlInvoked.observeForever(callbackUrlObserver)
+        }
     }
 
     private fun stopObservingCallbacks() {
@@ -194,6 +200,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                         PaymentSessionProblem.PaymentSessionAPIRequestFailed(
                                             error = paymentSessionResponse.error,
                                             retry = {
+                                                startObservingCallbacks()
                                                 executeNextStepUntilFurtherInstructions(
                                                     stepToExecute
                                                 )
@@ -213,6 +220,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                     PaymentSessionProblem.PaymentSessionAPIRequestFailed(
                                         error = paymentSessionResponse.error,
                                         retry = {
+                                            startObservingCallbacks()
                                             executeNextStepUntilFurtherInstructions(
                                                 stepToExecute
                                             )
@@ -396,7 +404,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         sessionURL: String,
     ) {
         clearState(true)
-        startObservingCallbacks()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKMethodInvoked(
@@ -428,6 +435,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         isPaymentFragmentActive = false
         currentPaymentOutputModel?.let {
             paymentAttemptInstrument = instrument
+
+            startObservingCallbacks()
 
             executeNextStepUntilFurtherInstructions(
                 OperationStep(
@@ -709,6 +718,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun onSessionProblemOccurred(problemDetails: ProblemDetails) {
         _paymentSessionState.setValue(PaymentSessionState.SessionProblemOccurred(problemDetails))
         setStateToIdle()
+
+        stopObservingCallbacks()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
