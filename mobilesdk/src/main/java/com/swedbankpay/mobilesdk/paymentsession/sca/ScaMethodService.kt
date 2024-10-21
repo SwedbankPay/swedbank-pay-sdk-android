@@ -43,131 +43,135 @@ internal object ScaMethodService {
     ): String = withContext(Dispatchers.Main) {
         suspendCoroutine { continuation ->
             val start = System.currentTimeMillis()
-            safeLet(
-                task.href,
-                task.expects,
-                localStartContext
-            ) { initialUrl, expects, context ->
-                WebView(context).apply {
-                    settings.apply {
-                        // JavaScript is required for our use case.
-                        // The SDK will only use remote content through links
-                        // retrieved from the backend. The backend must be careful
-                        // not to send compromised links.
-                        @SuppressLint("SetJavaScriptEnabled")
-                        javaScriptEnabled = true
-                        setSupportMultipleWindows(true)
-                        javaScriptCanOpenWindowsAutomatically = true
+            if (task.href.isNullOrEmpty()) {
+                continuation.resume("U")
+            } else {
+                safeLet(
+                    task.href,
+                    task.expects,
+                    localStartContext
+                ) { initialUrl, expects, context ->
+                    WebView(context).apply {
+                        settings.apply {
+                            // JavaScript is required for our use case.
+                            // The SDK will only use remote content through links
+                            // retrieved from the backend. The backend must be careful
+                            // not to send compromised links.
+                            @SuppressLint("SetJavaScriptEnabled")
+                            javaScriptEnabled = true
+                            setSupportMultipleWindows(true)
+                            javaScriptCanOpenWindowsAutomatically = true
 
-                        // Redirect pages may require this.
-                        domStorageEnabled = true
+                            // Redirect pages may require this.
+                            domStorageEnabled = true
 
-                        builtInZoomControls = true
-                        displayZoomControls = false
-                    }
-                    webViewClient = object : WebViewClient() {
+                            builtInZoomControls = true
+                            displayZoomControls = false
+                        }
+                        webViewClient = object : WebViewClient() {
 
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            super.onPageFinished(view, url)
-                            timeoutHandler.removeCallbacksAndMessages(null)
-                            if (url == initialUrl) {
-                                if (hasError) {
-                                    continuation.resume("N")
-                                } else {
-                                    BeaconService.logEvent(
-                                        EventAction.SCAMethodRequest(
-                                            http = HttpModel(
-                                                requestUrl = initialUrl,
-                                                method = "POST",
-                                            ),
-                                            duration = (System.currentTimeMillis() - start).toInt(),
-                                            extensions = scaMethodRequestExtensionModel("Y")
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                super.onPageFinished(view, url)
+                                timeoutHandler.removeCallbacksAndMessages(null)
+                                if (url == initialUrl) {
+                                    if (hasError) {
+                                        continuation.resume("N")
+                                    } else {
+                                        BeaconService.logEvent(
+                                            EventAction.SCAMethodRequest(
+                                                http = HttpModel(
+                                                    requestUrl = initialUrl,
+                                                    method = "POST",
+                                                ),
+                                                duration = (System.currentTimeMillis() - start).toInt(),
+                                                extensions = scaMethodRequestExtensionModel("Y")
+                                            )
+                                        )
+
+                                        continuation.resume("Y")
+                                    }
+
+                                    hasError = false
+                                }
+                            }
+
+                            @Deprecated("Deprecated in Java")
+                            override fun onReceivedError(
+                                view: WebView?,
+                                errorCode: Int,
+                                description: String?,
+                                failingUrl: String
+                            ) {
+                                onWebViewError(
+                                    Uri.parse(failingUrl),
+                                    errorCode,
+                                    description
+                                )
+                            }
+
+                            @RequiresApi(Build.VERSION_CODES.M)
+                            override fun onReceivedError(
+                                view: WebView?,
+                                request: WebResourceRequest,
+                                error: WebResourceError
+                            ) {
+                                if (request.isForMainFrame) {
+                                    onWebViewError(
+                                        request.url,
+                                        error.errorCode,
+                                        error.description.toString()
+                                    )
+                                }
+                            }
+
+                            override fun onReceivedHttpError(
+                                view: WebView?,
+                                request: WebResourceRequest,
+                                errorResponse: WebResourceResponse
+                            ) {
+                                if (request.isForMainFrame) {
+                                    onWebViewError(
+                                        request.url,
+                                        errorResponse.statusCode,
+                                        errorResponse.reasonPhrase
+                                    )
+                                }
+                            }
+
+                            private fun onWebViewError(
+                                uri: Uri,
+                                errorCode: Int,
+                                description: String?
+                            ) {
+                                hasError = true
+
+                                BeaconService.logEvent(
+                                    EventAction.SCAMethodRequest(
+                                        http = HttpModel(
+                                            requestUrl = uri.toString(),
+                                            method = "POST",
+                                            responseStatusCode = errorCode
+                                        ),
+                                        duration = (System.currentTimeMillis() - start).toInt(),
+                                        extensions = scaMethodRequestExtensionModel(
+                                            "N",
+                                            description,
+                                            errorCode
                                         )
                                     )
-
-                                    continuation.resume("Y")
-                                }
-
-                                hasError = false
-                            }
-                        }
-
-                        @Deprecated("Deprecated in Java")
-                        override fun onReceivedError(
-                            view: WebView?,
-                            errorCode: Int,
-                            description: String?,
-                            failingUrl: String
-                        ) {
-                            onWebViewError(
-                                Uri.parse(failingUrl),
-                                errorCode,
-                                description
-                            )
-                        }
-
-                        @RequiresApi(Build.VERSION_CODES.M)
-                        override fun onReceivedError(
-                            view: WebView?,
-                            request: WebResourceRequest,
-                            error: WebResourceError
-                        ) {
-                            if (request.isForMainFrame) {
-                                onWebViewError(
-                                    request.url,
-                                    error.errorCode,
-                                    error.description.toString()
                                 )
                             }
                         }
 
-                        override fun onReceivedHttpError(
-                            view: WebView?,
-                            request: WebResourceRequest,
-                            errorResponse: WebResourceResponse
-                        ) {
-                            if (request.isForMainFrame) {
-                                onWebViewError(
-                                    request.url,
-                                    errorResponse.statusCode,
-                                    errorResponse.reasonPhrase
-                                )
-                            }
-                        }
+                        timeoutHandler.postDelayed({
+                            this.stopLoading()
+                            continuation.resume("U")
+                        }, 10000)
 
-                        private fun onWebViewError(
-                            uri: Uri,
-                            errorCode: Int,
-                            description: String?
-                        ) {
-                            hasError = true
-
-                            BeaconService.logEvent(
-                                EventAction.SCAMethodRequest(
-                                    http = HttpModel(
-                                        requestUrl = uri.toString(),
-                                        method = "POST",
-                                        responseStatusCode = errorCode
-                                    ),
-                                    duration = (System.currentTimeMillis() - start).toInt(),
-                                    extensions = scaMethodRequestExtensionModel(
-                                        "N",
-                                        description,
-                                        errorCode
-                                    )
-                                )
-                            )
-                        }
+                        postUrl(initialUrl, expects.toByteArray())
                     }
-
-                    timeoutHandler.postDelayed({
-                        this.stopLoading()
-                        continuation.resume("U")
-                    }, 10000)
-
-                    postUrl(initialUrl, expects.toByteArray())
-                }
-            } ?: continuation.resume("U")
+                } ?: continuation.resume("U")
+            }
         }
     }
 }
