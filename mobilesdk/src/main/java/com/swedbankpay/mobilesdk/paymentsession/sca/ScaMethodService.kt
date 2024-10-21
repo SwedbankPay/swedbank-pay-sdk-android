@@ -92,7 +92,7 @@ internal object ScaMethodService {
                                     }
 
                                     hasError = false
-                                }
+                                } else continuation.resume("U")
                             }
 
                             @Deprecated("Deprecated in Java")
