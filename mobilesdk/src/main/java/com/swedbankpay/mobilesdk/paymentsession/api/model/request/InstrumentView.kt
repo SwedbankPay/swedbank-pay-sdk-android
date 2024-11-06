@@ -5,6 +5,6 @@ import com.google.gson.annotations.SerializedName
 
 @Keep
 data class InstrumentView(
-    @SerializedName("instrumentName")
-    val instrumentName: String
+    @SerializedName("paymentMethod")
+    val paymentMethod: String
 )

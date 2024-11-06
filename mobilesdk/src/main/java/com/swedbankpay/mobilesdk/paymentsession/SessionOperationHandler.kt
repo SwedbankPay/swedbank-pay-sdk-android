@@ -104,9 +104,10 @@ internal object SessionOperationHandler {
             )
         }
 
-        // New credit card
-        if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard
-            && paymentOutputModel.paymentSession.instrumentModePaymentMethod == "CreditCard"
+
+        if (paymentAttemptInstrument != null
+            && (paymentOutputModel.paymentSession.instrumentModePaymentMethod
+                    == paymentAttemptInstrument.identifier)
         ) {
             instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
             return OperationStep(
@@ -119,9 +120,9 @@ internal object SessionOperationHandler {
             paymentOutputModel.operations.filterNotNull()
                 .firstOrNull { it.rel == OperationRel.CUSTOMIZE_PAYMENT }
 
-        if (customizePayment != null) {
+        if (customizePayment != null && paymentAttemptInstrument != null) {
             if (paymentOutputModel.paymentSession.instrumentModePaymentMethod != null
-                && paymentAttemptInstrument?.identifier != paymentOutputModel.paymentSession.instrumentModePaymentMethod
+                && paymentAttemptInstrument.identifier != paymentOutputModel.paymentSession.instrumentModePaymentMethod
             ) {
                 return OperationStep(
                     requestMethod = customizePayment.method,
@@ -146,6 +147,19 @@ internal object SessionOperationHandler {
                         paymentAttemptInstrument,
                         paymentOutputModel.paymentSession.culture,
                         showConsentAffirmation = paymentAttemptInstrument.enabledPaymentDetailsConsentCheckbox
+                    ),
+                    instructions = instructions
+                )
+            }
+
+            if (paymentAttemptInstrument is PaymentAttemptInstrument.WebBased) {
+                return OperationStep(
+                    requestMethod = customizePayment.method,
+                    url = URL(customizePayment.href),
+                    operationRel = customizePayment.rel,
+                    data = customizePayment.rel?.getRequestDataIfAny(
+                        paymentAttemptInstrument,
+                        paymentOutputModel.paymentSession.culture
                     ),
                     instructions = instructions
                 )
@@ -210,7 +224,6 @@ internal object SessionOperationHandler {
                 integrationRel = IntegrationTaskRel.SCA_METHOD_REQUEST,
                 instructions = instructions
             )
-
         }
 
         // Search for OperationRel.CREATE_AUTHENTICATION
@@ -342,23 +355,14 @@ internal object SessionOperationHandler {
             )
         }
 
-        // Search for OperationRel.EXPAND_METHOD or OperationRel.START_PAYMENT_ATTEMPT for instruments
-        // that doesn't need OperationRel.EXPAND_METHOD to work.
+        // If instrument has not been shown to merchant. Send all of them
         if (!hasShownAvailableInstruments) {
-            val expandMethod =
-                operations.firstOrNull {
-                    it.rel == OperationRel.EXPAND_METHOD
-                            || it.rel == OperationRel.START_PAYMENT_ATTEMPT
-                }
-            if (expandMethod != null) {
-                val availableMethods = arrayListOf<MethodBaseModel>()
+            val availableMethods = arrayListOf<MethodBaseModel>()
 
-                paymentOutputModel.paymentSession.methods?.forEach { method ->
-                    if (method?.operations?.firstOrNull { op ->
-                            op?.rel == OperationRel.EXPAND_METHOD ||
-                                    op?.rel == OperationRel.START_PAYMENT_ATTEMPT
-                        } != null) {
-                        availableMethods.add(method)
+            if (!paymentOutputModel.paymentSession.methods.isNullOrEmpty()) {
+                paymentOutputModel.paymentSession.methods.forEach { method ->
+                    method?.let {
+                        availableMethods.add(it)
                     }
                 }
 
@@ -380,9 +384,6 @@ internal object SessionOperationHandler {
                 hasShownAvailableInstruments = true
 
                 return OperationStep(
-                    requestMethod = expandMethod.method,
-                    url = URL(expandMethod.href),
-                    operationRel = expandMethod.rel,
                     instructions = instructions
                 )
             }

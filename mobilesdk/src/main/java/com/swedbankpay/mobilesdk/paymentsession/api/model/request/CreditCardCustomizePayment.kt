@@ -4,7 +4,7 @@ import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
 
 @Keep
-internal data class CustomizePayment(
+internal data class CreditCardCustomizePayment(
     @SerializedName("paymentMethod")
     val paymentMethod: String?,
     @SerializedName("hideStoredPaymentOptions")
@@ -16,7 +16,7 @@ internal data class CustomizePayment(
 )
 
 @Keep
-internal data class ResetCustomizePayment(
+internal data class CustomizePayment(
     @SerializedName("paymentMethod")
     val paymentMethod: String?
 )

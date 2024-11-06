@@ -53,6 +53,12 @@ internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel {
                 values = values
             )
         }
+
+        is PaymentAttemptInstrument.WebBased -> {
+            ExtensionsModel(
+                values = values
+            )
+        }
     }
 }
 
