@@ -16,6 +16,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstr
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toSemiColonSeparatedString
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayError
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaMethodService
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
@@ -468,8 +469,30 @@ internal object SessionOperationHandler {
                 data = attemptPayload.rel?.getRequestDataIfAny(googlePayResult = googlePayResult)
             )
         } else {
-            return null
+            null
         }
+    }
+
+    fun getOperationStepForFailPaymentAttempt(
+        paymentOutputModel: PaymentOutputModel,
+        error: GooglePayError?
+    ): OperationStep? {
+        val failPaymentAttempt =
+            paymentOutputModel.paymentSession.allMethodOperations.firstOrNull {
+                it.rel == OperationRel.FAIL_PAYMENT_ATTEMPT
+            }
+
+        return if (failPaymentAttempt != null) {
+            OperationStep(
+                requestMethod = failPaymentAttempt.method,
+                url = URL(failPaymentAttempt.href),
+                operationRel = failPaymentAttempt.rel,
+                data = failPaymentAttempt.rel?.getRequestDataIfAny(googlePayError = error)
+            )
+        } else {
+            null
+        }
+
     }
 
     fun getBeaconUrl(paymentOutputModel: PaymentOutputModel?): String? =

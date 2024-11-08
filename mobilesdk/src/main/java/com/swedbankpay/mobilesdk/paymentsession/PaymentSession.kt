@@ -621,16 +621,27 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             GooglePayService.launchGooglePay(
                 expectsModels.filterNotNull(),
                 (paymentInstrument as PaymentAttemptInstrument.GooglePay).activity,
-            ) { googlePayResult ->
+            ) { googlePayResult, error ->
                 currentPaymentOutputModel?.let { paymentOutputModel ->
-                    val googlePayOperation =
-                        SessionOperationHandler.getOperationStepForAttemptPayload(
-                            paymentOutputModel,
-                            googlePayResult
-                        )
 
-                    googlePayOperation?.let {
-                        executeNextStepUntilFurtherInstructions(googlePayOperation)
+                    val operation = when {
+                        googlePayResult != null -> {
+                            SessionOperationHandler.getOperationStepForAttemptPayload(
+                                paymentOutputModel,
+                                googlePayResult
+                            )
+                        }
+
+                        else -> {
+                            SessionOperationHandler.getOperationStepForFailPaymentAttempt(
+                                paymentOutputModel,
+                                error
+                            )
+                        }
+                    }
+
+                    operation?.let {
+                        executeNextStepUntilFurtherInstructions(operation)
                     } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
 
                 } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)

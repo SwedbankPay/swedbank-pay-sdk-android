@@ -13,17 +13,23 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ExpectationMo
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getBooleanValueFor
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringArrayValueFor
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValueFor
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayConstants
 import org.json.JSONArray
 import org.json.JSONObject
-import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
+
+internal data class GooglePayError(
+    val statusCode: Int,
+    val message: String? = null,
+    val userCancelled: Boolean = false
+)
 
 internal object GooglePayService {
 
     fun launchGooglePay(
         expects: List<ExpectationModel>,
         activity: Activity,
-        onGooglePayResult: (GooglePayResult) -> Unit
+        onGooglePayResult: (GooglePayResult?, GooglePayError?) -> Unit
     ) {
         val activityResultRegistry = when (activity) {
             is AppCompatActivity -> activity.activityResultRegistry
@@ -39,13 +45,29 @@ internal object GooglePayService {
                 CommonStatusCodes.SUCCESS -> {
                     taskResult.result?.let {
                         val result = Gson().fromJson(it.toJson(), GooglePayResult::class.java)
-                        onGooglePayResult(result)
+                        onGooglePayResult(result, null)
                     }
                 }
 
-                //CommonStatusCodes.CANCELED -> { }
-                //AutoResolveHelper.RESULT_ERROR -> The API returned an error (it.status: Status)
-                //CommonStatusCodes.INTERNAL_ERROR -> Handle other unexpected errors
+                CommonStatusCodes.CANCELED -> {
+                    onGooglePayResult(
+                        null,
+                        GooglePayError(
+                            statusCode = CommonStatusCodes.CANCELED,
+                            userCancelled = true
+                        )
+                    )
+                }
+
+                else -> {
+                    onGooglePayResult(
+                        null,
+                        GooglePayError(
+                            statusCode = taskResult.status.statusCode,
+                            message = taskResult.status.statusMessage,
+                        )
+                    )
+                }
             }
         }
 

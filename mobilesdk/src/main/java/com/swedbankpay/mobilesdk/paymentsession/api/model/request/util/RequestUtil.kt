@@ -8,6 +8,8 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreateAuthenti
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreditCardAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreditCardCustomizePayment
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CustomizePayment
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttemptProblemType
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.GooglePayAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.InstrumentView
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Integration
@@ -18,9 +20,11 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.CREATE_AUTHENTICATION
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.CUSTOMIZE_PAYMENT
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.EXPAND_METHOD
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.FAIL_PAYMENT_ATTEMPT
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.PREPARE_PAYMENT
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.START_PAYMENT_ATTEMPT
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayError
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 
 /**
@@ -38,7 +42,8 @@ internal object RequestUtil {
         cRes: String = "",
         showConsentAffirmation: Boolean = false,
         resetPaymentMethod: Boolean = false,
-        googlePayResult: GooglePayResult? = null
+        googlePayResult: GooglePayResult? = null,
+        googlePayError: GooglePayError? = null
     ) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()
@@ -57,6 +62,7 @@ internal object RequestUtil {
             )
 
             ATTEMPT_PAYLOAD -> getAttemptPayloadData(googlePayResult)
+            FAIL_PAYMENT_ATTEMPT -> getFailPaymentAttemptData(googlePayError)
             else -> null
         }
 
@@ -151,6 +157,18 @@ internal object RequestUtil {
         return AttemptPayload(
             paymentMethod = "GooglePay",
             paymentPayload = googlePayResult?.paymentMethodData?.tokenizationData?.token?.toBase64(),
+        ).toJsonString()
+    }
+
+    private fun getFailPaymentAttemptData(googlePayError: GooglePayError?): String {
+        return FailPaymentAttempt(
+            problemType = if (googlePayError?.userCancelled == true) {
+                FailPaymentAttemptProblemType.USER_CANCELLED.identifier
+            } else {
+                FailPaymentAttemptProblemType.TECHNICAL_ERROR.identifier
+            },
+            errorCode = googlePayError?.message
+
         ).toJsonString()
     }
 
