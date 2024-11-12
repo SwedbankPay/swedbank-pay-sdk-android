@@ -64,7 +64,7 @@ internal object GooglePayService {
                         null,
                         GooglePayError(
                             statusCode = taskResult.status.statusCode,
-                            message = taskResult.status.statusMessage,
+                            message = "${CommonStatusCodes.getStatusCodeString(taskResult.status.statusCode)} ${taskResult.status.statusMessage}"
                         )
                     )
                 }
