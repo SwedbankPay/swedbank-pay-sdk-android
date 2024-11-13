@@ -21,9 +21,9 @@ internal class MethodBaseModelDeserializer : JsonDeserializer<MethodBaseModel> {
 
         val jsonObject = json?.asJsonObject
 
-        val instrument = jsonObject?.get("instrument")
+        val paymentMethod = jsonObject?.get("paymentMethod")
 
-        return when (instrument?.asStringOrNull) {
+        return when (paymentMethod?.asStringOrNull) {
             "Swish" -> context?.deserialize(
                 jsonObject,
                 SwishMethodModel::class.java

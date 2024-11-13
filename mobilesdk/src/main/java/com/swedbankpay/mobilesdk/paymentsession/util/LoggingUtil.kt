@@ -6,6 +6,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
+import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.SwedbankPayPaymentSessionSDKControllerMode
 
 /**
  * This files holds various functions for logging purposes
@@ -14,7 +15,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProbl
 @Keep
 internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel {
     val values: MutableMap<String, String?> = mutableMapOf(
-        "instrument" to this.identifier
+        "instrument" to this.paymentMethod
     )
 
     return when (this) {
@@ -53,12 +54,6 @@ internal fun PaymentAttemptInstrument.toExtensionsModel(): ExtensionsModel {
                 values = values
             )
         }
-
-        is PaymentAttemptInstrument.WebBased -> {
-            ExtensionsModel(
-                values = values
-            )
-        }
     }
 }
 
@@ -72,6 +67,30 @@ internal fun ProblemDetails.toExtensionsModel() =
             "problemDetail" to detail
         )
     )
+
+@Keep
+internal fun SwedbankPayPaymentSessionSDKControllerMode.toExtensionModel() =
+    when (this) {
+        is SwedbankPayPaymentSessionSDKControllerMode.InstrumentMode -> {
+            ExtensionsModel(
+                values = mutableMapOf(
+                    "mode" to "instrumentMode",
+                    "instrument" to this.instrument.paymentMethod
+                )
+            )
+        }
+
+        is SwedbankPayPaymentSessionSDKControllerMode.Menu -> {
+            ExtensionsModel(
+                values = mutableMapOf(
+                    "mode" to "menu",
+                    "restrictedToInstruments" to this.restrictedToInstruments?.joinToString(
+                        separator = ";"
+                    ) { it.paymentMethod }
+                )
+            )
+        }
+    }
 
 @Keep
 internal fun launchClientAppExtensionsModel(

@@ -3,6 +3,7 @@ package com.swedbankpay.mobilesdk.paymentsession.api.model.response
 
 import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
+import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 
 @Keep
 internal data class PaymentSessionModel(
@@ -29,4 +30,16 @@ internal data class PaymentSessionModel(
 ) {
     val allMethodOperations: List<OperationOutputModel> =
         methods?.flatMap { it?.operations ?: listOf() }?.filterNotNull() ?: listOf()
+
+    val allPaymentMethods: List<String> =
+        methods?.mapNotNull { it?.paymentMethod?.name } ?: listOf()
+
+    val restrictedToInstruments: List<String>?
+        get() {
+            return safeLet(allPaymentMethods, settings) { allMethods, settings ->
+                if (allMethods.sorted() == settings.enabledPaymentMethods.sorted()) {
+                    return null
+                } else return allMethods
+            }
+        }
 }

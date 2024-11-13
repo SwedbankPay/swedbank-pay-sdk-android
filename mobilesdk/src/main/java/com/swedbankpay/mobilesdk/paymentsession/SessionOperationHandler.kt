@@ -13,6 +13,8 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getValueFor
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
+import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.SwedbankPayPaymentSessionSDKControllerMode
+import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.instrumentModeRequired
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toSemiColonSeparatedString
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
@@ -35,10 +37,12 @@ internal object SessionOperationHandler {
      *
      * @param paymentOutputModel Current payment model
      * @param paymentAttemptInstrument Chosen [PaymentAttemptInstrument] for the payment.
+     * @param sdkControllerMode Chosen [SwedbankPayPaymentSessionSDKControllerMode] for the payment.
      */
     suspend fun getNextStep(
         paymentOutputModel: PaymentOutputModel?,
         paymentAttemptInstrument: PaymentAttemptInstrument? = null,
+        sdkControllerMode: SwedbankPayPaymentSessionSDKControllerMode? = null
     ): OperationStep {
         if (paymentOutputModel == null) {
             return OperationStep(
@@ -94,6 +98,7 @@ internal object SessionOperationHandler {
         val preparePayment =
             operations.firstOrNull { it.rel == OperationRel.PREPARE_PAYMENT }
         if (preparePayment != null) {
+            // Initial state of payment session, run preparePayment operation
             return OperationStep(
                 requestMethod = preparePayment.method,
                 url = URL(preparePayment.href),
@@ -105,76 +110,125 @@ internal object SessionOperationHandler {
             )
         }
 
-
-        if (paymentAttemptInstrument != null
-            && (paymentOutputModel.paymentSession.instrumentModePaymentMethod
-                    == paymentAttemptInstrument.identifier)
-        ) {
-            instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
-            return OperationStep(
-                instructions = instructions
-            )
-        }
-
         // CUSTOMIZE_PAYMENT
         val customizePayment =
             paymentOutputModel.operations.filterNotNull()
                 .firstOrNull { it.rel == OperationRel.CUSTOMIZE_PAYMENT }
 
-        if (customizePayment != null && paymentAttemptInstrument != null) {
-            if (paymentOutputModel.paymentSession.instrumentModePaymentMethod != null
-                && paymentAttemptInstrument.identifier != paymentOutputModel.paymentSession.instrumentModePaymentMethod
-            ) {
-                return OperationStep(
-                    requestMethod = customizePayment.method,
-                    url = URL(customizePayment.href),
-                    operationRel = customizePayment.rel,
-                    data = customizePayment.rel?.getRequestDataIfAny(
-                        paymentAttemptInstrument,
-                        paymentOutputModel.paymentSession.culture,
-                        resetPaymentMethod = true
-                    ),
-                    instructions = instructions
-                )
+        if (customizePayment != null) {
+            paymentAttemptInstrument?.let { attemptInstrument ->
+                if ((paymentOutputModel.paymentSession.instrumentModePaymentMethod != null
+                            && paymentOutputModel.paymentSession.instrumentModePaymentMethod != paymentAttemptInstrument.paymentMethod) || !paymentOutputModel.paymentSession.allPaymentMethods.contains(
+                        attemptInstrument.paymentMethod
+                    )
+                ) {
+                    // Resetting Instrument Mode session to Menu Mode (instrumentModePaymentMethod set to null),
+                    // if new payment attempt is made with an instrument other than the current
+                    // Instrument Mode instrument or with an instrument not in the list of methods (restricted menu)
+
+                    return OperationStep(
+                        requestMethod = customizePayment.method,
+                        url = URL(customizePayment.href),
+                        operationRel = customizePayment.rel,
+                        data = customizePayment.rel?.getRequestDataIfAny(),
+                        instructions = instructions
+                    )
+                }
+
+                if (attemptInstrument.instrumentModeRequired() && (paymentOutputModel.paymentSession.instrumentModePaymentMethod == null || paymentOutputModel.paymentSession.instrumentModePaymentMethod != attemptInstrument.paymentMethod)
+                ) {
+                    // Switching to Instrument Mode from Menu Mode session (instrumentModePaymentMethod set to null) or from Instrument Mode with other instrument, if new payment attempt is made with an Instrument Mode required instrument (newCreditCard)
+                    return OperationStep(
+                        requestMethod = customizePayment.method,
+                        url = URL(customizePayment.href),
+                        operationRel = customizePayment.rel,
+                        data = customizePayment.rel?.getRequestDataIfAny(
+                            paymentAttemptInstrument = attemptInstrument
+                        ),
+                        instructions = instructions
+                    )
+                }
+
+                if (paymentAttemptInstrument.instrumentModeRequired() && paymentOutputModel.paymentSession.instrumentModePaymentMethod == paymentAttemptInstrument.paymentMethod
+                ) {
+                    // Session is in Instrument Mode, and the set instrument is matching payment attempt, time to create a web based view and send to the merchant app
+                    instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
+                    return OperationStep(
+                        instructions = instructions
+                    )
+                }
             }
 
-            if (paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard
-            ) {
-                return OperationStep(
-                    requestMethod = customizePayment.method,
-                    url = URL(customizePayment.href),
-                    operationRel = customizePayment.rel,
-                    data = customizePayment.rel?.getRequestDataIfAny(
-                        paymentAttemptInstrument,
-                        paymentOutputModel.paymentSession.culture,
-                        showConsentAffirmation = paymentAttemptInstrument.enabledPaymentDetailsConsentCheckbox
-                    ),
-                    instructions = instructions
-                )
+
+            sdkControllerMode?.let { mode ->
+                if (mode is SwedbankPayPaymentSessionSDKControllerMode.InstrumentMode && (paymentOutputModel.paymentSession.instrumentModePaymentMethod == null
+                            || paymentOutputModel.paymentSession.instrumentModePaymentMethod != mode.instrument.paymentMethod)
+                ) {
+                    // Switching to Instrument Mode from Menu Mode session (instrumentModePaymentMethod set to nul) or from Instrument Mode with other instrument, if a SDK view controller is requested in instrument mode
+                    return OperationStep(
+                        requestMethod = customizePayment.method,
+                        url = URL(customizePayment.href),
+                        operationRel = customizePayment.rel,
+                        data = customizePayment.rel?.getRequestDataIfAny(
+                            availableInstrument = mode.instrument
+                        ),
+                        instructions = instructions
+                    )
+                }
+
+                if (mode is SwedbankPayPaymentSessionSDKControllerMode.InstrumentMode && paymentOutputModel.paymentSession.instrumentModePaymentMethod == mode.instrument.paymentMethod
+                ) {
+                    // Session is in Instrument Mode, and the set SDK view controller mode is matching the instrument, time to create a web based view and send to the merchant app
+
+                    instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
+                    return OperationStep(
+                        instructions = instructions
+                    )
+                }
+
+                if (mode is SwedbankPayPaymentSessionSDKControllerMode.Menu && (paymentOutputModel.paymentSession.instrumentModePaymentMethod != null
+                            || paymentOutputModel.paymentSession.restrictedToInstruments?.sorted()
+                            != mode.restrictedToInstruments?.map { it.paymentMethod }
+                        ?.sorted())
+                ) {
+                    // Switching to Menu Mode with potential list of restricted instruments from Instrument Mode or when  list of restricted instruments doesn't match (different list of instruments)
+
+                    return OperationStep(
+                        requestMethod = customizePayment.method,
+                        url = URL(customizePayment.href),
+                        operationRel = customizePayment.rel,
+                        data = customizePayment.rel?.getRequestDataIfAny(
+                            restrictToPaymentMethods = mode.restrictedToInstruments?.map { it.paymentMethod }
+                        ),
+                        instructions = instructions
+                    )
+                }
+
+                if (mode is SwedbankPayPaymentSessionSDKControllerMode.Menu && paymentOutputModel.paymentSession.instrumentModePaymentMethod == null && paymentOutputModel.paymentSession.restrictedToInstruments?.sorted() == mode.restrictedToInstruments?.map { it.paymentMethod }
+                        ?.sorted()
+                ) {
+                    // Session is in Menu Mode, and the list of restricted instruments match the set SDK view controller mode, time to create a web based view and send to the merchant app
+
+                    instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
+                    return OperationStep(
+                        instructions = instructions
+                    )
+                }
             }
 
-            if (paymentAttemptInstrument is PaymentAttemptInstrument.WebBased) {
-                return OperationStep(
-                    requestMethod = customizePayment.method,
-                    url = URL(customizePayment.href),
-                    operationRel = customizePayment.rel,
-                    data = customizePayment.rel?.getRequestDataIfAny(
-                        paymentAttemptInstrument,
-                        paymentOutputModel.paymentSession.culture
-                    ),
-                    instructions = instructions
-                )
-            }
+
         }
 
         // Search for OperationRel.START_PAYMENT_ATTEMPT
         val startPaymentAttempt =
             paymentOutputModel.paymentSession.methods
-                ?.firstOrNull { it?.instrument == paymentAttemptInstrument?.toInstrument() }
+                ?.firstOrNull { it?.paymentMethod == paymentAttemptInstrument?.toInstrument() }
                 ?.operations
                 ?.firstOrNull { it?.rel == OperationRel.START_PAYMENT_ATTEMPT }
 
         if (startPaymentAttempt != null) {
+            // We have a startPaymentAttempt and it's matching the set instrument, time to make a payment attempt
+
             return OperationStep(
                 requestMethod = startPaymentAttempt.method,
                 url = URL(startPaymentAttempt.href),
@@ -188,11 +242,12 @@ internal object SessionOperationHandler {
         }
 
         // Search for IntegrationTaskRel.LAUNCH_CLIENT_APP
-        // Only return this if swishUrl hasn't been used yet
         val launchClientApp = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task?.rel == IntegrationTaskRel.LAUNCH_CLIENT_APP }
 
         if (launchClientApp != null && !alreadyUsedSwishUrls.contains(launchClientApp.href) && launchClientApp.href != null) {
+            // We have an active launchClientApp task, and the contained URL isn't in the list of already launched Client App URLs, launch the external app on the device
+
             alreadyUsedSwishUrls.add(launchClientApp.href)
             instructions.add(0, StepInstruction.LaunchClientAppStep(launchClientApp.href))
             return OperationStep(
@@ -208,6 +263,7 @@ internal object SessionOperationHandler {
         if (scaMethodRequest != null
             && scaMethodRequest.expects?.any { it?.value in scaMethodRequestDataPerformed.keys } == false
         ) {
+            // We have an active scaMethodRequest task and we haven't loaded the Method Request URL before (as identified by threeDSMethodData value as key), load the SCA Method Request in the "invisible web view"
 
             val completionIndicator = ScaMethodService.loadScaMethodRequest(
                 task = scaMethodRequest,
@@ -243,6 +299,8 @@ internal object SessionOperationHandler {
             && createAuthExpectationModel != null
             && allowedToExecuteCreateAuthWithSCA
         ) {
+            // We have loaded the Method Request URL in the "invisible web view" before (as identified by threeDSMethodData value as key), so we can use the result and run the createAuthentication operation
+
             (createAuth.expects.getValueFor(PaymentSessionAPIConstants.TRAMPOLINE_NOTIFICATION_URL)
                     as String?)?.let { notificationUrl ->
                 return OperationStep(
@@ -266,6 +324,8 @@ internal object SessionOperationHandler {
         } else if (createAuth != null
             && !createAuth.expects.isNullOrEmpty()
         ) {
+            // The Session API has already provided us with a pre-defined Method Completion Indicator, so we take that and run the createAuthentication operation
+
             val trampolineNotificationUrl =
                 createAuth.expects.getValueFor(PaymentSessionAPIConstants.TRAMPOLINE_NOTIFICATION_URL) as String?
             val methodCompletionIndicator =
@@ -292,6 +352,30 @@ internal object SessionOperationHandler {
                     instructions = instructions
                 )
             }
+        } else if (createAuth != null) {
+            // We didn't have a result from a loaded Method Request URL, and we didn't get a pre-defined Method Completion Indicator, so we will have to send in the Unknown (U) indicator
+
+            val trampolineNotificationUrl =
+                createAuth.expects?.getValueFor(PaymentSessionAPIConstants.TRAMPOLINE_NOTIFICATION_URL) as String?
+
+            trampolineNotificationUrl?.let { notificationUrl ->
+                return OperationStep(
+                    requestMethod = createAuth.method,
+                    url = URL(createAuth.href),
+                    operationRel = createAuth.rel,
+                    data = createAuth.rel?.getRequestDataIfAny(
+                        culture = paymentOutputModel.paymentSession.culture,
+                        completionIndicator = "U",
+                        notificationUrl = notificationUrl
+                    ),
+                    instructions = instructions
+                )
+            } ?: kotlin.run {
+                instructions.add(0, StepInstruction.InternalError)
+                return OperationStep(
+                    instructions = instructions
+                )
+            }
         }
 
         // Search for IntegrationTaskRel.SCA_REDIRECT
@@ -301,6 +385,8 @@ internal object SessionOperationHandler {
         if (scaRedirect != null
             && scaRedirect.expects?.any { it?.value in scaRedirectDataPerformed.keys } == false
         ) {
+            // We have an active scaRedirect task, and the 3D secure page hasn't been shown to the user yet (as identified by creq as key), tell the merchant app to show a 3D Secure Fragment
+
             instructions.add(0, StepInstruction.ScaRedirectStep(scaRedirect))
             return OperationStep(
                 instructions = instructions
@@ -322,6 +408,8 @@ internal object SessionOperationHandler {
             && completeAuthExpectationModel != null
             && allowedToExecuteCompleteAuth
         ) {
+            // We have an active scaRedirect task, and the 3D secure page has been shown to the user (as identified by creq as key), run the completeAuthentication operation with the result
+
             return OperationStep(
                 requestMethod = completeAuth.method,
                 url = URL(completeAuth.href),
@@ -334,12 +422,13 @@ internal object SessionOperationHandler {
             )
         }
 
-
         // GooglePay. Search for IntegrationTaskRel.WALLET_SDK
         val walletSdk = operations.flatMap { it.tasks ?: listOf() }
             .firstOrNull { task -> task?.rel == IntegrationTaskRel.WALLET_SDK }
 
         if (walletSdk != null) {
+            // We have an active walletSdk task, this means we should initiate an Google pay Payment Request locally on the device
+
             instructions.add(0, StepInstruction.GooglePayStep(walletSdk))
             return OperationStep(
                 instructions = instructions
@@ -350,14 +439,41 @@ internal object SessionOperationHandler {
         val redirectPayer =
             operations.firstOrNull { it.rel == OperationRel.REDIRECT_PAYER }
         if (redirectPayer?.href != null) {
+            // We have a redirectPayer operation, this means the payment session has ended and we can look at the URL to determine the result
+
             instructions.add(0, StepInstruction.PaymentSessionCompleted(redirectPayer.href))
             return OperationStep(
                 instructions = instructions
             )
         }
 
-        // If instrument has not been shown to merchant. Send all of them
+        if (paymentAttemptInstrument != null) {
+            val paymentAttemptInstrumentOperation = paymentOutputModel.paymentSession.methods
+                ?.firstOrNull { it?.paymentMethod == paymentAttemptInstrument.toInstrument() }
+                ?.operations
+                ?.firstOrNull {
+                    it?.rel == OperationRel.EXPAND_METHOD
+                            || it?.rel == OperationRel.START_PAYMENT_ATTEMPT
+                }
+
+            if (paymentAttemptInstrumentOperation != null) {
+                // We have a method matching the set instrument, and it has one of the three supported method operations (expandMethod, startPaymentAttempt or getPayment)
+
+                return OperationStep(
+                    requestMethod = paymentAttemptInstrumentOperation.method,
+                    url = URL(paymentAttemptInstrumentOperation.href),
+                    operationRel = paymentAttemptInstrumentOperation.rel,
+                    data = paymentAttemptInstrumentOperation.rel?.getRequestDataIfAny(
+                        paymentAttemptInstrument,
+                        paymentOutputModel.paymentSession.culture
+                    )
+                )
+            }
+        }
+
         if (!hasShownAvailableInstruments) {
+            // No process has been initiated above, and we haven't sent the available instruments to the merchant app for this session yet, so send the list and wait for action
+
             val availableMethods = arrayListOf<MethodBaseModel>()
 
             if (!paymentOutputModel.paymentSession.methods.isNullOrEmpty()) {
@@ -390,34 +506,11 @@ internal object SessionOperationHandler {
             }
         }
 
-        // If we have a paymentAttemptInstrument this far down in the logic. Check if we can do something with it
-        if (paymentAttemptInstrument != null) {
-            val paymentAttemptInstrumentOperation = paymentOutputModel.paymentSession.methods
-                ?.firstOrNull { it?.instrument == paymentAttemptInstrument.toInstrument() }
-                ?.operations
-                ?.firstOrNull {
-                    it?.rel == OperationRel.EXPAND_METHOD
-                            || it?.rel == OperationRel.START_PAYMENT_ATTEMPT
-                }
-
-            if (paymentAttemptInstrumentOperation != null) {
-                return OperationStep(
-                    requestMethod = paymentAttemptInstrumentOperation.method,
-                    url = URL(paymentAttemptInstrumentOperation.href),
-                    operationRel = paymentAttemptInstrumentOperation.rel,
-                    data = paymentAttemptInstrumentOperation.rel?.getRequestDataIfAny(
-                        paymentAttemptInstrument,
-                        paymentOutputModel.paymentSession.culture
-                    )
-                )
-            }
-        }
-
         // Search for OperationRel.GET_PAYMENT
-        // If we come here and find OperationRel.GET_PAYMENT we want to start polling for a result we can
-        // do something with
         val getPayment = operations.firstOrNull { it.rel == OperationRel.GET_PAYMENT }
         if (getPayment != null) {
+            // We're told to simply fetch the session again, wait until polling and fetch the session, running the session operation handling once again
+
             return OperationStep(
                 requestMethod = getPayment.method,
                 url = URL(getPayment.href),

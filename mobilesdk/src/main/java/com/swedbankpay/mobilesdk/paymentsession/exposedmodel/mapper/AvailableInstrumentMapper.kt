@@ -16,12 +16,12 @@ import java.util.*
  * For logging purposes
  */
 fun List<MethodBaseModel>.toSemiColonSeparatedString() = this.joinToString(separator = ";") {
-    it.instrument?.identifier ?: "Unknown"
+    it.paymentMethod?.name ?: "Unknown"
 }
 
 fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument = when (this) {
     is SwishMethodModel -> AvailableInstrument.Swish(
-        identifier = this.instrument?.identifier ?: "Swish",
+        paymentMethod = this.paymentMethod?.name ?: "Swish",
         prefills = this.prefills.map { model ->
             SwishPrefill(
                 rank = (model as SwishMethodPrefillModel).rank,
@@ -31,7 +31,7 @@ fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument = when (this) {
     )
 
     is CreditCardMethodModel -> AvailableInstrument.CreditCard(
-        identifier = this.instrument?.identifier ?: "CreditCard",
+        paymentMethod = this.paymentMethod?.name ?: "CreditCard",
         prefills = this.prefills.map { model ->
             CreditCardPrefill(
                 rank = (model as CreditCardMethodPrefillModel).rank,
@@ -47,10 +47,10 @@ fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument = when (this) {
     )
 
     is GooglePayMethodModel -> AvailableInstrument.GooglePay(
-        identifier = this.instrument?.identifier ?: "GooglePay"
+        paymentMethod = this.paymentMethod?.name ?: "GooglePay"
     )
 
-    else -> AvailableInstrument.WebBased(identifier = this.instrument?.identifier ?: "WebBased")
+    else -> AvailableInstrument.WebBased(paymentMethod = this.paymentMethod?.name ?: "WebBased")
 }
 
 fun Date.month(): String {

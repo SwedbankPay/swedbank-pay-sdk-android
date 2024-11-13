@@ -3,8 +3,8 @@ package com.swedbankpay.mobilesdk.paymentsession.util
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ApiError
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.Instrument
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.MethodBaseModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentMethod
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PrefillBaseModel
 import com.swedbankpay.mobilesdk.paymentsession.util.gson.InstrumentDeserializer
@@ -18,7 +18,7 @@ internal object JsonUtil {
             .setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .registerTypeAdapter(MethodBaseModel::class.java, MethodBaseModelDeserializer())
             .registerTypeAdapter(PrefillBaseModel::class.java, PrefillBaseModelDeserializer())
-            .registerTypeAdapter(Instrument::class.java, InstrumentDeserializer())
+            .registerTypeAdapter(PaymentMethod::class.java, InstrumentDeserializer())
             .create()
 
     fun String.toPaymentOutputModel(): PaymentOutputModel {

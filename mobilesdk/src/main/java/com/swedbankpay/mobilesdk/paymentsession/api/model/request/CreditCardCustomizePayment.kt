@@ -18,5 +18,7 @@ internal data class CreditCardCustomizePayment(
 @Keep
 internal data class CustomizePayment(
     @SerializedName("paymentMethod")
-    val paymentMethod: String?
+    val paymentMethod: String?,
+    @SerializedName("restrictToPaymentMethods")
+    val restrictToPaymentMethods: List<String?>?
 )

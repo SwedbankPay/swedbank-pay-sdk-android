@@ -9,13 +9,13 @@ import java.util.*
 @Keep
 sealed class AvailableInstrument {
 
-    abstract val identifier: String
+    abstract val paymentMethod: String
 
     /**
      * Swish native payment with a list of prefills
      */
     data class Swish(
-        override val identifier: String,
+        override val paymentMethod: String,
         val prefills: List<SwishPrefill> = listOf(),
     ) : AvailableInstrument()
 
@@ -23,26 +23,26 @@ sealed class AvailableInstrument {
      * Credit card native payment with a list of prefills
      */
     data class CreditCard(
-        override val identifier: String,
+        override val paymentMethod: String,
         val prefills: List<CreditCardPrefill> = listOf()
     ) : AvailableInstrument()
 
     data class GooglePay(
-        override val identifier: String
+        override val paymentMethod: String
     ) : AvailableInstrument()
 
     /**
      * Instrument telling merchants that new credit card can be used
      */
     data class NewCreditCard(
-        override val identifier: String
+        override val paymentMethod: String
     ) : AvailableInstrument()
 
     /**
      * Instruments that can be used for web based payments
      */
     data class WebBased(
-        override val identifier: String
+        override val paymentMethod: String
     ) : AvailableInstrument()
 
 }

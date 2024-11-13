@@ -3,7 +3,7 @@ package com.swedbankpay.mobilesdk.paymentsession.exposedmodel
 import android.app.Activity
 import android.content.Context
 import androidx.annotation.Keep
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.Instrument
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentMethod
 
 /**
  * Instrument with needed values to make a payment attempt
@@ -11,7 +11,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.Instrument
 @Keep
 sealed class PaymentAttemptInstrument(
     internal val context: Context? = null,
-    internal val identifier: String
+    internal val paymentMethod: String
 ) {
     @Keep
     data class Swish(
@@ -32,20 +32,24 @@ sealed class PaymentAttemptInstrument(
 
     @Keep
     class GooglePay(internal val activity: Activity) :
-        PaymentAttemptInstrument(context = activity, identifier = GooglePay::class.java.simpleName)
-
-    @Keep
-    class WebBased(
-        identifier: String
-    ) : PaymentAttemptInstrument(context = null, identifier = identifier)
+        PaymentAttemptInstrument(
+            context = activity,
+            paymentMethod = GooglePay::class.java.simpleName
+        )
 }
 
 @Keep
-fun PaymentAttemptInstrument.toInstrument(): Instrument = when (this) {
-    is PaymentAttemptInstrument.CreditCard -> Instrument.CreditCard(this.identifier)
-    is PaymentAttemptInstrument.Swish -> Instrument.Swish(this.identifier)
-    is PaymentAttemptInstrument.GooglePay -> Instrument.GooglePay(this.identifier)
-    else -> Instrument.WebBased(this.identifier)
+fun PaymentAttemptInstrument.instrumentModeRequired() = when (this) {
+    is PaymentAttemptInstrument.NewCreditCard -> true
+    else -> false
+}
+
+@Keep
+fun PaymentAttemptInstrument.toInstrument(): PaymentMethod = when (this) {
+    is PaymentAttemptInstrument.CreditCard -> PaymentMethod.CreditCard(this.paymentMethod)
+    is PaymentAttemptInstrument.Swish -> PaymentMethod.Swish(this.paymentMethod)
+    is PaymentAttemptInstrument.GooglePay -> PaymentMethod.GooglePay(this.paymentMethod)
+    else -> PaymentMethod.WebBased(this.paymentMethod)
 }
 
 @Keep

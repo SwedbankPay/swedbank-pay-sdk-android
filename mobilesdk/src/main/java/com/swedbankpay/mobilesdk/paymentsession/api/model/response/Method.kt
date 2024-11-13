@@ -12,14 +12,14 @@ open class MethodBaseModel {
     @SerializedName("autoClick")
     val autoClick: Boolean = false
 
-    @SerializedName("instrument")
-    val instrument: Instrument? = null
+    @SerializedName("paymentMethod")
+    val paymentMethod: PaymentMethod? = null
 
     @SerializedName("operations")
     val operations: List<OperationOutputModel?> = listOf()
 
     override fun toString(): String {
-        return "amount=$amount, autoClick=$autoClick, instrument=$instrument, operations=$operations"
+        return "amount=$amount, autoClick=$autoClick, paymentMethod=$paymentMethod, operations=$operations"
     }
 }
 
@@ -66,23 +66,23 @@ internal class GooglePayMethodModel : MethodBaseModel() {
 }
 
 @Keep
-sealed class Instrument {
-    abstract val identifier: String
+sealed class PaymentMethod {
+    abstract val name: String
 
     data class Swish(
-        override val identifier: String
-    ) : Instrument()
+        override val name: String
+    ) : PaymentMethod()
 
     data class CreditCard(
-        override val identifier: String
-    ) : Instrument()
+        override val name: String
+    ) : PaymentMethod()
 
     data class GooglePay(
-        override val identifier: String
-    ) : Instrument()
+        override val name: String
+    ) : PaymentMethod()
 
     data class WebBased(
-        override val identifier: String
-    ) : Instrument()
+        override val name: String
+    ) : PaymentMethod()
 }
 

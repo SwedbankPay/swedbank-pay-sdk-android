@@ -1,8 +1,8 @@
 package com.swedbankpay.mobilesdk.paymentsession.api.model.response
 
 
-import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep
+import com.google.gson.annotations.SerializedName
 
 @Keep
 data class Settings(
@@ -13,5 +13,7 @@ data class Settings(
     @SerializedName("integration")
     val integration: String?,
     @SerializedName("traceId")
-    val traceId: String?
+    val traceId: String?,
+    @SerializedName("enabledPaymentMethods")
+    val enabledPaymentMethods: List<String>
 )

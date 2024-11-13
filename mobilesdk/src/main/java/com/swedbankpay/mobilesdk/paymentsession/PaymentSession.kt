@@ -26,6 +26,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetail
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
+import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.SwedbankPayPaymentSessionSDKControllerMode
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.isSwishLocalDevice
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayService
@@ -36,6 +37,7 @@ import com.swedbankpay.mobilesdk.paymentsession.util.configuration.AutomaticConf
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import com.swedbankpay.mobilesdk.paymentsession.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.livedata.QueuedMutableLiveData
+import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionModel
 import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionsModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -94,6 +96,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private var paymentAttemptInstrument: PaymentAttemptInstrument? = null
 
+    private var sdkControllerMode: SwedbankPayPaymentSessionSDKControllerMode? = null
+
     private var startRequestTimestamp: Long = 0
 
     private var isPaymentFragmentActive = false
@@ -117,6 +121,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private fun clearState(isStartingSession: Boolean = false) {
         clearPaymentAttemptInstrument()
+        clearSdkControllerMode()
         currentPaymentOutputModel = null
         SessionOperationHandler.clearState()
         stopObservingCallbacks()
@@ -250,7 +255,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         )
                         SessionOperationHandler.getNextStep(
                             paymentOutputModel = currentPaymentOutputModel,
-                            paymentAttemptInstrument = paymentAttemptInstrument
+                            paymentAttemptInstrument = paymentAttemptInstrument,
+                            sdkControllerMode = sdkControllerMode
                         ).let { step ->
 
                             if (operationStep.operationRel == OperationRel.REDIRECT_PAYER) {
@@ -342,6 +348,11 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun clearPaymentAttemptInstrument(
     ) {
         paymentAttemptInstrument = null
+    }
+
+    private fun clearSdkControllerMode(
+    ) {
+        sdkControllerMode = null
     }
 
     private fun checkWhatTodo(instruction: StepInstruction) {
@@ -458,10 +469,38 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     /**
+     * Creates a payment fragment with the supplied mode applied
+     */
+    fun createPaymentFragment(mode: SwedbankPayPaymentSessionSDKControllerMode) {
+        currentPaymentOutputModel?.let {
+            sdkControllerMode = mode
+
+            executeNextStepUntilFurtherInstructions(
+                OperationStep(
+                    instructions = listOf(StepInstruction.OverrideApiCall(it))
+                )
+            )
+
+            BeaconService.logEvent(
+                eventAction = EventAction.SDKMethodInvoked(
+                    method = MethodModel(
+                        name = "createPaymentFragment",
+                        succeeded = true
+                    ),
+                    extensions = mode.toExtensionModel()
+                )
+            )
+        } ?: kotlin.run {
+            onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+        }
+    }
+
+    /**
      * Creates a payment fragment
      */
-    fun createPaymentFragment() {
+    private fun createPaymentFragment() {
         clearPaymentAttemptInstrument()
+        clearSdkControllerMode()
         orderInfo?.let {
             val paymentFragment = PaymentFragment()
             PaymentFragment.defaultConfiguration = AutomaticConfiguration(it)
@@ -470,15 +509,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 .checkoutV3(true)
                 .useBrowser(false)
                 .build()
-
-            BeaconService.logEvent(
-                eventAction = EventAction.SDKMethodInvoked(
-                    method = MethodModel(
-                        name = "createPaymentFragment",
-                        succeeded = true
-                    )
-                )
-            )
 
             startObservingPaymentFragmentPaymentProcess()
             isPaymentFragmentActive = true

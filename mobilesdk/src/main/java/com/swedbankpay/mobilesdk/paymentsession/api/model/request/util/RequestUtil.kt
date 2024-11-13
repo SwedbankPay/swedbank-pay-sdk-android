@@ -23,6 +23,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.FAIL_PAYMENT_ATTEMPT
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.PREPARE_PAYMENT
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.START_PAYMENT_ATTEMPT
+import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayError
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
@@ -35,20 +36,21 @@ internal object RequestUtil {
     private val gson = GsonBuilder().serializeNulls().create()
 
     fun OperationRel.getRequestDataIfAny(
-        instrument: PaymentAttemptInstrument? = null,
+        paymentAttemptInstrument: PaymentAttemptInstrument? = null,
         culture: String? = null,
+        paymentMethod: String? = null,
+        availableInstrument: AvailableInstrument? = null,
+        restrictToPaymentMethods: List<String>? = null,
         completionIndicator: String = "N",
         notificationUrl: String = "",
         cRes: String = "",
-        showConsentAffirmation: Boolean = false,
-        resetPaymentMethod: Boolean = false,
         googlePayResult: GooglePayResult? = null,
         googlePayError: GooglePayError? = null
     ) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()
-            START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(instrument, culture)
-            EXPAND_METHOD -> getInstrumentViewsData(instrument)
+            START_PAYMENT_ATTEMPT -> getPaymentAttemptDataFor(paymentAttemptInstrument, culture)
+            EXPAND_METHOD -> getInstrumentViewsData(paymentAttemptInstrument)
             CREATE_AUTHENTICATION -> getCreateAuthenticationData(
                 completionIndicator,
                 notificationUrl
@@ -56,9 +58,10 @@ internal object RequestUtil {
 
             COMPLETE_AUTHENTICATION -> getCompleteAuthenticationData(cRes)
             CUSTOMIZE_PAYMENT -> getCustomizePaymentData(
-                instrument,
-                showConsentAffirmation,
-                resetPaymentMethod = resetPaymentMethod
+                paymentAttemptInstrument,
+                availableInstrument,
+                paymentMethod,
+                restrictToPaymentMethods
             )
 
             ATTEMPT_PAYLOAD -> getAttemptPayloadData(googlePayResult)
@@ -69,7 +72,7 @@ internal object RequestUtil {
     private fun getIntegrationRequestData(): String {
         return Integration(
             integration = "HostedView",
-            deviceAcceptedWallets = "GooglePay",
+            deviceAcceptedWallets = "GooglePay;ClickToPay",
             browser = RequestDataUtil.getBrowser(),
             client = RequestDataUtil.getClient(),
             service = RequestDataUtil.getService(),
@@ -78,7 +81,7 @@ internal object RequestUtil {
 
     private fun getInstrumentViewsData(instrument: PaymentAttemptInstrument?): String {
         return InstrumentView(
-            paymentMethod = instrument?.identifier ?: ""
+            paymentMethod = instrument?.paymentMethod ?: ""
         ).toJsonString()
 
     }
@@ -133,24 +136,28 @@ internal object RequestUtil {
     }
 
     private fun getCustomizePaymentData(
-        instrument: PaymentAttemptInstrument? = null,
-        showConsentAffirmation: Boolean? = null,
-        instrumentFilter: List<String>? = null,
-        resetPaymentMethod: Boolean = false
+        paymentAttemptInstrument: PaymentAttemptInstrument? = null,
+        instrument: AvailableInstrument? = null,
+        paymentMethod: String? = null,
+        restrictToPaymentMethods: List<String>? = null,
     ): String {
-        return if (instrument is PaymentAttemptInstrument.NewCreditCard) {
-            CreditCardCustomizePayment(
-                paymentMethod = instrument.identifier,
-                hideStoredPaymentOptions = true,
-                showConsentAffirmation = showConsentAffirmation,
-                restrictToPaymentMethods = instrumentFilter
+        return when {
+            restrictToPaymentMethods != null -> CustomizePayment(
+                paymentMethod = null,
+                restrictToPaymentMethods = restrictToPaymentMethods
             ).toJsonString()
-        } else CustomizePayment(
-            if (resetPaymentMethod) {
-                null
-            } else instrument?.identifier
-        ).toJsonString()
 
+            paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard -> CreditCardCustomizePayment(
+                paymentMethod = paymentAttemptInstrument.paymentMethod,
+                hideStoredPaymentOptions = true,
+                showConsentAffirmation = paymentAttemptInstrument.enabledPaymentDetailsConsentCheckbox,
+                restrictToPaymentMethods = null
+            ).toJsonString()
+
+            paymentMethod != null -> CustomizePayment(paymentMethod, null).toJsonString()
+            instrument != null -> CustomizePayment(instrument.paymentMethod, null).toJsonString()
+            else -> CustomizePayment(null, null).toJsonString()
+        }
     }
 
     private fun getAttemptPayloadData(googlePayResult: GooglePayResult?): String {
