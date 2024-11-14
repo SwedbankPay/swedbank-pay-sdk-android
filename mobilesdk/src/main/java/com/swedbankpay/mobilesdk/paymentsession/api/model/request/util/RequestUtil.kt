@@ -144,7 +144,7 @@ internal object RequestUtil {
         return when {
             restrictToPaymentMethods != null -> CustomizePayment(
                 paymentMethod = null,
-                restrictToPaymentMethods = restrictToPaymentMethods
+                restrictToPaymentMethods = restrictToPaymentMethods.ifEmpty { null }
             ).toJsonString()
 
             paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard -> CreditCardCustomizePayment(
