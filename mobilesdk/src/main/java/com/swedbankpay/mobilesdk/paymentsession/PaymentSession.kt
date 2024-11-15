@@ -443,6 +443,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     fun makeNativePaymentAttempt(
         instrument: PaymentAttemptInstrument,
     ) {
+        clearSdkControllerMode()
         isPaymentFragmentActive = false
         currentPaymentOutputModel?.let {
             paymentAttemptInstrument = instrument
@@ -472,8 +473,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      * Creates a payment fragment with the supplied mode applied
      */
     fun createPaymentFragment(mode: SwedbankPayPaymentSessionSDKControllerMode) {
+        clearPaymentAttemptInstrument()
         currentPaymentOutputModel?.let {
-
             sdkControllerMode = if (mode is SwedbankPayPaymentSessionSDKControllerMode.Menu
                 && mode.restrictedToInstruments?.isEmpty() == true
             ) {
