@@ -473,7 +473,14 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      */
     fun createPaymentFragment(mode: SwedbankPayPaymentSessionSDKControllerMode) {
         currentPaymentOutputModel?.let {
-            sdkControllerMode = mode
+
+            sdkControllerMode = if (mode is SwedbankPayPaymentSessionSDKControllerMode.Menu
+                && mode.restrictedToInstruments?.isEmpty() == true
+            ) {
+                mode.copy(restrictedToInstruments = null)
+            } else {
+                mode
+            }
 
             executeNextStepUntilFurtherInstructions(
                 OperationStep(
