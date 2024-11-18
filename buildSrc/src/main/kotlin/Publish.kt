@@ -35,12 +35,6 @@ private fun Project.createReleasePublication(description: String): MavenPublicat
                     organization.set("Swedbank Pay")
                     organizationUrl.set("https://www.swedbankpay.com/")
                 }
-                developer {
-                    name.set("Pertti Kröger")
-                    email.set("pertti@qvik.fi")
-                    organization.set("Qvik")
-                    organizationUrl.set("https://qvik.com/")
-                }
             }
 
             scm {
