@@ -5,7 +5,8 @@ import com.google.gson.annotations.SerializedName
 
 internal enum class FailPaymentAttemptProblemType(val identifier: String) {
     USER_CANCELLED("UserCancelled"),
-    TECHNICAL_ERROR("TechnicalError")
+    TECHNICAL_ERROR("TechnicalError"),
+    CLIENT_APP_LAUNCH_FAILED("ClientAppLaunchFailed")
 }
 
 @Keep

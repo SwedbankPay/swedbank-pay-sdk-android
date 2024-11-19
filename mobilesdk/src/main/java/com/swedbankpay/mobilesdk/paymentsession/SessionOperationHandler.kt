@@ -1,6 +1,7 @@
 package com.swedbankpay.mobilesdk.paymentsession
 
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestUtil.getRequestDataIfAny
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTaskRel
@@ -18,7 +19,6 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.instrumentModeRequi
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toSemiColonSeparatedString
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
-import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayError
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaMethodService
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
@@ -568,19 +568,19 @@ internal object SessionOperationHandler {
 
     fun getOperationStepForFailPaymentAttempt(
         paymentOutputModel: PaymentOutputModel,
-        error: GooglePayError?
+        failPaymentAttempt: FailPaymentAttempt
     ): OperationStep? {
-        val failPaymentAttempt =
+        val failPaymentAttemptOperation =
             paymentOutputModel.paymentSession.allMethodOperations.firstOrNull {
                 it.rel == OperationRel.FAIL_PAYMENT_ATTEMPT
             }
 
-        return if (failPaymentAttempt != null) {
+        return if (failPaymentAttemptOperation != null) {
             OperationStep(
-                requestMethod = failPaymentAttempt.method,
-                url = URL(failPaymentAttempt.href),
-                operationRel = failPaymentAttempt.rel,
-                data = failPaymentAttempt.rel?.getRequestDataIfAny(googlePayError = error)
+                requestMethod = failPaymentAttemptOperation.method,
+                url = URL(failPaymentAttemptOperation.href),
+                operationRel = failPaymentAttemptOperation.rel,
+                data = failPaymentAttemptOperation.rel?.getRequestDataIfAny(failPaymentAttempt = failPaymentAttempt)
             )
         } else {
             null

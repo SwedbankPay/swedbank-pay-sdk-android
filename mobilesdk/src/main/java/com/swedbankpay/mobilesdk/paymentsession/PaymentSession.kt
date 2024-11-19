@@ -17,6 +17,8 @@ import com.swedbankpay.mobilesdk.logging.model.ExtensionsModel
 import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIClient
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttemptProblemType
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.TimeOutUtil
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
@@ -641,7 +643,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 )
             )
         } catch (e: Exception) {
-            onSdkProblemOccurred(PaymentSessionProblem.ClientAppLaunchFailed)
             BeaconService.logEvent(
                 eventAction = EventAction.LaunchClientApp(
                     extensions = launchClientAppExtensionsModel(
@@ -651,6 +652,20 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     )
                 )
             )
+
+            currentPaymentOutputModel?.let { paymentOutputModel ->
+                val failPaymentAttemptOperation =
+                    SessionOperationHandler.getOperationStepForFailPaymentAttempt(
+                        paymentOutputModel,
+                        FailPaymentAttempt(
+                            problemType = FailPaymentAttemptProblemType.CLIENT_APP_LAUNCH_FAILED.identifier,
+                        )
+                    )
+                failPaymentAttemptOperation?.let {
+                    executeNextStepUntilFurtherInstructions(it)
+                } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+
+            } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
     }
 
@@ -673,7 +688,14 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         else -> {
                             SessionOperationHandler.getOperationStepForFailPaymentAttempt(
                                 paymentOutputModel,
-                                error
+                                FailPaymentAttempt(
+                                    problemType = if (error?.userCancelled == true) {
+                                        FailPaymentAttemptProblemType.USER_CANCELLED.identifier
+                                    } else {
+                                        FailPaymentAttemptProblemType.TECHNICAL_ERROR.identifier
+                                    },
+                                    errorCode = error?.message
+                                )
                             )
                         }
                     }

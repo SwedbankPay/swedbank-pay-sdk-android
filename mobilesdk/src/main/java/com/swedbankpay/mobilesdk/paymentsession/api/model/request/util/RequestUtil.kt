@@ -25,7 +25,6 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel.START_PAYMENT_ATTEMPT
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
-import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayError
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 
 /**
@@ -45,7 +44,7 @@ internal object RequestUtil {
         notificationUrl: String = "",
         cRes: String = "",
         googlePayResult: GooglePayResult? = null,
-        googlePayError: GooglePayError? = null
+        failPaymentAttempt: FailPaymentAttempt? = null
     ) =
         when (this) {
             PREPARE_PAYMENT -> getIntegrationRequestData()
@@ -65,7 +64,12 @@ internal object RequestUtil {
             )
 
             ATTEMPT_PAYLOAD -> getAttemptPayloadData(googlePayResult)
-            FAIL_PAYMENT_ATTEMPT -> getFailPaymentAttemptData(googlePayError)
+            FAIL_PAYMENT_ATTEMPT -> getFailPaymentAttemptData(
+                problemType = failPaymentAttempt?.problemType
+                    ?: FailPaymentAttemptProblemType.TECHNICAL_ERROR.identifier,
+                errorCode = failPaymentAttempt?.errorCode
+            )
+
             else -> null
         }
 
@@ -167,15 +171,10 @@ internal object RequestUtil {
         ).toJsonString()
     }
 
-    private fun getFailPaymentAttemptData(googlePayError: GooglePayError?): String {
+    private fun getFailPaymentAttemptData(problemType: String, errorCode: String?): String {
         return FailPaymentAttempt(
-            problemType = if (googlePayError?.userCancelled == true) {
-                FailPaymentAttemptProblemType.USER_CANCELLED.identifier
-            } else {
-                FailPaymentAttemptProblemType.TECHNICAL_ERROR.identifier
-            },
-            errorCode = googlePayError?.message
-
+            problemType = problemType,
+            errorCode = errorCode
         ).toJsonString()
     }
 
