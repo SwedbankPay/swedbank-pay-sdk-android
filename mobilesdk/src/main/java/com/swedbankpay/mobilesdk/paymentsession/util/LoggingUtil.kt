@@ -156,7 +156,6 @@ internal fun scaRedirectResultExtensionModel(
 @Keep
 internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
     val values: MutableMap<String, String?> = when (this) {
-        PaymentSessionProblem.ClientAppLaunchFailed -> mutableMapOf("problem" to "clientAppLaunchFailed")
         is PaymentSessionProblem.PaymentSessionAPIRequestFailed -> {
             val requestFailedValues: MutableMap<String, String?> = when (error) {
                 is SwedbankPayAPIError.Error -> mutableMapOf(

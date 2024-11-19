@@ -17,8 +17,6 @@ sealed class PaymentSessionProblem {
         val retry: () -> Unit
     ) : PaymentSessionProblem()
 
-    object ClientAppLaunchFailed : PaymentSessionProblem()
-
     object InternalInconsistencyError : PaymentSessionProblem()
 
     object AutomaticConfigurationFailed : PaymentSessionProblem()
