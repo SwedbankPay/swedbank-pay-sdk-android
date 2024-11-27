@@ -24,6 +24,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("proguard-rules.pro")
         buildConfigField("String", "SDK_VERSION", "\"$version\"")
+
+        unitTestVariants.configureEach {
+            mergedFlavor.manifestPlaceholders["swedbankPaymentUrlScheme"] = ""
+        }
     }
 
     testOptions {
