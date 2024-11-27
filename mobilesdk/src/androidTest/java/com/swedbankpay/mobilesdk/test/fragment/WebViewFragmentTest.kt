@@ -1,17 +1,27 @@
 package com.swedbankpay.mobilesdk.test.fragment
 
 import android.content.res.Configuration
+import android.view.View
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.testing.FragmentScenario
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.lifecycle.Lifecycle
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.*
+import androidx.test.espresso.UiController
+import androidx.test.espresso.ViewAction
+import androidx.test.espresso.action.ViewActions.pressBack
+import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.matcher.ViewMatchers.Visibility
+import androidx.test.espresso.matcher.ViewMatchers.isClickable
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isEnabled
+import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.espresso.web.assertion.WebViewAssertions
 import androidx.test.espresso.web.matcher.DomMatchers
 import androidx.test.espresso.web.model.SimpleAtom
@@ -21,7 +31,12 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
 import com.swedbankpay.mobilesdk.test.R
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.hamcrest.CoreMatchers.allOf
+import org.hamcrest.Matcher
 import org.hamcrest.Matchers
 import org.junit.After
 import org.junit.Assert
@@ -42,17 +57,20 @@ class WebViewFragmentTest {
      */
     @Before
     fun setup() {
-        scenario = launchFragmentInContainer(themeResId = R.style.Theme_AppCompat)
+        scenario =
+            launchFragmentInContainer(themeResId = androidx.appcompat.R.style.Theme_AppCompat)
 
         scenario.onWebViewFragment {
-            it.load("", """
+            it.load(
+                "", """
                 <html>
                 <head><title></title></head>
                 <body>
                 <p id="testResult"></p>
                 </body>
                 </html>
-            """.trimIndent())
+            """.trimIndent()
+            )
         }
     }
 
@@ -69,7 +87,7 @@ class WebViewFragmentTest {
     private fun removeDialogs() {
 
         //testDialog("alert('I whould go away now')")
-        
+
         val device = UiDevice.getInstance(getInstrumentation())
         var waitButton = device.findObject(UiSelector().textContains("wait"))
         if (waitButton.exists()) waitButton.click()
@@ -93,18 +111,22 @@ class WebViewFragmentTest {
             ""
         ) {
             sleep(1000)
-            
+
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(alertText)))
             onView(withId(android.R.id.button2))
-                .check(matches(Matchers.anyOf(
-                    withEffectiveVisibility(Visibility.INVISIBLE),
-                    withEffectiveVisibility(Visibility.GONE)
-                )))
+                .check(
+                    matches(
+                        Matchers.anyOf(
+                            withEffectiveVisibility(Visibility.INVISIBLE),
+                            withEffectiveVisibility(Visibility.GONE)
+                        )
+                    )
+                )
             onView(withId(android.R.id.button1))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(forceClick())
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
@@ -121,7 +143,7 @@ class WebViewFragmentTest {
             ""
         ) {
             sleep(1000)
-            
+
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(alertText)))
@@ -143,7 +165,7 @@ class WebViewFragmentTest {
             "true"
         ) {
             sleep(1000)
-            
+
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(confirmText)))
@@ -151,7 +173,7 @@ class WebViewFragmentTest {
                 .check(matches(isDisplayed()))
             onView(withId(android.R.id.button1))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(forceClick())
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
@@ -170,7 +192,7 @@ class WebViewFragmentTest {
             "false"
         ) {
             sleep(1000)
-            
+
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(confirmText)))
@@ -178,7 +200,7 @@ class WebViewFragmentTest {
                 .check(matches(isDisplayed()))
             onView(withId(android.R.id.button2))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(forceClick())
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
@@ -216,7 +238,7 @@ class WebViewFragmentTest {
             promptValue
         ) {
             sleep(1000)
-            
+
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .inRoot(isDialog())
                 .check(matches(isDisplayed()))
@@ -229,7 +251,7 @@ class WebViewFragmentTest {
                 .check(matches(isDisplayed()))
             onView(withId(android.R.id.button1))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(forceClick())
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
@@ -247,7 +269,7 @@ class WebViewFragmentTest {
             "null"
         ) {
             sleep(1000)
-            
+
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
@@ -258,7 +280,7 @@ class WebViewFragmentTest {
                 .check(matches(isDisplayed()))
             onView(withId(android.R.id.button2))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(forceClick())
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
@@ -276,7 +298,7 @@ class WebViewFragmentTest {
             "non-null"
         ) {
             sleep(1000)
-            
+
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
@@ -288,7 +310,7 @@ class WebViewFragmentTest {
                 .check(matches(isDisplayed()))
             onView(withId(android.R.id.button1))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(forceClick())
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
@@ -305,7 +327,7 @@ class WebViewFragmentTest {
             "null"
         ) {
             sleep(1000)
-            
+
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
@@ -327,7 +349,7 @@ class WebViewFragmentTest {
             ""
         ) {
             sleep(1000)
-            
+
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(alertText)))
@@ -342,7 +364,7 @@ class WebViewFragmentTest {
                 .check(matches(withText(alertText)))
             onView(withId(android.R.id.button1))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(forceClick())
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
@@ -360,14 +382,14 @@ class WebViewFragmentTest {
             "true"
         ) {
             sleep(1000)
-            
+
             onView(withId(android.R.id.message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(confirmText)))
-            
+
             scenario.apply {
                 recreate()
-                
+
                 runBlocking { waitForDialogFragment() }
             }
 
@@ -377,7 +399,7 @@ class WebViewFragmentTest {
                 .check(matches(withText(confirmText)))
             onView(withId(android.R.id.button1))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(forceClick())
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
@@ -395,7 +417,7 @@ class WebViewFragmentTest {
             promptValue
         ) {
             sleep(1000)
-            
+
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
@@ -403,6 +425,7 @@ class WebViewFragmentTest {
                 recreate()
                 runBlocking { waitForDialogFragment() }
             }
+            sleep(2000)
             onView(withId(com.swedbankpay.mobilesdk.R.id.swedbankpaysdk_prompt_message))
                 .check(matches(isDisplayed()))
                 .check(matches(withText(promptText)))
@@ -412,7 +435,7 @@ class WebViewFragmentTest {
                 .perform(replaceText(promptValue))
             onView(withId(android.R.id.button1))
                 .check(matches(isDisplayed()))
-                .perform(click())
+                .perform(forceClick())
         }
         onView(withId(android.R.id.message))
             .check(doesNotExist())
@@ -424,14 +447,56 @@ class WebViewFragmentTest {
     @Test
     fun itShouldLoadLocalizedStrings() {
 
-        Assert.assertTrue("SV localization missmatch", compareLocalizedExampleString(lang = "sv", translation = "Du är snart klar", resource = R.string.browserAlertTitle))
-        Assert.assertTrue("NO localization missmatch", compareLocalizedExampleString(lang = "nb", translation = "Du er nesten ferdig", resource = R.string.browserAlertTitle))
-        Assert.assertTrue("Localization missmatch", compareLocalizedExampleString(lang = "en", translation = "You're almost done", resource = R.string.browserAlertTitle))
+        Assert.assertTrue(
+            "SV localization missmatch",
+            compareLocalizedExampleString(
+                lang = "sv",
+                translation = "Du är snart klar",
+                resource = com.swedbankpay.mobilesdk.R.string.browserAlertTitle
+            )
+        )
+        Assert.assertTrue(
+            "NO localization missmatch",
+            compareLocalizedExampleString(
+                lang = "nb",
+                translation = "Du er nesten ferdig",
+                resource = com.swedbankpay.mobilesdk.R.string.browserAlertTitle
+            )
+        )
+        Assert.assertTrue(
+            "Localization missmatch",
+            compareLocalizedExampleString(
+                lang = "en",
+                translation = "You're almost done",
+                resource = com.swedbankpay.mobilesdk.R.string.browserAlertTitle
+            )
+        )
 
         //verifying that missing Norwegian translation defaults to English
-        Assert.assertTrue("SV localization missmatch", compareLocalizedExampleString(lang = "sv", translation = "Stäng", resource = R.string.swedbankpaysdk_dialog_close))
-        Assert.assertTrue("NO localization missmatch", compareLocalizedExampleString(lang = "nb", translation = "Close", resource = R.string.swedbankpaysdk_dialog_close))
-        Assert.assertTrue("Localization missmatch", compareLocalizedExampleString(lang = "en", translation = "Close", resource = R.string.swedbankpaysdk_dialog_close))
+        Assert.assertTrue(
+            "SV localization missmatch",
+            compareLocalizedExampleString(
+                lang = "sv",
+                translation = "Stäng",
+                resource = com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_dialog_close
+            )
+        )
+        Assert.assertTrue(
+            "NO localization missmatch",
+            compareLocalizedExampleString(
+                lang = "nb",
+                translation = "Close",
+                resource = com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_dialog_close
+            )
+        )
+        Assert.assertTrue(
+            "Localization missmatch",
+            compareLocalizedExampleString(
+                lang = "en",
+                translation = "Close",
+                resource = com.swedbankpay.mobilesdk.R.string.swedbankpaysdk_dialog_close
+            )
+        )
 
     }
 
@@ -439,8 +504,7 @@ class WebViewFragmentTest {
         lang: String,
         translation: String,
         resource: Int
-    ): Boolean
-    {
+    ): Boolean {
         val desiredLocale = Locale(lang)
         val context = getInstrumentation().context
         var conf: Configuration = context.resources.configuration
@@ -484,7 +548,8 @@ class WebViewFragmentTest {
         private const val promptValue = "value"
 
         private inline fun FragmentScenario<WebViewParentFragment>.onWebViewFragment(
-            crossinline f: (WebViewFragment) -> Unit) {
+            crossinline f: (WebViewFragment) -> Unit
+        ) {
             onFragment { f(it.webViewFragment) }
         }
 
@@ -513,4 +578,22 @@ class WebViewFragmentTest {
     class WebViewParentFragment : Fragment(R.layout.web_view_parent_fragment) {
         internal val webViewFragment get() = childFragmentManager.findFragmentById(R.id.web_view_fragment_container) as WebViewFragment
     }
+
+    private fun forceClick(): ViewAction {
+        return object : ViewAction {
+            override fun getDescription(): String {
+                return "Force click"
+            }
+
+            override fun getConstraints(): Matcher<View> {
+                return allOf(isClickable(), isEnabled(), isDisplayed())
+            }
+
+            override fun perform(uiController: UiController?, view: View?) {
+                view?.performClick()
+                uiController?.loopMainThreadUntilIdle()
+            }
+        }
+    }
+
 }

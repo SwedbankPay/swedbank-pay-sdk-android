@@ -28,6 +28,10 @@ android {
         unitTestVariants.configureEach {
             mergedFlavor.manifestPlaceholders["swedbankPaymentUrlScheme"] = ""
         }
+
+        testVariants.configureEach {
+            mergedFlavor.manifestPlaceholders["swedbankPaymentUrlScheme"] = ""
+        }
     }
 
     testOptions {
