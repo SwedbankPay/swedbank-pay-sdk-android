@@ -37,6 +37,8 @@ class Dependencies(map: Map<String, String>) {
     val `play-services-basement` by map
     val gson by map
 
+    val googlepay by map
+
     val junit by map
 
     val `joda-time` by map
@@ -46,6 +48,7 @@ class Dependencies(map: Map<String, String>) {
     val mockwebserver by map
 
     val robolectric by map
+
     //val `mockito-inline` by map
     val `mockito-kotlin` by map
     val `dexmaker-mockito-inline` by map

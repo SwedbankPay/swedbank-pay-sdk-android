@@ -2,7 +2,7 @@
 extra["kotlin_version"] = "1.8.10"
 
 extra["libs"] = mapOf(
-   "android-gradle-plugin" to "com.android.tools.build:gradle:7.4.2",   //7.1.3
+   "android-gradle-plugin" to "com.android.tools.build:gradle:8.5.0",
 
    "jgit" to "org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r",
 
@@ -35,10 +35,12 @@ extra["libs"] = mapOf(
    "play-services-basement" to "com.google.android.gms:play-services-basement:18.2.0",
    "gson" to "com.google.code.gson:gson:2.10.1",
 
+   "googlepay" to "com.google.android.gms:play-services-wallet:19.4.0",
+
    "junit" to "junit:junit:4.13.2",
 
    "joda-time" to "joda-time:joda-time:2.12.5",
-   "threetenbp" to "org.threeten:threetenbp:1.6.8",
+   "threetenbp" to "org.threeten:threetenbp:1.7.0",
 
    "okhttp" to "com.squareup.okhttp3:okhttp:4.10.0",
    "mockwebserver" to "com.squareup.okhttp3:mockwebserver:4.10.0",

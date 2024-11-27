@@ -24,6 +24,7 @@ import android.content.Context
  * is provided.
  */
 abstract class Configuration {
+
     /**
      * Called by [PaymentFragment] when it needs to show an error message
      * because an operation failed.

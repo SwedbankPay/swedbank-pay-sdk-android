@@ -8,7 +8,17 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.webkit.WebViewClient
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.map
+import androidx.lifecycle.switchMap
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 
 /**
@@ -42,6 +52,7 @@ class PaymentViewModel : AndroidViewModel {
             /** `false` */
             override val isFinal get() = false
         },
+
         /**
          * Payment is active and is waiting either for user interaction or backend response
          */
@@ -57,6 +68,7 @@ class PaymentViewModel : AndroidViewModel {
             /** `false` */
             override val isFinal get() = false
         },
+
         /**
          * Payment is complete. You should hide the [PaymentFragment].
          * This status does not signal anything of whether the payment was successful.
@@ -66,6 +78,7 @@ class PaymentViewModel : AndroidViewModel {
             /** `true` */
             override val isFinal get() = true
         },
+
         /**
          * Payment was canceled by the user. You should hide the [PaymentFragment].
          */
@@ -73,6 +86,7 @@ class PaymentViewModel : AndroidViewModel {
             /** `true` */
             override val isFinal get() = true
         },
+
         /**
          * Payment is active, but could not proceed.
          *
@@ -83,6 +97,7 @@ class PaymentViewModel : AndroidViewModel {
             /** `false` */
             override val isFinal get() = false
         },
+
         /**
          * Payment has failed. You should hide the [PaymentFragment] and show
          * a failure message.
@@ -229,6 +244,7 @@ class PaymentViewModel : AndroidViewModel {
     internal fun attachInternalViewModel(internalVm: InternalPaymentViewModel) {
         this.internalVm.value = internalVm
     }
+
     internal fun detachInternalViewModel(internalVm: InternalPaymentViewModel) {
         this.internalVm.apply {
             if (value == internalVm) {
@@ -254,7 +270,7 @@ class PaymentViewModel : AndroidViewModel {
      * this property will reflect that PaymentFragment from there on. To support multiple
      * PaymentFragments in an Activity, see [PaymentFragment.ArgumentsBuilder.viewModelProviderKey].
      *
-     * Due to the semantics of "Transformations" (now just "liveData.map {...}"), you should be 
+     * Due to the semantics of "Transformations" (now just "liveData.map {...}"), you should be
      * careful if accessing
      * this value using [LiveData.getValue] directly rather than by an [Observer].
      * Specifically, if nothing is observing this property (possibly indirectly, such as through
@@ -287,9 +303,11 @@ class PaymentViewModel : AndroidViewModel {
         }
 
         val failureReason = (it as? InternalPaymentViewModel.UIState.Failure)?.failureReason
-        val swedbankPayError = failureReason as? InternalPaymentViewModel.FailureReason.SwedbankPayError
+        val swedbankPayError =
+            failureReason as? InternalPaymentViewModel.FailureReason.SwedbankPayError
         val redirectError = failureReason as? InternalPaymentViewModel.FailureReason.RedirectError
-        val redirectHttpError = failureReason as? InternalPaymentViewModel.FailureReason.RedirectHttpError
+        val redirectHttpError =
+            failureReason as? InternalPaymentViewModel.FailureReason.RedirectHttpError
 
         val paymentOrderState = it as? InternalPaymentViewModel.UIState.ViewPaymentOrder
 

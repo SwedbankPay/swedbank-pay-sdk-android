@@ -1,6 +1,6 @@
 apply(from = "../dependencies/dependencies.gradle.kts")
 val kotlin_version: String by extra
- 
+
 plugins {
     id("com.android.library")
     kotlin("android")
@@ -13,13 +13,14 @@ apply {
     plugin("kotlin-android")
 }
 
-val javaVersion = JavaVersion.VERSION_11
+val javaVersion = JavaVersion.VERSION_17
 android {
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 33
+
+        namespace = "com.swedbankpay.mobilesdk.merchantbackend"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("proguard-rules.pro")

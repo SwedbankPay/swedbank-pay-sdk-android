@@ -14,7 +14,6 @@ fun Project.publishToMaven(description: String) {
 private fun Project.createReleasePublication(description: String): MavenPublication {
     return the<PublishingExtension>().publications.create<MavenPublication>("release") {
         from(components["release"])
-        artifact(sourcesJar())
         artifact(javadocJar())
 
         pom {
@@ -35,12 +34,6 @@ private fun Project.createReleasePublication(description: String): MavenPublicat
                     email.set("opensource@swedbankpay.com")
                     organization.set("Swedbank Pay")
                     organizationUrl.set("https://www.swedbankpay.com/")
-                }
-                developer {
-                    name.set("Pertti Kröger")
-                    email.set("pertti@qvik.fi")
-                    organization.set("Qvik")
-                    organizationUrl.set("https://qvik.com/")
                 }
             }
 
