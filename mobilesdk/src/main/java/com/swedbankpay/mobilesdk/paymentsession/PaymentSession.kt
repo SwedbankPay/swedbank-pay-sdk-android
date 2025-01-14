@@ -92,7 +92,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
     }
 
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val mainScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val idleScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var currentPaymentOutputModel: PaymentOutputModel? = null
 
@@ -180,8 +181,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     ) {
         startRequestTimestamp = System.currentTimeMillis()
         // So we don't launch multiple jobs when calling this method again
-        scope.coroutineContext.cancelChildren()
-        scope.launch {
+        mainScope.coroutineContext.cancelChildren()
+        mainScope.launch {
             var stepToExecute = operationStep
 
             while (stepToExecute.instructions.firstOrNull { it.waitForAction } == null) {
@@ -803,9 +804,16 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         )
     }
 
-
+    /**
+     * Will set state to idle.
+     * The delay is so observeAsState will get all values sent
+     */
     private fun setStateToIdle() {
-        _paymentSessionState.setValue(PaymentSessionState.Idle)
+        idleScope.coroutineContext.cancelChildren()
+        idleScope.launch {
+            delay(100)
+            _paymentSessionState.setValue(PaymentSessionState.Idle)
+        }
     }
 
     /**
