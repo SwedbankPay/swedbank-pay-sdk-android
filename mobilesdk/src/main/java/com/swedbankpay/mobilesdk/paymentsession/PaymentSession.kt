@@ -806,7 +806,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     /**
      * Will set state to idle.
-     * The delay is so observeAsState will get all values sent
+     * The delay is so observeAsState will get all values sent before setting state to idle
      */
     private fun setStateToIdle() {
         idleScope.coroutineContext.cancelChildren()
