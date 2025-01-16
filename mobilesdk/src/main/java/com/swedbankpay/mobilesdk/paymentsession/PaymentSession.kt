@@ -77,7 +77,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     /**
      * Observing payment fragment state
      */
-    private val paymentFragmentObserver = Observer<PaymentViewModel.State> {
+    private val paymentFragmentObserver = Observer<PaymentViewModel.State?> {
         when (it) {
             PaymentViewModel.State.COMPLETE -> {
                 onPaymentSessionComplete()

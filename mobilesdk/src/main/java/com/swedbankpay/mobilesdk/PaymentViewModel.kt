@@ -253,6 +253,14 @@ class PaymentViewModel : AndroidViewModel {
         }
     }
 
+    internal fun attachStateObserver(internalVm: InternalPaymentViewModel) {
+        state.observeForever(internalVm.stateBridgeObserver)
+    }
+
+    internal fun detachStateObserver(internalVm: InternalPaymentViewModel) {
+        state.removeObserver(internalVm.stateBridgeObserver)
+    }
+
     override fun onCleared() {
         super.onCleared()
         internalVm.value = null
