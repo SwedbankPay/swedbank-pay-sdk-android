@@ -115,108 +115,100 @@ internal object SessionOperationHandler {
             paymentOutputModel.operations.filterNotNull()
                 .firstOrNull { it.rel == OperationRel.CUSTOMIZE_PAYMENT }
 
-        if (customizePayment != null) {
-            paymentAttemptInstrument?.let { attemptInstrument ->
-                if ((paymentOutputModel.paymentSession.instrumentModePaymentMethod != null
-                            && paymentOutputModel.paymentSession.instrumentModePaymentMethod != paymentAttemptInstrument.paymentMethod) || !paymentOutputModel.paymentSession.allPaymentMethods.contains(
-                        attemptInstrument.paymentMethod
-                    )
-                ) {
-                    // Resetting Instrument Mode session to Menu Mode (instrumentModePaymentMethod set to null),
-                    // if new payment attempt is made with an instrument other than the current
-                    // Instrument Mode instrument or with an instrument not in the list of methods (restricted menu)
-
-                    return OperationStep(
-                        requestMethod = customizePayment.method,
-                        url = URL(customizePayment.href),
-                        operationRel = customizePayment.rel,
-                        data = customizePayment.rel?.getRequestDataIfAny(),
-                        instructions = instructions
-                    )
-                }
-
-                if (attemptInstrument.instrumentModeRequired() && (paymentOutputModel.paymentSession.instrumentModePaymentMethod == null || paymentOutputModel.paymentSession.instrumentModePaymentMethod != attemptInstrument.paymentMethod)
-                ) {
-                    // Switching to Instrument Mode from Menu Mode session (instrumentModePaymentMethod set to null) or from Instrument Mode with other instrument, if new payment attempt is made with an Instrument Mode required instrument (newCreditCard)
-                    return OperationStep(
-                        requestMethod = customizePayment.method,
-                        url = URL(customizePayment.href),
-                        operationRel = customizePayment.rel,
-                        data = customizePayment.rel?.getRequestDataIfAny(
-                            paymentAttemptInstrument = attemptInstrument
-                        ),
-                        instructions = instructions
-                    )
-                }
-
-                if (paymentAttemptInstrument.instrumentModeRequired() && paymentOutputModel.paymentSession.instrumentModePaymentMethod == paymentAttemptInstrument.paymentMethod
-                ) {
-                    // Session is in Instrument Mode, and the set instrument is matching payment attempt, time to create a web based view and send to the merchant app
-                    instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
-                    return OperationStep(
-                        instructions = instructions
-                    )
-                }
+        paymentAttemptInstrument?.let { attemptInstrument ->
+            if (customizePayment != null && ((paymentOutputModel.paymentSession.instrumentModePaymentMethod != null
+                        && paymentOutputModel.paymentSession.instrumentModePaymentMethod != paymentAttemptInstrument.paymentMethod) || !paymentOutputModel.paymentSession.allPaymentMethods.contains(
+                    attemptInstrument.paymentMethod
+                ))
+            ) {
+                // Resetting Instrument Mode session to Menu Mode (instrumentModePaymentMethod set to null),
+                // if new payment attempt is made with an instrument other than the current
+                // Instrument Mode instrument or with an instrument not in the list of methods (restricted menu)
+                return OperationStep(
+                    requestMethod = customizePayment.method,
+                    url = URL(customizePayment.href),
+                    operationRel = customizePayment.rel,
+                    data = customizePayment.rel?.getRequestDataIfAny(),
+                    instructions = instructions
+                )
             }
 
-
-            sdkControllerMode?.let { mode ->
-                if (mode is SwedbankPayPaymentSessionSDKControllerMode.InstrumentMode && (paymentOutputModel.paymentSession.instrumentModePaymentMethod == null
-                            || paymentOutputModel.paymentSession.instrumentModePaymentMethod != mode.instrument.paymentMethod)
-                ) {
-                    // Switching to Instrument Mode from Menu Mode session (instrumentModePaymentMethod set to nul) or from Instrument Mode with other instrument, if a SDK view controller is requested in instrument mode
-                    return OperationStep(
-                        requestMethod = customizePayment.method,
-                        url = URL(customizePayment.href),
-                        operationRel = customizePayment.rel,
-                        data = customizePayment.rel?.getRequestDataIfAny(
-                            availableInstrument = mode.instrument
-                        ),
-                        instructions = instructions
-                    )
-                }
-
-                if (mode is SwedbankPayPaymentSessionSDKControllerMode.InstrumentMode && paymentOutputModel.paymentSession.instrumentModePaymentMethod == mode.instrument.paymentMethod
-                ) {
-                    // Session is in Instrument Mode, and the set SDK view controller mode is matching the instrument, time to create a web based view and send to the merchant app
-
-                    instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
-                    return OperationStep(
-                        instructions = instructions
-                    )
-                }
-
-                if (mode is SwedbankPayPaymentSessionSDKControllerMode.Menu && (paymentOutputModel.paymentSession.instrumentModePaymentMethod != null
-                            || paymentOutputModel.paymentSession.restrictedToInstruments?.sorted()
-                            != mode.restrictedToInstruments?.map { it.paymentMethod }
-                        ?.sorted())
-                ) {
-                    // Switching to Menu Mode with potential list of restricted instruments from Instrument Mode or when  list of restricted instruments doesn't match (different list of instruments)
-
-                    return OperationStep(
-                        requestMethod = customizePayment.method,
-                        url = URL(customizePayment.href),
-                        operationRel = customizePayment.rel,
-                        data = customizePayment.rel?.getRequestDataIfAny(
-                            restrictToPaymentMethods = mode.restrictedToInstruments?.map { it.paymentMethod }
-                        ),
-                        instructions = instructions
-                    )
-                }
-
-                if (mode is SwedbankPayPaymentSessionSDKControllerMode.Menu && paymentOutputModel.paymentSession.instrumentModePaymentMethod == null && paymentOutputModel.paymentSession.restrictedToInstruments?.sorted() == mode.restrictedToInstruments?.map { it.paymentMethod }
-                        ?.sorted()
-                ) {
-                    // Session is in Menu Mode, and the list of restricted instruments match the set SDK view controller mode, time to create a web based view and send to the merchant app
-
-                    instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
-                    return OperationStep(
-                        instructions = instructions
-                    )
-                }
+            if (customizePayment != null && attemptInstrument.instrumentModeRequired() && (paymentOutputModel.paymentSession.instrumentModePaymentMethod == null || paymentOutputModel.paymentSession.instrumentModePaymentMethod != attemptInstrument.paymentMethod)
+            ) {
+                // Switching to Instrument Mode from Menu Mode session (instrumentModePaymentMethod set to null) or from Instrument Mode with other instrument, if new payment attempt is made with an Instrument Mode required instrument (newCreditCard)
+                return OperationStep(
+                    requestMethod = customizePayment.method,
+                    url = URL(customizePayment.href),
+                    operationRel = customizePayment.rel,
+                    data = customizePayment.rel?.getRequestDataIfAny(
+                        paymentAttemptInstrument = attemptInstrument
+                    ),
+                    instructions = instructions
+                )
             }
 
+            if (paymentAttemptInstrument.instrumentModeRequired() && paymentOutputModel.paymentSession.instrumentModePaymentMethod == paymentAttemptInstrument.paymentMethod
+            ) {
+                // Session is in Instrument Mode, and the set instrument is matching payment attempt, time to create a web based view and send to the merchant app
+                instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
+                return OperationStep(
+                    instructions = instructions
+                )
+            }
+        }
 
+
+        sdkControllerMode?.let { mode ->
+            if (customizePayment != null && mode is SwedbankPayPaymentSessionSDKControllerMode.InstrumentMode && (paymentOutputModel.paymentSession.instrumentModePaymentMethod == null
+                        || paymentOutputModel.paymentSession.instrumentModePaymentMethod != mode.instrument.paymentMethod)
+            ) {
+                // Switching to Instrument Mode from Menu Mode session (instrumentModePaymentMethod set to nul) or from Instrument Mode with other instrument, if a SDK view controller is requested in instrument mode
+                return OperationStep(
+                    requestMethod = customizePayment.method,
+                    url = URL(customizePayment.href),
+                    operationRel = customizePayment.rel,
+                    data = customizePayment.rel?.getRequestDataIfAny(
+                        availableInstrument = mode.instrument
+                    ),
+                    instructions = instructions
+                )
+            }
+
+            if (mode is SwedbankPayPaymentSessionSDKControllerMode.InstrumentMode && paymentOutputModel.paymentSession.instrumentModePaymentMethod == mode.instrument.paymentMethod
+            ) {
+                // Session is in Instrument Mode, and the set SDK view controller mode is matching the instrument, time to create a web based view and send to the merchant app
+                instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
+                return OperationStep(
+                    instructions = instructions
+                )
+            }
+
+            if (customizePayment != null && mode is SwedbankPayPaymentSessionSDKControllerMode.Menu && (paymentOutputModel.paymentSession.instrumentModePaymentMethod != null
+                        || paymentOutputModel.paymentSession.restrictedToInstruments?.sorted()
+                        != mode.restrictedToInstruments?.map { it.paymentMethod }
+                    ?.sorted())
+            ) {
+                // Switching to Menu Mode with potential list of restricted instruments from Instrument Mode or when  list of restricted instruments doesn't match (different list of instruments)
+                return OperationStep(
+                    requestMethod = customizePayment.method,
+                    url = URL(customizePayment.href),
+                    operationRel = customizePayment.rel,
+                    data = customizePayment.rel?.getRequestDataIfAny(
+                        restrictToPaymentMethods = mode.restrictedToInstruments?.map { it.paymentMethod }
+                    ),
+                    instructions = instructions
+                )
+            }
+
+            if (mode is SwedbankPayPaymentSessionSDKControllerMode.Menu && paymentOutputModel.paymentSession.instrumentModePaymentMethod == null && paymentOutputModel.paymentSession.restrictedToInstruments?.sorted() == mode.restrictedToInstruments?.map { it.paymentMethod }
+                    ?.sorted()
+            ) {
+                // Session is in Menu Mode, and the list of restricted instruments match the set SDK view controller mode, time to create a web based view and send to the merchant app
+                instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
+                return OperationStep(
+                    instructions = instructions
+                )
+            }
         }
 
         // Search for OperationRel.START_PAYMENT_ATTEMPT
