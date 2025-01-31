@@ -9,5 +9,5 @@ internal data class GooglePayAttempt(
     @SerializedName("culture")
     val culture: String? = null,
     @SerializedName("client")
-    val client: Client
+    val client: ClientWithType
 )
