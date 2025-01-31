@@ -8,5 +8,5 @@ internal data class CompleteAuthentication(
     @SerializedName("cRes")
     val cRes: String,
     @SerializedName("client")
-    val client: Client?,
+    val client: ClientMinimum?,
 )
