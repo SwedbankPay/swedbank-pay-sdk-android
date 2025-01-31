@@ -177,7 +177,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      * merchant app to take some kind of action
      */
     private fun executeNextStepUntilFurtherInstructions(
-        operationStep: OperationStep
+        operationStep: OperationStep,
+        context: Context? = null
     ) {
         startRequestTimestamp = System.currentTimeMillis()
         // So we don't launch multiple jobs when calling this method again
@@ -259,7 +260,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         SessionOperationHandler.getNextStep(
                             paymentOutputModel = currentPaymentOutputModel,
                             paymentAttemptInstrument = paymentAttemptInstrument,
-                            sdkControllerMode = sdkControllerMode
+                            sdkControllerMode = sdkControllerMode,
+                            context = context
                         ).let { step ->
 
                             if (operationStep.operationRel == OperationRel.REDIRECT_PAYER) {
@@ -412,10 +414,12 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      * Fetches a new payment session
      *
      * @param sessionURL URL needed to fetch the payment session
+     * @param context This is needed to determine if the user can pay with Google Pay.
      *
      */
     fun fetchPaymentSession(
         sessionURL: String,
+        context: Context? = null
     ) {
         clearState(true)
 
@@ -431,8 +435,9 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         executeNextStepUntilFurtherInstructions(
             operationStep = OperationStep(
                 requestMethod = RequestMethod.GET,
-                url = URL(sessionURL)
-            )
+                url = URL(sessionURL),
+            ),
+            context = context
         )
     }
 

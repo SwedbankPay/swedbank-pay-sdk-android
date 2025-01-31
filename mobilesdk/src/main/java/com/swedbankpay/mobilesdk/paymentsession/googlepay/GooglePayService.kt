@@ -1,9 +1,11 @@
 package com.swedbankpay.mobilesdk.paymentsession.googlepay
 
 import android.app.Activity
+import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.gms.wallet.IsReadyToPayRequest
 import com.google.android.gms.wallet.PaymentDataRequest
 import com.google.android.gms.wallet.Wallet
 import com.google.android.gms.wallet.WalletConstants
@@ -15,7 +17,9 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringArra
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValueFor
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayConstants
+import kotlinx.coroutines.tasks.await
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 
 internal data class GooglePayError(
@@ -173,5 +177,78 @@ internal object GooglePayService {
 
         googlePayTask.addOnCompleteListener(googlePayLauncher::launch)
     }
+
+
+    // Google pay readiness section
+    private val isReadyToPayBaseRequest = JSONObject()
+        .put("apiVersion", 2)
+        .put("apiVersionMinor", 0)
+
+    private fun isReadyToPayRequest(cardPaymentMethod: JSONObject): JSONObject? =
+        try {
+            isReadyToPayBaseRequest
+                .put(
+                    "allowedPaymentMethods", JSONArray(
+                        listOf(
+                            cardPaymentMethod
+                        )
+                    )
+                )
+        } catch (e: JSONException) {
+            null
+        }
+
+    suspend fun fetchCanUseGooglePay(
+        context: Context,
+        existingPaymentMethodRequired: Boolean,
+        allowedCardAuthMethods: List<String>,
+        allowedCardNetworks: List<String>
+    ): Boolean {
+        val walletOptions = Wallet.WalletOptions.Builder()
+            .setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION)
+            .build()
+
+        val paymentsClient = Wallet.getPaymentsClient(context, walletOptions)
+
+        val cardPaymentMethod = getCardPaymentMethod(
+            existingPaymentMethodRequired,
+            allowedCardAuthMethods,
+            allowedCardNetworks
+        )
+
+        val request =
+            IsReadyToPayRequest.fromJson(isReadyToPayRequest(cardPaymentMethod).toString())
+
+        return paymentsClient.isReadyToPay(request).await()
+    }
+
+    private fun getCardPaymentMethod(
+        existingPaymentMethodRequired: Boolean,
+        allowedCardAuthMethods: List<String>,
+        allowedCardNetworks: List<String>
+    ): JSONObject {
+        val jsonAuthMethods = JSONArray(allowedCardAuthMethods)
+        val jsonCardNetworks = JSONArray(allowedCardNetworks)
+
+        return if (existingPaymentMethodRequired) {
+            JSONObject()
+                .put("type", "CARD")
+                .put(
+                    "parameters", JSONObject()
+                        .put("allowedAuthMethods", jsonAuthMethods)
+                        .put("allowedCardNetworks", jsonCardNetworks)
+                        .put("existingPaymentMethodRequired", true)
+                )
+        } else {
+            JSONObject()
+                .put("type", "CARD")
+                .put(
+                    "parameters", JSONObject()
+                        .put("allowedAuthMethods", jsonAuthMethods)
+                        .put("allowedCardNetworks", jsonCardNetworks)
+                )
+        }
+    }
+
 
 }
