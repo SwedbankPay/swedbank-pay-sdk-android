@@ -41,6 +41,8 @@ class Dependencies(map: Map<String, String>) {
 
     val junit by map
 
+    val coroutineplayservices by map
+
     val `joda-time` by map
     val threetenbp by map
 
