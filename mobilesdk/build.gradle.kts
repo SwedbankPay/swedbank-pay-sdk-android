@@ -85,6 +85,8 @@ dependencies {
     compileOnly(libs.`joda-time`)
     compileOnly(libs.threetenbp)
 
+    implementation(libs.coroutineplayservices)
+
     testImplementation(libs.`androidx-test-core`)
     testImplementation(libs.`espresso-core`)
     testImplementation(libs.`espresso-intents`)

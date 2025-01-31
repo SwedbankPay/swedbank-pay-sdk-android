@@ -37,6 +37,8 @@ extra["libs"] = mapOf(
 
    "googlepay" to "com.google.android.gms:play-services-wallet:19.4.0",
 
+   "coroutineplayservices" to "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0",
+
    "junit" to "junit:junit:4.13.2",
 
    "joda-time" to "joda-time:joda-time:2.12.5",
