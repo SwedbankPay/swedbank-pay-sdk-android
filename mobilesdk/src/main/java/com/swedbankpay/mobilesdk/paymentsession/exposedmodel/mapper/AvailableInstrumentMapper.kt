@@ -19,7 +19,10 @@ fun List<MethodBaseModel>.toSemiColonSeparatedString() = this.joinToString(separ
     it.paymentMethod?.name ?: "Unknown"
 }
 
-fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument = when (this) {
+fun MethodBaseModel.toAvailableInstrument(
+    isReadyToPayWithGooglePay: Boolean,
+    isReadyToPayWithExistingPaymentMethodWithGooglePay: Boolean
+): AvailableInstrument = when (this) {
     is SwishMethodModel -> AvailableInstrument.Swish(
         paymentMethod = this.paymentMethod?.name ?: "Swish",
         prefills = this.prefills.map { model ->
@@ -47,7 +50,9 @@ fun MethodBaseModel.toAvailableInstrument(): AvailableInstrument = when (this) {
     )
 
     is GooglePayMethodModel -> AvailableInstrument.GooglePay(
-        paymentMethod = this.paymentMethod?.name ?: "GooglePay"
+        paymentMethod = this.paymentMethod?.name ?: "GooglePay",
+        isReadyToPay = isReadyToPayWithGooglePay,
+        isReadyToPayWithExistingPaymentMethod = isReadyToPayWithExistingPaymentMethodWithGooglePay
     )
 
     else -> AvailableInstrument.WebBased(paymentMethod = this.paymentMethod?.name ?: "WebBased")
