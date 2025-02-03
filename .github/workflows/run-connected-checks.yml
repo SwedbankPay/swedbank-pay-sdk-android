@@ -5,13 +5,13 @@ on: push
 jobs:
   connected_check:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         api-level: [28] #wait with this until tests are more stable 33
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: set up JDK
         uses: actions/setup-java@v3
         with:
@@ -37,7 +37,7 @@ jobs:
           
       - name: Upload Failing Test Report Log
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: appData
           path: app/  # path to where all logs and screenshots are
