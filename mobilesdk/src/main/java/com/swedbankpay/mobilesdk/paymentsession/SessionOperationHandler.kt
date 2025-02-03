@@ -1,10 +1,8 @@
 package com.swedbankpay.mobilesdk.paymentsession
 
-import android.content.Context
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestUtil.getRequestDataIfAny
-import com.swedbankpay.mobilesdk.paymentsession.api.model.response.GooglePayMethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTaskRel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.MethodBaseModel
@@ -21,7 +19,6 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.instrumentModeRequi
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toAvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.mapper.toSemiColonSeparatedString
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
-import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayService
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaMethodService
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
@@ -45,8 +42,7 @@ internal object SessionOperationHandler {
     suspend fun getNextStep(
         paymentOutputModel: PaymentOutputModel?,
         paymentAttemptInstrument: PaymentAttemptInstrument? = null,
-        sdkControllerMode: SwedbankPayPaymentSessionSDKControllerMode? = null,
-        context: Context? = null
+        sdkControllerMode: SwedbankPayPaymentSessionSDKControllerMode? = null
     ): OperationStep {
         if (paymentOutputModel == null) {
             return OperationStep(
@@ -479,35 +475,8 @@ internal object SessionOperationHandler {
                     }
                 }
 
-                // Get google pay readiness
-                val googlePay =
-                    availableMethods.firstOrNull { it is GooglePayMethodModel } as GooglePayMethodModel?
-                var isReadyToPayWithGooglePay = false
-                var isReadyToPayWithExistingPaymentMethodWithGooglePay = false
-
-                if (googlePay != null && context != null) {
-                    isReadyToPayWithGooglePay = GooglePayService.fetchCanUseGooglePay(
-                        context = context,
-                        existingPaymentMethodRequired = false,
-                        allowedCardAuthMethods = googlePay.allowedCardAuthMethods,
-                        allowedCardNetworks = googlePay.cardBrands
-                    )
-                    isReadyToPayWithExistingPaymentMethodWithGooglePay =
-                        GooglePayService.fetchCanUseGooglePay(
-                            context = context,
-                            existingPaymentMethodRequired = true,
-                            allowedCardAuthMethods = googlePay.allowedCardAuthMethods,
-                            allowedCardNetworks = googlePay.cardBrands
-                        )
-                }
-
                 val availableInstruments: MutableList<AvailableInstrument> =
-                    availableMethods.map {
-                        it.toAvailableInstrument(
-                            isReadyToPayWithGooglePay,
-                            isReadyToPayWithExistingPaymentMethodWithGooglePay
-                        )
-                    }.toMutableList()
+                    availableMethods.map { it.toAvailableInstrument() }.toMutableList()
 
                 if (availableInstruments.any { it is AvailableInstrument.CreditCard }) {
                     availableInstruments.add(AvailableInstrument.NewCreditCard("NewCreditCard"))

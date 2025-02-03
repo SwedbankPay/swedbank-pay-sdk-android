@@ -152,6 +152,17 @@ internal fun scaRedirectResultExtensionModel(
     }
 )
 
+@Keep
+internal fun googlePayPaymentReadinessExtensionModel(
+    isReadyToPay: Boolean,
+    isReadyToPayWithExistingPaymentMethod: Boolean
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "isReadyToPay" to isReadyToPay.toString(),
+        "isReadyToPayWithExistingPaymentMethod" to isReadyToPayWithExistingPaymentMethod.toString()
+    )
+)
+
 
 @Keep
 internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
