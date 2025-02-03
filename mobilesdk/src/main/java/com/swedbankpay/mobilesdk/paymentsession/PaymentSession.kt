@@ -20,6 +20,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttemptProblemType
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.TimeOutUtil
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.GooglePayMethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutputModel
@@ -37,6 +38,7 @@ import com.swedbankpay.mobilesdk.paymentsession.util.UriCallbackUtil.addCallback
 import com.swedbankpay.mobilesdk.paymentsession.util.clientAppCallbackExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.configuration.AutomaticConfiguration
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
+import com.swedbankpay.mobilesdk.paymentsession.util.googlePayPaymentReadinessExtensionModel
 import com.swedbankpay.mobilesdk.paymentsession.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.livedata.QueuedMutableLiveData
 import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionModel
@@ -177,8 +179,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      * merchant app to take some kind of action
      */
     private fun executeNextStepUntilFurtherInstructions(
-        operationStep: OperationStep,
-        context: Context? = null
+        operationStep: OperationStep
     ) {
         startRequestTimestamp = System.currentTimeMillis()
         // So we don't launch multiple jobs when calling this method again
@@ -260,8 +261,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         SessionOperationHandler.getNextStep(
                             paymentOutputModel = currentPaymentOutputModel,
                             paymentAttemptInstrument = paymentAttemptInstrument,
-                            sdkControllerMode = sdkControllerMode,
-                            context = context
+                            sdkControllerMode = sdkControllerMode
                         ).let { step ->
 
                             if (operationStep.operationRel == OperationRel.REDIRECT_PAYER) {
@@ -414,12 +414,10 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      * Fetches a new payment session
      *
      * @param sessionURL URL needed to fetch the payment session
-     * @param context This is needed to determine if the user can pay with Google Pay.
      *
      */
     fun fetchPaymentSession(
-        sessionURL: String,
-        context: Context? = null
+        sessionURL: String
     ) {
         clearState(true)
 
@@ -435,10 +433,54 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         executeNextStepUntilFurtherInstructions(
             operationStep = OperationStep(
                 requestMethod = RequestMethod.GET,
-                url = URL(sessionURL),
-            ),
-            context = context
+                url = URL(sessionURL)
+            )
         )
+    }
+
+    /**
+     * Fetches users ability to pay with google pay
+     *
+     * There needs to be an active payment session including Google Pay before this can be use
+     *
+     * @param context Context is needed to determine users ability to pay with google pay
+     */
+    fun fetchGooglePayPaymentReadiness(context: Context) {
+        currentPaymentOutputModel?.let { paymentOutputModel ->
+            val googlePayMethodModel = paymentOutputModel.paymentSession.methods
+                ?.firstOrNull { it is GooglePayMethodModel } as GooglePayMethodModel?
+
+            googlePayMethodModel?.let { googlePay ->
+                GooglePayService.fetchCanUseGooglePay(
+                    context,
+                    googlePay.allowedCardAuthMethods,
+                    googlePay.cardBrands
+                ) { isReadyToPay, isReadyToPayWithExistingPaymentMethod ->
+                    BeaconService.logEvent(
+                        eventAction = EventAction.SDKMethodInvoked(
+                            method = MethodModel(
+                                name = "fetchGooglePayPaymentReadiness",
+                                succeeded = true
+                            ),
+                            extensions = googlePayPaymentReadinessExtensionModel(
+                                isReadyToPay,
+                                isReadyToPayWithExistingPaymentMethod
+                            )
+                        )
+                    )
+                    _paymentSessionState.setValue(
+                        PaymentSessionState.GooglePayPaymentReadinessFetched(
+                            isReadyToPay = isReadyToPay,
+                            isReadyToPayWithExistingPaymentMethod = isReadyToPayWithExistingPaymentMethod
+                        )
+                    )
+                    setStateToIdle()
+                }
+            }
+
+
+        } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+
     }
 
     /**

@@ -17,7 +17,14 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringArra
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValueFor
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayConstants
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -29,6 +36,8 @@ internal data class GooglePayError(
 )
 
 internal object GooglePayService {
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     fun launchGooglePay(
         expects: List<ExpectationModel>,
@@ -198,28 +207,55 @@ internal object GooglePayService {
             null
         }
 
-    suspend fun fetchCanUseGooglePay(
+    fun fetchCanUseGooglePay(
         context: Context,
-        existingPaymentMethodRequired: Boolean,
         allowedCardAuthMethods: List<String>,
-        allowedCardNetworks: List<String>
-    ): Boolean {
-        val walletOptions = Wallet.WalletOptions.Builder()
-            .setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION)
-            .build()
+        allowedCardNetworks: List<String>,
+        googlePayReadiness: (Boolean, Boolean) -> Unit
+    ) {
+        scope.launch {
+            val walletOptions = Wallet.WalletOptions.Builder()
+                .setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION)
+                .build()
 
-        val paymentsClient = Wallet.getPaymentsClient(context, walletOptions)
+            val paymentsClient = Wallet.getPaymentsClient(context, walletOptions)
 
-        val cardPaymentMethod = getCardPaymentMethod(
-            existingPaymentMethodRequired,
-            allowedCardAuthMethods,
-            allowedCardNetworks
-        )
+            val isReadyToPayRequest = IsReadyToPayRequest.fromJson(
+                isReadyToPayRequest(
+                    getCardPaymentMethod(
+                        false,
+                        allowedCardAuthMethods,
+                        allowedCardNetworks
+                    )
+                ).toString()
+            )
 
-        val request =
-            IsReadyToPayRequest.fromJson(isReadyToPayRequest(cardPaymentMethod).toString())
+            val isReadyToPayWithExistingPaymentMethodRequest = IsReadyToPayRequest.fromJson(
+                isReadyToPayRequest(
+                    getCardPaymentMethod(
+                        true,
+                        allowedCardAuthMethods,
+                        allowedCardNetworks
+                    )
+                ).toString()
+            )
 
-        return paymentsClient.isReadyToPay(request).await()
+            val isReadyToPayAsync =
+                async { paymentsClient.isReadyToPay(isReadyToPayRequest).await() }
+            val isReadyToPayWithExistingPaymentMethodAsync = async {
+                paymentsClient.isReadyToPay(isReadyToPayWithExistingPaymentMethodRequest).await()
+            }
+
+            val (isReadyToPay, isReadyToPayWithExistingPaymentMethod) = awaitAll(
+                isReadyToPayAsync,
+                isReadyToPayWithExistingPaymentMethodAsync
+            )
+
+            withContext(Dispatchers.Main) {
+                googlePayReadiness.invoke(isReadyToPay, isReadyToPayWithExistingPaymentMethod)
+            }
+        }
+
     }
 
     private fun getCardPaymentMethod(
