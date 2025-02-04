@@ -8,13 +8,7 @@ internal data class CreditCardAttempt(
     @SerializedName("culture")
     val culture: String? = null,
     @SerializedName("client")
-    val client: Client,
+    val client: ClientWithType,
     @SerializedName("paymentToken")
-    val paymentToken: String?,
-    @SerializedName("cardNumber")
-    val cardNumber: String?,
-    @SerializedName("cardExpiryMonth")
-    val cardExpiryMonth: String?,
-    @SerializedName("cardExpiryYear")
-    val cardExpiryYear: String?,
+    val paymentToken: String?
 )
