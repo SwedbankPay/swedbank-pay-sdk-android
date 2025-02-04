@@ -67,7 +67,7 @@ internal class GooglePayMethodModel : MethodBaseModel() {
     val environment: String = "TEST"
 
     override fun toString(): String {
-        return "GooglePayMethodModel(cardBrands=$cardBrands, ${super.toString()})"
+        return "GooglePayMethodModel(cardBrands=$cardBrands, allowedCardAuthMethods=$allowedCardAuthMethods, environment=$environment ${super.toString()})"
     }
 }
 
