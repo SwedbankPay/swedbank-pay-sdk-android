@@ -46,7 +46,6 @@ internal object SessionOperationHandler {
         paymentOutputModel: PaymentOutputModel?,
         paymentAttemptInstrument: PaymentAttemptInstrument? = null,
         sdkControllerMode: SwedbankPayPaymentSessionSDKControllerMode? = null,
-        context: Context? = null
     ): OperationStep {
         if (paymentOutputModel == null) {
             return OperationStep(
