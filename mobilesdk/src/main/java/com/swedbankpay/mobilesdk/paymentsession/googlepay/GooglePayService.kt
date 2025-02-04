@@ -168,13 +168,9 @@ internal object GooglePayService {
                 )
             )
 
-        val environment = when (
+        val environment = getEnvironmentConstant(
             expects.getStringValueFor(GooglePayConstants.ENVIRONMENT)
-        ) {
-            "TEST" -> WalletConstants.ENVIRONMENT_TEST
-            "PRODUCTION" -> WalletConstants.ENVIRONMENT_PRODUCTION
-            else -> WalletConstants.ENVIRONMENT_TEST
-        }
+        )
 
         val walletOptions = Wallet.WalletOptions.Builder()
             .setEnvironment(environment)
@@ -185,6 +181,12 @@ internal object GooglePayService {
         val googlePayTask = paymentsClient.loadPaymentData(request)
 
         googlePayTask.addOnCompleteListener(googlePayLauncher::launch)
+    }
+
+    private fun getEnvironmentConstant(environmentNative: String?) = when (environmentNative) {
+        "TEST" -> WalletConstants.ENVIRONMENT_TEST
+        "PRODUCTION" -> WalletConstants.ENVIRONMENT_PRODUCTION
+        else -> WalletConstants.ENVIRONMENT_TEST
     }
 
 
@@ -209,13 +211,14 @@ internal object GooglePayService {
 
     fun fetchCanUseGooglePay(
         context: Context,
+        environment: String,
         allowedCardAuthMethods: List<String>,
         allowedCardNetworks: List<String>,
         googlePayReadiness: (Boolean, Boolean) -> Unit
     ) {
         scope.launch {
             val walletOptions = Wallet.WalletOptions.Builder()
-                .setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION)
+                .setEnvironment(getEnvironmentConstant(environment))
                 .build()
 
             val paymentsClient = Wallet.getPaymentsClient(context, walletOptions)
@@ -263,8 +266,8 @@ internal object GooglePayService {
         allowedCardAuthMethods: List<String>,
         allowedCardNetworks: List<String>
     ): JSONObject {
-        val jsonAuthMethods = JSONArray(allowedCardAuthMethods)
-        val jsonCardNetworks = JSONArray(allowedCardNetworks)
+        val jsonAuthMethods = JSONArray(allowedCardAuthMethods.toUpperCase())
+        val jsonCardNetworks = JSONArray(allowedCardNetworks.toUpperCase())
 
         return if (existingPaymentMethodRequired) {
             JSONObject()
@@ -286,5 +289,6 @@ internal object GooglePayService {
         }
     }
 
+    private fun List<String>.toUpperCase() = this.map { it.uppercase() }
 
 }
