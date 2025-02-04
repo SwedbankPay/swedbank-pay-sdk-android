@@ -479,35 +479,8 @@ internal object SessionOperationHandler {
                     }
                 }
 
-                // Get google pay readiness
-                val googlePay =
-                    availableMethods.firstOrNull { it is GooglePayMethodModel } as GooglePayMethodModel?
-                var isReadyToPayWithGooglePay = false
-                var isReadyToPayWithExistingPaymentMethodWithGooglePay = false
-
-                if (googlePay != null && context != null) {
-                    isReadyToPayWithGooglePay = GooglePayService.fetchCanUseGooglePay(
-                        context = context,
-                        existingPaymentMethodRequired = false,
-                        allowedCardAuthMethods = googlePay.allowedCardAuthMethods,
-                        allowedCardNetworks = googlePay.cardBrands
-                    )
-                    isReadyToPayWithExistingPaymentMethodWithGooglePay =
-                        GooglePayService.fetchCanUseGooglePay(
-                            context = context,
-                            existingPaymentMethodRequired = true,
-                            allowedCardAuthMethods = googlePay.allowedCardAuthMethods,
-                            allowedCardNetworks = googlePay.cardBrands
-                        )
-                }
-
                 val availableInstruments: MutableList<AvailableInstrument> =
-                    availableMethods.map {
-                        it.toAvailableInstrument(
-                            isReadyToPayWithGooglePay,
-                            isReadyToPayWithExistingPaymentMethodWithGooglePay
-                        )
-                    }.toMutableList()
+                    availableMethods.map { it.toAvailableInstrument() }.toMutableList()
 
                 if (availableInstruments.any { it is AvailableInstrument.CreditCard }) {
                     availableInstruments.add(AvailableInstrument.NewCreditCard("NewCreditCard"))
