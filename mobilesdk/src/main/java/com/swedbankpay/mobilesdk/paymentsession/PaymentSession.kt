@@ -453,6 +453,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             googlePayMethodModel?.let { googlePay ->
                 GooglePayService.fetchCanUseGooglePay(
                     context,
+                    googlePay.environment,
                     googlePay.allowedCardAuthMethods,
                     googlePay.cardBrands
                 ) { isReadyToPay, isReadyToPayWithExistingPaymentMethod ->

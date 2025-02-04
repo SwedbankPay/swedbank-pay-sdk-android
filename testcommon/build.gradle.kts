@@ -16,6 +16,14 @@ android {
         minSdk = 21
 
         namespace = "com.swedbankpay.mobilesdk.testcommon"
+
+        unitTestVariants.configureEach {
+            mergedFlavor.manifestPlaceholders["swedbankPaymentUrlScheme"] = ""
+        }
+
+        testVariants.configureEach {
+            mergedFlavor.manifestPlaceholders["swedbankPaymentUrlScheme"] = ""
+        }
     }
 
     compileOptions {
