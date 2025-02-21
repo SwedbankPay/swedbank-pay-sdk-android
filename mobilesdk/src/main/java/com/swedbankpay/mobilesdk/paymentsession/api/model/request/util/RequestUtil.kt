@@ -3,6 +3,9 @@ package com.swedbankpay.mobilesdk.paymentsession.api.model.request.util
 import android.util.Base64
 import com.google.gson.GsonBuilder
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.AttemptPayload
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.ClientMinimum
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.ClientWithType
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CompleteAuthentication
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreateAuthentication
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreditCardAttempt
@@ -75,11 +78,12 @@ internal object RequestUtil {
 
     private fun getIntegrationRequestData(): String {
         return Integration(
-            integration = "HostedView",
+            integration = "App",
             deviceAcceptedWallets = "GooglePay;ClickToPay",
             browser = RequestDataUtil.getBrowser(),
-            client = RequestDataUtil.getClient(),
+            client = RequestDataUtil.getClient<Client>(),
             service = RequestDataUtil.getService(),
+            presentationSdk = RequestDataUtil.getPresentationSdk()
         ).toJsonString()
     }
 
@@ -97,22 +101,19 @@ internal object RequestUtil {
         return when (instrument) {
             is PaymentAttemptInstrument.Swish -> SwishAttempt(
                 culture = culture,
-                client = RequestDataUtil.getClient(),
+                client = RequestDataUtil.getClient<ClientWithType>(),
                 msisdn = instrument.msisdn
             ).toJsonString()
 
             is PaymentAttemptInstrument.CreditCard -> CreditCardAttempt(
                 culture = culture,
-                client = RequestDataUtil.getClient(),
-                paymentToken = instrument.prefill.paymentToken,
-                cardNumber = instrument.prefill.maskedPan,
-                cardExpiryMonth = instrument.prefill.expiryMonth,
-                cardExpiryYear = instrument.prefill.expiryYear
+                client = RequestDataUtil.getClient<ClientWithType>(),
+                paymentToken = instrument.prefill.paymentToken
             ).toJsonString()
 
             is PaymentAttemptInstrument.GooglePay -> GooglePayAttempt(
                 culture = culture,
-                client = RequestDataUtil.getClient()
+                client = RequestDataUtil.getClient<ClientWithType>()
             ).toJsonString()
 
             else -> ""
@@ -127,7 +128,7 @@ internal object RequestUtil {
             methodCompletionIndicator = completionIndicator,
             notificationUrl = notificationUrl,
             requestWindowSize = "FULLSCREEN",
-            client = RequestDataUtil.getClient(),
+            client = RequestDataUtil.getClient<Client>(),
             browser = RequestDataUtil.getBrowser()
         ).toJsonString()
     }
@@ -135,7 +136,7 @@ internal object RequestUtil {
     private fun getCompleteAuthenticationData(cRes: String): String {
         return CompleteAuthentication(
             cRes = cRes,
-            client = RequestDataUtil.getClient()
+            client = RequestDataUtil.getClient<ClientMinimum>()
         ).toJsonString()
     }
 

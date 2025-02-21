@@ -11,5 +11,5 @@ internal data class SwishAttempt(
     @SerializedName("msisdn")
     val msisdn: String? = null,
     @SerializedName("client")
-    val client: Client
+    val client: ClientWithType
 )

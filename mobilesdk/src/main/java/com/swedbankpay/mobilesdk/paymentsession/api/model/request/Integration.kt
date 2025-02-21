@@ -18,10 +18,20 @@ internal data class Integration(
     val browser: Browser,
     @SerializedName("service")
     val service: Service,
+    @SerializedName("presentationSdk")
+    val presentationSdk: PresentationSdk
 )
 
 @Keep
 data class Service(
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("version")
+    val version: String?,
+)
+
+@Keep
+data class PresentationSdk(
     @SerializedName("name")
     val name: String?,
     @SerializedName("version")

@@ -27,6 +27,9 @@ sealed class AvailableInstrument {
         val prefills: List<CreditCardPrefill> = listOf()
     ) : AvailableInstrument()
 
+    /**
+     * Google pay native payments
+     */
     data class GooglePay(
         override val paymentMethod: String
     ) : AvailableInstrument()
