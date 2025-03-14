@@ -1,9 +1,11 @@
 package com.swedbankpay.mobilesdk.paymentsession.googlepay
 
 import android.app.Activity
+import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.gms.wallet.IsReadyToPayRequest
 import com.google.android.gms.wallet.PaymentDataRequest
 import com.google.android.gms.wallet.Wallet
 import com.google.android.gms.wallet.WalletConstants
@@ -15,7 +17,16 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringArra
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValueFor
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayConstants
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 
 internal data class GooglePayError(
@@ -25,6 +36,8 @@ internal data class GooglePayError(
 )
 
 internal object GooglePayService {
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     fun launchGooglePay(
         expects: List<ExpectationModel>,
@@ -155,13 +168,9 @@ internal object GooglePayService {
                 )
             )
 
-        val environment = when (
+        val environment = getEnvironmentConstant(
             expects.getStringValueFor(GooglePayConstants.ENVIRONMENT)
-        ) {
-            "TEST" -> WalletConstants.ENVIRONMENT_TEST
-            "PRODUCTION" -> WalletConstants.ENVIRONMENT_PRODUCTION
-            else -> WalletConstants.ENVIRONMENT_TEST
-        }
+        )
 
         val walletOptions = Wallet.WalletOptions.Builder()
             .setEnvironment(environment)
@@ -173,5 +182,113 @@ internal object GooglePayService {
 
         googlePayTask.addOnCompleteListener(googlePayLauncher::launch)
     }
+
+    private fun getEnvironmentConstant(environmentNative: String?) = when (environmentNative) {
+        "TEST" -> WalletConstants.ENVIRONMENT_TEST
+        "PRODUCTION" -> WalletConstants.ENVIRONMENT_PRODUCTION
+        else -> WalletConstants.ENVIRONMENT_TEST
+    }
+
+
+    // Google pay readiness section
+    private val isReadyToPayBaseRequest = JSONObject()
+        .put("apiVersion", 2)
+        .put("apiVersionMinor", 0)
+
+    private fun isReadyToPayRequest(cardPaymentMethod: JSONObject): JSONObject? =
+        try {
+            isReadyToPayBaseRequest
+                .put(
+                    "allowedPaymentMethods", JSONArray(
+                        listOf(
+                            cardPaymentMethod
+                        )
+                    )
+                )
+        } catch (e: JSONException) {
+            null
+        }
+
+    fun fetchCanUseGooglePay(
+        context: Context,
+        environment: String,
+        allowedCardAuthMethods: List<String>,
+        allowedCardNetworks: List<String>,
+        googlePayReadiness: (Boolean, Boolean) -> Unit
+    ) {
+        scope.launch {
+            val walletOptions = Wallet.WalletOptions.Builder()
+                .setEnvironment(getEnvironmentConstant(environment))
+                .build()
+
+            val paymentsClient = Wallet.getPaymentsClient(context, walletOptions)
+
+            val isReadyToPayRequest = IsReadyToPayRequest.fromJson(
+                isReadyToPayRequest(
+                    getCardPaymentMethod(
+                        false,
+                        allowedCardAuthMethods,
+                        allowedCardNetworks
+                    )
+                ).toString()
+            )
+
+            val isReadyToPayWithExistingPaymentMethodRequest = IsReadyToPayRequest.fromJson(
+                isReadyToPayRequest(
+                    getCardPaymentMethod(
+                        true,
+                        allowedCardAuthMethods,
+                        allowedCardNetworks
+                    )
+                ).toString()
+            )
+
+            val isReadyToPayAsync =
+                async { paymentsClient.isReadyToPay(isReadyToPayRequest).await() }
+            val isReadyToPayWithExistingPaymentMethodAsync = async {
+                paymentsClient.isReadyToPay(isReadyToPayWithExistingPaymentMethodRequest).await()
+            }
+
+            val (isReadyToPay, isReadyToPayWithExistingPaymentMethod) = awaitAll(
+                isReadyToPayAsync,
+                isReadyToPayWithExistingPaymentMethodAsync
+            )
+
+            withContext(Dispatchers.Main) {
+                googlePayReadiness.invoke(isReadyToPay, isReadyToPayWithExistingPaymentMethod)
+            }
+        }
+
+    }
+
+    private fun getCardPaymentMethod(
+        existingPaymentMethodRequired: Boolean,
+        allowedCardAuthMethods: List<String>,
+        allowedCardNetworks: List<String>
+    ): JSONObject {
+        val jsonAuthMethods = JSONArray(allowedCardAuthMethods.toUpperCase())
+        val jsonCardNetworks = JSONArray(allowedCardNetworks.toUpperCase())
+
+        return if (existingPaymentMethodRequired) {
+            JSONObject()
+                .put("type", "CARD")
+                .put(
+                    "parameters", JSONObject()
+                        .put("allowedAuthMethods", jsonAuthMethods)
+                        .put("allowedCardNetworks", jsonCardNetworks)
+                        .put("existingPaymentMethodRequired", true)
+                )
+        } else {
+            JSONObject()
+                .put("type", "CARD")
+                .put(
+                    "parameters", JSONObject()
+                        .put("allowedAuthMethods", jsonAuthMethods)
+                        .put("allowedCardNetworks", jsonCardNetworks)
+                )
+        }
+    }
+
+    private fun List<String>.toUpperCase() = this.map { it.uppercase() }
 
 }

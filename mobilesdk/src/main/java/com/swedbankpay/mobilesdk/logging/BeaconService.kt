@@ -5,6 +5,7 @@ import com.swedbankpay.mobilesdk.logging.model.BeaconInput
 import com.swedbankpay.mobilesdk.logging.model.BeaconType
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.EventModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestDataUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +31,7 @@ internal object BeaconService {
         var beaconInput = BeaconInput(
             type = BeaconType.CLIENT_EVENT.identifier,
             service = RequestDataUtil.getService(),
-            client = RequestDataUtil.getClient(),
+            client = RequestDataUtil.getClient<Client>(),
             event = EventModel(
                 created = RequestDataUtil.nowAsIsoString(),
                 action = eventAction.action,

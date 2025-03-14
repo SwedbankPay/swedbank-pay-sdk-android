@@ -6,6 +6,9 @@ import androidx.core.os.ConfigurationCompat
 import com.swedbankpay.mobilesdk.BuildConfig
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Browser
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.ClientMinimum
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.ClientWithType
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.PresentationSdk
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Service
 import java.net.NetworkInterface
 import java.text.FieldPosition
@@ -17,13 +20,33 @@ internal object RequestDataUtil {
 
     const val SDK_NAME = "SwedbankPaySDK-Android"
 
-    fun getClient() = Client(
-        userAgent = "${SDK_NAME}/${getVersion()}",
-        ipAddress = getIPAddress(),
-        screenHeight = getPhoneSize().heightPixels,
-        screenWidth = getPhoneSize().widthPixels,
-        screenColorDepth = 24,
-    )
+    inline fun <reified T> getClient(): T {
+        return when (T::class) {
+            Client::class -> Client(
+                userAgent = "${SDK_NAME}/${getVersion()}",
+                ipAddress = getIPAddress(),
+                screenHeight = getPhoneSize().heightPixels,
+                screenWidth = getPhoneSize().widthPixels,
+                screenColorDepth = 24,
+            ) as T
+
+            ClientWithType::class -> ClientWithType(
+                userAgent = "${SDK_NAME}/${getVersion()}",
+                ipAddress = getIPAddress(),
+                screenHeight = getPhoneSize().heightPixels,
+                screenWidth = getPhoneSize().widthPixels,
+                screenColorDepth = 24,
+                clientType = "Native"
+            ) as T
+
+            ClientMinimum::class -> ClientMinimum(
+                userAgent = "${SDK_NAME}/${getVersion()}",
+                ipAddress = getIPAddress(),
+            ) as T
+
+            else -> throw IllegalStateException("Type must be of Client, ClientWithType or ClientMinimum")
+        }
+    }
 
     fun getBrowser() = Browser(
         acceptHeader = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -34,6 +57,11 @@ internal object RequestDataUtil {
 
     fun getService() = Service(
         name = SDK_NAME,
+        version = getVersion()
+    )
+
+    fun getPresentationSdk() = PresentationSdk(
+        name = "Android",
         version = getVersion()
     )
 

@@ -45,7 +45,7 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         checkCallbacks()
     }
 
-    private val stateBridgeObserver = Observer<UIState?>
+    internal val stateBridgeObserver = Observer<PaymentViewModel.State?>
     {
         PaymentFragmentStateBridge.paymentProcessState.value = it
     }
@@ -112,8 +112,10 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             val old = field
             if (old != value) {
                 old?.detachInternalViewModel(this)
+                old?.detachStateObserver(this)
                 field = value
                 value?.attachInternalViewModel(this)
+                value?.attachStateObserver(this)
             }
         }
 
@@ -129,7 +131,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     override fun onCleared() {
         super.onCleared()
         CallbackActivity.onCallbackUrlInvoked.removeObserver(callbackUrlObserver)
-        uiState.removeObserver(stateBridgeObserver)
         javascriptInterface.vm = null
         configuration = null
         publicVm = null
@@ -206,9 +207,6 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             }
             setProcessState(state)
         }
-
-        // To be able to observe ui state from payment fragment in payment sessions
-        uiState.observeForever(stateBridgeObserver)
     }
 
     fun saveState(bundle: Bundle) {

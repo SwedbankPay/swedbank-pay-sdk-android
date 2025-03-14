@@ -22,6 +22,17 @@ sealed class PaymentSessionState {
         PaymentSessionState()
 
     /**
+     * Called when Google Pay payment readiness is known
+     *
+     * @param isReadyToPay A boolean indicating whether the user's device is capable of making payments with Google Pay
+     * @param isReadyToPayWithExistingPaymentMethod A boolean indicating whether the user has at least one card available for payment with the payment session
+     */
+    class GooglePayPaymentReadinessFetched(
+        val isReadyToPay: Boolean,
+        val isReadyToPayWithExistingPaymentMethod: Boolean
+    ) : PaymentSessionState()
+
+    /**
      * Called when a 3D secure view needs to be presented.
      *
      * @param fragment Fragment with 3D secure view.

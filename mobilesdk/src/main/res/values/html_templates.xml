@@ -13,6 +13,7 @@
         &lt;script src=\"%1$s\">&lt;/script>
         &lt;script language=\"javascript\">
             var parameters = {
+                integration: \"App\",
                 container: \"checkin\",
                 onConsumerIdentified: function(consumerIdentifiedEvent) {
                     swedbankpaysdk.onConsumerProfileRefAvailable(consumerIdentifiedEvent.consumerProfileRef);
@@ -42,6 +43,7 @@
         &lt;script src=\"%1$s\">&lt;/script>
         &lt;script language="javascript">
             var parameters = {
+                integration: \"App\",
                 container: \"checkout\",
                 onError: function(error) {
                     swedbankpaysdk.onPaymentError(JSON.stringify(error));
@@ -70,6 +72,7 @@
                 window.onload = function () {
     
                     var parameters = {
+                        integration: \"App\",
                         container: {
                             checkout: \"checkout\"
                         },

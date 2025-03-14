@@ -18,6 +18,30 @@ internal data class Client(
 )
 
 @Keep
+internal data class ClientWithType(
+    @SerializedName("userAgent")
+    val userAgent: String,
+    @SerializedName("ipAddress")
+    val ipAddress: String,
+    @SerializedName("screenHeight")
+    val screenHeight: Int?,
+    @SerializedName("screenWidth")
+    val screenWidth: Int?,
+    @SerializedName("screenColorDepth")
+    val screenColorDepth: Int?,
+    @SerializedName("clientType")
+    val clientType: String
+)
+
+@Keep
+internal data class ClientMinimum(
+    @SerializedName("userAgent")
+    val userAgent: String,
+    @SerializedName("ipAddress")
+    val ipAddress: String,
+)
+
+@Keep
 internal data class Version(
     val major: Int,
     val minor: Int,
@@ -26,3 +50,4 @@ internal data class Version(
     val majorRevision: Int,
     val minorRevision: Int,
 )
+

@@ -60,8 +60,14 @@ internal class GooglePayMethodModel : MethodBaseModel() {
     @SerializedName("cardBrands")
     val cardBrands: List<String> = listOf()
 
+    @SerializedName("allowedCardAuthMethods")
+    val allowedCardAuthMethods: List<String> = listOf()
+
+    @SerializedName("environment")
+    val environment: String = "TEST"
+
     override fun toString(): String {
-        return "GooglePayMethodModel(cardBrands=$cardBrands, ${super.toString()})"
+        return "GooglePayMethodModel(cardBrands=$cardBrands, allowedCardAuthMethods=$allowedCardAuthMethods, environment=$environment ${super.toString()})"
     }
 }
 
