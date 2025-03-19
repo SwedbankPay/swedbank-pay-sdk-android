@@ -12,6 +12,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
+import com.swedbankpay.mobilesdk.internal.safeResume
 import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.HttpModel
@@ -20,9 +21,8 @@ import com.swedbankpay.mobilesdk.paymentsession.sca.extension.toByteArray
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import com.swedbankpay.mobilesdk.paymentsession.util.scaMethodRequestExtensionModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 
 internal object ScaMethodService {
@@ -41,10 +41,10 @@ internal object ScaMethodService {
         task: IntegrationTask,
         localStartContext: Context?
     ): String = withContext(Dispatchers.Main) {
-        suspendCoroutine { continuation ->
+        suspendCancellableCoroutine { continuation ->
             val start = System.currentTimeMillis()
             if (task.href.isNullOrEmpty()) {
-                continuation.resume("U")
+                continuation.safeResume("U")
             } else {
                 safeLet(
                     task.href,
@@ -75,7 +75,7 @@ internal object ScaMethodService {
                                 timeoutHandler.removeCallbacksAndMessages(null)
                                 if (url == initialUrl) {
                                     if (hasError) {
-                                        continuation.resume("N")
+                                        continuation.safeResume("N")
                                     } else {
                                         BeaconService.logEvent(
                                             EventAction.SCAMethodRequest(
@@ -88,11 +88,11 @@ internal object ScaMethodService {
                                             )
                                         )
 
-                                        continuation.resume("Y")
+                                        continuation.safeResume("Y")
                                     }
 
                                     hasError = false
-                                } else continuation.resume("U")
+                                } else continuation.safeResume("U")
                             }
 
                             @Deprecated("Deprecated in Java")
@@ -165,12 +165,12 @@ internal object ScaMethodService {
 
                         timeoutHandler.postDelayed({
                             this.stopLoading()
-                            continuation.resume("U")
+                            continuation.safeResume("U")
                         }, 10000)
 
                         postUrl(initialUrl, expects.toByteArray())
                     }
-                } ?: continuation.resume("U")
+                } ?: continuation.safeResume("U")
             }
         }
     }
