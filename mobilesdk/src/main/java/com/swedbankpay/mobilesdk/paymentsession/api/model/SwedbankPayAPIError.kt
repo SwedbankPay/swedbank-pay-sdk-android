@@ -9,5 +9,11 @@ sealed class SwedbankPayAPIError {
     data class Error(val message: String? = null, val responseCode: Int? = null) :
         SwedbankPayAPIError()
 
+    data class AbortPaymentNotAllowed(
+        val message: String? = null,
+        val responseCode: Int? = null,
+        val type: String? = null
+    ) : SwedbankPayAPIError()
+
     object InvalidUrl : SwedbankPayAPIError()
 }
