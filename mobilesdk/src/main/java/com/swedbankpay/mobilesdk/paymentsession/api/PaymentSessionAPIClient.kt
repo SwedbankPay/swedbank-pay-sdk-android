@@ -270,9 +270,21 @@ internal open class PaymentSessionAPIClient {
                             error = error
                         )
 
-                        continuation.resume(
-                            PaymentSessionResponse.Error(error)
-                        )
+                        if (apiError.type == PaymentSessionAPIConstants.ABORT_PAYMENT_NOT_ALLOWED_TYPE) {
+                            continuation.resume(
+                                PaymentSessionResponse.Error(
+                                    SwedbankPayAPIError.AbortPaymentNotAllowed(
+                                        message = apiError.detail,
+                                        responseCode = responseCode,
+                                        type = apiError.type
+                                ))
+                            )
+                        } else {
+                            continuation.resume(
+                                PaymentSessionResponse.Error(error)
+                            )
+                        }
+
                     } catch (e: Exception) {
                         logAPICall(
                             url = requestUrl.toString(),

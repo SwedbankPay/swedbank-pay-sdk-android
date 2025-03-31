@@ -17,6 +17,7 @@ import com.swedbankpay.mobilesdk.logging.model.ExtensionsModel
 import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIClient
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
+import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttemptProblemType
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.TimeOutUtil
@@ -225,19 +226,35 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     }
 
                     is PaymentSessionResponse.Error -> {
-                        withContext(Dispatchers.Main) {
-                            onSdkProblemOccurred((
-                                    PaymentSessionProblem.PaymentSessionAPIRequestFailed(
-                                        error = paymentSessionResponse.error,
-                                        retry = {
-                                            startObservingCallbacks()
-                                            executeNextStepUntilFurtherInstructions(
-                                                stepToExecute
-                                            )
-                                        }
-                                    )
-                                    ))
+                        val mainJobError = mainScope.launch {
+                            withContext(Dispatchers.Main) {
+                                when (paymentSessionResponse.error) {
+                                    is SwedbankPayAPIError.AbortPaymentNotAllowed -> {
+                                        onSdkProblemOccurred((
+                                                PaymentSessionProblem.PaymentSessionAPIRequestFailed(
+                                                    error = paymentSessionResponse.error,
+                                                    retry = {}
+                                                )
+                                                ))
+                                    }
+                                    else -> {
+                                        onSdkProblemOccurred((
+                                                PaymentSessionProblem.PaymentSessionAPIRequestFailed(
+                                                    error = paymentSessionResponse.error,
+                                                    retry = {
+                                                        startObservingCallbacks()
+                                                        executeNextStepUntilFurtherInstructions(
+                                                            stepToExecute
+                                                        )
+                                                    }
+                                                )
+                                                ))
+                                    }
+                                }
+
+                            }
                         }
+                        mainJobError.join()
                         break
                     }
 
@@ -281,33 +298,36 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                     client.postFailedAttemptRequest(problem.problemDetails)
                                 }
 
-                                withContext(Dispatchers.Main) {
-                                    when (instruction) {
-                                        is StepInstruction.SessionNotFound -> {
-                                            onSdkProblemOccurred(
-                                                PaymentSessionProblem.InternalInconsistencyError
-                                            )
-                                        }
+                                val mainJobInstruction = mainScope.launch {
+                                    withContext(Dispatchers.Main) {
+                                        when (instruction) {
+                                            is StepInstruction.SessionNotFound -> {
+                                                onSdkProblemOccurred(
+                                                    PaymentSessionProblem.InternalInconsistencyError
+                                                )
+                                            }
 
-                                        is StepInstruction.InternalError -> {
-                                            onSdkProblemOccurred(
-                                                PaymentSessionProblem.InternalInconsistencyError
-                                            )
-                                        }
+                                            is StepInstruction.InternalError -> {
+                                                onSdkProblemOccurred(
+                                                    PaymentSessionProblem.InternalInconsistencyError
+                                                )
+                                            }
 
-                                        is StepInstruction.StepNotFound -> {
-                                            onSdkProblemOccurred(
-                                                PaymentSessionProblem.PaymentSessionEndReached
-                                            )
-                                        }
+                                            is StepInstruction.StepNotFound -> {
+                                                onSdkProblemOccurred(
+                                                    PaymentSessionProblem.PaymentSessionEndReached
+                                                )
+                                            }
 
-                                        else -> {
-                                            if (instruction?.waitForAction == true) {
-                                                checkWhatTodo(instruction)
+                                            else -> {
+                                                if (instruction?.waitForAction == true) {
+                                                    checkWhatTodo(instruction)
+                                                }
                                             }
                                         }
                                     }
                                 }
+                                mainJobInstruction.join()
                             }
                         }
                     }
