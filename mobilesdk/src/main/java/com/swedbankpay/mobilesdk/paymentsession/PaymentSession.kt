@@ -21,6 +21,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttemptProblemType
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.TimeOutUtil
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ApiErrorType
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.GooglePayMethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.OperationRel
@@ -28,6 +29,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutput
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentSessionResponse
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.translatedType
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.SwedbankPayPaymentSessionSDKControllerMode
@@ -49,6 +51,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
@@ -98,6 +101,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private val mainScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val idleScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
+    private var initialSessionURL: String? = null
+
     private var currentPaymentOutputModel: PaymentOutputModel? = null
 
     private var paymentAttemptInstrument: PaymentAttemptInstrument? = null
@@ -128,6 +133,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun clearState(isStartingSession: Boolean = false) {
         clearPaymentAttemptInstrument()
         clearSdkControllerMode()
+        initialSessionURL = null
         currentPaymentOutputModel = null
         SessionOperationHandler.clearState()
         stopObservingCallbacks()
@@ -180,11 +186,12 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      * merchant app to take some kind of action
      */
     private fun executeNextStepUntilFurtherInstructions(
-        operationStep: OperationStep
+        operationStep: OperationStep,
+        automaticRetry: Boolean = true,
+        originalStep: OperationStep? = null
     ) {
         startRequestTimestamp = System.currentTimeMillis()
-        // So we don't launch multiple jobs when calling this method again
-        mainScope.coroutineContext.cancelChildren()
+
         mainScope.launch {
             var stepToExecute = operationStep
 
@@ -196,28 +203,34 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     // When we poll we need to reset requestTimestamp so we don't end it to early
                     startRequestTimestamp = System.currentTimeMillis()
                 }
-
-                when (val paymentSessionResponse =
-                    client.executeNextRequest(stepToExecute, paymentAttemptInstrument)) {
+                val paymentSessionResponse =
+                    client.executeNextRequest(
+                        stepToExecute,
+                        paymentAttemptInstrument
+                    )
+                // Check if coroutine scope is still active. If not don't bother do do things
+                // Coroutine will not be active if we are waiting for action from merchant
+                ensureActive()
+                when (paymentSessionResponse) {
                     is PaymentSessionResponse.Retry -> {
-                        if (System.currentTimeMillis() - startRequestTimestamp >
-                            TimeOutUtil.getSessionTimeout(
-                                operationStep.operationRel,
-                                paymentAttemptInstrument?.toInstrument()
-                            )
+                        if ((System.currentTimeMillis() - startRequestTimestamp >
+                                    TimeOutUtil.getSessionTimeout(
+                                        operationStep.operationRel,
+                                        paymentAttemptInstrument?.toInstrument()
+                                    )) || !automaticRetry
                         ) {
                             withContext(Dispatchers.Main) {
-                                onSdkProblemOccurred((
-                                        PaymentSessionProblem.PaymentSessionAPIRequestFailed(
-                                            error = paymentSessionResponse.error,
-                                            retry = {
-                                                startObservingCallbacks()
-                                                executeNextStepUntilFurtherInstructions(
-                                                    stepToExecute
-                                                )
-                                            }
-                                        )
-                                        ))
+                                onSdkProblemOccurred(
+                                    PaymentSessionProblem.PaymentSessionAPIRequestFailed(
+                                        error = paymentSessionResponse.error,
+                                        retry = {
+                                            startObservingCallbacks()
+                                            executeNextStepUntilFurtherInstructions(
+                                                originalStep ?: stepToExecute
+                                            )
+                                        }
+                                    )
+                                )
                             }
                             break
                         } else {
@@ -226,35 +239,70 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     }
 
                     is PaymentSessionResponse.Error -> {
-                        val mainJobError = mainScope.launch {
-                            withContext(Dispatchers.Main) {
-                                when (paymentSessionResponse.error) {
-                                    is SwedbankPayAPIError.AbortPaymentNotAllowed -> {
-                                        onSdkProblemOccurred((
-                                                PaymentSessionProblem.PaymentSessionAPIRequestFailed(
-                                                    error = paymentSessionResponse.error,
-                                                    retry = {}
-                                                )
-                                                ))
+                        withContext(Dispatchers.Main) {
+                            onSdkProblemOccurred(
+                                PaymentSessionProblem.PaymentSessionAPIRequestFailed(
+                                    error = paymentSessionResponse.error,
+                                    retry = {
+                                        startObservingCallbacks()
+                                        executeNextStepUntilFurtherInstructions(
+                                            originalStep ?: stepToExecute
+                                        )
                                     }
+                                )
+                            )
+                        }
+                        break
+                    }
+
+                    is PaymentSessionResponse.OperationError -> {
+                        withContext(Dispatchers.Main) {
+                            val apiErrorType = paymentSessionResponse.apiError.translatedType()
+
+                            val problem =
+                                when {
+                                    apiErrorType == ApiErrorType.OPERATION_NOT_ALLOWED
+                                            && operationStep.operationRel == OperationRel.ABORT_PAYMENT -> {
+                                        PaymentSessionProblem.AbortPaymentNotAllowed
+                                    }
+
+                                    (apiErrorType == ApiErrorType.OPERATION_NOT_ALLOWED
+                                            && initialSessionURL != null
+                                            && operationStep.operationRel != OperationRel.GET_PAYMENT) ||
+                                            (apiErrorType == ApiErrorType.GENERIC_OPERATION_ERROR
+                                                    && initialSessionURL != null
+                                                    && operationStep.operationRel != OperationRel.GET_PAYMENT) -> {
+                                        // If we're getting a 409 server error where Session API can't find or won't allow the operation,
+                                        // and it's not a result of a getPayment call, attempt a single getPayment call to recover
+                                        executeNextStepUntilFurtherInstructions(
+                                            operationStep = OperationStep(
+                                                requestMethod = RequestMethod.GET,
+                                                url = URL(initialSessionURL)
+                                            ),
+                                            automaticRetry = false,
+                                            originalStep = stepToExecute
+                                        )
+
+                                        null
+                                    }
+
                                     else -> {
-                                        onSdkProblemOccurred((
-                                                PaymentSessionProblem.PaymentSessionAPIRequestFailed(
-                                                    error = paymentSessionResponse.error,
-                                                    retry = {
-                                                        startObservingCallbacks()
-                                                        executeNextStepUntilFurtherInstructions(
-                                                            stepToExecute
-                                                        )
-                                                    }
+                                        PaymentSessionProblem.PaymentSessionAPIRequestFailed(
+                                            error = SwedbankPayAPIError.Unknown,
+                                            retry = {
+                                                startObservingCallbacks()
+                                                executeNextStepUntilFurtherInstructions(
+                                                    originalStep ?: stepToExecute
                                                 )
-                                                ))
+                                            }
+                                        )
                                     }
                                 }
-
+                            if (problem != null) {
+                                onSdkProblemOccurred(problem)
                             }
                         }
-                        mainJobError.join()
+
                         break
                     }
 
@@ -298,36 +346,34 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                     client.postFailedAttemptRequest(problem.problemDetails)
                                 }
 
-                                val mainJobInstruction = mainScope.launch {
-                                    withContext(Dispatchers.Main) {
-                                        when (instruction) {
-                                            is StepInstruction.SessionNotFound -> {
-                                                onSdkProblemOccurred(
-                                                    PaymentSessionProblem.InternalInconsistencyError
-                                                )
-                                            }
+                                withContext(Dispatchers.Main) {
+                                    when (instruction) {
+                                        is StepInstruction.SessionNotFound -> {
+                                            onSdkProblemOccurred(
+                                                PaymentSessionProblem.InternalInconsistencyError
+                                            )
+                                        }
 
-                                            is StepInstruction.InternalError -> {
-                                                onSdkProblemOccurred(
-                                                    PaymentSessionProblem.InternalInconsistencyError
-                                                )
-                                            }
+                                        is StepInstruction.InternalError -> {
+                                            onSdkProblemOccurred(
+                                                PaymentSessionProblem.InternalInconsistencyError
+                                            )
+                                        }
 
-                                            is StepInstruction.StepNotFound -> {
-                                                onSdkProblemOccurred(
-                                                    PaymentSessionProblem.PaymentSessionEndReached
-                                                )
-                                            }
+                                        is StepInstruction.StepNotFound -> {
+                                            onSdkProblemOccurred(
+                                                PaymentSessionProblem.PaymentSessionEndReached
+                                            )
+                                        }
 
-                                            else -> {
-                                                if (instruction?.waitForAction == true) {
-                                                    checkWhatTodo(instruction)
-                                                }
+                                        else -> {
+                                            if (instruction?.waitForAction == true) {
+                                                mainScope.coroutineContext.cancelChildren(null)
+                                                checkWhatTodo(instruction)
                                             }
                                         }
                                     }
                                 }
-                                mainJobInstruction.join()
                             }
                         }
                     }
@@ -440,6 +486,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         sessionURL: String
     ) {
         clearState(true)
+
+        initialSessionURL = sessionURL
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKMethodInvoked(
@@ -699,7 +747,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private fun launchSwish(uri: Uri, context: Context?) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         try {
             context?.startActivity(intent)
             BeaconService.logEvent(

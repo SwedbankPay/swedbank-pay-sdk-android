@@ -126,20 +126,19 @@ internal open class PaymentSessionAPIClient {
                     try {
                         val apiError = response.toApiError()
 
-                        val error = SwedbankPayAPIError.Error(
-                            message = apiError.detail,
-                            responseCode = responseCode
-                        )
 
                         logAPICall(
                             url = requestUrl.toString(),
                             method = "GET",
                             duration = System.currentTimeMillis() - start,
-                            error = error
+                            error = SwedbankPayAPIError.Error(
+                                message = apiError.detail,
+                                responseCode = responseCode
+                            )
                         )
 
                         continuation.resume(
-                            PaymentSessionResponse.Error(error)
+                            PaymentSessionResponse.OperationError(apiError)
                         )
                     } catch (e: Exception) {
                         logAPICall(
@@ -258,33 +257,20 @@ internal open class PaymentSessionAPIClient {
                     try {
                         val apiError = response.toApiError()
 
-                        val error = SwedbankPayAPIError.Error(
-                            message = apiError.detail,
-                            responseCode = responseCode
-                        )
 
                         logAPICall(
                             url = requestUrl.toString(),
-                            method = "POST",
+                            method = "GET",
                             duration = System.currentTimeMillis() - start,
-                            error = error
+                            error = SwedbankPayAPIError.Error(
+                                message = apiError.detail,
+                                responseCode = responseCode
+                            )
                         )
 
-                        if (apiError.type == PaymentSessionAPIConstants.ABORT_PAYMENT_NOT_ALLOWED_TYPE) {
-                            continuation.resume(
-                                PaymentSessionResponse.Error(
-                                    SwedbankPayAPIError.AbortPaymentNotAllowed(
-                                        message = apiError.detail,
-                                        responseCode = responseCode,
-                                        type = apiError.type
-                                ))
-                            )
-                        } else {
-                            continuation.resume(
-                                PaymentSessionResponse.Error(error)
-                            )
-                        }
-
+                        continuation.resume(
+                            PaymentSessionResponse.OperationError(apiError)
+                        )
                     } catch (e: Exception) {
                         logAPICall(
                             url = requestUrl.toString(),
