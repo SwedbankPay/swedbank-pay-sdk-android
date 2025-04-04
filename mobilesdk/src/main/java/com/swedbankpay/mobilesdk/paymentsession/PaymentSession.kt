@@ -113,6 +113,13 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private var isPaymentFragmentActive = false
 
+    /**
+     * Styling for the payment menu
+     *
+     * Styling the payment menu requires a separate agreement with Swedbank Pay.
+     */
+    var paymentMenuStyle: Map<*, *>? = null
+
     private val client: PaymentSessionAPIClient by lazy {
         PaymentSessionAPIClient()
     }
@@ -632,10 +639,15 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             val paymentFragment = PaymentFragment()
             PaymentFragment.defaultConfiguration = AutomaticConfiguration(it)
 
-            paymentFragment.arguments = PaymentFragment.ArgumentsBuilder()
+            val argsBuilder = PaymentFragment.ArgumentsBuilder()
                 .checkoutV3(true)
                 .useBrowser(false)
-                .build()
+
+            paymentMenuStyle?.let {
+                argsBuilder.style(it)
+            }
+
+            paymentFragment.arguments = argsBuilder.build()
 
             startObservingPaymentFragmentPaymentProcess()
             isPaymentFragmentActive = true
