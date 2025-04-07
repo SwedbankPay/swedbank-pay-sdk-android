@@ -184,13 +184,6 @@ internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
                     "problem" to "paymentSessionAPIRequestFailed",
                     "errorMessage" to "Unknown",
                 )
-
-                is SwedbankPayAPIError.AbortPaymentNotAllowed -> mutableMapOf(
-                    "problem" to "paymentSessionAPIRequestFailed",
-                    "errorMessage" to error.message,
-                    "responseCode" to error.responseCode.toString(),
-                    "type" to error.type
-                )
             }
             requestFailedValues
         }
@@ -203,6 +196,8 @@ internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
             "errorMessage" to error.message,
             "responseCode" to error.responseCode.toString()
         )
+
+        PaymentSessionProblem.AbortPaymentNotAllowed -> mutableMapOf("problem" to "abortPaymentNotAllowed")
     }
 
     return ExtensionsModel(
@@ -217,7 +212,6 @@ internal fun SwedbankPayAPIError.toExtensionsModel(): ExtensionsModel {
             is SwedbankPayAPIError.Error -> message
             SwedbankPayAPIError.InvalidUrl -> "invalid url"
             SwedbankPayAPIError.Unknown -> "unknown"
-            is SwedbankPayAPIError.AbortPaymentNotAllowed -> message
         }
     )
 
