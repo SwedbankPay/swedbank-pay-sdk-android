@@ -2,7 +2,6 @@ package com.swedbankpay.mobilesdk.paymentsession.api.model.request.util
 
 import android.content.res.Resources
 import android.util.DisplayMetrics
-import androidx.core.os.ConfigurationCompat
 import com.swedbankpay.mobilesdk.BuildConfig
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Browser
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
@@ -50,7 +49,7 @@ internal object RequestDataUtil {
 
     fun getBrowser() = Browser(
         acceptHeader = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        languageHeader = getLanguages(),
+        languageHeader = getLanguage(),
         timeZoneOffset = getTimeZoneOffsetInMinutes(),
         javascriptEnabled = true
     )
@@ -127,6 +126,5 @@ internal object RequestDataUtil {
 
     private fun getVersion() = BuildConfig.SDK_VERSION.take(5)
 
-    private fun getLanguages() =
-        ConfigurationCompat.getLocales(Resources.getSystem().configuration).toLanguageTags()
+    private fun getLanguage() = Locale.getDefault().toLanguageTag()
 }
