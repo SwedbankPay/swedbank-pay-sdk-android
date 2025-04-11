@@ -356,18 +356,21 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                 withContext(Dispatchers.Main) {
                                     when (instruction) {
                                         is StepInstruction.SessionNotFound -> {
+                                            mainScope.coroutineContext.cancelChildren(null)
                                             onSdkProblemOccurred(
                                                 PaymentSessionProblem.InternalInconsistencyError
                                             )
                                         }
 
                                         is StepInstruction.InternalError -> {
+                                            mainScope.coroutineContext.cancelChildren(null)
                                             onSdkProblemOccurred(
                                                 PaymentSessionProblem.InternalInconsistencyError
                                             )
                                         }
 
                                         is StepInstruction.StepNotFound -> {
+                                            mainScope.coroutineContext.cancelChildren(null)
                                             onSdkProblemOccurred(
                                                 PaymentSessionProblem.PaymentSessionEndReached
                                             )
