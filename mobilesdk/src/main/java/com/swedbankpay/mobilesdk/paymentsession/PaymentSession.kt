@@ -69,7 +69,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
          * Contains the state of the payment process
          */
         private var _paymentSessionState: QueuedMutableLiveData<PaymentSessionState> =
-            QueuedMutableLiveData(PaymentSessionState.Idle)
+            QueuedMutableLiveData()
         val paymentSessionState: LiveData<PaymentSessionState> = _paymentSessionState
     }
 
@@ -99,7 +99,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     private val mainScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val idleScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var initialSessionURL: String? = null
 
@@ -146,7 +145,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         stopObservingCallbacks()
         stopObservingPaymentFragmentPaymentProcess()
         isPaymentFragmentActive = false
-        setStateToIdle()
 
         if (isStartingSession) {
             BeaconService.clearQueue()
@@ -553,7 +551,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                             isReadyToPayWithExistingPaymentMethod = isReadyToPayWithExistingPaymentMethod
                         )
                     )
-                    setStateToIdle()
                 }
             }
 
@@ -656,7 +653,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             isPaymentFragmentActive = true
 
             _paymentSessionState.setValue(PaymentSessionState.ShowPaymentFragment(paymentFragment))
-            setStateToIdle()
 
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
     }
@@ -713,7 +709,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                             )
                         )
                         _paymentSessionState.setValue(PaymentSessionState.Dismiss3DSecureFragment)
-                        setStateToIdle()
 
                         BeaconService.logEvent(
                             eventAction = EventAction.SDKCallbackInvoked(
@@ -729,7 +724,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
 
         _paymentSessionState.setValue(PaymentSessionState.Show3DSecureFragment(scaRedirectFragment))
-        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
@@ -905,7 +899,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
 
         _paymentSessionState.setValue(PaymentSessionState.SdkProblemOccurred(paymentSessionProblem))
-        setStateToIdle()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
@@ -920,7 +913,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private fun onSessionProblemOccurred(problemDetails: ProblemDetails) {
         _paymentSessionState.setValue(PaymentSessionState.SessionProblemOccurred(problemDetails))
-        setStateToIdle()
 
         stopObservingCallbacks()
 
@@ -933,18 +925,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 extensions = problemDetails.toExtensionsModel()
             )
         )
-    }
-
-    /**
-     * Will set state to idle.
-     * The delay is so observeAsState will get all values sent before setting state to idle
-     */
-    private fun setStateToIdle() {
-        idleScope.coroutineContext.cancelChildren()
-        idleScope.launch {
-            delay(100)
-            _paymentSessionState.setValue(PaymentSessionState.Idle)
-        }
     }
 
     /**
