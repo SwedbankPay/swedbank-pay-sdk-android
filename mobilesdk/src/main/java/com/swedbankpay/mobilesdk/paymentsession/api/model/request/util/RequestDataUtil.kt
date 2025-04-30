@@ -23,7 +23,6 @@ internal object RequestDataUtil {
         return when (T::class) {
             Client::class -> Client(
                 userAgent = "${SDK_NAME}/${getVersion()}",
-                ipAddress = getIPAddress(),
                 screenHeight = getPhoneSize().heightPixels,
                 screenWidth = getPhoneSize().widthPixels,
                 screenColorDepth = 24,
@@ -31,7 +30,6 @@ internal object RequestDataUtil {
 
             ClientWithType::class -> ClientWithType(
                 userAgent = "${SDK_NAME}/${getVersion()}",
-                ipAddress = getIPAddress(),
                 screenHeight = getPhoneSize().heightPixels,
                 screenWidth = getPhoneSize().widthPixels,
                 screenColorDepth = 24,
@@ -40,7 +38,6 @@ internal object RequestDataUtil {
 
             ClientMinimum::class -> ClientMinimum(
                 userAgent = "${SDK_NAME}/${getVersion()}",
-                ipAddress = getIPAddress(),
             ) as T
 
             else -> throw IllegalStateException("Type must be of Client, ClientWithType or ClientMinimum")
