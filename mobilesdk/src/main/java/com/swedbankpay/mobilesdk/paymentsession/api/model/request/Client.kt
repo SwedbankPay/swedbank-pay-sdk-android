@@ -7,8 +7,6 @@ import com.google.gson.annotations.SerializedName
 internal data class Client(
     @SerializedName("userAgent")
     val userAgent: String,
-    @SerializedName("ipAddress")
-    val ipAddress: String,
     @SerializedName("screenHeight")
     val screenHeight: Int?,
     @SerializedName("screenWidth")
@@ -21,8 +19,6 @@ internal data class Client(
 internal data class ClientWithType(
     @SerializedName("userAgent")
     val userAgent: String,
-    @SerializedName("ipAddress")
-    val ipAddress: String,
     @SerializedName("screenHeight")
     val screenHeight: Int?,
     @SerializedName("screenWidth")
@@ -37,8 +33,6 @@ internal data class ClientWithType(
 internal data class ClientMinimum(
     @SerializedName("userAgent")
     val userAgent: String,
-    @SerializedName("ipAddress")
-    val ipAddress: String,
 )
 
 @Keep

@@ -196,6 +196,8 @@ internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
             "errorMessage" to error.message,
             "responseCode" to error.responseCode.toString()
         )
+
+        PaymentSessionProblem.AbortPaymentNotAllowed -> mutableMapOf("problem" to "abortPaymentNotAllowed")
     }
 
     return ExtensionsModel(
