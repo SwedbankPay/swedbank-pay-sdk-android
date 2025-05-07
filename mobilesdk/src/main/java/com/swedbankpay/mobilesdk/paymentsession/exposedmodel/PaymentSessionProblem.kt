@@ -12,6 +12,8 @@ sealed class PaymentSessionProblem {
         val retry: () -> Unit
     ) : PaymentSessionProblem()
 
+    object AbortPaymentNotAllowed : PaymentSessionProblem()
+
     data class PaymentSession3DSecureFragmentLoadFailed(
         val error: SwedbankPayAPIError.Error,
         val retry: () -> Unit

@@ -29,9 +29,13 @@ sealed class AvailableInstrument {
 
     /**
      * Google pay native payments
+     * @param isReadyToPay Boolean indicating if users device has the ability to make Google pay payments
+     * @param isReadyToPayWithExistingPaymentMethod  Boolean indicating if user has at least one card available for payment in current payment session
      */
     data class GooglePay(
-        override val paymentMethod: String
+        override val paymentMethod: String,
+        val isReadyToPay: Boolean = false,
+        val isReadyToPayWithExistingPaymentMethod: Boolean = false
     ) : AvailableInstrument()
 
     /**

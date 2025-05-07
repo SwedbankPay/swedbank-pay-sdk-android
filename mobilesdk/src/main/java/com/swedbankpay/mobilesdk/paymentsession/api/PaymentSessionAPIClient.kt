@@ -7,6 +7,8 @@ import com.swedbankpay.mobilesdk.paymentsession.OperationStep
 import com.swedbankpay.mobilesdk.paymentsession.StepInstruction
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.TimeOutUtil
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ApiError
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentOutputModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentSessionResponse
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.RequestMethod
@@ -16,9 +18,11 @@ import com.swedbankpay.mobilesdk.paymentsession.util.JsonUtil.toApiError
 import com.swedbankpay.mobilesdk.paymentsession.util.JsonUtil.toPaymentOutputModel
 import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionsModel
 import java.io.OutputStreamWriter
-import java.net.MalformedURLException
+import java.net.ConnectException
+import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.URL
+import java.net.UnknownHostException
 import javax.net.ssl.HttpsURLConnection
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -29,6 +33,7 @@ internal open class PaymentSessionAPIClient {
         operation: OperationStep,
         paymentAttemptInstrument: PaymentAttemptInstrument?
     ): PaymentSessionResponse {
+
         val overrideApiCall =
             operation.instructions.firstOrNull { it is StepInstruction.OverrideApiCall }
 
@@ -88,34 +93,33 @@ internal open class PaymentSessionAPIClient {
                 connection.doOutput = false
 
                 val responseCode = connection.responseCode
+
+                val logInfo = ApiCallLogInfo(
+                    url = requestUrl.toString(),
+                    method = "GET",
+                    duration = System.currentTimeMillis() - start,
+                    responseStatusCode = responseCode
+                )
+
                 if (responseCode == HttpsURLConnection.HTTP_OK) {
                     val response = connection.inputStream.bufferedReader()
                         .use { it.readText() }
 
-                    logAPICall(
-                        url = requestUrl.toString(),
-                        method = "GET",
-                        duration = System.currentTimeMillis() - start,
-                        responseStatusCode = responseCode
-                    )
-
                     continuation.resume(
-                        PaymentSessionResponse.Success(paymentOutputModel = response.toPaymentOutputModel())
+                        handleSuccess(
+                            paymentOutputModel = response.toPaymentOutputModel(),
+                            logInfo = logInfo
+                        )
                     )
                 } else if ((500.until(600)).contains(responseCode)) {
-                    logAPICall(
-                        url = requestUrl.toString(),
-                        method = "GET",
-                        duration = System.currentTimeMillis() - start,
-                        responseStatusCode = responseCode,
-                    )
-
                     // When we get a server error we want to retry the request
                     continuation.resume(
-                        PaymentSessionResponse.Retry(
-                            SwedbankPayAPIError.Error(
-                                message = "Internal server error",
-                                responseCode = responseCode
+                        handleRetry(
+                            logInfo = logInfo.copy(
+                                error = SwedbankPayAPIError.Error(
+                                    message = "Internal server error",
+                                    responseCode = responseCode
+                                )
                             )
                         )
                     )
@@ -126,72 +130,70 @@ internal open class PaymentSessionAPIClient {
                     try {
                         val apiError = response.toApiError()
 
-                        val error = SwedbankPayAPIError.Error(
-                            message = apiError.detail,
-                            responseCode = responseCode
-                        )
-
-                        logAPICall(
-                            url = requestUrl.toString(),
-                            method = "GET",
-                            duration = System.currentTimeMillis() - start,
-                            error = error
-                        )
-
                         continuation.resume(
-                            PaymentSessionResponse.Error(error)
+                            handleOperationError(
+                                apiError = apiError,
+                                logInfo = logInfo.copy(
+                                    error = SwedbankPayAPIError.Error(
+                                        message = apiError.detail,
+                                        responseCode = responseCode
+                                    )
+                                )
+                            )
                         )
                     } catch (e: Exception) {
-                        logAPICall(
-                            url = requestUrl.toString(),
-                            method = "GET",
-                            duration = System.currentTimeMillis() - start,
-                            responseStatusCode = responseCode
-                        )
-
                         continuation.resume(
-                            PaymentSessionResponse.Error(
-                                SwedbankPayAPIError.Error(
-                                    message = connection.responseMessage,
-                                    responseCode = responseCode
+                            handleError(
+                                logInfo = logInfo.copy(
+                                    error = SwedbankPayAPIError.Error(
+                                        message = e.localizedMessage,
+                                        responseCode = responseCode
+                                    )
                                 )
                             )
                         )
                     }
                 }
-            } catch (timeoutException: SocketTimeoutException) {
-                val error = SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)
-                logAPICall(
-                    url = url.toString(),
-                    method = "GET",
-                    duration = System.currentTimeMillis() - start,
-                    error = error
-                )
-
-                // When we get a time out we want to retry the request
-                continuation.resume(PaymentSessionResponse.Retry(error))
             } catch (e: Exception) {
                 val error = SwedbankPayAPIError.Error(message = e.localizedMessage)
-                logAPICall(
+
+                val logInfo = ApiCallLogInfo(
                     url = url.toString(),
                     method = "GET",
                     duration = System.currentTimeMillis() - start,
                     error = error
                 )
 
-                continuation.resume(
-                    PaymentSessionResponse.Error(error)
-                )
+                val response = when (e) {
+                    // When not connected to internet we can get these exceptions.
+                    // If so retry the call
+                    is UnknownHostException,
+                    is SocketTimeoutException,
+                    is ConnectException,
+                    is SocketException -> {
+                        handleRetry(logInfo.copy(error = error))
+                    }
+
+                    else -> {
+                        handleError(logInfo.copy(error = error))
+                    }
+                }
+
+                continuation.resume(response)
             }
         } ?: kotlin.run {
             val error = SwedbankPayAPIError.InvalidUrl
-            logAPICall(
-                url = "",
-                method = "GET",
-                duration = System.currentTimeMillis() - start,
-                error = error
+
+            continuation.resume(
+                handleError(
+                    ApiCallLogInfo(
+                        url = "",
+                        method = "GET",
+                        duration = System.currentTimeMillis() - start,
+                        error = error
+                    )
+                )
             )
-            continuation.resume(PaymentSessionResponse.Error(error))
         }
 
     }
@@ -222,32 +224,33 @@ internal open class PaymentSessionAPIClient {
                 outputStreamWriter.flush()
 
                 val responseCode = connection.responseCode
+
+                val logInfo = ApiCallLogInfo(
+                    url = requestUrl.toString(),
+                    method = "POST",
+                    duration = System.currentTimeMillis() - start,
+                    responseStatusCode = responseCode
+                )
+
                 if (responseCode == HttpsURLConnection.HTTP_OK) {
                     val response = connection.inputStream.bufferedReader()
                         .use { it.readText() }
 
-                    logAPICall(
-                        url = requestUrl.toString(),
-                        method = "POST",
-                        duration = System.currentTimeMillis() - start,
-                        responseStatusCode = responseCode
+                    continuation.resume(
+                        handleSuccess(
+                            paymentOutputModel = response.toPaymentOutputModel(),
+                            logInfo = logInfo
+                        )
                     )
-
-                    continuation.resume(PaymentSessionResponse.Success(response.toPaymentOutputModel()))
                 } else if ((500.until(600)).contains(responseCode)) {
-                    logAPICall(
-                        url = requestUrl.toString(),
-                        method = "POST",
-                        duration = System.currentTimeMillis() - start,
-                        responseStatusCode = responseCode,
-                    )
-
                     // When we get a server error we want to retry the request
                     continuation.resume(
-                        PaymentSessionResponse.Retry(
-                            SwedbankPayAPIError.Error(
-                                message = "Internal server error",
-                                responseCode = responseCode
+                        handleRetry(
+                            logInfo = logInfo.copy(
+                                error = SwedbankPayAPIError.Error(
+                                    message = "Internal server error",
+                                    responseCode = responseCode
+                                )
                             )
                         )
                     )
@@ -258,74 +261,68 @@ internal open class PaymentSessionAPIClient {
                     try {
                         val apiError = response.toApiError()
 
-                        val error = SwedbankPayAPIError.Error(
-                            message = apiError.detail,
-                            responseCode = responseCode
-                        )
-
-                        logAPICall(
-                            url = requestUrl.toString(),
-                            method = "POST",
-                            duration = System.currentTimeMillis() - start,
-                            error = error
-                        )
-
                         continuation.resume(
-                            PaymentSessionResponse.Error(error)
+                            handleOperationError(
+                                apiError = apiError, logInfo.copy(
+                                    error = SwedbankPayAPIError.Error(
+                                        message = apiError.detail,
+                                        responseCode = responseCode
+                                    )
+                                )
+                            )
                         )
                     } catch (e: Exception) {
-                        logAPICall(
-                            url = requestUrl.toString(),
-                            method = "POST",
-                            duration = System.currentTimeMillis() - start,
-                            responseStatusCode = responseCode
-                        )
-
                         continuation.resume(
-                            PaymentSessionResponse.Error(
-                                SwedbankPayAPIError.Error(
-                                    message = connection.responseMessage,
-                                    responseCode = responseCode
+                            handleError(
+                                logInfo.copy(
+                                    error = SwedbankPayAPIError.Error(
+                                        message = e.localizedMessage,
+                                        responseCode = responseCode
+                                    )
                                 )
                             )
                         )
                     }
                 }
-            } catch (timeoutException: SocketTimeoutException) {
-                val error = SwedbankPayAPIError.Error(message = timeoutException.localizedMessage)
-                logAPICall(
-                    url = url.toString(),
-                    method = "POST",
-                    duration = System.currentTimeMillis() - start,
-                    error = error
-                )
-
-                // When we get a time out we want to retry the request
-                continuation.resume(PaymentSessionResponse.Retry(error))
             } catch (e: Exception) {
                 val error = SwedbankPayAPIError.Error(message = e.localizedMessage)
-                logAPICall(
+                val logInfo = ApiCallLogInfo(
                     url = url.toString(),
                     method = "POST",
                     duration = System.currentTimeMillis() - start,
                     error = error
                 )
+                val response = when (e) {
+                    // When not connected to internet we can get these exceptions.
+                    // If so retry the call
+                    is UnknownHostException,
+                    is SocketTimeoutException,
+                    is ConnectException,
+                    is SocketException -> {
+                        handleRetry(logInfo.copy(error = error))
+                    }
 
-                continuation.resume(
-                    PaymentSessionResponse.Error(error)
-                )
+                    else -> {
+                        handleError(logInfo.copy(error = error))
+                    }
+                }
+
+                continuation.resume(response)
             }
         } ?: kotlin.run {
             val error = SwedbankPayAPIError.InvalidUrl
-            logAPICall(
-                url = "",
-                method = "POST",
-                duration = System.currentTimeMillis() - start,
-                error = error
-            )
-            continuation.resume(PaymentSessionResponse.Error(error))
-        }
 
+            continuation.resume(
+                handleError(
+                    ApiCallLogInfo(
+                        url = "",
+                        method = "POST",
+                        duration = System.currentTimeMillis() - start,
+                        error = error
+                    )
+                )
+            )
+        }
     }
 
     /**
@@ -349,57 +346,85 @@ internal open class PaymentSessionAPIClient {
                 connection.doOutput = true
 
                 val responseCode = connection.responseCode
-                if (responseCode == HttpsURLConnection.HTTP_NO_CONTENT) {
-                    logAPICall(
-                        url = it,
-                        method = "POST",
-                        duration = System.currentTimeMillis() - start,
-                        responseStatusCode = responseCode,
-                    )
-                } else {
-                    logAPICall(
-                        url = it,
-                        method = "POST",
-                        duration = System.currentTimeMillis() - start,
-                        responseStatusCode = responseCode,
-                    )
-                }
-            } catch (e: MalformedURLException) {
-                logAPICall(
+                val logInfo = ApiCallLogInfo(
                     url = it,
                     method = "POST",
                     duration = System.currentTimeMillis() - start,
-                    error = SwedbankPayAPIError.Error(message = e.localizedMessage)
+                    responseStatusCode = responseCode,
                 )
+
+                logAPICall(logInfo)
+
             } catch (e: Exception) {
                 logAPICall(
-                    url = it,
-                    method = "POST",
-                    duration = System.currentTimeMillis() - start,
-                    error = SwedbankPayAPIError.Error(message = e.localizedMessage)
+                    ApiCallLogInfo(
+                        url = it,
+                        method = "POST",
+                        duration = System.currentTimeMillis() - start,
+                        error = SwedbankPayAPIError.Error(message = e.localizedMessage)
+                    )
                 )
             }
         }
     }
 
+    private fun handleSuccess(
+        paymentOutputModel: PaymentOutputModel,
+        logInfo: ApiCallLogInfo
+    ): PaymentSessionResponse {
+        logAPICall(logInfo)
+        return PaymentSessionResponse.Success(paymentOutputModel = paymentOutputModel)
+    }
+
+    private fun handleRetry(
+        logInfo: ApiCallLogInfo
+    ): PaymentSessionResponse {
+        logAPICall(logInfo)
+        return PaymentSessionResponse.Retry(
+            SwedbankPayAPIError.Error(
+                message = (logInfo.error as? SwedbankPayAPIError.Error)?.message,
+                responseCode = logInfo.responseStatusCode
+            )
+        )
+    }
+
+    private fun handleOperationError(
+        apiError: ApiError,
+        logInfo: ApiCallLogInfo
+    ): PaymentSessionResponse {
+        logAPICall(logInfo)
+        return PaymentSessionResponse.OperationError(apiError)
+    }
+
+    private fun handleError(
+        logInfo: ApiCallLogInfo
+    ): PaymentSessionResponse {
+        logAPICall(logInfo)
+        return PaymentSessionResponse.Error(logInfo.error ?: SwedbankPayAPIError.Unknown)
+    }
+
     private fun logAPICall(
-        url: String,
-        method: String,
-        duration: Long,
-        responseStatusCode: Int? = null,
-        error: SwedbankPayAPIError? = null
+        logInfo: ApiCallLogInfo
     ) {
         BeaconService.logEvent(
             EventAction.HttpRequest(
                 http = HttpModel(
-                    requestUrl = url,
-                    method = method,
-                    responseStatusCode = responseStatusCode,
+                    requestUrl = logInfo.url,
+                    method = logInfo.method,
+                    responseStatusCode = logInfo.responseStatusCode,
                 ),
-                duration = duration.toInt(),
-                extensions = error?.toExtensionsModel()
+                duration = logInfo.duration.toInt(),
+                extensions = logInfo.error?.toExtensionsModel()
             )
         )
     }
+
+    private data class ApiCallLogInfo(
+        val url: String,
+        val method: String,
+        val duration: Long,
+        val responseStatusCode: Int? = null,
+        val error: SwedbankPayAPIError? = null
+    )
 
 }

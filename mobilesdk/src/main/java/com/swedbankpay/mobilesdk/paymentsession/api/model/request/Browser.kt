@@ -7,8 +7,8 @@ import com.google.gson.annotations.SerializedName
 data class Browser(
     @SerializedName("acceptHeader")
     val acceptHeader: String?,
-    @SerializedName("languageHeader")
-    val languageHeader: String?,
+    @SerializedName("language")
+    val language: String?,
     @SerializedName("timeZoneOffset")
     val timeZoneOffset: Int?,
     @SerializedName("javascriptEnabled")

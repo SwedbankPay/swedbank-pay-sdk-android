@@ -73,9 +73,4 @@ sealed class PaymentSessionState {
      */
     class SdkProblemOccurred(val problem: PaymentSessionProblem) : PaymentSessionState()
 
-    /**
-     * Default state
-     */
-    object Idle : PaymentSessionState()
-
 }

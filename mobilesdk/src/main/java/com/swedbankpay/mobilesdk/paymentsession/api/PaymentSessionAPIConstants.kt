@@ -9,6 +9,8 @@ internal object PaymentSessionAPIConstants {
 
     const val NOTIFICATION_URL = "https://fake.payex.com/notification"
 
+    const val ABORT_PAYMENT_NOT_ALLOWED_TYPE = "https://api.payex.com/psp/errordetail/paymentsessions/operationnotallowed"
+
     // Expects name constants
     const val THREE_DS_METHOD_DATA = "threeDSMethodData"
     const val CREQ = "creq"

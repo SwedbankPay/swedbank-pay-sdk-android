@@ -2,6 +2,7 @@ package com.swedbankpay.mobilesdk.paymentsession.api.model.response
 
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 
+
 internal sealed class PaymentSessionResponse(
 ) {
     class Success(val paymentOutputModel: PaymentOutputModel) : PaymentSessionResponse()
@@ -10,5 +11,6 @@ internal sealed class PaymentSessionResponse(
 
     data class Retry(val error: SwedbankPayAPIError) : PaymentSessionResponse()
 
-}
+    data class OperationError(val apiError: ApiError) : PaymentSessionResponse()
 
+}
