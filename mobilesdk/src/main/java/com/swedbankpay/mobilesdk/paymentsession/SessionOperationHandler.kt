@@ -43,14 +43,16 @@ internal object SessionOperationHandler {
         paymentOutputModel: PaymentOutputModel?,
         paymentAttemptInstrument: PaymentAttemptInstrument? = null,
         sdkControllerMode: SwedbankPayPaymentSessionSDKControllerMode? = null,
-    ): OperationStep {
+        onProblemOccurred: (ProblemDetails, Boolean) -> Unit
+    ): OperationStep? {
+
+        var hasShowedError = false
+
         if (paymentOutputModel == null) {
             return OperationStep(
-                instructions = listOf(StepInstruction.SessionNotFound)
+                instruction = StepInstruction.SessionNotFound
             )
         }
-
-        val instructions = mutableListOf<StepInstruction>()
 
         // Extract every operation we have on the session object
         var operations: List<OperationOutputModel> =
@@ -63,26 +65,12 @@ internal object SessionOperationHandler {
             val problemOperation = paymentOutputModel.problem.operation
             if (problemOperation?.rel == OperationRel.ACKNOWLEDGE_FAILED_ATTEMPT) {
                 if (problemOperation.href != null) {
-                    if (alreadyUsedProblemUrls.contains(problemOperation.href)) {
-                        instructions.add(
-                            StepInstruction.ProblemOccurred(
-                                paymentOutputModel.problem,
-                                false
-                            )
-                        )
-                    } else {
+                    if (!alreadyUsedProblemUrls.contains(problemOperation.href)) {
+                        hasShowedError = true
                         alreadyUsedProblemUrls.add(problemOperation.href)
-                        return OperationStep(
-                            requestMethod = problemOperation.method,
-                            url = URL(problemOperation.href),
-                            operationRel = problemOperation.rel,
-                            instructions = listOf(
-                                StepInstruction.ProblemOccurred(
-                                    paymentOutputModel.problem,
-                                    true
-                                )
-                            )
-                        )
+                        onProblemOccurred.invoke(paymentOutputModel.problem, true)
+                    } else {
+                        onProblemOccurred.invoke(paymentOutputModel.problem, false)
                     }
                 }
             }
@@ -105,8 +93,7 @@ internal object SessionOperationHandler {
                 operationRel = preparePayment.rel,
                 data = preparePayment.rel?.getRequestDataIfAny(
                     culture = paymentOutputModel.paymentSession.culture
-                ),
-                instructions = instructions
+                )
             )
         }
 
@@ -128,8 +115,7 @@ internal object SessionOperationHandler {
                     requestMethod = customizePayment.method,
                     url = URL(customizePayment.href),
                     operationRel = customizePayment.rel,
-                    data = customizePayment.rel?.getRequestDataIfAny(),
-                    instructions = instructions
+                    data = customizePayment.rel?.getRequestDataIfAny()
                 )
             }
 
@@ -142,17 +128,15 @@ internal object SessionOperationHandler {
                     operationRel = customizePayment.rel,
                     data = customizePayment.rel?.getRequestDataIfAny(
                         paymentAttemptInstrument = attemptInstrument
-                    ),
-                    instructions = instructions
+                    )
                 )
             }
 
             if (paymentAttemptInstrument.instrumentModeRequired() && paymentOutputModel.paymentSession.instrumentModePaymentMethod == paymentAttemptInstrument.paymentMethod
             ) {
                 // Session is in Instrument Mode, and the set instrument is matching payment attempt, time to create a web based view and send to the merchant app
-                instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
                 return OperationStep(
-                    instructions = instructions
+                    instruction = StepInstruction.CreatePaymentFragmentStep
                 )
             }
         }
@@ -169,17 +153,15 @@ internal object SessionOperationHandler {
                     operationRel = customizePayment.rel,
                     data = customizePayment.rel?.getRequestDataIfAny(
                         availableInstrument = mode.instrument
-                    ),
-                    instructions = instructions
+                    )
                 )
             }
 
             if (mode is SwedbankPayPaymentSessionSDKControllerMode.InstrumentMode && paymentOutputModel.paymentSession.instrumentModePaymentMethod == mode.instrument.paymentMethod
             ) {
                 // Session is in Instrument Mode, and the set SDK view controller mode is matching the instrument, time to create a web based view and send to the merchant app
-                instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
                 return OperationStep(
-                    instructions = instructions
+                    instruction = StepInstruction.CreatePaymentFragmentStep
                 )
             }
 
@@ -195,8 +177,7 @@ internal object SessionOperationHandler {
                     operationRel = customizePayment.rel,
                     data = customizePayment.rel?.getRequestDataIfAny(
                         restrictToPaymentMethods = mode.restrictedToInstruments?.map { it.paymentMethod }
-                    ),
-                    instructions = instructions
+                    )
                 )
             }
 
@@ -204,9 +185,8 @@ internal object SessionOperationHandler {
                     ?.sorted()
             ) {
                 // Session is in Menu Mode, and the list of restricted instruments match the set SDK view controller mode, time to create a web based view and send to the merchant app
-                instructions.add(0, StepInstruction.CreatePaymentFragmentStep)
                 return OperationStep(
-                    instructions = instructions
+                    instruction = StepInstruction.CreatePaymentFragmentStep
                 )
             }
         }
@@ -220,7 +200,6 @@ internal object SessionOperationHandler {
 
         if (startPaymentAttempt != null) {
             // We have a startPaymentAttempt and it's matching the set instrument, time to make a payment attempt
-
             return OperationStep(
                 requestMethod = startPaymentAttempt.method,
                 url = URL(startPaymentAttempt.href),
@@ -228,8 +207,7 @@ internal object SessionOperationHandler {
                 data = startPaymentAttempt.rel?.getRequestDataIfAny(
                     paymentAttemptInstrument,
                     paymentOutputModel.paymentSession.culture
-                ),
-                instructions = instructions
+                )
             )
         }
 
@@ -241,9 +219,8 @@ internal object SessionOperationHandler {
             // We have an active launchClientApp task, and the contained URL isn't in the list of already launched Client App URLs, launch the external app on the device
 
             alreadyUsedSwishUrls.add(launchClientApp.href)
-            instructions.add(0, StepInstruction.LaunchClientAppStep(launchClientApp.href))
             return OperationStep(
-                instructions = instructions,
+                instruction = StepInstruction.LaunchClientAppStep(launchClientApp.href),
                 integrationRel = IntegrationTaskRel.LAUNCH_CLIENT_APP
             )
         }
@@ -267,11 +244,9 @@ internal object SessionOperationHandler {
             )?.value as String?] =
                 completionIndicator
 
-            instructions.add(0, StepInstruction.OverrideApiCall(paymentOutputModel))
-
             return OperationStep(
                 integrationRel = IntegrationTaskRel.SCA_METHOD_REQUEST,
-                instructions = instructions
+                instruction = StepInstruction.OverrideApiCall(paymentOutputModel)
             )
         }
 
@@ -304,13 +279,11 @@ internal object SessionOperationHandler {
                         completionIndicator = scaMethodRequestDataPerformed[createAuthExpectationModel.value]
                             ?: "U",
                         notificationUrl = notificationUrl
-                    ),
-                    instructions = instructions
+                    )
                 )
             } ?: kotlin.run {
-                instructions.add(0, StepInstruction.InternalError)
                 return OperationStep(
-                    instructions = instructions
+                    instruction = StepInstruction.InternalError
                 )
             }
         } else if (createAuth != null
@@ -335,13 +308,11 @@ internal object SessionOperationHandler {
                         culture = paymentOutputModel.paymentSession.culture,
                         completionIndicator = completionIndicator,
                         notificationUrl = notificationUrl
-                    ),
-                    instructions = instructions
+                    )
                 )
             } ?: kotlin.run {
-                instructions.add(0, StepInstruction.InternalError)
                 return OperationStep(
-                    instructions = instructions
+                    instruction = StepInstruction.InternalError
                 )
             }
         } else if (createAuth != null) {
@@ -359,13 +330,11 @@ internal object SessionOperationHandler {
                         culture = paymentOutputModel.paymentSession.culture,
                         completionIndicator = "U",
                         notificationUrl = notificationUrl
-                    ),
-                    instructions = instructions
+                    )
                 )
             } ?: kotlin.run {
-                instructions.add(0, StepInstruction.InternalError)
                 return OperationStep(
-                    instructions = instructions
+                    instruction = StepInstruction.InternalError
                 )
             }
         }
@@ -378,10 +347,8 @@ internal object SessionOperationHandler {
             && scaRedirect.expects?.any { it?.value in scaRedirectDataPerformed.keys } == false
         ) {
             // We have an active scaRedirect task, and the 3D secure page hasn't been shown to the user yet (as identified by creq as key), tell the merchant app to show a 3D Secure Fragment
-
-            instructions.add(0, StepInstruction.ScaRedirectStep(scaRedirect))
             return OperationStep(
-                instructions = instructions
+                instruction = StepInstruction.ScaRedirectStep(scaRedirect)
             )
         }
 
@@ -409,8 +376,7 @@ internal object SessionOperationHandler {
                 data = completeAuth.rel?.getRequestDataIfAny(
                     culture = paymentOutputModel.paymentSession.culture,
                     cRes = scaRedirectDataPerformed[completeAuthExpectationModel.value] ?: ""
-                ),
-                instructions = instructions
+                )
             )
         }
 
@@ -420,10 +386,8 @@ internal object SessionOperationHandler {
 
         if (walletSdk != null) {
             // We have an active walletSdk task, this means we should initiate an Google pay Payment Request locally on the device
-
-            instructions.add(0, StepInstruction.GooglePayStep(walletSdk))
             return OperationStep(
-                instructions = instructions
+                instruction = StepInstruction.GooglePayStep(walletSdk)
             )
         }
 
@@ -432,10 +396,8 @@ internal object SessionOperationHandler {
             operations.firstOrNull { it.rel == OperationRel.REDIRECT_PAYER }
         if (redirectPayer?.href != null) {
             // We have a redirectPayer operation, this means the payment session has ended and we can look at the URL to determine the result
-
-            instructions.add(0, StepInstruction.PaymentSessionCompleted(redirectPayer.href))
             return OperationStep(
-                instructions = instructions
+                instruction = StepInstruction.PaymentSessionCompleted(redirectPayer.href)
             )
         }
 
@@ -482,18 +444,14 @@ internal object SessionOperationHandler {
                     availableInstruments.add(AvailableInstrument.NewCreditCard("NewCreditCard"))
                 }
 
-                instructions.add(
-                    0, StepInstruction
+                hasShownAvailableInstruments = true
+
+                return OperationStep(
+                    instruction = StepInstruction
                         .AvailableInstrumentStep(
                             availableInstruments = availableInstruments,
                             availableInstrumentsForLogging = availableMethods.toSemiColonSeparatedString()
                         )
-                )
-
-                hasShownAvailableInstruments = true
-
-                return OperationStep(
-                    instructions = instructions
                 )
             }
         }
@@ -510,15 +468,19 @@ internal object SessionOperationHandler {
                 data = getPayment.rel?.getRequestDataIfAny(
                     culture = paymentOutputModel.paymentSession.culture
                 ),
-                delayRequestDuration = 2000,
-                instructions = instructions
+                delayRequestDuration = 2000
             )
         }
 
-        instructions.add(0, StepInstruction.StepNotFound)
-        return OperationStep(
-            instructions = instructions
-        )
+
+        if (!hasShowedError) {
+            return OperationStep(
+                instruction = StepInstruction.StepNotFound
+            )
+        }
+
+
+        return null
     }
 
     fun getOperationStepForAbortPayment(paymentOutputModel: PaymentOutputModel): OperationStep? {
@@ -624,12 +586,6 @@ internal sealed class StepInstruction(
 
     object InternalError : StepInstruction(true)
 
-    class ProblemOccurred(
-        val problemDetails: ProblemDetails,
-        waitForAction: Boolean
-    ) :
-        StepInstruction(waitForAction)
-
     class OverrideApiCall(
         val paymentOutputModel: PaymentOutputModel
     ) : StepInstruction(false)
@@ -637,10 +593,7 @@ internal sealed class StepInstruction(
 }
 
 /**
- * This class holds what the next step would be in the payment session
- * [instructions] can hold zero, one or at most two [StepInstruction]
- * If two [StepInstruction] is present in the list the second one
- * will always be a [StepInstruction.ProblemOccurred] with waitForAction set to false
+ * This class holds what the next step will be in the payment session
  */
 internal data class OperationStep(
     val requestMethod: RequestMethod? = RequestMethod.GET,
@@ -648,6 +601,6 @@ internal data class OperationStep(
     val operationRel: OperationRel? = null,
     val integrationRel: IntegrationTaskRel? = null,
     val data: String? = null,
-    val instructions: List<StepInstruction> = listOf(),
+    val instruction: StepInstruction? = null,
     val delayRequestDuration: Long = 0,
 )

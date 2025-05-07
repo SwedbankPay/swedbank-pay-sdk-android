@@ -112,6 +112,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private var isPaymentFragmentActive = false
 
+    private var stopExecutingNextStep = false
+
     /**
      * Styling for the payment menu
      *
@@ -195,12 +197,14 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         automaticRetry: Boolean = true,
         originalStep: OperationStep? = null
     ) {
+        stopExecutingNextStep = false
         startRequestTimestamp = System.currentTimeMillis()
 
         mainScope.launch {
-            var stepToExecute = operationStep
+            var stepToExecute: OperationStep = operationStep
 
-            while (stepToExecute.instructions.firstOrNull { it.waitForAction } == null) {
+            while (stepToExecute.instruction?.waitForAction != true && !stopExecutingNextStep) {
+
                 // This is here for polling purposes
                 if (stepToExecute.delayRequestDuration > 0) {
                     delay(stepToExecute.delayRequestDuration)
@@ -213,6 +217,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         stepToExecute,
                         paymentAttemptInstrument
                     )
+
                 // Check if coroutine scope is still active. If not don't bother do do things
                 // Coroutine will not be active if we are waiting for action from merchant
                 ensureActive()
@@ -331,25 +336,27 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         SessionOperationHandler.getNextStep(
                             paymentOutputModel = currentPaymentOutputModel,
                             paymentAttemptInstrument = paymentAttemptInstrument,
-                            sdkControllerMode = sdkControllerMode
-                        ).let { step ->
-
+                            sdkControllerMode = sdkControllerMode,
+                            onProblemOccurred = { problem, showProblem ->
+                                if (showProblem) {
+                                    mainScope.launch {
+                                        withContext(Dispatchers.Main) {
+                                            onSessionProblemOccurred(problem)
+                                        }
+                                    }
+                                }
+                                client.postFailedAttemptRequest(problem)
+                            }
+                        )?.let { step ->
                             if (operationStep.operationRel == OperationRel.REDIRECT_PAYER) {
                                 clearPaymentAttemptInstrument()
                             }
 
                             stepToExecute = step
-                            if (step.instructions.isNotEmpty()
+                            if (step.instruction != null
                             ) {
-                                val (instruction, problem) = step.instructions
 
-                                if (instruction is StepInstruction.ProblemOccurred) {
-                                    client.postFailedAttemptRequest(instruction.problemDetails)
-                                }
-
-                                if (problem != null && problem is StepInstruction.ProblemOccurred) {
-                                    client.postFailedAttemptRequest(problem.problemDetails)
-                                }
+                                val instruction = step.instruction
 
                                 withContext(Dispatchers.Main) {
                                     when (instruction) {
@@ -375,7 +382,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                         }
 
                                         else -> {
-                                            if (instruction?.waitForAction == true) {
+                                            if (instruction.waitForAction == true) {
                                                 mainScope.coroutineContext.cancelChildren(null)
                                                 checkWhatTodo(instruction)
                                             }
@@ -383,6 +390,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                     }
                                 }
                             }
+                        } ?: kotlin.run {
+                            stopExecutingNextStep = true
                         }
                     }
                 }
@@ -472,10 +481,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
             is StepInstruction.PaymentSessionCompleted -> {
                 onPaymentComplete(instruction.url)
-            }
-
-            is StepInstruction.ProblemOccurred -> {
-                onSessionProblemOccurred(instruction.problemDetails)
             }
 
             else -> {
@@ -578,7 +583,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
             executeNextStepUntilFurtherInstructions(
                 OperationStep(
-                    instructions = listOf(StepInstruction.OverrideApiCall(it))
+                    instruction = StepInstruction.OverrideApiCall(it)
                 )
             )
 
@@ -611,7 +616,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
             executeNextStepUntilFurtherInstructions(
                 OperationStep(
-                    instructions = listOf(StepInstruction.OverrideApiCall(it))
+                    instruction = StepInstruction.OverrideApiCall(it)
                 )
             )
 
@@ -705,7 +710,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         )
                         executeNextStepUntilFurtherInstructions(
                             operationStep = OperationStep(
-                                instructions = listOf(StepInstruction.OverrideApiCall(session))
+                                instruction = StepInstruction.OverrideApiCall(session)
                             )
                         )
                         _paymentSessionState.setValue(PaymentSessionState.Dismiss3DSecureFragment)
@@ -802,7 +807,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 (paymentInstrument as PaymentAttemptInstrument.GooglePay).activity,
             ) { googlePayResult, error ->
                 currentPaymentOutputModel?.let { paymentOutputModel ->
-
+                    clearPaymentAttemptInstrument()
                     val operation = when {
                         googlePayResult != null -> {
                             SessionOperationHandler.getOperationStepForAttemptPayload(
