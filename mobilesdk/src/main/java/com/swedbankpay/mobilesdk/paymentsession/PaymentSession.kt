@@ -1,6 +1,7 @@
 package com.swedbankpay.mobilesdk.paymentsession
 
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -102,6 +103,16 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private var initialSessionURL: String? = null
 
+    /**
+     * Is used for various tasks that needs context to work
+     */
+    private var currentContext: Context? = null
+
+    /**
+     * Is used when opening google pay
+     */
+    private var currentActivity: Activity? = null
+
     private var currentPaymentOutputModel: PaymentOutputModel? = null
 
     private var paymentAttemptInstrument: PaymentAttemptInstrument? = null
@@ -142,6 +153,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         clearPaymentAttemptInstrument()
         clearSdkControllerMode()
         initialSessionURL = null
+        currentContext = null
+        currentActivity = null
         currentPaymentOutputModel = null
         SessionOperationHandler.clearState()
         stopObservingCallbacks()
@@ -337,6 +350,10 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                             paymentOutputModel = currentPaymentOutputModel,
                             paymentAttemptInstrument = paymentAttemptInstrument,
                             sdkControllerMode = sdkControllerMode,
+                            currentContext = currentContext,
+                            clearPaymentAttemptInstrument = {
+                                clearPaymentAttemptInstrument()
+                            },
                             onProblemOccurred = { problem, showProblem ->
                                 if (showProblem) {
                                     mainScope.launch {
@@ -348,10 +365,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                 client.postFailedAttemptRequest(problem)
                             }
                         )?.let { step ->
-                            if (operationStep.operationRel == OperationRel.REDIRECT_PAYER) {
-                                clearPaymentAttemptInstrument()
-                            }
-
                             stepToExecute = step
                             if (step.instruction != null
                             ) {
@@ -576,8 +589,11 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     ) {
         clearSdkControllerMode()
         isPaymentFragmentActive = false
+
         currentPaymentOutputModel?.let {
             paymentAttemptInstrument = instrument
+            currentContext = instrument.context
+            currentActivity = (instrument as? PaymentAttemptInstrument.GooglePay)?.activity
 
             startObservingCallbacks()
 
@@ -604,7 +620,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      * Creates a payment fragment with the supplied mode applied
      */
     fun createPaymentFragment(mode: SwedbankPayPaymentSessionSDKControllerMode) {
-        clearPaymentAttemptInstrument()
         currentPaymentOutputModel?.let {
             sdkControllerMode = if (mode is SwedbankPayPaymentSessionSDKControllerMode.Menu
                 && mode.restrictedToInstruments?.isEmpty() == true
@@ -638,7 +653,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
      * Creates a payment fragment
      */
     private fun createPaymentFragment() {
-        clearPaymentAttemptInstrument()
         clearSdkControllerMode()
         orderInfo?.let {
             val paymentFragment = PaymentFragment()
@@ -702,8 +716,6 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             currentPaymentOutputModel?.let { session ->
                 when {
                     cRes != null -> {
-                        clearPaymentAttemptInstrument()
-
                         SessionOperationHandler.scaRedirectComplete(
                             task.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)?.value as String,
                             cRes
@@ -743,17 +755,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun launchClientApp(href: String) {
         val uriWithCallback = href.addCallbackUrl(orderInfo)
 
-        safeLet(uriWithCallback, paymentAttemptInstrument) { uri, paymentInstrument ->
-            when (paymentInstrument) {
-                is PaymentAttemptInstrument.Swish -> {
-                    launchSwish(uri, paymentInstrument.localStartContext)
-                    clearPaymentAttemptInstrument()
-                }
-
-                else -> {
-                    onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
-                }
-            }
+        safeLet(uriWithCallback, currentContext) { uri, context ->
+            launchSwish(uri, context)
         } ?: kotlin.run {
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
@@ -801,13 +804,12 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     private fun launchGooglePay(task: IntegrationTask) {
-        safeLet(paymentAttemptInstrument, task.expects) { paymentInstrument, expectsModels ->
+        safeLet(currentActivity, task.expects) { activity, expectsModels ->
             GooglePayService.launchGooglePay(
                 expectsModels.filterNotNull(),
-                (paymentInstrument as PaymentAttemptInstrument.GooglePay).activity,
+                activity,
             ) { googlePayResult, error ->
                 currentPaymentOutputModel?.let { paymentOutputModel ->
-                    clearPaymentAttemptInstrument()
                     val operation = when {
                         googlePayResult != null -> {
                             SessionOperationHandler.getOperationStepForAttemptPayload(

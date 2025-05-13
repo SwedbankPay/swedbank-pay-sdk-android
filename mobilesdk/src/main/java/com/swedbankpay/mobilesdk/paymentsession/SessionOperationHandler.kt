@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.paymentsession
 
+import android.content.Context
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestUtil.getRequestDataIfAny
@@ -38,11 +39,16 @@ internal object SessionOperationHandler {
      * @param paymentOutputModel Current payment model
      * @param paymentAttemptInstrument Chosen [PaymentAttemptInstrument] for the payment.
      * @param sdkControllerMode Chosen [SwedbankPayPaymentSessionSDKControllerMode] for the payment.
+     * @param currentContext Context to be used in various places
+     * @param clearPaymentAttemptInstrument Callback to clear payment attempt instrument
+     * @param onProblemOccurred Callback to send problem without interrupting session logic
      */
     suspend fun getNextStep(
         paymentOutputModel: PaymentOutputModel?,
         paymentAttemptInstrument: PaymentAttemptInstrument? = null,
         sdkControllerMode: SwedbankPayPaymentSessionSDKControllerMode? = null,
+        currentContext: Context? = null,
+        clearPaymentAttemptInstrument: () -> Unit,
         onProblemOccurred: (ProblemDetails, Boolean) -> Unit
     ): OperationStep? {
 
@@ -135,6 +141,7 @@ internal object SessionOperationHandler {
             if (paymentAttemptInstrument.instrumentModeRequired() && paymentOutputModel.paymentSession.instrumentModePaymentMethod == paymentAttemptInstrument.paymentMethod
             ) {
                 // Session is in Instrument Mode, and the set instrument is matching payment attempt, time to create a web based view and send to the merchant app
+                clearPaymentAttemptInstrument.invoke()
                 return OperationStep(
                     instruction = StepInstruction.CreatePaymentFragmentStep
                 )
@@ -200,6 +207,7 @@ internal object SessionOperationHandler {
 
         if (startPaymentAttempt != null) {
             // We have a startPaymentAttempt and it's matching the set instrument, time to make a payment attempt
+            clearPaymentAttemptInstrument.invoke()
             return OperationStep(
                 requestMethod = startPaymentAttempt.method,
                 url = URL(startPaymentAttempt.href),
@@ -236,7 +244,7 @@ internal object SessionOperationHandler {
 
             val completionIndicator = ScaMethodService.loadScaMethodRequest(
                 task = scaMethodRequest,
-                localStartContext = paymentAttemptInstrument?.context
+                localStartContext = currentContext
             )
 
             scaMethodRequestDataPerformed[scaMethodRequest.getExpectValuesFor(
@@ -396,6 +404,7 @@ internal object SessionOperationHandler {
             operations.firstOrNull { it.rel == OperationRel.REDIRECT_PAYER }
         if (redirectPayer?.href != null) {
             // We have a redirectPayer operation, this means the payment session has ended and we can look at the URL to determine the result
+            clearPaymentAttemptInstrument.invoke()
             return OperationStep(
                 instruction = StepInstruction.PaymentSessionCompleted(redirectPayer.href)
             )
