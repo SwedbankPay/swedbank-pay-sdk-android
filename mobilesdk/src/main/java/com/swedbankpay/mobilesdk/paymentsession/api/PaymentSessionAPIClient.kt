@@ -34,12 +34,9 @@ internal open class PaymentSessionAPIClient {
         paymentAttemptInstrument: PaymentAttemptInstrument?
     ): PaymentSessionResponse {
 
-        val overrideApiCall =
-            operation.instructions.firstOrNull { it is StepInstruction.OverrideApiCall }
-
         val paymentResponse = when {
-            overrideApiCall != null && overrideApiCall is StepInstruction.OverrideApiCall -> {
-                PaymentSessionResponse.Success(overrideApiCall.paymentOutputModel)
+            operation.instruction is StepInstruction.OverrideApiCall -> {
+                PaymentSessionResponse.Success(operation.instruction.paymentOutputModel)
             }
 
             operation.requestMethod == RequestMethod.GET -> {
