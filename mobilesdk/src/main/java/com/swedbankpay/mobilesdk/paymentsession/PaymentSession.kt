@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.PaymentFragment
 import com.swedbankpay.mobilesdk.PaymentViewModel
@@ -17,7 +18,6 @@ import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.ExtensionsModel
 import com.swedbankpay.mobilesdk.logging.model.MethodModel
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIClient
-import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttemptProblemType
@@ -42,6 +42,7 @@ import com.swedbankpay.mobilesdk.paymentsession.util.UriCallbackUtil.addCallback
 import com.swedbankpay.mobilesdk.paymentsession.util.clientAppCallbackExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.configuration.AutomaticConfiguration
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
+import com.swedbankpay.mobilesdk.paymentsession.util.extension.setValueIfChanged
 import com.swedbankpay.mobilesdk.paymentsession.util.googlePayPaymentReadinessExtensionModel
 import com.swedbankpay.mobilesdk.paymentsession.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.livedata.QueuedMutableLiveData
@@ -57,6 +58,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
 
+data class ScaResult(
+    val cRes: String? = null,
+    val cReq: String? = null,
+    val error: PaymentSessionProblem? = null
+)
 
 /**
  * Class that handles payment sessions
@@ -72,6 +78,22 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         private var _paymentSessionState: QueuedMutableLiveData<PaymentSessionState> =
             QueuedMutableLiveData()
         val paymentSessionState: LiveData<PaymentSessionState> = _paymentSessionState
+
+        private var scaResult: MutableLiveData<ScaResult?> = MutableLiveData()
+
+        internal fun onScaResult(
+            cRes: String? = null,
+            cReq: String? = null,
+            error: PaymentSessionProblem? = null
+        ) {
+            scaResult.setValueIfChanged(
+                ScaResult(
+                    cRes = cRes,
+                    cReq = cReq,
+                    error = error
+                )
+            )
+        }
     }
 
     /**
@@ -96,6 +118,33 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             }
 
             else -> {}
+        }
+    }
+
+    private val scaRedirectObserver = Observer<ScaResult?> { result ->
+        stopObservingScaRedirect()
+
+        if (result?.error != null) {
+            onSdkProblemOccurred(result.error)
+        } else {
+            safeLet(currentPaymentOutputModel, result?.cRes, result?.cReq) { session, cres, creq ->
+                SessionOperationHandler.scaRedirectComplete(creq, cres)
+                executeNextStepUntilFurtherInstructions(
+                    operationStep = OperationStep(
+                        instruction = StepInstruction.OverrideApiCall(session)
+                    )
+                )
+                _paymentSessionState.setValue(PaymentSessionState.Dismiss3DSecureFragment)
+
+                BeaconService.logEvent(
+                    eventAction = EventAction.SDKCallbackInvoked(
+                        method = MethodModel(
+                            name = "dismiss3DSecureFragment",
+                            succeeded = true
+                        )
+                    )
+                )
+            } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
     }
 
@@ -159,6 +208,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         SessionOperationHandler.clearState()
         stopObservingCallbacks()
         stopObservingPaymentFragmentPaymentProcess()
+        stopObservingScaRedirect()
         isPaymentFragmentActive = false
 
         if (isStartingSession) {
@@ -403,7 +453,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                     }
                                 }
                             }
-                        } ?: kotlin.run {
+                        } ?: run {
                             stopExecutingNextStep = true
                         }
                     }
@@ -644,7 +694,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     extensions = mode.toExtensionModel()
                 )
             )
-        } ?: kotlin.run {
+        } ?: run {
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
     }
@@ -709,36 +759,9 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
     private fun show3DSecure(task: IntegrationTask) {
 
-        val scaRedirectFragment = ScaRedirectFragment(
-            task,
-            errorHandler = ::onSdkProblemOccurred
-        ) { cRes ->
-            currentPaymentOutputModel?.let { session ->
-                when {
-                    cRes != null -> {
-                        SessionOperationHandler.scaRedirectComplete(
-                            task.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)?.value as String,
-                            cRes
-                        )
-                        executeNextStepUntilFurtherInstructions(
-                            operationStep = OperationStep(
-                                instruction = StepInstruction.OverrideApiCall(session)
-                            )
-                        )
-                        _paymentSessionState.setValue(PaymentSessionState.Dismiss3DSecureFragment)
+        startObservingScaRedirect()
 
-                        BeaconService.logEvent(
-                            eventAction = EventAction.SDKCallbackInvoked(
-                                method = MethodModel(
-                                    name = "dismiss3DSecureFragment",
-                                    succeeded = true
-                                )
-                            )
-                        )
-                    }
-                }
-            } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
-        }
+        val scaRedirectFragment = ScaRedirectFragment.newInstance(task)
 
         _paymentSessionState.setValue(PaymentSessionState.Show3DSecureFragment(scaRedirectFragment))
 
@@ -752,12 +775,20 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         )
     }
 
+    private fun startObservingScaRedirect() {
+        scaResult.observeForever(scaRedirectObserver)
+    }
+
+    private fun stopObservingScaRedirect() {
+        scaResult.observeForever(scaRedirectObserver)
+    }
+
     private fun launchClientApp(href: String) {
         val uriWithCallback = href.addCallbackUrl(orderInfo)
 
         safeLet(uriWithCallback, currentContext) { uri, context ->
             launchSwish(uri, context)
-        } ?: kotlin.run {
+        } ?: run {
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
     }
@@ -840,7 +871,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
 
             }
-        } ?: kotlin.run {
+        } ?: run {
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
 
