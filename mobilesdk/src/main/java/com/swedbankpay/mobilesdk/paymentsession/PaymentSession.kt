@@ -5,8 +5,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.PaymentFragment
 import com.swedbankpay.mobilesdk.PaymentViewModel
@@ -79,7 +79,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             QueuedMutableLiveData()
         val paymentSessionState: LiveData<PaymentSessionState> = _paymentSessionState
 
-        private var scaResult: MutableLiveData<ScaResult?> = MutableLiveData()
+        private var scaResult: QueuedMutableLiveData<ScaResult?> = QueuedMutableLiveData()
 
         internal fun onScaResult(
             cRes: String? = null,
@@ -121,32 +121,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
     }
 
-    private val scaRedirectObserver = Observer<ScaResult?> { result ->
-        stopObservingScaRedirect()
-
-        if (result?.error != null) {
-            onSdkProblemOccurred(result.error)
-        } else {
-            safeLet(currentPaymentOutputModel, result?.cRes, result?.cReq) { session, cres, creq ->
-                SessionOperationHandler.scaRedirectComplete(creq, cres)
-                executeNextStepUntilFurtherInstructions(
-                    operationStep = OperationStep(
-                        instruction = StepInstruction.OverrideApiCall(session)
-                    )
-                )
-                _paymentSessionState.setValue(PaymentSessionState.Dismiss3DSecureFragment)
-
-                BeaconService.logEvent(
-                    eventAction = EventAction.SDKCallbackInvoked(
-                        method = MethodModel(
-                            name = "dismiss3DSecureFragment",
-                            succeeded = true
-                        )
-                    )
-                )
-            } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
-        }
-    }
+    private var scaRedirectObserver : Observer<ScaResult?>? = null
 
     private val mainScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -758,8 +733,38 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     }
 
     private fun show3DSecure(task: IntegrationTask) {
+        scaRedirectObserver = Observer<ScaResult?> { result ->
+            if (result != null) {
+                if (result.error != null) {
+                    onSdkProblemOccurred(result.error)
+                } else {
+                    safeLet(
+                        currentPaymentOutputModel,
+                        result.cRes,
+                        result.cReq
+                    ) { session, cres, creq ->
+                        SessionOperationHandler.scaRedirectComplete(creq, cres)
+                        executeNextStepUntilFurtherInstructions(
+                            operationStep = OperationStep(
+                                instruction = StepInstruction.OverrideApiCall(session)
+                            )
+                        )
+                        _paymentSessionState.setValue(PaymentSessionState.Dismiss3DSecureFragment)
 
-        startObservingScaRedirect()
+                        BeaconService.logEvent(
+                            eventAction = EventAction.SDKCallbackInvoked(
+                                method = MethodModel(
+                                    name = "dismiss3DSecureFragment",
+                                    succeeded = true
+                                )
+                            )
+                        )
+                    } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+                }
+            }
+        }
+
+        scaResult.observeForever(scaRedirectObserver!!)
 
         val scaRedirectFragment = ScaRedirectFragment.newInstance(task)
 
@@ -775,12 +780,12 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         )
     }
 
-    private fun startObservingScaRedirect() {
-        scaResult.observeForever(scaRedirectObserver)
-    }
-
     private fun stopObservingScaRedirect() {
-        scaResult.observeForever(scaRedirectObserver)
+        scaRedirectObserver?.let {
+            scaResult.setValueIfChanged(null)
+            scaResult.removeObserver(it)
+            scaRedirectObserver = null
+        }
     }
 
     private fun launchClientApp(href: String) {
