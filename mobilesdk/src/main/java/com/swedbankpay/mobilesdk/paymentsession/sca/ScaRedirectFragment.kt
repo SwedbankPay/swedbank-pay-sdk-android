@@ -34,6 +34,7 @@ import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import com.swedbankpay.mobilesdk.paymentsession.util.scaRedirectResultExtensionModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 private const val ARG_HREF = "href"
@@ -69,7 +70,6 @@ internal class ScaRedirectFragment() : Fragment() {
 
     private var loadingJob: Job? = null
     private var timeoutJob: Job? = null
-    private var timeoutHandler: Handler = Handler(Looper.getMainLooper())
 
     private var hasError = false
 
@@ -107,8 +107,12 @@ internal class ScaRedirectFragment() : Fragment() {
 
         timeoutJob = lifecycleScope.launch {
             delay(10000)
-            sendTimeoutError(webView)
-
+            if (isVisible) {
+                sendTimeoutError(webView)
+            } else {
+                timeoutJob?.cancel()
+                timeoutJob = null
+            }
         }
 
         if (recreated == false || recreated == null) {
@@ -147,7 +151,6 @@ internal class ScaRedirectFragment() : Fragment() {
                             webView?.visibility = View.VISIBLE
                         }
                         hasError = false
-                        timeoutHandler.removeCallbacksAndMessages(null)
                     }
 
                     @Deprecated("Deprecated in Java")
@@ -185,7 +188,6 @@ internal class ScaRedirectFragment() : Fragment() {
                                     extensions = scaRedirectResultExtensionModel(cres != null)
                                 )
                             )
-
                             handler.post {
                                 PaymentSession.onScaResult(cres, taskCreq)
                             }
@@ -313,7 +315,9 @@ internal class ScaRedirectFragment() : Fragment() {
                     retry = {
                         timeoutJob = lifecycleScope.launch {
                             delay(10000)
-                            sendTimeoutError(webView)
+                            if (isActive) {
+                                sendTimeoutError(webView)
+                            }
                         }
                         webView?.postUrl(href, expects)
                     }
@@ -334,5 +338,11 @@ internal class ScaRedirectFragment() : Fragment() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(ARG_IS_RECREATED, true)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        timeoutJob?.cancel()
+        timeoutJob = null
     }
 }
