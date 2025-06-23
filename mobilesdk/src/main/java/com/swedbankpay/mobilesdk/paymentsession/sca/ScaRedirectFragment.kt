@@ -23,6 +23,7 @@ import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.HttpModel
+import com.swedbankpay.mobilesdk.paymentsession.PaymentSession
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIConstants
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
@@ -33,21 +34,56 @@ import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import com.swedbankpay.mobilesdk.paymentsession.util.scaRedirectResultExtensionModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-internal class ScaRedirectFragment(
-    private val task: IntegrationTask,
-    private val errorHandler: (PaymentSessionProblem) -> Unit,
-    private val completionHandler: (String?) -> Unit
-) : Fragment() {
+private const val ARG_HREF = "href"
+private const val ARG_EXPECTS = "expects"
+private const val ARG_CREQ = "creq"
+private const val ARG_IS_RECREATED = "recreated"
+
+internal class ScaRedirectFragment() : Fragment() {
+
+    private var taskHref: String? = null
+    private var taskExpects: ByteArray? = null
+    private var taskCreq: String? = null
+
+    private var recreated: Boolean? = null
+
+    companion object {
+        @JvmStatic
+        fun newInstance(task: IntegrationTask) =
+            ScaRedirectFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_HREF, task.href)
+                    putByteArray(ARG_EXPECTS, task.expects?.toByteArray())
+                    putString(
+                        ARG_CREQ,
+                        task.getExpectValuesFor(PaymentSessionAPIConstants.CREQ)?.value as String
+                    )
+                }
+            }
+    }
 
     private var webView: WebView? = null
     private var progressIndicator: CircularProgressIndicator? = null
 
     private var loadingJob: Job? = null
-    private var timeoutHandler: Handler = Handler(Looper.getMainLooper())
+    private var timeoutJob: Job? = null
 
     private var hasError = false
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            taskHref = it.getString(ARG_HREF)
+            taskExpects = it.getByteArray(ARG_EXPECTS)
+            taskCreq = it.getString(ARG_CREQ)
+        }
+
+        recreated = savedInstanceState?.getBoolean(ARG_IS_RECREATED, false)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -69,189 +105,244 @@ internal class ScaRedirectFragment(
             progressIndicator?.visibility = View.VISIBLE
         }
 
-        safeLet(
-            task.href,
-            task.expects,
-        ) { initialUrl, expects ->
-            webView?.apply {
-                settings.apply {
-                    @SuppressLint("SetJavaScriptEnabled")
-                    javaScriptEnabled = true
-                    setSupportMultipleWindows(true)
-                    javaScriptCanOpenWindowsAutomatically = true
-
-                    // Redirect pages may require this.
-                    domStorageEnabled = true
-
-                    builtInZoomControls = true
-                    displayZoomControls = false
-                }
-
-                timeoutHandler.postDelayed({
-                    this.stopLoading()
-                    val error = PaymentSessionProblem.PaymentSession3DSecureFragmentLoadFailed(
-                        error = SwedbankPayAPIError.Error(
-                            message = "Timeout"
-                        ),
-                        retry = {
-                            safeLet(task.href, task.expects) { href, expects ->
-                                this.postUrl(href, expects.toByteArray())
-                            }
-                                ?: errorHandler.invoke(PaymentSessionProblem.InternalInconsistencyError)
-                        }
-                    )
-
-                    errorHandler.invoke(error)
-                }, 10000)
-
-                postUrl(initialUrl, expects.toByteArray())
+        timeoutJob = lifecycleScope.launch {
+            delay(10000)
+            if (isVisible) {
+                sendTimeoutError(webView)
+            } else {
+                timeoutJob?.cancel()
+                timeoutJob = null
             }
+        }
 
-            webView?.webViewClient = object : WebViewClient() {
+        if (recreated == false || recreated == null) {
+            safeLet(
+                taskHref,
+                taskExpects,
+            ) { initialUrl, expects ->
+                webView?.apply {
+                    settings.apply {
+                        @SuppressLint("SetJavaScriptEnabled")
+                        javaScriptEnabled = true
+                        setSupportMultipleWindows(true)
+                        javaScriptCanOpenWindowsAutomatically = true
 
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    super.onPageFinished(view, url)
-                    if (!hasError) {
-                        loadingJob?.cancel()
-                        loadingJob = null
-                        progressIndicator?.visibility = View.GONE
-                        webView?.visibility = View.VISIBLE
+                        // Redirect pages may require this.
+                        domStorageEnabled = true
+
+                        builtInZoomControls = true
+                        displayZoomControls = false
                     }
-                    hasError = false
-                    timeoutHandler.removeCallbacksAndMessages(null)
+
+                    postUrl(initialUrl, expects)
+
                 }
 
-                @Deprecated("Deprecated in Java")
-                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                    return shouldOverrideUrlLoading(url?.let(Uri::parse))
-                }
+                webView?.webViewClient = object : WebViewClient() {
 
-                @TargetApi(Build.VERSION_CODES.N)
-                override fun shouldOverrideUrlLoading(
-                    view: WebView?,
-                    request: WebResourceRequest?
-                ): Boolean {
-                    return shouldOverrideUrlLoading(request?.url)
-                }
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        super.onPageFinished(view, url)
+                        if (!hasError) {
+                            loadingJob?.cancel()
+                            loadingJob = null
+                            timeoutJob?.cancel()
+                            timeoutJob = null
+                            progressIndicator?.visibility = View.GONE
+                            webView?.visibility = View.VISIBLE
+                        }
+                        hasError = false
+                    }
 
-                private fun shouldOverrideUrlLoading(
-                    uri: Uri?
-                ): Boolean {
-                    if (uri.toString()
-                            .startsWith(PaymentSessionAPIConstants.NOTIFICATION_URL)
+                    @Deprecated("Deprecated in Java")
+                    override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                        return shouldOverrideUrlLoading(url?.let(Uri::parse))
+                    }
+
+                    @TargetApi(Build.VERSION_CODES.N)
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView?,
+                        request: WebResourceRequest?
+                    ): Boolean {
+                        return shouldOverrideUrlLoading(request?.url)
+                    }
+
+                    private fun shouldOverrideUrlLoading(
+                        uri: Uri?
+                    ): Boolean {
+                        if (uri.toString()
+                                .startsWith(PaymentSessionAPIConstants.NOTIFICATION_URL)
+                        ) {
+                            val handler = Handler(Looper.getMainLooper())
+
+                            val cres = uri?.getQueryParameter(
+                                PaymentSessionAPIConstants.CRES
+                            )
+
+                            BeaconService.logEvent(
+                                EventAction.SCARedirectResult(
+                                    http = HttpModel(
+                                        requestUrl = initialUrl,
+                                        method = "POST",
+                                    ),
+                                    duration = (System.currentTimeMillis() - start).toInt(),
+                                    extensions = scaRedirectResultExtensionModel(cres != null)
+                                )
+                            )
+                            handler.post {
+                                PaymentSession.onScaResult(cres, taskCreq)
+                            }
+                            webView?.stopLoading()
+                            return true
+                        }
+
+                        var handled = false
+
+                        if (context != null && isAdded) {
+                            handled = uri != null && (
+                                    ScaRedirectUtil.attemptHandleByExternalApp(
+                                        uri.toString(),
+                                        requireActivity()
+                                    ))
+                        }
+
+                        return handled || !ScaRedirectUtil.webViewCanOpen(uri)
+                    }
+
+                    @Deprecated("Deprecated in Java")
+                    override fun onReceivedError(
+                        view: WebView?,
+                        errorCode: Int,
+                        description: String?,
+                        failingUrl: String
                     ) {
-                        val cres = uri?.getQueryParameter(
-                            PaymentSessionAPIConstants.CRES
+                        onWebViewError(
+                            Uri.parse(failingUrl),
+                            errorCode,
+                            description
                         )
+                    }
 
+                    @RequiresApi(Build.VERSION_CODES.M)
+                    override fun onReceivedError(
+                        view: WebView?,
+                        request: WebResourceRequest,
+                        error: WebResourceError
+                    ) {
+                        if (request.isForMainFrame) {
+                            onWebViewError(
+                                request.url,
+                                error.errorCode,
+                                error.description.toString()
+                            )
+                        }
+                    }
+
+                    override fun onReceivedHttpError(
+                        view: WebView?,
+                        request: WebResourceRequest,
+                        errorResponse: WebResourceResponse
+                    ) {
+                        if (request.isForMainFrame) {
+                            onWebViewError(
+                                request.url,
+                                errorResponse.statusCode,
+                                errorResponse.reasonPhrase
+                            )
+                        }
+                    }
+
+                    private fun onWebViewError(
+                        uri: Uri,
+                        errorCode: Int,
+                        description: String?
+                    ) {
+                        hasError = true
                         BeaconService.logEvent(
                             EventAction.SCARedirectResult(
                                 http = HttpModel(
-                                    requestUrl = initialUrl,
+                                    requestUrl = uri.toString(),
                                     method = "POST",
                                 ),
                                 duration = (System.currentTimeMillis() - start).toInt(),
-                                extensions = scaRedirectResultExtensionModel(cres != null)
+                                extensions = scaRedirectResultExtensionModel(
+                                    false,
+                                    description,
+                                    errorCode
+                                )
                             )
                         )
 
-                        val handler = Handler(Looper.getMainLooper())
-                        handler.post {
-                            completionHandler.invoke(cres)
-                        }
-                        webView?.stopLoading()
-                        return true
-                    }
+                        safeLet(taskHref, taskExpects) { href, expects ->
+                            val error =
+                                PaymentSessionProblem.PaymentSession3DSecureFragmentLoadFailed(
+                                    error = SwedbankPayAPIError.Error(
+                                        message = description, responseCode = errorCode
+                                    ),
+                                    retry = {
+                                        webView?.postUrl(href, expects)
+                                    }
+                                )
 
-                    val handled = uri != null && (
-                            ScaRedirectUtil.attemptHandleByExternalApp(
-                                uri.toString(),
-                                requireContext()
-                            ))
-
-                    return handled || !ScaRedirectUtil.webViewCanOpen(uri)
-                }
-
-                @Deprecated("Deprecated in Java")
-                override fun onReceivedError(
-                    view: WebView?,
-                    errorCode: Int,
-                    description: String?,
-                    failingUrl: String
-                ) {
-                    onWebViewError(
-                        Uri.parse(failingUrl),
-                        errorCode,
-                        description
-                    )
-                }
-
-                @RequiresApi(Build.VERSION_CODES.M)
-                override fun onReceivedError(
-                    view: WebView?,
-                    request: WebResourceRequest,
-                    error: WebResourceError
-                ) {
-                    if (request.isForMainFrame) {
-                        onWebViewError(
-                            request.url,
-                            error.errorCode,
-                            error.description.toString()
-                        )
-                    }
-                }
-
-                override fun onReceivedHttpError(
-                    view: WebView?,
-                    request: WebResourceRequest,
-                    errorResponse: WebResourceResponse
-                ) {
-                    if (request.isForMainFrame) {
-                        onWebViewError(
-                            request.url,
-                            errorResponse.statusCode,
-                            errorResponse.reasonPhrase
-                        )
-                    }
-                }
-
-                private fun onWebViewError(
-                    uri: Uri,
-                    errorCode: Int,
-                    description: String?
-                ) {
-                    hasError = true
-                    BeaconService.logEvent(
-                        EventAction.SCARedirectResult(
-                            http = HttpModel(
-                                requestUrl = uri.toString(),
-                                method = "POST",
-                            ),
-                            duration = (System.currentTimeMillis() - start).toInt(),
-                            extensions = scaRedirectResultExtensionModel(
-                                false,
-                                description,
-                                errorCode
-                            )
-                        )
-                    )
-
-                    val error = PaymentSessionProblem.PaymentSession3DSecureFragmentLoadFailed(
-                        error = SwedbankPayAPIError.Error(
-                            message = description, responseCode = errorCode
-                        ),
-                        retry = {
-                            safeLet(task.href, task.expects) { href, expects ->
-                                webView?.postUrl(href, expects.toByteArray())
+                            val handler = Handler(Looper.getMainLooper())
+                            handler.post {
+                                PaymentSession.onScaResult(error = error)
                             }
-                                ?: errorHandler.invoke(PaymentSessionProblem.InternalInconsistencyError)
+                        } ?: run {
+                            val handler = Handler(Looper.getMainLooper())
+                            handler.post {
+                                PaymentSession.onScaResult(error = PaymentSessionProblem.InternalInconsistencyError)
+                            }
                         }
-                    )
-
-                    errorHandler.invoke(error)
+                    }
+                }
+            } ?: run {
+                val handler = Handler(Looper.getMainLooper())
+                handler.post {
+                    PaymentSession.onScaResult(error = PaymentSessionProblem.InternalInconsistencyError)
                 }
             }
-        } ?: errorHandler.invoke(PaymentSessionProblem.InternalInconsistencyError)
+        }
+    }
 
+    private fun sendTimeoutError(webView: WebView?) {
+        safeLet(taskHref, taskExpects) { href, expects ->
+            val error =
+                PaymentSessionProblem.PaymentSession3DSecureFragmentLoadFailed(
+                    error = SwedbankPayAPIError.Error(
+                        message = "Timeout",
+                        responseCode = 408
+                    ),
+                    retry = {
+                        timeoutJob = lifecycleScope.launch {
+                            delay(10000)
+                            if (isActive) {
+                                sendTimeoutError(webView)
+                            }
+                        }
+                        webView?.postUrl(href, expects)
+                    }
+                )
+
+            val handler = Handler(Looper.getMainLooper())
+            handler.post {
+                PaymentSession.onScaResult(error = error)
+            }
+        } ?: run {
+            val handler = Handler(Looper.getMainLooper())
+            handler.post {
+                PaymentSession.onScaResult(error = PaymentSessionProblem.InternalInconsistencyError)
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(ARG_IS_RECREATED, true)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        timeoutJob?.cancel()
+        timeoutJob = null
     }
 }

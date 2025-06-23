@@ -14,7 +14,7 @@ internal fun List<ExpectationModel?>.toByteArray(): ByteArray {
                 result.append("=")
                 result.append(
                     URLEncoder.encode(
-                        if (e.value is String) e.value else "",
+                        e.value as? String ?: "",
                         "UTF-8"
                     )
                 )
