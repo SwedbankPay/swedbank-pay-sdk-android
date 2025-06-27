@@ -19,8 +19,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.Consumer
+import com.swedbankpay.mobilesdk.LaunchNativeGooglePayEvent
 import com.swedbankpay.mobilesdk.PaymentFragment
 import com.swedbankpay.mobilesdk.PaymentOrder
 import com.swedbankpay.mobilesdk.PaymentViewModel
@@ -62,6 +64,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     val uiState = processState.map { it?.uiState }
 
     val loading = uiState.map { it == UIState.Loading }
+
+    val googlePayEvent = MutableLiveData<LaunchNativeGooglePayEvent?>(null)
 
     val updatingPaymentOrder = uiState.map { it is UIState.UpdatingPaymentOrder }
 
@@ -250,6 +254,13 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         publicVm?.run {
             javaScriptEventListener?.javaScriptEvent(this, message)
         }
+    }
+
+    fun onLaunchNativeGooglePay(payload: String) {
+        val launchNativeGooglePayEvent =
+            Gson().fromJson(payload, LaunchNativeGooglePayEvent::class.java)
+
+        googlePayEvent.value = launchNativeGooglePayEvent
     }
 
     fun getPaymentMenuHtmlContent(): HtmlContent? {

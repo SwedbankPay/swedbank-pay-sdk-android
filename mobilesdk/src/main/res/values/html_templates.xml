@@ -1,4 +1,3 @@
-
 <resources>
     <string name="swedbankpaysdk_javascript_interface_name">swedbankpaysdk</string>
 
@@ -58,19 +57,18 @@
     &lt;/body>
 &lt;/html>
     </string>
-    
+
     <string name="swedbankpaysdk_view_checkout_template">
 &lt;!DOCTYPE html>
 &lt;html>
     &lt;head>
         &lt;title>&lt;/title>
         &lt;script type="text/javascript">
-                
+
                 window.onerror = function(message, source, lineno, colno, error) {
                     swedbankpaysdk.onPaymentError(JSON.stringify(error));
                 };
                 window.onload = function () {
-    
                     var parameters = {
                         integration: \"App\",
                         container: {
@@ -87,6 +85,9 @@
                         },
                         onPaid: function onPaid(eventNotification) {
                             swedbankpaysdk.onPaid(JSON.stringify(eventNotification));
+                        },
+                        onLaunchNativeGooglePay: function onLaunchNativeGooglePay(payLoad) {
+                            swedbankpaysdk.onLaunchNativeGooglePay(JSON.stringify(payLoad));
                         }
                     };
                     var style = %2$s;

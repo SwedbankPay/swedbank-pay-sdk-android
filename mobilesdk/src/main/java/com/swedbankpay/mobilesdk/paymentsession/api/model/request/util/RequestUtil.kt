@@ -179,7 +179,7 @@ internal object RequestUtil {
         ).toJsonString()
     }
 
-    private fun String.toBase64() = Base64.encodeToString(this.toByteArray(), Base64.NO_WRAP)
+    fun String.toBase64(): String? = Base64.encodeToString(this.toByteArray(), Base64.NO_WRAP)
 
     private inline fun <reified T : Any> T.toJsonString(): String = gson.toJson(this, T::class.java)
 }

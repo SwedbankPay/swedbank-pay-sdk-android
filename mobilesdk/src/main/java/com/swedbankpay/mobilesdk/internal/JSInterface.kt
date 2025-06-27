@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.internal
 
+import android.util.Log
 import android.webkit.JavascriptInterface
 import androidx.annotation.AnyThread
 import androidx.lifecycle.viewModelScope
@@ -59,4 +60,10 @@ internal class JSInterface(var vm: InternalPaymentViewModel?) {
     fun onGeneralEvent(message: String) = withViewModel {
         onGeneralEvent(message)
     }
+
+    @JavascriptInterface
+    fun onLaunchNativeGooglePay(payload:String) = withViewModel {
+        onLaunchNativeGooglePay(payload)
+    }
+
 }

@@ -21,6 +21,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.get
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.swedbankpay.mobilesdk.NativeGooglePayAttemptPayload
 import com.swedbankpay.mobilesdk.R
 
 internal class WebViewFragment : Fragment() {
@@ -149,7 +150,7 @@ internal class WebViewFragment : Fragment() {
             wrangleBottomSheet(bottomSheetBehavior, bottomSheetContainer, onBackPressedCallback)
         }
     }
-    
+
     var previousBottomSheetBehaviorState = 0
     private fun observeBottomSheetState(
         bottomSheetBehavior: BottomSheetBehavior<*>,
@@ -216,6 +217,10 @@ internal class WebViewFragment : Fragment() {
         }
         vm.loadContent(baseUrl, htmlString)
         return true
+    }
+
+    fun sendGooglePayPayload(nativeGooglePayAttemptPayload: NativeGooglePayAttemptPayload) {
+        webViewModel.sendGooglePayPayload(nativeGooglePayAttemptPayload)
     }
 
     private fun ensureJSDialogFragments(tags: Set<String>) {

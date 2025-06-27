@@ -7,10 +7,24 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Message
-import android.webkit.*
+import android.util.Log
+import android.webkit.JsPromptResult
+import android.webkit.JsResult
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
 import android.webkit.WebView.WebViewTransport
+import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
+import androidx.lifecycle.map
+import com.google.gson.Gson
+import com.swedbankpay.mobilesdk.NativeGooglePayAttemptPayload
 import com.swedbankpay.mobilesdk.R
 import okhttp3.internal.toHexString
 
@@ -22,7 +36,8 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
     ) {
         class Alert(message: String?, result: JsResult) : JSDialogInfo<JsResult>(message, result)
         class Confirm(message: String?, result: JsResult) : JSDialogInfo<JsResult>(message, result)
-        class Prompt(message: String?, result: JsPromptResult, val defaultValue: String?) : JSDialogInfo<JsPromptResult>(message, result)
+        class Prompt(message: String?, result: JsPromptResult, val defaultValue: String?) :
+            JSDialogInfo<JsPromptResult>(message, result)
     }
 
     // Yes, a View is part of a ViewModel. Blasphemy.
@@ -51,6 +66,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             value = (value ?: emptyMap()).plus(entry)
         }
     }
+
     fun getDialogInfo(tag: String) = javascriptDialogs.value?.get(tag)
     fun consumeDialogInfo(tag: String): JSDialogInfo<*>? {
         val dialogs = javascriptDialogs.value
@@ -87,7 +103,8 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                     displayZoomControls = false
                 }
 
-                val parentViewModel = internalPaymentViewModelProvider.get<InternalPaymentViewModel>()
+                val parentViewModel =
+                    internalPaymentViewModelProvider.get<InternalPaymentViewModel>()
                 webChromeClient = MyWebChromeClient(parentViewModel)
                 webViewClient = MyWebViewClient(parentViewModel)
 
@@ -146,6 +163,17 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
 
     fun removeExtraWebView() {
         replaceExtraWebView(null)
+    }
+
+    fun sendGooglePayPayload(nativeGooglePayAttemptPayload: NativeGooglePayAttemptPayload) {
+        val jsonPayload = Gson().toJson(nativeGooglePayAttemptPayload)
+
+        requireWebView().apply {
+           evaluateJavascript(
+                "window.payex.hostedView.checkout().paymentAttemptPayload($jsonPayload);",
+                null
+            )
+        }
     }
 
     private fun replaceExtraWebView(newExtraWebView: WebView?) {
@@ -232,9 +260,11 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             message: String?,
             result: JsResult
         ): Boolean {
-            addDialog(JSDialogInfo.Alert(
-                message = message,
-                result = result)
+            addDialog(
+                JSDialogInfo.Alert(
+                    message = message,
+                    result = result
+                )
             )
             return true
         }
@@ -245,10 +275,12 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             message: String?,
             result: JsResult
         ): Boolean {
-            addDialog(JSDialogInfo.Confirm(
-                message = message,
-                result = result
-            ))
+            addDialog(
+                JSDialogInfo.Confirm(
+                    message = message,
+                    result = result
+                )
+            )
             return true
         }
 
@@ -259,11 +291,13 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
             defaultValue: String?,
             result: JsPromptResult
         ): Boolean {
-            addDialog(JSDialogInfo.Prompt(
-                message = message,
-                defaultValue = defaultValue,
-                result = result
-            ))
+            addDialog(
+                JSDialogInfo.Prompt(
+                    message = message,
+                    defaultValue = defaultValue,
+                    result = result
+                )
+            )
             return true
         }
 
