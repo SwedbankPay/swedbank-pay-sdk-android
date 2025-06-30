@@ -221,13 +221,46 @@ internal fun SwedbankPayAPIError.toExtensionsModel(): ExtensionsModel {
 }
 
 @Keep
-internal fun onJsEventExtensionModel(
+internal fun onJsEventConsumerRefAvailableExtensionModel(
     event: String,
-    message: String = ""
+    consumerProfileRef: String = ""
 ) = ExtensionsModel(
     values = mutableMapOf(
         "event" to event,
-        "message" to message
+        "consumerProfileRef" to consumerProfileRef
+    )
+)
+
+@Keep
+internal fun onJsEventLaunchNativeGooglePayExtensionModel(
+    event: String,
+    environment: String
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "environment" to environment
+    )
+)
+
+@Keep
+internal fun onJsEventGeneralExtensionModel(
+    event: String,
+    eventSource: String
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "eventSource" to eventSource
+    )
+)
+
+@Keep
+internal fun onJsEventOnPaidExtensionModel(
+    event: String,
+    redirectUrl: String
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "redirectUrl" to redirectUrl
     )
 )
 
@@ -245,16 +278,7 @@ internal fun onJsEventErrorExtensionModel(
 )
 
 @Keep
-internal fun onJsEventSentExtensionModel(
-    event: String
-) = ExtensionsModel(
-    values = mutableMapOf(
-        "event" to event
-    )
-)
-
-@Keep
-internal fun onPaymentAttemptPayloadJsEventSentExtensionModel(
+internal fun onJsEventSentPaymentAttemptPayloadExtensionModel(
     event: String,
     paymentMethod: String
 ) = ExtensionsModel(
@@ -266,28 +290,44 @@ internal fun onPaymentAttemptPayloadJsEventSentExtensionModel(
 
 @Keep
 internal fun launchGooglePayExtensionModel(
+    origin: String,
     succeeded: Boolean,
     reason: String = "",
 ) = ExtensionsModel(
-    values = mutableMapOf(
-        "succeeded" to succeeded.toString(),
-        "reason" to reason
-    )
+    values = if (succeeded) {
+        mutableMapOf(
+            "origin" to origin,
+            "succeeded" to true.toString(),
+        )
+    } else {
+        mutableMapOf(
+            "origin" to origin,
+            "succeeded" to false.toString(),
+            "reason" to reason
+        )
+    }
 )
 
 @Keep
 internal fun onGooglePayPayloadExtensionModel(
+    origin: String,
     googlePayResult: GooglePayResult
 ) = ExtensionsModel(
-    values = mutableMapOf()
+    values = mutableMapOf(
+        "origin" to origin,
+        "type" to googlePayResult.paymentMethodData?.type,
+        "cardNetwork" to googlePayResult.paymentMethodData?.info?.cardNetwork
+    )
 )
 
 @Keep
 internal fun onGooglePayPayloadErrorExtensionModel(
+    origin: String,
     googlePayError: GooglePayError?
 ) = if (googlePayError != null) {
     ExtensionsModel(
         values = mutableMapOf(
+            "origin" to origin,
             "statusCode" to googlePayError.statusCode.toString(),
             "errorMessage" to googlePayError.message,
             "userCancelled" to googlePayError.userCancelled.toString()
@@ -296,7 +336,7 @@ internal fun onGooglePayPayloadErrorExtensionModel(
 } else {
     ExtensionsModel(
         values = mutableMapOf(
-            "errorMessage" to "Didn't get a succesful or a error response from google pay"
+            "errorMessage" to "Didn't get a valid response from google pay"
         )
     )
 }

@@ -69,8 +69,6 @@ data class MethodModel(
 
 @Keep
 data class ExtensionsModel(
-    @SerializedName("details")
-    val details: String? = null,
     @SerializedName("values")
     val values: MutableMap<String, String?>? = null,
 )

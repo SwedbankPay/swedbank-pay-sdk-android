@@ -32,7 +32,12 @@ import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
 import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.util.onJsEventErrorExtensionModel
-import com.swedbankpay.mobilesdk.logging.util.onJsEventExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onJsEventConsumerRefAvailableExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onJsEventGeneralExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onJsEventLaunchNativeGooglePayExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onJsEventOnPaidExtensionModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValueFor
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayConstants
 import com.swedbankpay.mobilesdk.toStyleJs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -244,9 +249,9 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
         BeaconService.logEvent(
             eventAction = EventAction.OnJsEvent(
-                extensions = onJsEventExtensionModel(
+                extensions = onJsEventConsumerRefAvailableExtensionModel(
                     event = "onConsumerProfileRefAvailable",
-                    message = consumerProfileRef
+                    consumerProfileRef = consumerProfileRef
                 )
             )
         )
@@ -268,11 +273,13 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         //setFailureState(FailureReason.SwedbankPayError(terminalFailure))
         Log.d(LOG_TAG, "onPaid: $message")
         setProcessState(ProcessState.Complete)
+
+        val onPaidEvent = parseEvent(message, JsOnPaidEvent::class.java)
         BeaconService.logEvent(
             eventAction = EventAction.OnJsEvent(
-                extensions = onJsEventExtensionModel(
-                    event = "onPaid",
-                    message = message
+                extensions = onJsEventOnPaidExtensionModel(
+                    event = onPaidEvent?.event ?: "OnPaid",
+                    redirectUrl = onPaidEvent?.redirectUrl ?: "Unknown"
                 )
             )
         )
@@ -284,11 +291,12 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
             javaScriptEventListener?.javaScriptEvent(this, message)
         }
 
+        val generalEvent = parseEvent(message, JsGeneralEvent::class.java)
         BeaconService.logEvent(
             eventAction = EventAction.OnJsEvent(
-                extensions = onJsEventExtensionModel(
-                    event = "onGeneralEvent",
-                    message = message
+                extensions = onJsEventGeneralExtensionModel(
+                    event = generalEvent?.event ?: "onGeneralEvent",
+                    eventSource = generalEvent?.sourceEvent ?: "Unknown"
                 )
             )
         )
@@ -302,8 +310,11 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
 
         BeaconService.logEvent(
             eventAction = EventAction.OnJsEvent(
-                extensions = onJsEventExtensionModel(
-                    event = launchNativeGooglePayEvent.event
+                extensions = onJsEventLaunchNativeGooglePayExtensionModel(
+                    event = launchNativeGooglePayEvent.event,
+                    environment = launchNativeGooglePayEvent.initParams?.getStringValueFor(
+                        GooglePayConstants.ENVIRONMENT
+                    ) ?: "Unknown"
                 )
             )
         )

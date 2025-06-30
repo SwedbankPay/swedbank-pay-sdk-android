@@ -455,20 +455,21 @@ open class PaymentFragment : Fragment() {
                         BeaconService.logEvent(
                             eventAction = EventAction.OnGooglePayPayload(
                                 extensions = if (googlePayResult != null) {
-                                    onGooglePayPayloadExtensionModel(googlePayResult)
+                                    onGooglePayPayloadExtensionModel(origin = "Payment menu", googlePayResult)
                                 } else {
                                     onGooglePayPayloadErrorExtensionModel(
+                                        origin = "Payment Menu",
                                         error
                                     )
                                 }
                             )
                         )
-
                     }
 
                     BeaconService.logEvent(
                         eventAction = EventAction.LaunchGooglePay(
                             extensions = launchGooglePayExtensionModel(
+                                origin = "Payment Menu",
                                 succeeded = true
                             )
                         )
@@ -483,6 +484,7 @@ open class PaymentFragment : Fragment() {
                     BeaconService.logEvent(
                         eventAction = EventAction.LaunchGooglePay(
                             extensions = launchGooglePayExtensionModel(
+                                origin = "Payment Menu",
                                 succeeded = false,
                                 reason = "initParams was null"
                             )

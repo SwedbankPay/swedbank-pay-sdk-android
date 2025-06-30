@@ -27,7 +27,7 @@ import com.swedbankpay.mobilesdk.NativeGooglePayAttemptPayload
 import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
-import com.swedbankpay.mobilesdk.logging.util.onPaymentAttemptPayloadJsEventSentExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onJsEventSentPaymentAttemptPayloadExtensionModel
 import okhttp3.internal.toHexString
 
 internal class WebViewModel(application: Application) : AndroidViewModel(application) {
@@ -179,7 +179,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
 
         BeaconService.logEvent(
             eventAction = EventAction.OnJsEventSent(
-                extensions = onPaymentAttemptPayloadJsEventSentExtensionModel(
+                extensions = onJsEventSentPaymentAttemptPayloadExtensionModel(
                     event = "paymentAttemptPayload",
                     paymentMethod = nativeGooglePayAttemptPayload.paymentMethod
                 )

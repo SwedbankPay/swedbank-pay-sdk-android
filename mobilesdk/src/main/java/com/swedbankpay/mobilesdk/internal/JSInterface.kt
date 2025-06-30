@@ -1,10 +1,8 @@
 package com.swedbankpay.mobilesdk.internal
 
-import android.util.Log
 import android.webkit.JavascriptInterface
 import androidx.annotation.AnyThread
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -18,14 +16,6 @@ internal class JSInterface(var vm: InternalPaymentViewModel?) {
     private inline fun withViewModel(crossinline f: InternalPaymentViewModel.() -> Unit) {
         withViewModelScope {
             vm?.f()
-        }
-    }
-
-    private fun <T> parseEvent(event: String, type: Class<T>): T? {
-        return try {
-            Gson().fromJson(event, type)
-        } catch (_: Exception) {
-            null
         }
     }
 
