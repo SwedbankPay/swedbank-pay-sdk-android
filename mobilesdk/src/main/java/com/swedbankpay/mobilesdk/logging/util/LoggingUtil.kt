@@ -1,12 +1,15 @@
-package com.swedbankpay.mobilesdk.paymentsession.util
+package com.swedbankpay.mobilesdk.logging.util
 
 import androidx.annotation.Keep
+import com.swedbankpay.mobilesdk.TerminalFailure
 import com.swedbankpay.mobilesdk.logging.model.ExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.SwedbankPayPaymentSessionSDKControllerMode
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayError
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 
 /**
  * This files holds various functions for logging purposes
@@ -163,7 +166,6 @@ internal fun googlePayPaymentReadinessExtensionModel(
     )
 )
 
-
 @Keep
 internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
     val values: MutableMap<String, String?> = when (this) {
@@ -217,3 +219,86 @@ internal fun SwedbankPayAPIError.toExtensionsModel(): ExtensionsModel {
 
     return ExtensionsModel(values = values)
 }
+
+@Keep
+internal fun onJsEventExtensionModel(
+    event: String,
+    message: String = ""
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "message" to message
+    )
+)
+
+@Keep
+internal fun onJsEventErrorExtensionModel(
+    event: String,
+    terminalFailure: TerminalFailure?
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "origin" to terminalFailure?.origin,
+        "messageId" to terminalFailure?.messageId,
+        "details" to terminalFailure?.details
+    )
+)
+
+@Keep
+internal fun onJsEventSentExtensionModel(
+    event: String
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event
+    )
+)
+
+@Keep
+internal fun onPaymentAttemptPayloadJsEventSentExtensionModel(
+    event: String,
+    paymentMethod: String
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "paymentMethod" to paymentMethod
+    )
+)
+
+@Keep
+internal fun launchGooglePayExtensionModel(
+    succeeded: Boolean,
+    reason: String = "",
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "succeeded" to succeeded.toString(),
+        "reason" to reason
+    )
+)
+
+@Keep
+internal fun onGooglePayPayloadExtensionModel(
+    googlePayResult: GooglePayResult
+) = ExtensionsModel(
+    values = mutableMapOf()
+)
+
+@Keep
+internal fun onGooglePayPayloadErrorExtensionModel(
+    googlePayError: GooglePayError?
+) = if (googlePayError != null) {
+    ExtensionsModel(
+        values = mutableMapOf(
+            "statusCode" to googlePayError.statusCode.toString(),
+            "errorMessage" to googlePayError.message,
+            "userCancelled" to googlePayError.userCancelled.toString()
+        )
+    )
+} else {
+    ExtensionsModel(
+        values = mutableMapOf(
+            "errorMessage" to "Didn't get a succesful or a error response from google pay"
+        )
+    )
+}
+
+

@@ -21,6 +21,11 @@ import com.swedbankpay.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
 import com.swedbankpay.mobilesdk.internal.getParcelableInternal
+import com.swedbankpay.mobilesdk.logging.BeaconService
+import com.swedbankpay.mobilesdk.logging.model.EventAction
+import com.swedbankpay.mobilesdk.logging.util.launchGooglePayExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onGooglePayPayloadErrorExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onGooglePayPayloadExtensionModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestUtil.toBase64
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayService
 import java.io.Serializable
@@ -430,32 +435,44 @@ open class PaymentFragment : Fragment() {
 
     private fun InternalPaymentViewModel.observeLaunchGooglePay() {
         googlePayEvent.observe(this@PaymentFragment) { googlePayEvent ->
-            val webFragment =
-                childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
             if (googlePayEvent != null) {
+                val webFragment =
+                    childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
                 googlePayEvent.initParams?.let { params ->
                     GooglePayService.launchGooglePay(
                         params,
                         requireActivity()
                     ) { googlePayResult, error ->
-                        val attemptPayload = googlePayResult?.paymentMethodData?.tokenizationData?.token
+                        val attemptPayload =
+                            googlePayResult?.paymentMethodData?.tokenizationData?.token
                         webFragment.sendGooglePayPayload(
                             NativeGooglePayAttemptPayload(
                                 paymentOrderId = googlePayEvent.paymentOrder.id,
                                 paymentAttemptPayload = attemptPayload?.toBase64()
                             )
                         )
+
+                        BeaconService.logEvent(
+                            eventAction = EventAction.OnGooglePayPayload(
+                                extensions = if (googlePayResult != null) {
+                                    onGooglePayPayloadExtensionModel(googlePayResult)
+                                } else {
+                                    onGooglePayPayloadErrorExtensionModel(
+                                        error
+                                    )
+                                }
+                            )
+                        )
+
                     }
 
-                    // TODO new beacon logging LaunchGooglePay
-                    /*BeaconService.logEvent(
-                        eventAction = EventAction.SDKMethodInvoked(
-                            method = MethodModel(
-                                name = "launchGooglePay",
+                    BeaconService.logEvent(
+                        eventAction = EventAction.LaunchGooglePay(
+                            extensions = launchGooglePayExtensionModel(
                                 succeeded = true
                             )
                         )
-                    )*/
+                    )
                 } ?: run {
                     webFragment.sendGooglePayPayload(
                         NativeGooglePayAttemptPayload(
@@ -463,15 +480,14 @@ open class PaymentFragment : Fragment() {
                             paymentAttemptPayload = null
                         )
                     )
-                    // TODO new beacon logging LaunchGooglePay
-                    /* BeaconService.logEvent(
-                         eventAction = EventAction.SDKMethodInvoked(
-                             method = MethodModel(
-                                 name = "launchGooglePay",
-                                 succeeded = false
-                             )
-                         )
-                     ) */
+                    BeaconService.logEvent(
+                        eventAction = EventAction.LaunchGooglePay(
+                            extensions = launchGooglePayExtensionModel(
+                                succeeded = false,
+                                reason = "initParams was null"
+                            )
+                        )
+                    )
                 }
             }
         }

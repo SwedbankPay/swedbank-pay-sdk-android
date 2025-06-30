@@ -19,7 +19,7 @@ import com.swedbankpay.mobilesdk.logging.model.HttpModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.IntegrationTask
 import com.swedbankpay.mobilesdk.paymentsession.sca.extension.toByteArray
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
-import com.swedbankpay.mobilesdk.paymentsession.util.scaMethodRequestExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.scaMethodRequestExtensionModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext

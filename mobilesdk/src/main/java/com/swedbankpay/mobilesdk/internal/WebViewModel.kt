@@ -7,7 +7,6 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Message
-import android.util.Log
 import android.webkit.JsPromptResult
 import android.webkit.JsResult
 import android.webkit.WebChromeClient
@@ -26,6 +25,9 @@ import androidx.lifecycle.map
 import com.google.gson.Gson
 import com.swedbankpay.mobilesdk.NativeGooglePayAttemptPayload
 import com.swedbankpay.mobilesdk.R
+import com.swedbankpay.mobilesdk.logging.BeaconService
+import com.swedbankpay.mobilesdk.logging.model.EventAction
+import com.swedbankpay.mobilesdk.logging.util.onPaymentAttemptPayloadJsEventSentExtensionModel
 import okhttp3.internal.toHexString
 
 internal class WebViewModel(application: Application) : AndroidViewModel(application) {
@@ -169,11 +171,20 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         val jsonPayload = Gson().toJson(nativeGooglePayAttemptPayload)
 
         requireWebView().apply {
-           evaluateJavascript(
+            evaluateJavascript(
                 "window.payex.hostedView.checkout().paymentAttemptPayload($jsonPayload);",
                 null
             )
         }
+
+        BeaconService.logEvent(
+            eventAction = EventAction.OnJsEventSent(
+                extensions = onPaymentAttemptPayloadJsEventSentExtensionModel(
+                    event = "paymentAttemptPayload",
+                    paymentMethod = nativeGooglePayAttemptPayload.paymentMethod
+                )
+            )
+        )
     }
 
     private fun replaceExtraWebView(newExtraWebView: WebView?) {
