@@ -9,7 +9,9 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.response.SwishMethodPr
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.AvailableInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.CreditCardPrefill
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.SwishPrefill
-import java.text.SimpleDateFormat
+import org.threeten.bp.DateTimeUtils
+import org.threeten.bp.ZoneOffset
+import org.threeten.bp.format.DateTimeFormatter
 import java.util.*
 
 /**
@@ -40,9 +42,9 @@ fun MethodBaseModel.toAvailableInstrument(
                 cardBrand = model.cardBrand,
                 maskedPan = model.maskedPan,
                 expiryDate = model.expiryDate,
-                expiryMonth = model.expiryDate?.month() ?: "",
-                expiryYear = model.expiryDate?.year() ?: "",
-                expiryString = model.expiryDate?.getExpiryString() ?: "",
+                expiryMonth = model.expiryDate?.formatUsingPattern("MM") ?: "",
+                expiryYear = model.expiryDate?.formatUsingPattern("yy") ?: "",
+                expiryString = model.expiryDate?.formatUsingPattern("MM/yy") ?: "",
             )
         }
     )
@@ -54,14 +56,7 @@ fun MethodBaseModel.toAvailableInstrument(
     else -> AvailableInstrument.WebBased(paymentMethod = this.paymentMethod?.name ?: "WebBased")
 }
 
-fun Date.month(): String {
-    return SimpleDateFormat("MM", Locale.getDefault()).format(this)
-}
-
-fun Date.year(): String {
-    return SimpleDateFormat("yy", Locale.getDefault()).format(this)
-}
-
-fun Date.getExpiryString(): String {
-    return SimpleDateFormat("MM/yy", Locale.getDefault()).format(this)
+private fun Date.formatUsingPattern(pattern : String) : String {
+    val date = DateTimeUtils.toInstant(this)
+    return DateTimeFormatter.ofPattern(pattern).format(date.atZone(ZoneOffset.UTC))
 }
