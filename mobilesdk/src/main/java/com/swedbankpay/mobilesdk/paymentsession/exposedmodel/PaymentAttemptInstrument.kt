@@ -27,7 +27,7 @@ sealed class PaymentAttemptInstrument(
 
     @Keep
     data class NewCreditCard(
-        val enabledPaymentDetailsConsentCheckbox: Boolean
+        val enabledPaymentDetailsConsentCheckbox: Boolean? = null
     ) : PaymentAttemptInstrument(null, "CreditCard")
 
     @Keep
