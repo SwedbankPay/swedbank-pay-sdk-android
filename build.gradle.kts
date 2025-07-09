@@ -20,7 +20,7 @@ buildscript {
 plugins {
     kotlin("android") version "1.8.20" apply false
     id("org.jetbrains.dokka") version "1.8.10" apply false
-    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
 
 // Remember to use your own group if you fork this library
@@ -42,6 +42,9 @@ task<Delete>("clean") {
 
 nexusPublishing {
     repositories {
-        sonatype()
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+        }
     }
 }
