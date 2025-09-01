@@ -36,4 +36,20 @@ sealed class EventAction(val action: String, val extensions: ExtensionsModel? = 
         val duration: Int?,
         extensions: ExtensionsModel?
     ) : EventAction("SCARedirectResult", extensions)
+
+    class OnJsEvent(
+        extensions: ExtensionsModel?
+    ) : EventAction(action = "OnJsEvent", extensions)
+
+    class OnJsEventSent(
+        extensions: ExtensionsModel?
+    ) : EventAction(action = "OnJsEventSent", extensions)
+
+    class LaunchGooglePay(
+        extensions: ExtensionsModel?
+    ) : EventAction(action = "LaunchGooglePay", extensions)
+
+    class OnGooglePayPayload(
+        extensions: ExtensionsModel?
+    ) : EventAction(action = "OnGooglePayPayload", extensions)
 }

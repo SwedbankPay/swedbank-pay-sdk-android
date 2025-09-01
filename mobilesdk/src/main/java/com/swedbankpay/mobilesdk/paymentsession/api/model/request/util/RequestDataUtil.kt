@@ -9,9 +9,10 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.request.ClientMinimum
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.ClientWithType
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.PresentationSdk
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Service
+import org.threeten.bp.ZonedDateTime
+import org.threeten.bp.format.DateTimeFormatter
+import org.threeten.bp.format.DateTimeFormatterBuilder
 import java.net.NetworkInterface
-import java.text.FieldPosition
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -104,18 +105,13 @@ internal object RequestDataUtil {
 
     // 2024-09-25T16:46:46.923+02:00
     fun nowAsIsoString(): String {
-        val formatter: SimpleDateFormat =
-            object : SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.sssZ", Locale.getDefault()) {
-                override fun format(
-                    date: Date,
-                    toAppendTo: StringBuffer,
-                    pos: FieldPosition
-                ): StringBuffer {
-                    val toFix = super.format(date, toAppendTo, pos)
-                    return toFix.insert(toFix.length - 2, ':')
-                }
-            }
-        return formatter.format(Date())
+        val now = ZonedDateTime.now()
+
+        val dateTimeFormatter: DateTimeFormatter? = DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+            .appendOffset("+HH:MM", "")
+            .toFormatter()
+        return now.format(dateTimeFormatter)
     }
 
 

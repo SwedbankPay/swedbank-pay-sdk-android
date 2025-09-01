@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.swedbankpay.mobilesdk.PaymentFragment
@@ -17,6 +16,14 @@ import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.ExtensionsModel
 import com.swedbankpay.mobilesdk.logging.model.MethodModel
+import com.swedbankpay.mobilesdk.logging.util.clientAppCallbackExtensionsModel
+import com.swedbankpay.mobilesdk.logging.util.googlePayPaymentReadinessExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.launchClientAppExtensionsModel
+import com.swedbankpay.mobilesdk.logging.util.launchGooglePayExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onGooglePayPayloadErrorExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onGooglePayPayloadExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.toExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.toExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIClient
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
@@ -39,15 +46,10 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayService
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaRedirectFragment
 import com.swedbankpay.mobilesdk.paymentsession.util.UriCallbackUtil.addCallbackUrl
-import com.swedbankpay.mobilesdk.paymentsession.util.clientAppCallbackExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.configuration.AutomaticConfiguration
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.setValueIfChanged
-import com.swedbankpay.mobilesdk.paymentsession.util.googlePayPaymentReadinessExtensionModel
-import com.swedbankpay.mobilesdk.paymentsession.util.launchClientAppExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.util.livedata.QueuedMutableLiveData
-import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionModel
-import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionsModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -121,7 +123,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         }
     }
 
-    private var scaRedirectObserver : Observer<ScaResult?>? = null
+    private var scaRedirectObserver: Observer<ScaResult?>? = null
 
     private val mainScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -845,6 +847,23 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 expectsModels.filterNotNull(),
                 activity,
             ) { googlePayResult, error ->
+
+                BeaconService.logEvent(
+                    eventAction = EventAction.OnGooglePayPayload(
+                        extensions = if (googlePayResult != null) {
+                            onGooglePayPayloadExtensionModel(
+                                origin = "SDK",
+                                googlePayResult
+                            )
+                        } else {
+                            onGooglePayPayloadErrorExtensionModel(
+                                origin = "SDK",
+                                error
+                            )
+                        }
+                    )
+                )
+
                 currentPaymentOutputModel?.let { paymentOutputModel ->
                     val operation = when {
                         googlePayResult != null -> {
@@ -876,19 +895,32 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                 } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
 
             }
-        } ?: run {
-            onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
-        }
 
-        BeaconService.logEvent(
-            eventAction = EventAction.SDKMethodInvoked(
-                method = MethodModel(
-                    name = "launchGooglePay",
-                    succeeded = true
+            BeaconService.logEvent(
+                eventAction = EventAction.LaunchGooglePay(
+                    extensions = launchGooglePayExtensionModel(
+                        origin = "SDK",
+                        succeeded = true
+                    )
                 )
             )
-        )
 
+        } ?: run {
+            BeaconService.logEvent(
+                eventAction = EventAction.LaunchGooglePay(
+                    extensions = launchGooglePayExtensionModel(
+                        origin = "SDK",
+                        succeeded = false,
+                        reason = if (currentActivity == null) {
+                            "Activity is null"
+                        } else {
+                            "Expects parameters is missing"
+                        }
+                    )
+                )
+            )
+            onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
+        }
     }
 
     private fun onPaymentComplete(url: String) {

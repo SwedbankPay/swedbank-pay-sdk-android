@@ -83,7 +83,7 @@ dependencies {
     implementation(libs.googlepay)
 
     compileOnly(libs.`joda-time`)
-    compileOnly(libs.threetenbp)
+    implementation(libs.threetenbp)
 
     implementation(libs.coroutineplayservices)
 

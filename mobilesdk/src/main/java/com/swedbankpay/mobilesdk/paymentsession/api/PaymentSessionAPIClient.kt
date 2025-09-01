@@ -16,7 +16,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstr
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.util.JsonUtil.toApiError
 import com.swedbankpay.mobilesdk.paymentsession.util.JsonUtil.toPaymentOutputModel
-import com.swedbankpay.mobilesdk.paymentsession.util.toExtensionsModel
+import com.swedbankpay.mobilesdk.logging.util.toExtensionsModel
 import java.io.OutputStreamWriter
 import java.net.ConnectException
 import java.net.SocketException

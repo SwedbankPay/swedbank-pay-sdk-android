@@ -31,7 +31,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProbl
 import com.swedbankpay.mobilesdk.paymentsession.sca.extension.toByteArray
 import com.swedbankpay.mobilesdk.paymentsession.sca.util.ScaRedirectUtil
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
-import com.swedbankpay.mobilesdk.paymentsession.util.scaRedirectResultExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.scaRedirectResultExtensionModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive

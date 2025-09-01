@@ -9,6 +9,16 @@ internal data class CreditCardCustomizePayment(
     val paymentMethod: String?,
     @SerializedName("hideStoredPaymentOptions")
     val hideStoredPaymentOptions: Boolean?,
+    @SerializedName("restrictToPaymentMethods")
+    val restrictToPaymentMethods: List<String?>?
+)
+
+@Keep
+internal data class CreditCardWitchConsentCustomizePayment(
+    @SerializedName("paymentMethod")
+    val paymentMethod: String?,
+    @SerializedName("hideStoredPaymentOptions")
+    val hideStoredPaymentOptions: Boolean?,
     @SerializedName("showConsentAffirmation")
     val showConsentAffirmation: Boolean?,
     @SerializedName("restrictToPaymentMethods")

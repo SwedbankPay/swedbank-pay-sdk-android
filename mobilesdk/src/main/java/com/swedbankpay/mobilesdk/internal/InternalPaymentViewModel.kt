@@ -19,14 +19,25 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.swedbankpay.mobilesdk.Configuration
 import com.swedbankpay.mobilesdk.Consumer
+import com.swedbankpay.mobilesdk.LaunchNativeGooglePayEvent
 import com.swedbankpay.mobilesdk.PaymentFragment
 import com.swedbankpay.mobilesdk.PaymentOrder
 import com.swedbankpay.mobilesdk.PaymentViewModel
 import com.swedbankpay.mobilesdk.R
 import com.swedbankpay.mobilesdk.TerminalFailure
 import com.swedbankpay.mobilesdk.ViewPaymentOrderInfo
+import com.swedbankpay.mobilesdk.logging.BeaconService
+import com.swedbankpay.mobilesdk.logging.model.EventAction
+import com.swedbankpay.mobilesdk.logging.util.onJsEventErrorExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onJsEventConsumerRefAvailableExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onJsEventGeneralExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onJsEventLaunchNativeGooglePayExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onJsEventOnPaidExtensionModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.getStringValueFor
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.util.GooglePayConstants
 import com.swedbankpay.mobilesdk.toStyleJs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -62,6 +73,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
     val uiState = processState.map { it?.uiState }
 
     val loading = uiState.map { it == UIState.Loading }
+
+    val googlePayEvent = MutableLiveData<LaunchNativeGooglePayEvent?>(null)
 
     val updatingPaymentOrder = uiState.map { it is UIState.UpdatingPaymentOrder }
 
@@ -233,16 +246,43 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         processState.value
             ?.getNextStateAfterConsumerProfileRefAvailable(consumerProfileRef)
             ?.let(::setProcessState)
+
+        BeaconService.logEvent(
+            eventAction = EventAction.OnJsEvent(
+                extensions = onJsEventConsumerRefAvailableExtensionModel(
+                    event = "onConsumerProfileRefAvailable",
+                    consumerProfileRef = consumerProfileRef
+                )
+            )
+        )
     }
 
     fun onError(terminalFailure: TerminalFailure?) {
         setFailureState(FailureReason.SwedbankPayError(terminalFailure))
+        BeaconService.logEvent(
+            eventAction = EventAction.OnJsEvent(
+                extensions = onJsEventErrorExtensionModel(
+                    event = "onError",
+                    terminalFailure = terminalFailure
+                )
+            )
+        )
     }
 
     fun onPaid(message: String) {
         //setFailureState(FailureReason.SwedbankPayError(terminalFailure))
         Log.d(LOG_TAG, "onPaid: $message")
         setProcessState(ProcessState.Complete)
+
+        val onPaidEvent = parseEvent(message, JsOnPaidEvent::class.java)
+        BeaconService.logEvent(
+            eventAction = EventAction.OnJsEvent(
+                extensions = onJsEventOnPaidExtensionModel(
+                    event = onPaidEvent?.event ?: "OnPaid",
+                    redirectUrl = onPaidEvent?.redirectUrl ?: "Unknown"
+                )
+            )
+        )
     }
 
     fun onGeneralEvent(message: String) {
@@ -250,6 +290,34 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
         publicVm?.run {
             javaScriptEventListener?.javaScriptEvent(this, message)
         }
+
+        val generalEvent = parseEvent(message, JsGeneralEvent::class.java)
+        BeaconService.logEvent(
+            eventAction = EventAction.OnJsEvent(
+                extensions = onJsEventGeneralExtensionModel(
+                    event = generalEvent?.event ?: "onGeneralEvent",
+                    eventSource = generalEvent?.sourceEvent ?: "Unknown"
+                )
+            )
+        )
+    }
+
+    fun onLaunchNativeGooglePay(payload: String) {
+        val launchNativeGooglePayEvent =
+            Gson().fromJson(payload, LaunchNativeGooglePayEvent::class.java)
+
+        googlePayEvent.value = launchNativeGooglePayEvent
+
+        BeaconService.logEvent(
+            eventAction = EventAction.OnJsEvent(
+                extensions = onJsEventLaunchNativeGooglePayExtensionModel(
+                    event = launchNativeGooglePayEvent.event,
+                    environment = launchNativeGooglePayEvent.initParams?.getStringValueFor(
+                        GooglePayConstants.ENVIRONMENT
+                    ) ?: "Unknown"
+                )
+            )
+        )
     }
 
     fun getPaymentMenuHtmlContent(): HtmlContent? {

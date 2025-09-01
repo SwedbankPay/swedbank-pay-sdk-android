@@ -12,12 +12,22 @@ import androidx.annotation.IntDef
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.swedbankpay.mobilesdk.PaymentFragment.ArgumentsBuilder
 import com.swedbankpay.mobilesdk.PaymentFragment.Companion.ARG_VIEW_MODEL_PROVIDER_KEY
+import com.swedbankpay.mobilesdk.PaymentFragment.Companion.COMPLETE_MESSAGE
+import com.swedbankpay.mobilesdk.PaymentFragment.Companion.ERROR_MESSAGE
+import com.swedbankpay.mobilesdk.PaymentFragment.Companion.RETRY_PROMPT
+import com.swedbankpay.mobilesdk.PaymentFragment.Companion.RETRY_PROMPT_DETAIL
 import com.swedbankpay.mobilesdk.PaymentFragment.Companion.defaultConfiguration
 import com.swedbankpay.mobilesdk.internal.InternalPaymentViewModel
 import com.swedbankpay.mobilesdk.internal.WebViewFragment
 import com.swedbankpay.mobilesdk.internal.getParcelableInternal
+import com.swedbankpay.mobilesdk.logging.BeaconService
+import com.swedbankpay.mobilesdk.logging.model.EventAction
+import com.swedbankpay.mobilesdk.logging.util.launchGooglePayExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onGooglePayPayloadErrorExtensionModel
+import com.swedbankpay.mobilesdk.logging.util.onGooglePayPayloadExtensionModel
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestUtil.toBase64
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayService
 import java.io.Serializable
 
 /**
@@ -42,7 +52,7 @@ import java.io.Serializable
  *
  *     ViewModelProviders.of(activity).get(PaymentViewModel.class)
  *
- * Optionally, you may specify a custom [ViewModelProvider][androidx.lifecycle.ViewModelProvider]
+ * Optionally, you may specify a custom [ViewModelProvider][ViewModelProvider]
  * key by [ArgumentsBuilder.viewModelProviderKey] or [ARG_VIEW_MODEL_PROVIDER_KEY],
  * e.g. if you want to support multiple PaymentFragments in an Activity (not recommended).
  *
@@ -86,17 +96,18 @@ open class PaymentFragment : Fragment() {
         private var style: Bundle? = null
         private var viewModelKey: String? = null
         private var useExternalBrowser = false
+
         @DefaultUI
         private var enabledDefaultUI = RETRY_PROMPT
         private var debugIntentUris = false
-        
+
         /**
          * Enables or disables checkoutV3 for this payment.
          * This controls the payment from and what values of the paymentOrder object are returned
          * @param checkoutV3 `true` to use checkoutV3, `false` to skip it
          */
         fun checkoutV3(checkoutV3: Boolean) = apply { this.checkoutV3 = checkoutV3 }
-        
+
         /**
          * Enables or disables checkin for this payment.
          * Mostly useful for using [userData] and a custom [Configuration].
@@ -128,7 +139,7 @@ open class PaymentFragment : Fragment() {
          *
          * [com.swedbankpay.mobilesdk.merchantbackend.MerchantBackendConfiguration]
          * does not use this parameter.
-         * If you create a custom [Configuration], you may set any [android.os.Parcelable]
+         * If you create a custom [Configuration], you may set any [Parcelable]
          * or [Serializable] object here, and receive it in your [Configuration] callbacks.
          * Note that due to possible saving and restoring of the argument bundle, you should
          * not rely on receiving the same object as you set here, but an equal one.
@@ -154,6 +165,7 @@ open class PaymentFragment : Fragment() {
          * @param style [Bundle] containing the styling parameters
          */
         fun style(style: Bundle) = apply { this.style = style }
+
         /**
          * Sets styling for the payment menu.
          *
@@ -166,9 +178,9 @@ open class PaymentFragment : Fragment() {
 
         /**
          * Sets the key used on the containing [activity's][androidx.fragment.app.FragmentActivity]
-         * [ViewModelProvider][androidx.lifecycle.ViewModelProvider]
+         * [ViewModelProvider][ViewModelProvider]
          * for the [PaymentViewModel]. This is only useful for special scenarios.
-         * @param viewModelKey the [androidx.lifecycle.ViewModelProvider] key the PaymentFragment uses to find its [PaymentViewModel] in the containing [activity][androidx.fragment.app.FragmentActivity]
+         * @param viewModelKey the [ViewModelProvider] key the PaymentFragment uses to find its [PaymentViewModel] in the containing [activity][androidx.fragment.app.FragmentActivity]
          */
         fun viewModelProviderKey(viewModelKey: String?) = apply { this.viewModelKey = viewModelKey }
 
@@ -209,7 +221,8 @@ open class PaymentFragment : Fragment() {
          * Enables or disables verbose error dialogs when Android Intent Uris
          * do not function correctly.
          */
-        fun debugIntentUris(debugIntentUris: Boolean) = apply { this.debugIntentUris = debugIntentUris }
+        fun debugIntentUris(debugIntentUris: Boolean) =
+            apply { this.debugIntentUris = debugIntentUris }
 
         /**
          * Adds the values in this ArgumentsBuilder to a [Bundle].
@@ -256,16 +269,19 @@ open class PaymentFragment : Fragment() {
          * See [ArgumentsBuilder.setEnabledDefaultUI]
          */
         const val RETRY_PROMPT = 1 shl 0
+
         /**
          * Default UI flag: a laconic completion message
          * See [ArgumentsBuilder.setEnabledDefaultUI]
          */
         const val COMPLETE_MESSAGE = 1 shl 1
+
         /**
          * Default UI flag: a less laconic, though a bit technical, error message
          * See [ArgumentsBuilder.setEnabledDefaultUI]
          */
         const val ERROR_MESSAGE = 1 shl 2
+
         /**
          * Default UI flag: a detail message about what went wrong.
          * This flag affects how the [RETRY_PROMPT] UI works; it has
@@ -278,7 +294,7 @@ open class PaymentFragment : Fragment() {
          * and payment menu for this payment. You will receive this value as the `userData` argument
          * in your [Configuration.postConsumers] and [Configuration.postPaymentorders] methods.
          *
-         * Value must be [android.os.Parcelable] or [Serializable].
+         * Value must be [Parcelable] or [Serializable].
          */
         const val ARG_USER_DATA = "com.swedbankpay.mobilesdk.USER_DATA"
 
@@ -298,9 +314,9 @@ open class PaymentFragment : Fragment() {
          * You will receive this value in your [Configuration.postPaymentorders].
          */
         const val ARG_PAYMENT_ORDER = "com.swedbankpay.mobilesdk.ARG_PAYMENT_ORDER"
-        
+
         /**
-         * Argument key: a bool to decide on using checkout V3. 
+         * Argument key: a bool to decide on using checkout V3.
          */
         const val ARG_CHECKOUT_V3 = "com.swedbankpay.mobilesdk.ARG_CHECKOUT_V3"
 
@@ -319,7 +335,8 @@ open class PaymentFragment : Fragment() {
          * [PaymentViewModel] of this PaymentFragment. Use this if you have multiple
          * PaymentFragments in the same Activity (not recommended).
          */
-        const val ARG_VIEW_MODEL_PROVIDER_KEY = "com.swedbankpay.mobilesdk.ARG_VIEW_MODEL_PROVIDER_KEY"
+        const val ARG_VIEW_MODEL_PROVIDER_KEY =
+            "com.swedbankpay.mobilesdk.ARG_VIEW_MODEL_PROVIDER_KEY"
 
         /**
          * Argument key: the enabled deafult UI.
@@ -355,14 +372,15 @@ open class PaymentFragment : Fragment() {
     )
     annotation class DefaultUI
 
-    private val publicVm get() = ViewModelProvider(requireActivity()).run {
-        val key = requireArguments().getString(ARG_VIEW_MODEL_PROVIDER_KEY)
-        if (key == null) {
-            get(PaymentViewModel::class.java)
-        } else {
-            get(key, PaymentViewModel::class.java)
+    private val publicVm
+        get() = ViewModelProvider(requireActivity()).run {
+            val key = requireArguments().getString(ARG_VIEW_MODEL_PROVIDER_KEY)
+            if (key == null) {
+                get(PaymentViewModel::class.java)
+            } else {
+                get(key, PaymentViewModel::class.java)
+            }
         }
-    }
     private val vm get() = ViewModelProvider(this)[InternalPaymentViewModel::class.java]
 
     /**
@@ -405,12 +423,75 @@ open class PaymentFragment : Fragment() {
         vm.observeLoading()
         vm.observeCurrentPage()
         vm.observeMessage()
+        vm.observeLaunchGooglePay()
         publicVm.observeRetryPreviousPressed()
     }
 
     private fun InternalPaymentViewModel.observeLoading() {
         loading.observe(this@PaymentFragment) {
             updateRefreshLayoutState()
+        }
+    }
+
+    private fun InternalPaymentViewModel.observeLaunchGooglePay() {
+        googlePayEvent.observe(this@PaymentFragment) { googlePayEvent ->
+            if (googlePayEvent != null) {
+                val webFragment =
+                    childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
+                googlePayEvent.initParams?.let { params ->
+                    GooglePayService.launchGooglePay(
+                        params,
+                        requireActivity()
+                    ) { googlePayResult, error ->
+                        val attemptPayload =
+                            googlePayResult?.paymentMethodData?.tokenizationData?.token
+                        webFragment.sendGooglePayPayload(
+                            NativeGooglePayAttemptPayload(
+                                paymentOrderId = googlePayEvent.paymentOrder.id,
+                                paymentAttemptPayload = attemptPayload?.toBase64()
+                            )
+                        )
+
+                        BeaconService.logEvent(
+                            eventAction = EventAction.OnGooglePayPayload(
+                                extensions = if (googlePayResult != null) {
+                                    onGooglePayPayloadExtensionModel(origin = "Payment menu", googlePayResult)
+                                } else {
+                                    onGooglePayPayloadErrorExtensionModel(
+                                        origin = "Payment Menu",
+                                        error
+                                    )
+                                }
+                            )
+                        )
+                    }
+
+                    BeaconService.logEvent(
+                        eventAction = EventAction.LaunchGooglePay(
+                            extensions = launchGooglePayExtensionModel(
+                                origin = "Payment Menu",
+                                succeeded = true
+                            )
+                        )
+                    )
+                } ?: run {
+                    webFragment.sendGooglePayPayload(
+                        NativeGooglePayAttemptPayload(
+                            paymentOrderId = googlePayEvent.paymentOrder.id,
+                            paymentAttemptPayload = null
+                        )
+                    )
+                    BeaconService.logEvent(
+                        eventAction = EventAction.LaunchGooglePay(
+                            extensions = launchGooglePayExtensionModel(
+                                origin = "Payment Menu",
+                                succeeded = false,
+                                reason = "initParams was null"
+                            )
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -442,7 +523,8 @@ open class PaymentFragment : Fragment() {
         vm.apply {
             reloadRequested = false
             getPaymentMenuHtmlContent()?.let {
-                val webFragment = childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
+                val webFragment =
+                    childFragmentManager.findFragmentById(R.id.swedbankpaysdk_root_web_view_fragment) as WebViewFragment
                 webFragment.load(it.baseUrl, it.getWebViewPage(requireContext()))
                 webViewShowingRootPage.value = true
             }
@@ -450,7 +532,7 @@ open class PaymentFragment : Fragment() {
     }
 
     private fun InternalPaymentViewModel.observeMessage() {
-        messageTitle.observe(this@PaymentFragment) { 
+        messageTitle.observe(this@PaymentFragment) {
             requireView().findViewById<View>(R.id.swedbankpaysdk_message).visibility =
                 if (it != null) View.VISIBLE else View.INVISIBLE
             requireView().findViewById<TextView>(R.id.swedbankpaysdk_message_title).text = it
@@ -467,7 +549,8 @@ open class PaymentFragment : Fragment() {
 
     private fun updateRefreshLayoutState() {
         val vm = this.vm
-        val swipeLayout = requireView().findViewById<SwipeRefreshLayout>(R.id.swedbankpaysdk_swipe_refresh_layout)
+        val swipeLayout =
+            requireView().findViewById<SwipeRefreshLayout>(R.id.swedbankpaysdk_swipe_refresh_layout)
         val loading = vm.loading.value == true
         swipeLayout.isRefreshing = loading
         swipeLayout.isEnabled = loading || vm.retryActionAvailable.value == true
@@ -486,23 +569,37 @@ open class PaymentFragment : Fragment() {
             vm.resumeFromSavedState(checkNotNull(savedInstanceState.getBundle(STATE_VM)))
         } else {
             requireArguments().apply {
-                
+
                 val checkoutV3 = getBoolean(ARG_CHECKOUT_V3)
                 val useCheckin = getBoolean(ARG_USE_CHECKIN)
                 val consumer = getParcelableInternal(ARG_CONSUMER, Consumer::class.java)
-                val paymentOrder = getParcelableInternal(ARG_PAYMENT_ORDER, PaymentOrder::class.java)
+                val paymentOrder =
+                    getParcelableInternal(ARG_PAYMENT_ORDER, PaymentOrder::class.java)
                 val userData = get(ARG_USER_DATA)
                 val style = getBundle(ARG_STYLE)
                 val useExternal = getBoolean(ARG_USE_BROWSER)
-                vm.start(useCheckin, consumer, paymentOrder, userData, style, useExternal, checkoutV3)
+                vm.start(
+                    useCheckin,
+                    consumer,
+                    paymentOrder,
+                    userData,
+                    style,
+                    useExternal,
+                    checkoutV3
+                )
             }
         }
     }
 
     @CallSuper
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.swedbankpaysdk_payment_fragment, container, false).apply {
-            val swipeRefreshLayout = findViewById<SwipeRefreshLayout>(R.id.swedbankpaysdk_swipe_refresh_layout)
+            val swipeRefreshLayout =
+                findViewById<SwipeRefreshLayout>(R.id.swedbankpaysdk_swipe_refresh_layout)
             swipeRefreshLayout.setOnRefreshListener {
                 vm.retryFromRetryableError()
             }

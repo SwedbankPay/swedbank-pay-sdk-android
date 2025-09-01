@@ -10,6 +10,7 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CompleteAuthen
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreateAuthentication
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreditCardAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreditCardCustomizePayment
+import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CreditCardWitchConsentCustomizePayment
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.CustomizePayment
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttemptProblemType
@@ -152,14 +153,25 @@ internal object RequestUtil {
                 restrictToPaymentMethods = restrictToPaymentMethods.ifEmpty { null }
             ).toJsonString()
 
-            paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard -> CreditCardCustomizePayment(
-                paymentMethod = paymentAttemptInstrument.paymentMethod,
-                hideStoredPaymentOptions = true,
-                showConsentAffirmation = paymentAttemptInstrument.enabledPaymentDetailsConsentCheckbox,
-                restrictToPaymentMethods = null
-            ).toJsonString()
+            paymentAttemptInstrument is PaymentAttemptInstrument.NewCreditCard -> {
+                if (paymentAttemptInstrument.enabledPaymentDetailsConsentCheckbox != null) {
+                    CreditCardWitchConsentCustomizePayment(
+                        paymentMethod = paymentAttemptInstrument.paymentMethod,
+                        hideStoredPaymentOptions = true,
+                        showConsentAffirmation = paymentAttemptInstrument.enabledPaymentDetailsConsentCheckbox,
+                        restrictToPaymentMethods = null
+                    ).toJsonString()
+                } else {
+                    CreditCardCustomizePayment(
+                        paymentMethod = paymentAttemptInstrument.paymentMethod,
+                        hideStoredPaymentOptions = true,
+                        restrictToPaymentMethods = null
+                    ).toJsonString()
+                }
+            }
 
             paymentMethod != null -> CustomizePayment(paymentMethod, null).toJsonString()
+
             instrument != null -> CustomizePayment(instrument.paymentMethod, null).toJsonString()
             else -> CustomizePayment(null, null).toJsonString()
         }
@@ -179,7 +191,7 @@ internal object RequestUtil {
         ).toJsonString()
     }
 
-    private fun String.toBase64() = Base64.encodeToString(this.toByteArray(), Base64.NO_WRAP)
+    fun String.toBase64(): String? = Base64.encodeToString(this.toByteArray(), Base64.NO_WRAP)
 
     private inline fun <reified T : Any> T.toJsonString(): String = gson.toJson(this, T::class.java)
 }

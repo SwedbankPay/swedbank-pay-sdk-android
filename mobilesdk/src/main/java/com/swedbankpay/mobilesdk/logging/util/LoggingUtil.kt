@@ -1,12 +1,15 @@
-package com.swedbankpay.mobilesdk.paymentsession.util
+package com.swedbankpay.mobilesdk.logging.util
 
 import androidx.annotation.Keep
+import com.swedbankpay.mobilesdk.TerminalFailure
 import com.swedbankpay.mobilesdk.logging.model.ExtensionsModel
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.ProblemDetails
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentAttemptInstrument
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.PaymentSessionProblem
 import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.SwedbankPayPaymentSessionSDKControllerMode
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayError
+import com.swedbankpay.mobilesdk.paymentsession.googlepay.model.GooglePayResult
 
 /**
  * This files holds various functions for logging purposes
@@ -163,7 +166,6 @@ internal fun googlePayPaymentReadinessExtensionModel(
     )
 )
 
-
 @Keep
 internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
     val values: MutableMap<String, String?> = when (this) {
@@ -217,3 +219,126 @@ internal fun SwedbankPayAPIError.toExtensionsModel(): ExtensionsModel {
 
     return ExtensionsModel(values = values)
 }
+
+@Keep
+internal fun onJsEventConsumerRefAvailableExtensionModel(
+    event: String,
+    consumerProfileRef: String = ""
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "consumerProfileRef" to consumerProfileRef
+    )
+)
+
+@Keep
+internal fun onJsEventLaunchNativeGooglePayExtensionModel(
+    event: String,
+    environment: String
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "environment" to environment
+    )
+)
+
+@Keep
+internal fun onJsEventGeneralExtensionModel(
+    event: String,
+    eventSource: String
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "eventSource" to eventSource
+    )
+)
+
+@Keep
+internal fun onJsEventOnPaidExtensionModel(
+    event: String,
+    redirectUrl: String
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "redirectUrl" to redirectUrl
+    )
+)
+
+@Keep
+internal fun onJsEventErrorExtensionModel(
+    event: String,
+    terminalFailure: TerminalFailure?
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "origin" to terminalFailure?.origin,
+        "messageId" to terminalFailure?.messageId,
+        "details" to terminalFailure?.details
+    )
+)
+
+@Keep
+internal fun onJsEventSentPaymentAttemptPayloadExtensionModel(
+    event: String,
+    paymentMethod: String
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "event" to event,
+        "paymentMethod" to paymentMethod
+    )
+)
+
+@Keep
+internal fun launchGooglePayExtensionModel(
+    origin: String,
+    succeeded: Boolean,
+    reason: String = "",
+) = ExtensionsModel(
+    values = if (succeeded) {
+        mutableMapOf(
+            "origin" to origin,
+            "succeeded" to true.toString(),
+        )
+    } else {
+        mutableMapOf(
+            "origin" to origin,
+            "succeeded" to false.toString(),
+            "reason" to reason
+        )
+    }
+)
+
+@Keep
+internal fun onGooglePayPayloadExtensionModel(
+    origin: String,
+    googlePayResult: GooglePayResult
+) = ExtensionsModel(
+    values = mutableMapOf(
+        "origin" to origin,
+        "type" to googlePayResult.paymentMethodData?.type,
+        "cardNetwork" to googlePayResult.paymentMethodData?.info?.cardNetwork
+    )
+)
+
+@Keep
+internal fun onGooglePayPayloadErrorExtensionModel(
+    origin: String,
+    googlePayError: GooglePayError?
+) = if (googlePayError != null) {
+    ExtensionsModel(
+        values = mutableMapOf(
+            "origin" to origin,
+            "statusCode" to googlePayError.statusCode.toString(),
+            "errorMessage" to googlePayError.message,
+            "userCancelled" to googlePayError.userCancelled.toString()
+        )
+    )
+} else {
+    ExtensionsModel(
+        values = mutableMapOf(
+            "errorMessage" to "Didn't get a valid response from google pay"
+        )
+    )
+}
+
+
