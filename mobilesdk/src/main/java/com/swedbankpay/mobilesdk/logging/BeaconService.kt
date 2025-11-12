@@ -1,12 +1,16 @@
 package com.swedbankpay.mobilesdk.logging
 
+import android.R.attr.type
+import android.util.Log
 import com.google.gson.Gson
 import com.swedbankpay.mobilesdk.logging.model.BeaconInput
 import com.swedbankpay.mobilesdk.logging.model.BeaconType
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.EventModel
+import com.swedbankpay.mobilesdk.paymentsession.PaymentSession
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestDataUtil
+import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentSessionModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,16 +23,22 @@ import javax.net.ssl.HttpsURLConnection
 internal object BeaconService {
 
     private var beaconUrl: String? = null
+    private var paymentSession: PaymentSessionModel? = null
     private val beacons: Queue<BeaconInput> = LinkedList()
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    fun setBeaconUrl(url: String?) {
+    fun setBeaconValues(url: String?, paymentSession: PaymentSessionModel?) {
         beaconUrl = url
+        this.paymentSession = paymentSession
     }
 
-    fun logEvent(eventAction: EventAction) {
+    fun logEvent(eventAction: EventAction, message: String) {
         var beaconInput = BeaconInput(
+            id = paymentSession?.id,
+            instrument = paymentSession?.paymentMethod,
+            integration = "App",
+            message = message,
             type = BeaconType.CLIENT_EVENT.identifier,
             service = RequestDataUtil.getService(),
             client = RequestDataUtil.getClient<Client>(),

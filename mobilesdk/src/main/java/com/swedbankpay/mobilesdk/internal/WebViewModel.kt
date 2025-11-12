@@ -183,7 +183,8 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
                     event = "paymentAttemptPayload",
                     paymentMethod = nativeGooglePayAttemptPayload.paymentMethod
                 )
-            )
+            ),
+            message = "Sending google pay payload through java script events in payment menu"
         )
     }
 
@@ -193,7 +194,7 @@ internal class WebViewModel(application: Application) : AndroidViewModel(applica
         removed?.destroy()
     }
 
-    private inner class MyWebViewClient(
+    private class MyWebViewClient(
         private val parentViewModel: InternalPaymentViewModel
     ) : WebViewClient() {
         @Deprecated("Deprecated in Java")

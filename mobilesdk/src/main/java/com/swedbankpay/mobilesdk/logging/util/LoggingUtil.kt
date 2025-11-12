@@ -208,6 +208,31 @@ internal fun PaymentSessionProblem.toExtensionsModel(): ExtensionsModel {
 }
 
 @Keep
+internal fun PaymentSessionProblem.toReadableMessage(): String? {
+    return when (this) {
+        is PaymentSessionProblem.PaymentSessionAPIRequestFailed -> {
+             error.toReadableMessage()
+        }
+        PaymentSessionProblem.PaymentSessionEndReached -> "Native payment session has reached a state that isn’t supported by the SDK"
+        PaymentSessionProblem.InternalInconsistencyError -> "Logic inconsistency problem in the SDK"
+        PaymentSessionProblem.AutomaticConfigurationFailed -> "Couldn't automatically configure the SDK"
+        is PaymentSessionProblem.PaymentSession3DSecureFragmentLoadFailed -> error.message
+        PaymentSessionProblem.AbortPaymentNotAllowed -> "Abort payment is not allowed"
+    }
+}
+
+@Keep
+internal fun SwedbankPayAPIError.toReadableMessage() : String {
+    return when (this) {
+        is SwedbankPayAPIError.Error ->  this.message ?: "Unknown error"
+        SwedbankPayAPIError.InvalidUrl -> "Invalid url"
+        SwedbankPayAPIError.Unknown -> "Uknown error"
+    }
+}
+
+
+
+@Keep
 internal fun SwedbankPayAPIError.toExtensionsModel(): ExtensionsModel {
     val values: MutableMap<String, String?> = mutableMapOf(
         "errorMessage" to when (this) {

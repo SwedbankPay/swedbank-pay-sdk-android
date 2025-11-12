@@ -253,7 +253,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                     event = "onConsumerProfileRefAvailable",
                     consumerProfileRef = consumerProfileRef
                 )
-            )
+            ),
+            "On consumer profile ref available"
         )
     }
 
@@ -265,7 +266,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                     event = "onError",
                     terminalFailure = terminalFailure
                 )
-            )
+            ),
+            message = terminalFailure?.details ?: "On error"
         )
     }
 
@@ -281,7 +283,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                     event = onPaidEvent?.event ?: "OnPaid",
                     redirectUrl = onPaidEvent?.redirectUrl ?: "Unknown"
                 )
-            )
+            ) ,
+             message = "Payment was paid successfully"
         )
     }
 
@@ -298,7 +301,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                     event = generalEvent?.event ?: "onGeneralEvent",
                     eventSource = generalEvent?.sourceEvent ?: "Unknown"
                 )
-            )
+            ),
+            message = generalEvent?.event ?: "On general event"
         )
     }
 
@@ -316,7 +320,8 @@ internal class InternalPaymentViewModel(app: Application) : AndroidViewModel(app
                         GooglePayConstants.ENVIRONMENT
                     ) ?: "Unknown"
                 )
-            )
+            ),
+            message = "Getting google pay parameters to launch google pay from payment menu"
         )
     }
 

@@ -4,7 +4,7 @@ sealed class EventAction(val action: String, val extensions: ExtensionsModel? = 
     class SDKMethodInvoked(
         val method: MethodModel?,
         extensions: ExtensionsModel? = null
-    ) : EventAction("SDKMethodInvoked", extensions)
+    ) : EventAction("SDKMethodInvoked",  extensions)
 
     class SDKCallbackInvoked(
         val method: MethodModel?,

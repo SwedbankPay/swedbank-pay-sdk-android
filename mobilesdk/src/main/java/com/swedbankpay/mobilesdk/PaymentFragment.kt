@@ -462,7 +462,8 @@ open class PaymentFragment : Fragment() {
                                         error
                                     )
                                 }
-                            )
+                            ),
+                            message = "On google pay payload"
                         )
                     }
 
@@ -472,7 +473,8 @@ open class PaymentFragment : Fragment() {
                                 origin = "Payment Menu",
                                 succeeded = true
                             )
-                        )
+                        ),
+                        message = "Launch google pay"
                     )
                 } ?: run {
                     webFragment.sendGooglePayPayload(
@@ -488,7 +490,8 @@ open class PaymentFragment : Fragment() {
                                 succeeded = false,
                                 reason = "initParams was null"
                             )
-                        )
+                        ),
+                        message = "Launch google pay failed due to initParams was null"
                     )
                 }
             }

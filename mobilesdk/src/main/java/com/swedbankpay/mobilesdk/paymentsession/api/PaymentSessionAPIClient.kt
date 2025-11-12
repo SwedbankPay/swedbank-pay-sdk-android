@@ -1,5 +1,6 @@
 package com.swedbankpay.mobilesdk.paymentsession.api
 
+import com.google.android.gms.tasks.Tasks.call
 import com.swedbankpay.mobilesdk.logging.BeaconService
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.HttpModel
@@ -17,6 +18,7 @@ import com.swedbankpay.mobilesdk.paymentsession.exposedmodel.toInstrument
 import com.swedbankpay.mobilesdk.paymentsession.util.JsonUtil.toApiError
 import com.swedbankpay.mobilesdk.paymentsession.util.JsonUtil.toPaymentOutputModel
 import com.swedbankpay.mobilesdk.logging.util.toExtensionsModel
+import com.swedbankpay.mobilesdk.logging.util.toReadableMessage
 import java.io.OutputStreamWriter
 import java.net.ConnectException
 import java.net.SocketException
@@ -412,7 +414,8 @@ internal open class PaymentSessionAPIClient {
                 ),
                 duration = logInfo.duration.toInt(),
                 extensions = logInfo.error?.toExtensionsModel()
-            )
+            ),
+            message = logInfo.error?.toReadableMessage() ?: "Successful api call"
         )
     }
 

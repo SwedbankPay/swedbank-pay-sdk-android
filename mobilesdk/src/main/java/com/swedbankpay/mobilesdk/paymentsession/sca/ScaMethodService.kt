@@ -85,7 +85,8 @@ internal object ScaMethodService {
                                                 ),
                                                 duration = (System.currentTimeMillis() - start).toInt(),
                                                 extensions = scaMethodRequestExtensionModel("Y")
-                                            )
+                                            ),
+                                            message = "A successful sca method request"
                                         )
 
                                         continuation.safeResume("Y")
@@ -158,7 +159,8 @@ internal object ScaMethodService {
                                             description,
                                             errorCode
                                         )
-                                    )
+                                    ),
+                                    message = description ?: "Unknown error with 3DSecure"
                                 )
                             }
                         }

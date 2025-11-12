@@ -9,6 +9,14 @@ import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestDa
 
 @Keep
 internal data class BeaconInput(
+    @SerializedName("id")
+    val id: String?,
+    @SerializedName("instrument")
+    val instrument: String?,
+    @SerializedName("integration")
+    val integration: String,
+    @SerializedName("message")
+    val message: String? = null,
     @SerializedName("type")
     val type: String,
     @SerializedName("service")
@@ -65,6 +73,8 @@ data class MethodModel(
     val sdk: String? = RequestDataUtil.SDK_NAME,
     @SerializedName("succeeded")
     val succeeded: Boolean? = null,
+    @SerializedName("problemType")
+    val problemType: String? = null
 )
 
 @Keep

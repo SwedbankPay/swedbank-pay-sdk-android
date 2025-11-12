@@ -186,7 +186,8 @@ internal class ScaRedirectFragment() : Fragment() {
                                     ),
                                     duration = (System.currentTimeMillis() - start).toInt(),
                                     extensions = scaRedirectResultExtensionModel(cres != null)
-                                )
+                                ),
+                                message = "A successful sca redirect request"
                             )
                             handler.post {
                                 PaymentSession.onScaResult(cres, taskCreq)
@@ -269,7 +270,8 @@ internal class ScaRedirectFragment() : Fragment() {
                                     description,
                                     errorCode
                                 )
-                            )
+                            ),
+                            message = description ?: "Unknown error with SCA redirect"
                         )
 
                         safeLet(taskHref, taskExpects) { href, expects ->

@@ -24,6 +24,7 @@ import com.swedbankpay.mobilesdk.logging.util.onGooglePayPayloadErrorExtensionMo
 import com.swedbankpay.mobilesdk.logging.util.onGooglePayPayloadExtensionModel
 import com.swedbankpay.mobilesdk.logging.util.toExtensionModel
 import com.swedbankpay.mobilesdk.logging.util.toExtensionsModel
+import com.swedbankpay.mobilesdk.logging.util.toReadableMessage
 import com.swedbankpay.mobilesdk.paymentsession.api.PaymentSessionAPIClient
 import com.swedbankpay.mobilesdk.paymentsession.api.model.SwedbankPayAPIError
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.FailPaymentAttempt
@@ -205,7 +206,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         extensions = clientAppCallbackExtensionsModel(
                             callbackUrl
                         )
-                    )
+                    ),
+                    message = "Returning from swish"
                 )
 
                 val getPayment =
@@ -368,10 +370,11 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                             break
                         }
 
-                        BeaconService.setBeaconUrl(
+                        BeaconService.setBeaconValues(
                             SessionOperationHandler.getBeaconUrl(
                                 currentPaymentOutputModel
-                            )
+                            ),
+                            currentPaymentOutputModel?.paymentSession
                         )
                         SessionOperationHandler.getNextStep(
                             paymentOutputModel = currentPaymentOutputModel,
@@ -499,7 +502,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                 "instruments" to instruction.availableInstrumentsForLogging
                             )
                         )
-                    )
+                    ),
+                    message = "Instruments available on the payment session is fetched"
                 )
             }
 
@@ -548,7 +552,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     name = "fetchPaymentSession",
                     succeeded = true
                 )
-            )
+            ),
+            message = "Initial fetch of the payment session"
         )
 
         executeNextStepUntilFurtherInstructions(
@@ -588,7 +593,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                 isReadyToPay,
                                 isReadyToPayWithExistingPaymentMethod
                             )
-                        )
+                        ),
+                        "Fetching if device responsible for the payment can pay with Google Pay"
                     )
                     _paymentSessionState.setValue(
                         PaymentSessionState.GooglePayPaymentReadinessFetched(
@@ -637,7 +643,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         succeeded = true
                     ),
                     extensions = instrument.toExtensionsModel()
-                )
+                ),
+                "Make a native payment attempt"
             )
 
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
@@ -669,7 +676,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         succeeded = true
                     ),
                     extensions = mode.toExtensionModel()
-                )
+                ),
+                "Creating a payment menu that can be displayed to the user"
             )
         } ?: run {
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
@@ -729,7 +737,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         name = "abortPaymentSession",
                         succeeded = abortPaymentOperation != null
                     )
-                )
+                ),
+                message = "Abort the current payment session"
             )
         } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
     }
@@ -759,7 +768,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                     name = "dismiss3DSecureFragment",
                                     succeeded = true
                                 )
-                            )
+                            ),
+                            message = "Tells the merchant that 3D secure view can be dismissed"
                         )
                     } ?: onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
                 }
@@ -778,7 +788,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     name = "show3DSecureFragment",
                     succeeded = true
                 )
-            )
+            ),
+            message = "Tells the merchant that 3D secure view can be displayed"
         )
     }
 
@@ -812,7 +823,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         launchUrl = uri.toString(),
                         succeeded = true
                     )
-                )
+                ),
+                message = "Launching Swish"
             )
         } catch (e: Exception) {
             BeaconService.logEvent(
@@ -822,7 +834,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         launchUrl = uri.toString(),
                         succeeded = false
                     )
-                )
+                ),
+                "Couldn't launch Swish"
             )
 
             currentPaymentOutputModel?.let { paymentOutputModel ->
@@ -861,7 +874,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                 error
                             )
                         }
-                    )
+                    ),
+                    message = error?.message ?: "Getting a successful response from Google Pay"
                 )
 
                 currentPaymentOutputModel?.let { paymentOutputModel ->
@@ -902,22 +916,26 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                         origin = "SDK",
                         succeeded = true
                     )
-                )
+                ),
+                message = "Launching Google Pay"
             )
 
         } ?: run {
+            val reason = if (currentActivity == null) {
+                "Activity is null"
+            } else {
+                "Expects parameters is missing"
+            }
+
             BeaconService.logEvent(
                 eventAction = EventAction.LaunchGooglePay(
                     extensions = launchGooglePayExtensionModel(
                         origin = "SDK",
                         succeeded = false,
-                        reason = if (currentActivity == null) {
-                            "Activity is null"
-                        } else {
-                            "Expects parameters is missing"
-                        }
+                        reason = reason
                     )
-                )
+                ),
+                message = "Couldn't launch Google pay due to $reason"
             )
             onSdkProblemOccurred(PaymentSessionProblem.InternalInconsistencyError)
         }
@@ -947,7 +965,8 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                     name = "paymentComplete",
                     succeeded = true
                 )
-            )
+            ),
+            message = "Payment is complete"
         )
         clearState()
     }
@@ -958,9 +977,11 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             eventAction = EventAction.SDKCallbackInvoked(
                 method = MethodModel(
                     name = "paymentCanceled",
-                    succeeded = true
+                    succeeded = true,
+                    problemType = "paymentCanceled"
                 )
-            )
+            ),
+            message = "Payment is canceled"
         )
         clearState()
     }
@@ -975,14 +996,18 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
 
         _paymentSessionState.setValue(PaymentSessionState.SdkProblemOccurred(paymentSessionProblem))
 
+        val extensions = paymentSessionProblem.toExtensionsModel()
+
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
                 method = MethodModel(
                     name = "sdkProblemOccurred",
-                    succeeded = true
+                    succeeded = true,
+                    problemType = extensions.values?.get("problem") ?: "sdkProblemOccurred"
                 ),
-                extensions = paymentSessionProblem.toExtensionsModel()
-            )
+                extensions = extensions
+            ),
+            message = paymentSessionProblem.toReadableMessage() ?: "A problem occurred in the SDK"
         )
     }
 
@@ -995,10 +1020,12 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
             eventAction = EventAction.SDKCallbackInvoked(
                 method = MethodModel(
                     name = "sessionProblemOccurred",
-                    succeeded = true
+                    succeeded = true,
+                    problemType = problemDetails.type.substringAfterLast("/")
                 ),
                 extensions = problemDetails.toExtensionsModel()
-            )
+            ),
+            message = "${problemDetails.title} ${problemDetails.detail}"
         )
     }
 
