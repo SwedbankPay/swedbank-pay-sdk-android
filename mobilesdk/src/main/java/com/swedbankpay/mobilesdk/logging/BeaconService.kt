@@ -1,13 +1,10 @@
 package com.swedbankpay.mobilesdk.logging
 
-import android.R.attr.type
-import android.util.Log
 import com.google.gson.Gson
 import com.swedbankpay.mobilesdk.logging.model.BeaconInput
 import com.swedbankpay.mobilesdk.logging.model.BeaconType
 import com.swedbankpay.mobilesdk.logging.model.EventAction
 import com.swedbankpay.mobilesdk.logging.model.EventModel
-import com.swedbankpay.mobilesdk.paymentsession.PaymentSession
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.Client
 import com.swedbankpay.mobilesdk.paymentsession.api.model.request.util.RequestDataUtil
 import com.swedbankpay.mobilesdk.paymentsession.api.model.response.PaymentSessionModel
@@ -29,14 +26,12 @@ internal object BeaconService {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     fun setBeaconValues(url: String?, paymentSession: PaymentSessionModel?) {
-        beaconUrl = url
         this.paymentSession = paymentSession
+        beaconUrl = url
     }
 
     fun logEvent(eventAction: EventAction, message: String) {
         var beaconInput = BeaconInput(
-            id = paymentSession?.id,
-            instrument = paymentSession?.paymentMethod,
             integration = "App",
             message = message,
             type = BeaconType.CLIENT_EVENT.identifier,
@@ -100,8 +95,10 @@ internal object BeaconService {
 
     private fun makeLogRequest(beaconInput: BeaconInput?) {
         beaconInput?.let {
+            val beaconInputWithId =
+                it.copy(id = paymentSession?.id, instrument = paymentSession?.paymentMethod)
             try {
-                val beaconInputData = Gson().toJson(beaconInput)
+                val beaconInputData = Gson().toJson(beaconInputWithId)
 
                 val url = URL(beaconUrl)
 

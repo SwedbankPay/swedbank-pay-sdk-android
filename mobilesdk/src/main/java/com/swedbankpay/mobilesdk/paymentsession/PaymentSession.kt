@@ -594,7 +594,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
                                 isReadyToPayWithExistingPaymentMethod
                             )
                         ),
-                        "Fetching if device responsible for the payment can pay with Google Pay"
+                        "Fetching if the device responsible for the payment can pay with Google Pay"
                     )
                     _paymentSessionState.setValue(
                         PaymentSessionState.GooglePayPaymentReadinessFetched(
