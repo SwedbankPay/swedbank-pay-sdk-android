@@ -990,6 +990,7 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
         _paymentSessionState.setValue(PaymentSessionState.SessionProblemOccurred(problemDetails))
 
         stopObservingCallbacks()
+        stopObservingScaRedirect()
 
         BeaconService.logEvent(
             eventAction = EventAction.SDKCallbackInvoked(
