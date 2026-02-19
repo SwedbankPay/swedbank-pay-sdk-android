@@ -48,6 +48,7 @@ import com.swedbankpay.mobilesdk.paymentsession.googlepay.GooglePayService
 import com.swedbankpay.mobilesdk.paymentsession.sca.ScaRedirectFragment
 import com.swedbankpay.mobilesdk.paymentsession.util.UriCallbackUtil.addCallbackUrl
 import com.swedbankpay.mobilesdk.paymentsession.util.configuration.AutomaticConfiguration
+import com.swedbankpay.mobilesdk.paymentsession.util.configuration.AutomaticConfigurationPaymentFragment
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.safeLet
 import com.swedbankpay.mobilesdk.paymentsession.util.extension.setValueIfChanged
 import com.swedbankpay.mobilesdk.paymentsession.util.livedata.QueuedMutableLiveData
@@ -690,11 +691,11 @@ class PaymentSession(private var orderInfo: ViewPaymentOrderInfo? = null) {
     private fun createPaymentFragment() {
         clearSdkControllerMode()
         orderInfo?.let {
-            val paymentFragment = PaymentFragment()
-            PaymentFragment.defaultConfiguration = AutomaticConfiguration(it)
+            val paymentFragment = AutomaticConfigurationPaymentFragment()
 
             val argsBuilder = PaymentFragment.ArgumentsBuilder()
                 .checkoutV3(true)
+                .userData(AutomaticConfiguration(it))
                 .useBrowser(false)
 
             paymentMenuStyle?.let {
